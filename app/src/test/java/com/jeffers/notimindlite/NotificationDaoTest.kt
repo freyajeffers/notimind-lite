@@ -1,0 +1,144 @@
+package com.jeffers.notimindlite
+
+import android.content.Context
+import androidx.room.Room
+import androidx.test.core.app.ApplicationProvider
+import com.jeffers.notimindlite.data.local.AppDatabase
+import com.jeffers.notimindlite.data.local.NotificationDao
+import com.jeffers.notimindlite.data.local.NotificationEntity
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.runBlocking
+import org.junit.After
+import org.junit.Assert.*
+import org.junit.Before
+import org.junit.Test
+import org.junit.runner.RunWith
+import org.robolectric.RobolectricTestRunner
+import org.robolectric.annotation.Config
+
+@RunWith(RobolectricTestRunner::class)
+@Config(sdk = [33])
+class NotificationDaoTest {
+
+    private lateinit var database: AppDatabase
+    private lateinit var dao: NotificationDao
+
+    @Before
+    fun setup() {
+        val context = ApplicationProvider.getApplicationContext<Context>()
+        database = Room.inMemoryDatabaseBuilder(context, AppDatabase::class.java)
+            .allowMainThreadQueries()
+            .build()
+        dao = database.notificationDao()
+    }
+
+    @After
+    fun teardown() {
+        database.close()
+    }
+
+    @Test
+    fun insertAndQueryNotification_withRichMetadata() = runBlocking {
+        val entity = NotificationEntity(
+            key = "com.test.app_1001",
+            packageName = "com.test.app",
+            appName = "Test App",
+            title = "Rich Test Title",
+            content = "Rich Test Content",
+            postTime = System.currentTimeMillis(),
+            isDismissed = false,
+            isPersistent = true,
+            category = "msg",
+            channelId = "chat_channel",
+            subText = "Subtext Info",
+            bigText = "Expanded Big Text Content",
+            priority = 2,
+            groupKey = "group_chat_1",
+            isOngoing = true,
+            isClearable = false,
+            actionsCount = 3
+        )
+
+        val id = dao.insertNotification(entity)
+        assertTrue(id > 0)
+
+        val activeList = dao.getActiveNotificationsList()
+        assertEquals(1, activeList.size)
+
+        val retrieved = activeList[0]
+        assertEquals("Rich Test Title", retrieved.title)
+        assertEquals("msg", retrieved.category)
+        assertEquals("chat_channel", retrieved.channelId)
+        assertEquals("Subtext Info", retrieved.subText)
+        assertEquals("Expanded Big Text Content", retrieved.bigText)
+        assertEquals(2, retrieved.priority)
+        assertEquals("group_chat_1", retrieved.groupKey)
+        assertTrue(retrieved.isOngoing)
+        assertFalse(retrieved.isClearable)
+        assertEquals(3, retrieved.actionsCount)
+    }
+
+    @Test
+    fun markDismissed_removesFromActiveList() = runBlocking {
+        val entity = NotificationEntity(
+            key = "com.test.app_1002",
+            packageName = "com.test.app",
+            appName = "Test App",
+            title = "Dismiss Me",
+            content = "Content",
+            isDismissed = false
+        )
+
+        dao.insertNotification(entity)
+        assertEquals(1, dao.getActiveNotificationsList().size)
+
+        dao.markDismissed("com.test.app_1002")
+        assertEquals(0, dao.getActiveNotificationsList().size)
+
+        val allLogs = dao.getAllNotifications().first()
+        assertEquals(1, allLogs.size)
+        assertTrue(allLogs[0].isDismissed)
+    }
+
+    @Test
+    fun markDismissedWithReason_categorizesIntoRecentlyDismissedAndLost() = runBlocking {
+        val userSwiped = NotificationEntity(key = "k1", packageName = "p1", appName = "A1", title = "Swiped", content = "C1", isDismissed = false)
+        val appCancelled = NotificationEntity(key = "k2", packageName = "p2", appName = "A2", title = "App Cancel", content = "C2", isDismissed = false)
+
+        dao.insertNotification(userSwiped)
+        dao.insertNotification(appCancelled)
+
+        dao.markDismissedWithReason("k1", 1) // REASON_CANCEL (User Swiped)
+        dao.markDismissedWithReason("k2", 8) // REASON_APP_CANCEL (App Cancelled)
+
+        val recentlyDismissed = dao.getRecentlyDismissedFlow().first()
+        val lostNotifs = dao.getLostNotificationsFlow().first()
+
+        assertEquals(1, recentlyDismissed.size)
+        assertEquals("Swiped", recentlyDismissed[0].title)
+        assertEquals(1, recentlyDismissed[0].dismissReason)
+
+        assertEquals(1, lostNotifs.size)
+        assertEquals("App Cancel", lostNotifs[0].title)
+        assertEquals(8, lostNotifs[0].dismissReason)
+    }
+
+    @Test
+    fun updatePinnedStatus_togglesPinnedState() = runBlocking {
+        val notif = NotificationEntity(key = "pin_1", packageName = "p", appName = "A", title = "Pin Me", content = "C", isDismissed = false, isPinned = false)
+        dao.insertNotification(notif)
+
+        var pinnedList = dao.getPinnedNotificationsFlow().first()
+        assertEquals(0, pinnedList.size)
+
+        dao.updatePinnedStatus("pin_1", true)
+        pinnedList = dao.getPinnedNotificationsFlow().first()
+        assertEquals(1, pinnedList.size)
+        assertEquals("Pin Me", pinnedList[0].title)
+        assertTrue(pinnedList[0].isPinned)
+
+        dao.updatePinnedStatus("pin_1", false)
+        pinnedList = dao.getPinnedNotificationsFlow().first()
+        assertEquals(0, pinnedList.size)
+    }
+}
