@@ -13,4 +13,23 @@ class PreferenceManager(context: Context) {
     fun setExpandedSection(section: String) {
         prefs.edit().putString("expanded_section", section).apply()
     }
+
+    fun isRestoreOnBootEnabled(): Boolean {
+        return prefs.getBoolean("restore_on_boot", false)
+    }
+
+    fun setRestoreOnBootEnabled(enabled: Boolean) {
+        prefs.edit().putBoolean("restore_on_boot", enabled).apply()
+    }
+
+    // Preference for storing last app update timestamp
+    private val PREF_LAST_UPDATE_TIME = "pref_last_update_time"
+
+    fun setLastUpdateTime(time: Long) {
+        prefs.edit().putLong(PREF_LAST_UPDATE_TIME, time).apply()
+    }
+
+    fun getLastUpdateTime(): Long {
+        return prefs.getLong(PREF_LAST_UPDATE_TIME, 0L)
+    }
 }

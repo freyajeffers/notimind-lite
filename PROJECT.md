@@ -11,16 +11,19 @@ Packages:
 ## Milestones
 | # | Name | Scope | Dependencies | Status |
 |---|------|-------|-------------|--------|
-| 1 | Core Architecture & Setup | Gradle setup, Kotlin, AndroidX, Compose, Room dependencies, Application class, AndroidManifest | None | IN_PROGRESS |
-| 2 | Data Persistence Schema | Room DB (`AppDatabase`, `NotificationDao`, `NotificationEntity`) metadata: id, key, packageName, appName, title, content, postTime, isDismissed, isPersistent | M1 | PLANNED |
-| 3 | Core Services & Boot Recovery | `NotificationLoggerService` (extending `NotificationListenerService`), `BootReceiver` (`ACTION_BOOT_COMPLETED`, restore active notifications, rebind service) | M2 | PLANNED |
-| 4 | Multi-Screen Jetpack Compose UI | Navigation routes, Active Notifications Screen, Log History Screen (filter/search), Settings Screen (permission status link, clear log, boot toggle) | M3 | PLANNED |
+| 1 | Core Architecture & Setup | Gradle setup, Kotlin, AndroidX, Compose, Room dependencies, Application class, AndroidManifest | None | DONE |
+| 2 | Data Persistence Schema | Room DB (`AppDatabase`, `NotificationDao`, `NotificationEntity`) metadata: id, key, packageName, appName, title, content, postTime, isDismissed, isPersistent | M1 | DONE |
+| 3 | Core Services & Boot Recovery | `NotificationLoggerService` (extending `NotificationListenerService`), `BootReceiver` (`ACTION_BOOT_COMPLETED`, restore active notifications, rebind service) | M2 | DONE |
+| 4 | Multi-Screen Jetpack Compose UI | Navigation routes, Active Notifications Screen, Log History Screen (filter/search), Settings Screen (permission status link, clear log, boot toggle) | M3 | IN_PROGRESS |
 | 5 | Final E2E Test Suite Pass & Coverage Hardening | 100% pass rate on E2E test suite (Tiers 1-4) + Tier 5 adversarial testing | M4, E2E-TESTS | PLANNED |
+
+
 
 ## E2E Testing Track
 | Track | Description | Artifacts | Status |
 |-------|-------------|-----------|--------|
-| E2E-TESTS | Comprehensive opaque-box test suite (Tiers 1-4) based on ORIGINAL_REQUEST.md requirements | `TEST_INFRA.md`, `TEST_READY.md`, unit/integration test suites | IN_PROGRESS |
+| E2E-TESTS | Comprehensive opaque-box test suite (Tiers 1-4) based on ORIGINAL_REQUEST.md requirements | `TEST_INFRA.md`, `TEST_READY.md`, unit/integration test suites | DONE |
+
 
 ## Interface Contracts
 ### Data ↔ Services

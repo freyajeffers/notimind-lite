@@ -10,10 +10,19 @@ import kotlinx.coroutines.flow.Flow
 interface NotificationDao {
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insert(entity: NotificationEntity): Long
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertNotification(notification: NotificationEntity): Long
 
     @Query("SELECT * FROM notifications ORDER BY postTime DESC")
     fun getAllNotifications(): Flow<List<NotificationEntity>>
+
+    @Query("SELECT * FROM notifications ORDER BY postTime DESC")
+    fun getAllNotificationsFlow(): Flow<List<NotificationEntity>>
+
+    @Query("SELECT * FROM notifications ORDER BY postTime DESC")
+    suspend fun getAllNotificationsList(): List<NotificationEntity>
 
     @Query("SELECT * FROM notifications ORDER BY postTime DESC")
     fun getAllNotificationsSortedByReceived(): Flow<List<NotificationEntity>>
@@ -28,6 +37,9 @@ interface NotificationDao {
     fun getDismissedNotificationsSortedByReceived(): Flow<List<NotificationEntity>>
 
     @Query("SELECT * FROM notifications WHERE isDismissed = 0 ORDER BY postTime DESC")
+    fun getActiveNotifications(): Flow<List<NotificationEntity>>
+
+    @Query("SELECT * FROM notifications WHERE isDismissed = 0 ORDER BY postTime DESC")
     fun getActiveNotificationsFlow(): Flow<List<NotificationEntity>>
 
     @Query("SELECT * FROM notifications WHERE isDismissed = 0 ORDER BY postTime DESC")
@@ -38,6 +50,10 @@ interface NotificationDao {
 
     @Query("SELECT * FROM notifications WHERE isDismissed = 1 AND (dismissReason IN (5, 8) OR dismissReason NOT IN (1, 2, 3) OR dismissReason IS NULL) ORDER BY COALESCE(dismissTime, postTime) DESC")
     fun getLostNotificationsFlow(): Flow<List<NotificationEntity>>
+
+    // New method to fetch notification by key for deduplication
+    @Query("SELECT * FROM notifications WHERE key = :key LIMIT 1")
+    suspend fun getNotificationByKey(key: String): NotificationEntity?
 
     @Query("SELECT * FROM notifications WHERE isPinned = 1 ORDER BY postTime DESC")
     fun getPinnedNotificationsFlow(): Flow<List<NotificationEntity>>
@@ -56,4 +72,10 @@ interface NotificationDao {
 
     @Query("SELECT COUNT(*) FROM notifications WHERE isDismissed = 1")
     fun getDismissedNotificationCountFlow(): Flow<Int>
+
+    @Query("SELECT COUNT(*) FROM notifications")
+    fun getTotalNotificationCountFlow(): Flow<Int>
+
+    @Query("DELETE FROM notifications")
+    suspend fun clearAll()
 }

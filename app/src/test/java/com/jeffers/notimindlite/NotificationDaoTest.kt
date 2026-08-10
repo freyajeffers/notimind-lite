@@ -141,4 +141,60 @@ class NotificationDaoTest {
         pinnedList = dao.getPinnedNotificationsFlow().first()
         assertEquals(0, pinnedList.size)
     }
+
+    @Test
+    fun sub2msQueryPerformanceSLA_50kRecords() = runBlocking {
+        val totalEntities = 50_000
+        val now = System.currentTimeMillis()
+
+        database.runInTransaction {
+            val db = database.openHelper.writableDatabase
+            db.beginTransaction()
+            try {
+                val stmt = db.compileStatement(
+                    "INSERT INTO notifications (key, packageName, appName, title, content, postTime, isDismissed, isPinned, isPersistent, priority, actionsCount, isOngoing, isClearable) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
+                )
+                for (i in 1..totalEntities) {
+                    stmt.clearBindings()
+                    stmt.bindString(1, "pkg.app_$i")
+                    stmt.bindString(2, "com.test.app${i % 100}")
+                    stmt.bindString(3, "App ${i % 100}")
+                    stmt.bindString(4, "Title $i")
+                    stmt.bindString(5, "Content $i")
+                    stmt.bindLong(6, now - i * 10)
+                    stmt.bindLong(7, if (i % 2 == 0) 1L else 0L)
+                    stmt.bindLong(8, if (i % 500 == 0) 1L else 0L)
+                    stmt.bindLong(9, 0L)
+                    stmt.bindLong(10, 0L)
+                    stmt.bindLong(11, 0L)
+                    stmt.bindLong(12, 0L)
+                    stmt.bindLong(13, 1L)
+                    stmt.executeInsert()
+                }
+                db.setTransactionSuccessful()
+            } finally {
+                db.endTransaction()
+            }
+        }
+
+        val totalCount = dao.getNotificationCount()
+        assertEquals(50_000, totalCount)
+
+        // Warm up query
+        dao.getActiveNotificationsList()
+
+        // Measure SLA for indexed query over active notifications
+        val iterations = 10
+        var totalNanos = 0L
+        for (i in 1..iterations) {
+            val start = System.nanoTime()
+            val active = dao.getActiveNotificationsList()
+            val duration = System.nanoTime() - start
+            totalNanos += duration
+            assertTrue(active.isNotEmpty())
+        }
+
+        val avgMs = (totalNanos.toDouble() / iterations) / 1_000_000.0
+        assertTrue("Average active query latency over 50k rows must be sub-2ms, was ${avgMs}ms", avgMs < 2.0)
+    }
 }

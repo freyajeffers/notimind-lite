@@ -56,7 +56,7 @@ fun LogHistoryScreen(dao: NotificationDao) {
 
     val activeList = if (sortMode == SortMode.DISMISSED) dismissedNotifsDismissed else dismissedNotifsReceived
     var searchQuery by remember { mutableStateOf("") }
-    val dateFormat = SimpleDateFormat("MMM dd, HH:mm:ss", Locale.getDefault())
+    val dateFormat = remember { SimpleDateFormat("MMM dd, HH:mm:ss", Locale.getDefault()) }
 
     val filteredNotifs = remember(activeList, searchQuery) {
         if (searchQuery.isBlank()) {

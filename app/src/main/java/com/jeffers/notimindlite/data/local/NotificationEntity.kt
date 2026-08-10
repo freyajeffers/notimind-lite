@@ -9,7 +9,8 @@ import androidx.room.Index
     tableName = "notifications",
     indices = [
         Index(value = ["isDismissed"]),
-        Index(value = ["isPinned"])
+        Index(value = ["isPinned"]),
+        Index(value = ["postTime"])
     ]
 )
 data class NotificationEntity(

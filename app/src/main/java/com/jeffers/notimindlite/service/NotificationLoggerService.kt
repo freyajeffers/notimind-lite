@@ -11,6 +11,7 @@ import com.jeffers.notimindlite.data.local.NotificationEntity
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import java.util.Locale
 import java.util.concurrent.ConcurrentHashMap
 
 /**
@@ -104,7 +105,7 @@ class NotificationLoggerService : NotificationListenerService() {
             val priority = notification.priority
 
             // ── System Notification Clutter Filter ──
-            // Filter out empty background system status/sync noise (e.g. system UI, USB debugging, background syncs)
+            // Filter out empty background system status/sync noise
             if (title.isBlank() && content.isBlank()) {
                 Log.d(TAG, "Skipping empty notification clutter from $packageName")
                 return
@@ -114,6 +115,23 @@ class NotificationLoggerService : NotificationListenerService() {
                 (title.contains("USB", ignoreCase = true) || title.contains("debugging", ignoreCase = true) || title.contains("charging", ignoreCase = true))
             ) {
                 Log.d(TAG, "Filter out low-value system notification clutter: $packageName - $title")
+                return
+            }
+
+            // Filter out "x more notifications" summary noise (e.g., "3 more notifications")
+            val moreNotifsRegex = Regex(".*\\d+\\s+more notification.*", RegexOption.IGNORE_CASE)
+            if (title.matches(moreNotifsRegex) || content.matches(moreNotifsRegex) || (subText != null && subText.matches(moreNotifsRegex))) {
+                Log.d(TAG, "Filter out 'x more notifications' summary clutter from $packageName: $title / $content")
+                return
+            }
+
+            // Filter out "Spam" summary / spam blocked notifications
+            if (title.equals("Spam", ignoreCase = true) ||
+                (subText != null && subText.equals("Spam", ignoreCase = true)) ||
+                category.equals("spam", ignoreCase = true) ||
+                (title.contains("spam", ignoreCase = true) && content.contains("blocked", ignoreCase = true))
+            ) {
+                Log.d(TAG, "Filter out Spam notification from $packageName: $title")
                 return
             }
 
@@ -136,11 +154,26 @@ class NotificationLoggerService : NotificationListenerService() {
             recentLogs[key] = now
             recentContents[key] = contentSignature
 
-            val appName = try {
-                val appInfo = packageManager.getApplicationInfo(packageName, 0)
+            val rawAppName = try {
+                val appInfo = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                    packageManager.getApplicationInfo(packageName, android.content.pm.PackageManager.MATCH_UNINSTALLED_PACKAGES)
+                } else {
+                    packageManager.getApplicationInfo(packageName, 0)
+                }
                 packageManager.getApplicationLabel(appInfo).toString()
             } catch (e: Exception) {
-                packageName
+                null
+            }
+
+            // Format clean user-facing app name if label is missing or is raw package name
+            val appName = if (!rawAppName.isNullOrBlank() && !rawAppName.contains(".")) {
+                rawAppName
+            } else {
+                val parts = packageName.split(".")
+                val lastPart = parts.lastOrNull { part ->
+                    part != "android" && part != "app" && part != "apps" && part != "mobile" && part != "lite"
+                } ?: parts.lastOrNull() ?: packageName
+                lastPart.replaceFirstChar { if (it.isLowerCase()) it.titlecase() else it.toString() }
             }
 
             val channelId = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
@@ -174,28 +207,37 @@ class NotificationLoggerService : NotificationListenerService() {
                 null
             }
 
-            val entity = NotificationEntity(
-                key = key,
-                packageName = packageName,
-                appName = appName,
-                title = title,
-                content = content,
-                postTime = postTime,
-                isDismissed = false,
-                isPersistent = isOngoing,
-                category = category,
-                channelId = channelId,
-                subText = subText,
-                bigText = bigText,
-                priority = priority,
-                groupKey = groupKey,
-                isOngoing = isOngoing,
-                isClearable = isClearable,
-                actionsCount = actionsCount,
-                intentUri = intentUri,
-                actionLabels = actionLabelsJson
-            )
-            scope.launch { dao.insertNotification(entity) }
+            // Determine deduplication key: prefer existing key, fallback to hash of packageName, title, and content
+            val dedupKey = if (key.isNotBlank()) key else "${packageName}_${title}_${content}".hashCode().toString()
+            scope.launch {
+                val existing = dao.getNotificationByKey(dedupKey)
+                if (existing != null) {
+                    Log.d(TAG, "Duplicate notification detected for key $dedupKey; skipping insertion.")
+                } else {
+                    val entity = NotificationEntity(
+                        key = dedupKey,
+                        packageName = packageName,
+                        appName = appName,
+                        title = title,
+                        content = content,
+                        postTime = postTime,
+                        isDismissed = false,
+                        isPersistent = isOngoing,
+                        category = category,
+                        channelId = channelId,
+                        subText = subText,
+                        bigText = bigText,
+                        priority = priority,
+                        groupKey = groupKey,
+                        isOngoing = isOngoing,
+                        isClearable = isClearable,
+                        actionsCount = actionsCount,
+                        intentUri = intentUri,
+                        actionLabels = actionLabelsJson
+                    )
+                    dao.insertNotification(entity)
+                }
+            }
         } catch (e: Exception) {
             Log.e(TAG, "Failed to log notification", e)
         }
@@ -215,6 +257,8 @@ class NotificationLoggerService : NotificationListenerService() {
         if (sbn.packageName == applicationContext.packageName) return
         Log.d(TAG, "Notification removed: ${sbn.key}, reason: $reason. Marking as isDismissed = 1")
         com.jeffers.notimindlite.util.NotificationLauncher.unregisterPendingIntent(sbn.key)
+        recentLogs.remove(sbn.key)
+        recentContents.remove(sbn.key)
         val dismissTime = System.currentTimeMillis()
         scope.launch {
             if (reason != null) {

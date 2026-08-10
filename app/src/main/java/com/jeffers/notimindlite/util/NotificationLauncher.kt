@@ -31,6 +31,15 @@ object NotificationLauncher {
         }
     }
 
+    fun getPendingIntentCacheSize(): Int = pendingIntentCache.size
+
+    fun getActionIntentCacheSize(): Int = actionIntentCache.size
+
+    fun clearCache() {
+        pendingIntentCache.clear()
+        actionIntentCache.clear()
+    }
+
     fun triggerAction(context: Context, notifKey: String, actionIndex: Int): Boolean {
         val cacheKey = "${notifKey}_action_$actionIndex"
         val actionIntent = actionIntentCache[cacheKey]

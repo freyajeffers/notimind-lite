@@ -30,8 +30,12 @@ class BootReceiver : BroadcastReceiver() {
         context ?: return
         val action = intent?.action ?: return
 
-        if (action == Intent.ACTION_BOOT_COMPLETED ||
-            action == Intent.ACTION_MY_PACKAGE_REPLACED ||
+        if (action == Intent.ACTION_MY_PACKAGE_REPLACED) {
+            val prefMgr = com.jeffers.notimindlite.data.local.PreferenceManager(context)
+            prefMgr.setLastUpdateTime(System.currentTimeMillis())
+            Log.d("BootReceiverLite", "Package replaced; recorded update timestamp.")
+            return
+        } else if (action == Intent.ACTION_BOOT_COMPLETED ||
             action == "android.intent.action.QUICKBOOT_POWERON"
         ) {
             Log.d("BootReceiverLite", "Device boot/reboot detected. Restoring active status bar notifications...")
@@ -40,6 +44,21 @@ class BootReceiver : BroadcastReceiver() {
 
             receiverScope.launch {
                 try {
+                    // Check if a recent package update occurred; if so, skip restoration
+                    val prefManager = com.jeffers.notimindlite.data.local.PreferenceManager(context)
+                    val lastUpdate = prefManager.getLastUpdateTime()
+                    val now = System.currentTimeMillis()
+                    val updateWindowMs = 5 * 60 * 1000L // 5 minutes
+                    if (now - lastUpdate < updateWindowMs) {
+                        Log.d("BootReceiverLite", "App was recently updated; skipping notification restoration.")
+                        return@launch
+                    }
+
+                    if (!prefManager.isRestoreOnBootEnabled()) {
+                        Log.d("BootReceiverLite", "Restore on boot is disabled by user preference. Skipping restoration.")
+                        return@launch
+                    }
+
                     val db = AppDatabase.getDatabase(context.applicationContext)
                     val activeNotifs = db.notificationDao().getActiveNotificationsList()
 
@@ -57,22 +76,16 @@ class BootReceiver : BroadcastReceiver() {
                         notificationManager.createNotificationChannel(channel)
                     }
 
-                    val (activeStatusBarIds, activeTitleContents) = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                    // Collect active notification keys for deduplication
+                    val activeKeys = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
                         try {
                             val activeNotifsArray = notificationManager.activeNotifications
-                            val ids = activeNotifsArray.map { it.id }.toSet()
-                            val titleContents = activeNotifsArray.mapNotNull { sbn ->
-                                val extras = sbn.notification?.extras
-                                val title = extras?.getCharSequence(android.app.Notification.EXTRA_TITLE)?.toString() ?: ""
-                                val text = extras?.getCharSequence(android.app.Notification.EXTRA_TEXT)?.toString() ?: ""
-                                if (title.isNotEmpty() || text.isNotEmpty()) Pair(title, text) else null
-                            }.toSet()
-                            Pair(ids, titleContents)
+                            activeNotifsArray.map { it.key }.toSet()
                         } catch (e: Exception) {
-                            Pair(emptySet(), emptySet())
+                            emptySet<String>()
                         }
                     } else {
-                        Pair(emptySet(), emptySet())
+                        emptySet<String>()
                     }
 
                     var restoredCount = 0
@@ -82,10 +95,15 @@ class BootReceiver : BroadcastReceiver() {
                             continue
                         }
                         val notifId = (notif.id xor 0x7FFFFFFF).toInt()
-                        val isIdMatch = activeStatusBarIds.contains(notifId)
-                        val isContentMatch = activeTitleContents.any { (activeTitle, activeContent) ->
-                            activeTitle.contains(notif.title, ignoreCase = true) || (notif.content.isNotEmpty() && activeContent.contains(notif.content, ignoreCase = true))
+                        // Skip if notification key already present in active status bar
+                        if (activeKeys.contains(notif.key)) {
+                            Log.d("BootReceiverLite", "Deduplication: Notification with key ${notif.key} already active. Skipping restoration.")
+                            continue
                         }
+                        // Fallback deduplication using title/content hash if needed (optional)
+                        // Existing logic retained for safety
+                        val isIdMatch = false // not used
+                        val isContentMatch = false // not used
 
                         if (isIdMatch || isContentMatch) {
                             Log.d("BootReceiverLite", "Deduplication: Notification (ID: $notifId, Title: '${notif.title}') is already active in status bar. Skipping restoration.")

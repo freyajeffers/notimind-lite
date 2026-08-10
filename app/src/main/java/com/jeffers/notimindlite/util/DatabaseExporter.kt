@@ -53,16 +53,56 @@ object DatabaseExporter {
         sb.append("ID,Package,AppName,Title,Content,PostTime,IsDismissed,DismissReason,IsPinned\n")
         val dateFormat = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault())
         for (n in notifications) {
-            val escapedTitle = "\"${n.title.replace("\"", "\"\"")}\""
-            val escapedContent = "\"${n.content.replace("\"", "\"\"")}\""
+            val escapedAppName = sanitizeCsvField(n.appName)
+            val escapedTitle = sanitizeCsvField(n.title)
+            val escapedContent = sanitizeCsvField(n.content)
             val postTimeStr = dateFormat.format(Date(n.postTime))
-            sb.append("${n.id},${n.packageName},\"${n.appName}\",$escapedTitle,$escapedContent,$postTimeStr,${n.isDismissed},${n.dismissReason ?: ""},${n.isPinned}\n")
+            sb.append("${n.id},${n.packageName},$escapedAppName,$escapedTitle,$escapedContent,$postTimeStr,${n.isDismissed},${n.dismissReason ?: ""},${n.isPinned}\n")
         }
         return sb.toString()
     }
 
+    fun sanitizeCsvField(value: String?): String {
+        if (value == null) return "\"\""
+        var sanitized = value.replace("\"", "\"\"")
+        val trimmedSpace = sanitized.trimStart(' ')
+        if (trimmedSpace.startsWith("=") || trimmedSpace.startsWith("+") ||
+            trimmedSpace.startsWith("-") || trimmedSpace.startsWith("@") ||
+            trimmedSpace.startsWith("\t") || trimmedSpace.startsWith("\r")
+        ) {
+            sanitized = "'$sanitized"
+        }
+        return "\"$sanitized\""
+    }
+
+    fun getExportFileUri(context: Context, file: File): Uri {
+        return FileProvider.getUriForFile(
+            context,
+            "${context.packageName}.fileprovider",
+            file
+        )
+    }
+
+    fun cleanupExportFiles(context: Context, maxAgeMillis: Long = 3600_000L) {
+        try {
+            val cacheDir = File(context.cacheDir, "exports")
+            if (cacheDir.exists()) {
+                val now = System.currentTimeMillis()
+                cacheDir.listFiles()?.forEach { file ->
+                    if (now - file.lastModified() > maxAgeMillis) {
+                        file.delete()
+                    }
+                }
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "Failed to clean up temporary export files", e)
+        }
+    }
+
     fun shareExportFile(context: Context, notifications: List<NotificationEntity>, isJson: Boolean = true) {
         try {
+            cleanupExportFiles(context)
+
             val fileContent = if (isJson) exportToJsonString(notifications) else exportToCsvString(notifications)
             val extension = if (isJson) "json" else "csv"
             val fileName = "notimind_export_${System.currentTimeMillis()}.$extension"
@@ -75,11 +115,7 @@ object DatabaseExporter {
                 writer.write(fileContent)
             }
 
-            val uri: Uri = FileProvider.getUriForFile(
-                context,
-                "${context.packageName}.fileprovider",
-                file
-            )
+            val uri: Uri = getExportFileUri(context, file)
 
             val shareIntent = Intent(Intent.ACTION_SEND).apply {
                 type = if (isJson) "application/json" else "text/csv"

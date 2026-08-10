@@ -117,7 +117,7 @@ fun ActiveNotificationsScreen(dao: NotificationDao) {
     val activeNotifs by dao.getActiveNotificationsFlow().collectAsState(initial = emptyList())
     val recentlyDismissed by dao.getRecentlyDismissedFlow().collectAsState(initial = emptyList())
     val lostNotifs by dao.getLostNotificationsFlow().collectAsState(initial = emptyList())
-    val dateFormat = SimpleDateFormat("MMM dd, HH:mm:ss", Locale.getDefault())
+    val dateFormat = remember { SimpleDateFormat("MMM dd, HH:mm:ss", Locale.getDefault()) }
 
     // Track dismissing items for swipe animation
     var dismissingKeys by remember { mutableStateOf(setOf<String>()) }
