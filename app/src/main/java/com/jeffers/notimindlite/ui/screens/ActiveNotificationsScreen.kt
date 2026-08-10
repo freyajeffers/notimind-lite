@@ -4,7 +4,12 @@ import android.content.Context
 import android.content.Intent
 import android.provider.Settings
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.background
@@ -16,6 +21,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Bookmark
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.ExpandLess
 import androidx.compose.material.icons.filled.ExpandMore
 import androidx.compose.material.icons.filled.PushPin
@@ -25,6 +31,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
@@ -209,7 +216,7 @@ fun ActiveNotificationsScreen(dao: NotificationDao) {
                     NotificationSection.LOST -> lostNotifs
                 }
 
-                // Section Header Card
+                // Section Header Card with expansion arrow rotation micro-animation
                 item(key = "header_${section.keyName}") {
                     Card(
                         modifier = Modifier
@@ -271,9 +278,10 @@ fun ActiveNotificationsScreen(dao: NotificationDao) {
 
                             AnimatedVisibility(
                                 visible = !isDismissing,
-                                exit = shrinkVertically(animationSpec = tween(300)) + fadeOut(animationSpec = tween(200))
+                                enter = fadeIn() + expandVertically(animationSpec = spring(stiffness = 300f)),
+                                exit = shrinkVertically(animationSpec = tween(250)) + fadeOut(animationSpec = tween(200))
                             ) {
-                                UnifiedNotificationCard(
+                                SystemSwipeToDismissCard(
                                     item = item,
                                     dateFormat = dateFormat,
                                     section = section,
@@ -286,8 +294,8 @@ fun ActiveNotificationsScreen(dao: NotificationDao) {
                                         dismissingKeys = dismissingKeys + item.key
                                         scope.launch {
                                             NotificationLoggerService.dismissNotification(item.key)
-                                            delay(350)
-                                            dao.markDismissedWithReason(item.key, 4)
+                                            delay(300)
+                                            dao.markDismissedWithReason(item.key, 1) // User Swiped
                                             dismissingKeys = dismissingKeys - item.key
                                         }
                                     }
@@ -298,6 +306,83 @@ fun ActiveNotificationsScreen(dao: NotificationDao) {
                 }
             }
         }
+    }
+}
+
+/**
+ * Container supporting interactive swipe-to-dismiss gesture for active clearable notifications
+ */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun SystemSwipeToDismissCard(
+    item: NotificationEntity,
+    dateFormat: SimpleDateFormat,
+    section: NotificationSection,
+    dao: NotificationDao,
+    isExpanded: Boolean,
+    onToggleExpand: () -> Unit,
+    onDismiss: () -> Unit
+) {
+    if (section == NotificationSection.ACTIVE && !item.isDismissed && item.isClearable) {
+        val dismissState = rememberSwipeToDismissBoxState(
+            confirmValueChange = { dismissValue ->
+                if (dismissValue != SwipeToDismissBoxValue.Settled) {
+                    onDismiss()
+                    true
+                } else {
+                    false
+                }
+            }
+        )
+
+        SwipeToDismissBox(
+            state = dismissState,
+            backgroundContent = {
+                val color by animateColorAsState(
+                    when (dismissState.targetValue) {
+                        SwipeToDismissBoxValue.Settled -> Color.Transparent
+                        else -> MaterialTheme.colorScheme.errorContainer
+                    },
+                    label = "swipe_bg_color"
+                )
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .clip(MaterialTheme.shapes.medium)
+                        .background(color)
+                        .padding(horizontal = 20.dp),
+                    contentAlignment = Alignment.CenterEnd
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Delete,
+                        contentDescription = "Swipe to Dismiss",
+                        tint = MaterialTheme.colorScheme.onErrorContainer
+                    )
+                }
+            },
+            enableDismissFromStartToEnd = false,
+            enableDismissFromEndToStart = true
+        ) {
+            UnifiedNotificationCard(
+                item = item,
+                dateFormat = dateFormat,
+                section = section,
+                dao = dao,
+                isExpanded = isExpanded,
+                onToggleExpand = onToggleExpand,
+                onDismiss = onDismiss
+            )
+        }
+    } else {
+        UnifiedNotificationCard(
+            item = item,
+            dateFormat = dateFormat,
+            section = section,
+            dao = dao,
+            isExpanded = isExpanded,
+            onToggleExpand = onToggleExpand,
+            onDismiss = onDismiss
+        )
     }
 }
 
@@ -313,6 +398,9 @@ fun UnifiedNotificationCard(
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
+
+    // Micro-animation scale for pin bookmark toggle
+    val pinScale by animateFloatAsState(if (item.isPinned) 1.2f else 1.0f, animationSpec = spring(stiffness = 400f), label = "pin_scale")
 
     Card(
         modifier = Modifier
@@ -344,7 +432,9 @@ fun UnifiedNotificationCard(
                                 dao.updatePinnedStatus(item.key, !item.isPinned)
                             }
                         },
-                        modifier = Modifier.size(24.dp)
+                        modifier = Modifier
+                            .size(24.dp)
+                            .scale(pinScale)
                     ) {
                         Icon(
                             imageVector = if (item.isPinned) Icons.Default.Bookmark else Icons.Outlined.BookmarkBorder,
@@ -435,8 +525,12 @@ fun UnifiedNotificationCard(
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
 
-            // Enhanced full metadata details section
-            AnimatedVisibility(visible = isExpanded) {
+            // Enhanced full metadata details section with spring expand micro-animation
+            AnimatedVisibility(
+                visible = isExpanded,
+                enter = fadeIn() + expandVertically(animationSpec = spring(stiffness = 300f)),
+                exit = fadeOut() + shrinkVertically(animationSpec = spring(stiffness = 300f))
+            ) {
                 NotificationDetailPanel(item = item, dateFormat = dateFormat)
             }
 
@@ -622,18 +716,5 @@ fun DetailChip(label: String, value: String, maxLines: Int = 1) {
             overflow = TextOverflow.Ellipsis,
             modifier = Modifier.weight(1f)
         )
-    }
-}
-
-@Composable
-fun DetailRow(label: String, value: String) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = 2.dp),
-        horizontalArrangement = Arrangement.SpaceBetween
-    ) {
-        Text(text = "$label:", fontSize = 11.sp, fontWeight = FontWeight.Medium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-        Text(text = value, fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurface, modifier = Modifier.padding(start = 8.dp))
     }
 }

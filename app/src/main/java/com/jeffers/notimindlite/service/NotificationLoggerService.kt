@@ -24,8 +24,9 @@ class NotificationLoggerService : NotificationListenerService() {
     private val scope = CoroutineScope(Dispatchers.IO)
 
     companion object {
-        private const val DEBOUNCE_MS = 5000L
+        private const val DEBOUNCE_MS = 30000L // 30-second dynamic debounce
         private val recentLogs = ConcurrentHashMap<String, Long>()
+        private val recentContents = ConcurrentHashMap<String, String>()
         private var instance: NotificationLoggerService? = null
 
         fun dismissNotification(key: String) {
@@ -88,17 +89,9 @@ class NotificationLoggerService : NotificationListenerService() {
         if (sbn.packageName == applicationContext.packageName) return
         try {
             val notification = sbn.notification ?: return
-            val key = sbn.key
-            com.jeffers.notimindlite.util.NotificationLauncher.registerPendingIntent(key, notification.contentIntent)
-            val extras = notification.extras
             val packageName = sbn.packageName
-            val appName = try {
-                val appInfo = packageManager.getApplicationInfo(packageName, 0)
-                packageManager.getApplicationLabel(appInfo).toString()
-            } catch (e: Exception) {
-                packageName
-            }
 
+            val extras = notification.extras
             val title = extras?.getCharSequence(android.app.Notification.EXTRA_TITLE)?.toString()
                 ?: extras?.getString("android.title")
                 ?: ""
@@ -107,27 +100,54 @@ class NotificationLoggerService : NotificationListenerService() {
                 ?: ""
             val subText = extras?.getCharSequence(android.app.Notification.EXTRA_SUB_TEXT)?.toString()
             val bigText = extras?.getCharSequence(android.app.Notification.EXTRA_BIG_TEXT)?.toString()
+            val category = notification.category
+            val priority = notification.priority
 
-            // 5-second debouncing check
-            val debounceContentKey = "$packageName|$title|$content"
-            val now = System.currentTimeMillis()
-            val lastKeyTime = recentLogs[key] ?: 0L
-            val lastContentTime = recentLogs[debounceContentKey] ?: 0L
-
-            if ((now - lastKeyTime < DEBOUNCE_MS) || (now - lastContentTime < DEBOUNCE_MS)) {
-                Log.d(TAG, "Debouncing notification update for $key / $debounceContentKey within 5s window. Skipping log.")
+            // ── System Notification Clutter Filter ──
+            // Filter out empty background system status/sync noise (e.g. system UI, USB debugging, background syncs)
+            if (title.isBlank() && content.isBlank()) {
+                Log.d(TAG, "Skipping empty notification clutter from $packageName")
                 return
             }
-            recentLogs[key] = now
-            recentLogs[debounceContentKey] = now
+            if ((packageName == "android" || packageName == "com.android.systemui") &&
+                (priority <= -2 || category == "service" || category == "sys") &&
+                (title.contains("USB", ignoreCase = true) || title.contains("debugging", ignoreCase = true) || title.contains("charging", ignoreCase = true))
+            ) {
+                Log.d(TAG, "Filter out low-value system notification clutter: $packageName - $title")
+                return
+            }
 
-            val category = notification.category
+            val key = sbn.key
+            com.jeffers.notimindlite.util.NotificationLauncher.registerPendingIntent(key, notification.contentIntent)
+
+            // ── Smart & Dynamic 30s Debounce ──
+            val now = System.currentTimeMillis()
+            val contentSignature = "$title|$content"
+            val lastLogTime = recentLogs[key] ?: 0L
+            val lastContent = recentContents[key]
+
+            // If identical title & content received within 30s window, debounce it
+            if (lastContent == contentSignature && (now - lastLogTime < DEBOUNCE_MS)) {
+                Log.d(TAG, "Smart Debounce: Identical notification update for $key within 30s window. Skipping log.")
+                return
+            }
+
+            // Update debounce cache
+            recentLogs[key] = now
+            recentContents[key] = contentSignature
+
+            val appName = try {
+                val appInfo = packageManager.getApplicationInfo(packageName, 0)
+                packageManager.getApplicationLabel(appInfo).toString()
+            } catch (e: Exception) {
+                packageName
+            }
+
             val channelId = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                 notification.channelId
             } else {
                 null
             }
-            val priority = notification.priority
             val groupKey = sbn.groupKey
             val isOngoing = sbn.isOngoing
             val isClearable = sbn.isClearable
@@ -194,6 +214,7 @@ class NotificationLoggerService : NotificationListenerService() {
     private fun handleNotificationRemoved(sbn: StatusBarNotification, reason: Int?) {
         if (sbn.packageName == applicationContext.packageName) return
         Log.d(TAG, "Notification removed: ${sbn.key}, reason: $reason. Marking as isDismissed = 1")
+        com.jeffers.notimindlite.util.NotificationLauncher.unregisterPendingIntent(sbn.key)
         val dismissTime = System.currentTimeMillis()
         scope.launch {
             if (reason != null) {

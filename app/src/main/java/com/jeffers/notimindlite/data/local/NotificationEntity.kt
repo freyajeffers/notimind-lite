@@ -3,7 +3,15 @@ package com.jeffers.notimindlite.data.local
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 
-@Entity(tableName = "notifications")
+import androidx.room.Index
+
+@Entity(
+    tableName = "notifications",
+    indices = [
+        Index(value = ["isDismissed"]),
+        Index(value = ["isPinned"])
+    ]
+)
 data class NotificationEntity(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
     val key: String,

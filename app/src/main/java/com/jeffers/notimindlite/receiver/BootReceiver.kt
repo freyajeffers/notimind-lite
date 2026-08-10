@@ -57,14 +57,22 @@ class BootReceiver : BroadcastReceiver() {
                         notificationManager.createNotificationChannel(channel)
                     }
 
-                    val activeStatusBarIds = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                    val (activeStatusBarIds, activeTitleContents) = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
                         try {
-                            notificationManager.activeNotifications.map { it.id }.toSet()
+                            val activeNotifsArray = notificationManager.activeNotifications
+                            val ids = activeNotifsArray.map { it.id }.toSet()
+                            val titleContents = activeNotifsArray.mapNotNull { sbn ->
+                                val extras = sbn.notification?.extras
+                                val title = extras?.getCharSequence(android.app.Notification.EXTRA_TITLE)?.toString() ?: ""
+                                val text = extras?.getCharSequence(android.app.Notification.EXTRA_TEXT)?.toString() ?: ""
+                                if (title.isNotEmpty() || text.isNotEmpty()) Pair(title, text) else null
+                            }.toSet()
+                            Pair(ids, titleContents)
                         } catch (e: Exception) {
-                            emptySet()
+                            Pair(emptySet(), emptySet())
                         }
                     } else {
-                        emptySet()
+                        Pair(emptySet(), emptySet())
                     }
 
                     var restoredCount = 0
@@ -74,8 +82,13 @@ class BootReceiver : BroadcastReceiver() {
                             continue
                         }
                         val notifId = (notif.id xor 0x7FFFFFFF).toInt()
-                        if (activeStatusBarIds.contains(notifId)) {
-                            Log.d("BootReceiverLite", "Deduplication: Notification $notifId is already active in status bar. Skipping restoration.")
+                        val isIdMatch = activeStatusBarIds.contains(notifId)
+                        val isContentMatch = activeTitleContents.any { (activeTitle, activeContent) ->
+                            activeTitle.contains(notif.title, ignoreCase = true) || (notif.content.isNotEmpty() && activeContent.contains(notif.content, ignoreCase = true))
+                        }
+
+                        if (isIdMatch || isContentMatch) {
+                            Log.d("BootReceiverLite", "Deduplication: Notification (ID: $notifId, Title: '${notif.title}') is already active in status bar. Skipping restoration.")
                             continue
                         }
 

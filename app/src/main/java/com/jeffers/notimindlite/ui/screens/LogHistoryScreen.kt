@@ -1,6 +1,10 @@
 package com.jeffers.notimindlite.ui.screens
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.spring
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -8,6 +12,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Sort
 import androidx.compose.material.icons.filled.Bookmark
+import androidx.compose.material.icons.filled.Download
 import androidx.compose.material.icons.filled.ExpandLess
 import androidx.compose.material.icons.filled.ExpandMore
 import androidx.compose.material.icons.filled.History
@@ -23,7 +28,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.jeffers.notimindlite.data.local.NotificationDao
 import com.jeffers.notimindlite.data.local.NotificationEntity
+import com.jeffers.notimindlite.util.DatabaseExporter
 import com.jeffers.notimindlite.util.NotificationLauncher
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.*
@@ -36,8 +43,11 @@ enum class SortMode(val label: String) {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun LogHistoryScreen(dao: NotificationDao) {
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
     var sortMode by remember { mutableStateOf(SortMode.DISMISSED) }
-    var showMenu by remember { mutableStateOf(false) }
+    var showSortMenu by remember { mutableStateOf(false) }
+    var showExportMenu by remember { mutableStateOf(false) }
     var expandedCards by remember { mutableStateOf(setOf<String>()) }
 
     val dismissedNotifsDismissed by dao.getDismissedNotificationsSortedByDismissed().collectAsState(initial = emptyList())
@@ -66,26 +76,59 @@ fun LogHistoryScreen(dao: NotificationDao) {
             TopAppBar(
                 title = { Text("Log History ($totalCount)", fontWeight = FontWeight.Bold) },
                 actions = {
+                    // Export Database Button
                     Box {
-                        IconButton(onClick = { showMenu = true }) {
+                        IconButton(onClick = { showExportMenu = true }) {
+                            Icon(Icons.Default.Download, contentDescription = "Export Database Logs")
+                        }
+                        DropdownMenu(
+                            expanded = showExportMenu,
+                            onDismissRequest = { showExportMenu = false }
+                        ) {
+                            DropdownMenuItem(
+                                text = { Text("Export Logs to JSON") },
+                                onClick = {
+                                    showExportMenu = false
+                                    scope.launch {
+                                        val allLogs = dao.getAllNotifications().first()
+                                        DatabaseExporter.shareExportFile(context, allLogs, isJson = true)
+                                    }
+                                }
+                            )
+                            DropdownMenuItem(
+                                text = { Text("Export Logs to CSV") },
+                                onClick = {
+                                    showExportMenu = false
+                                    scope.launch {
+                                        val allLogs = dao.getAllNotifications().first()
+                                        DatabaseExporter.shareExportFile(context, allLogs, isJson = false)
+                                    }
+                                }
+                            )
+                        }
+                    }
+
+                    // Sort Order Button
+                    Box {
+                        IconButton(onClick = { showSortMenu = true }) {
                             Icon(Icons.AutoMirrored.Filled.Sort, contentDescription = "Sort Log History")
                         }
                         DropdownMenu(
-                            expanded = showMenu,
-                            onDismissRequest = { showMenu = false }
+                            expanded = showSortMenu,
+                            onDismissRequest = { showSortMenu = false }
                         ) {
                             DropdownMenuItem(
                                 text = { Text("Sort by Time Dismissed ${if (sortMode == SortMode.DISMISSED) "✓" else ""}") },
                                 onClick = {
                                     sortMode = SortMode.DISMISSED
-                                    showMenu = false
+                                    showSortMenu = false
                                 }
                             )
                             DropdownMenuItem(
                                 text = { Text("Sort by Time Received ${if (sortMode == SortMode.RECEIVED) "✓" else ""}") },
                                 onClick = {
                                     sortMode = SortMode.RECEIVED
-                                    showMenu = false
+                                    showSortMenu = false
                                 }
                             )
                         }
@@ -255,8 +298,12 @@ fun LogHistoryCard(
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
 
-            // Enhanced detail panel
-            AnimatedVisibility(visible = isExpanded) {
+            // Enhanced detail panel with spring micro-animation
+            AnimatedVisibility(
+                visible = isExpanded,
+                enter = fadeIn() + androidx.compose.animation.expandVertically(animationSpec = spring(stiffness = 300f)),
+                exit = fadeOut() + shrinkVertically(animationSpec = spring(stiffness = 300f))
+            ) {
                 NotificationDetailPanel(item = item, dateFormat = dateFormat)
             }
 

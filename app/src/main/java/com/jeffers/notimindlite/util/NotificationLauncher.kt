@@ -25,6 +25,10 @@ object NotificationLauncher {
 
     fun unregisterPendingIntent(key: String) {
         pendingIntentCache.remove(key)
+        val actionKeys = actionIntentCache.keys.filter { it.startsWith("${key}_action_") }
+        for (aKey in actionKeys) {
+            actionIntentCache.remove(aKey)
+        }
     }
 
     fun triggerAction(context: Context, notifKey: String, actionIndex: Int): Boolean {
