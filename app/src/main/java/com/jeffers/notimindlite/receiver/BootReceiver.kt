@@ -94,38 +94,9 @@ class BootReceiver : BroadcastReceiver() {
                             Log.d("BootReceiverLite", "Skipping ongoing notification from boot restoration: ${notif.title}")
                             continue
                         }
-                        val notifId = (notif.id xor 0x7FFFFFFF).toInt()
-                        val rawId = notif.id.toInt()
-
-                        // Skip if notification key already present in active status bar
-                        if (activeKeys.contains(notif.key)) {
-                            Log.d("BootReceiverLite", "Deduplication: Notification with key ${notif.key} already active. Skipping restoration.")
-                            continue
-                        }
-
-                        // Dynamic ID matching against active status bar notifications
-                        val isIdMatch = activeStatusBarNotifs.any { sbn ->
-                            sbn.id == notifId || sbn.id == rawId
-                        }
-
-                        // Dynamic Title/Content matching against active status bar notifications
-                        val isContentMatch = activeStatusBarNotifs.any { sbn ->
-                            val sbnTitle = sbn.notification?.extras?.getCharSequence(android.app.Notification.EXTRA_TITLE)?.toString()
-                            val sbnText = sbn.notification?.extras?.getCharSequence(android.app.Notification.EXTRA_TEXT)?.toString()
-
-                            val titleMatches = sbnTitle != null && (
-                                sbnTitle == notif.title ||
-                                sbnTitle == "${notif.appName}: ${notif.title}"
-                            )
-                            val textMatches = sbnText != null && sbnText == notif.content
-
-                            titleMatches && textMatches
-                        }
-
-                        if (isIdMatch || isContentMatch) {
-                            Log.d("BootReceiverLite", "Deduplication: Notification (ID: $notifId, Title: '${notif.title}') is already active in status bar. Skipping restoration.")
-                            continue
-                        }
+                        
+                        // Use unique notification ID for each restored notification to prevent overwriting
+                        val notifId = (notif.id.hashCode() and 0x7FFFFFFF) + 1000
 
                         val builder = NotificationCompat.Builder(context, CHANNEL_ID_RESTORED)
                             .setSmallIcon(android.R.drawable.stat_notify_chat)
