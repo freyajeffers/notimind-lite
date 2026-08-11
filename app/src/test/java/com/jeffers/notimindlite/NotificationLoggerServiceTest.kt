@@ -19,7 +19,7 @@ import org.robolectric.annotation.Config
 
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [33])
-class NotificationLoggerServiceTest {
+class NotificationLoggerServiceTest : BaseRobolectricTest() {
 
     @Test
     fun service_createsSuccessfullyWithoutNpe() {
