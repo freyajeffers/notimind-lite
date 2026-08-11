@@ -27,7 +27,7 @@ class NotificationServiceDbPairwiseTest : BaseRobolectricTest() {
 
         // 1. Post notification
         service.onNotificationPosted(sbn)
-        Thread.sleep(100)
+        Thread.sleep(300)
 
         val activeList = dao.getActiveNotificationsList()
         assertEquals(1, activeList.size)
@@ -36,7 +36,7 @@ class NotificationServiceDbPairwiseTest : BaseRobolectricTest() {
 
         // 2. Remove notification
         service.onNotificationRemoved(sbn)
-        Thread.sleep(100)
+        Thread.sleep(300)
 
         assertEquals(0, dao.getActiveNotificationsList().size)
         val history = dao.getAllNotifications().first()

@@ -76,17 +76,17 @@ class BootReceiver : BroadcastReceiver() {
                         notificationManager.createNotificationChannel(channel)
                     }
 
-                    // Collect active notification keys for deduplication
-                    val activeKeys = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                    // Collect active status bar notifications for deduplication
+                    val activeStatusBarNotifs = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
                         try {
-                            val activeNotifsArray = notificationManager.activeNotifications
-                            activeNotifsArray.map { it.key }.toSet()
+                            notificationManager.activeNotifications.toList()
                         } catch (e: Exception) {
-                            emptySet<String>()
+                            emptyList()
                         }
                     } else {
-                        emptySet<String>()
+                        emptyList()
                     }
+                    val activeKeys = activeStatusBarNotifs.map { it.key }.toSet()
 
                     var restoredCount = 0
                     for (notif in activeNotifs) {
@@ -95,15 +95,32 @@ class BootReceiver : BroadcastReceiver() {
                             continue
                         }
                         val notifId = (notif.id xor 0x7FFFFFFF).toInt()
+                        val rawId = notif.id.toInt()
+
                         // Skip if notification key already present in active status bar
                         if (activeKeys.contains(notif.key)) {
                             Log.d("BootReceiverLite", "Deduplication: Notification with key ${notif.key} already active. Skipping restoration.")
                             continue
                         }
-                        // Fallback deduplication using title/content hash if needed (optional)
-                        // Existing logic retained for safety
-                        val isIdMatch = false // not used
-                        val isContentMatch = false // not used
+
+                        // Dynamic ID matching against active status bar notifications
+                        val isIdMatch = activeStatusBarNotifs.any { sbn ->
+                            sbn.id == notifId || sbn.id == rawId
+                        }
+
+                        // Dynamic Title/Content matching against active status bar notifications
+                        val isContentMatch = activeStatusBarNotifs.any { sbn ->
+                            val sbnTitle = sbn.notification?.extras?.getCharSequence(android.app.Notification.EXTRA_TITLE)?.toString()
+                            val sbnText = sbn.notification?.extras?.getCharSequence(android.app.Notification.EXTRA_TEXT)?.toString()
+
+                            val titleMatches = sbnTitle != null && (
+                                sbnTitle == notif.title ||
+                                sbnTitle == "${notif.appName}: ${notif.title}"
+                            )
+                            val textMatches = sbnText != null && sbnText == notif.content
+
+                            titleMatches && textMatches
+                        }
 
                         if (isIdMatch || isContentMatch) {
                             Log.d("BootReceiverLite", "Deduplication: Notification (ID: $notifId, Title: '${notif.title}') is already active in status bar. Skipping restoration.")

@@ -10,6 +10,7 @@ import kotlinx.coroutines.test.runTest
 import org.junit.Assert.*
 import org.junit.Test
 import kotlin.random.Random
+import kotlin.system.measureNanoTime
 
 class PersistenceBoundaryTest : BaseRobolectricTest() {
 
@@ -175,5 +176,79 @@ class PersistenceBoundaryTest : BaseRobolectricTest() {
 
         val pinnedCount = dao.getPinnedNotificationsFlow().first().size
         assertEquals(10, pinnedCount)
+    }
+
+    @Test
+    fun tc_R2_T2_008_fiftyThousandEntityQueryPerformanceBenchmark() = runTest {
+        val count = 50_000
+
+        // Generate 50,000 entity dataset
+        val entities = (1..count).map { i ->
+            NotificationEntity(
+                id = i.toLong(),
+                key = "perf_key_$i",
+                packageName = "com.perf.app_${i % 20}",
+                appName = "Perf App ${i % 20}",
+                title = "Benchmark Notification $i",
+                content = "High-load dataset benchmark payload $i",
+                postTime = 1000000L + i,
+                isDismissed = i % 2 == 0,
+                isPinned = i % 500 == 0
+            )
+        }
+
+        // Fast batch insertion in single SQLite transaction
+        database.runInTransaction {
+            val db = database.openHelper.writableDatabase
+            val stmt = db.compileStatement(
+                "INSERT INTO notifications (id, key, packageName, appName, title, content, postTime, isDismissed, isPinned, isPersistent, priority, actionsCount, isOngoing, isClearable) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
+            )
+            for (i in 1..count) {
+                stmt.clearBindings()
+                stmt.bindLong(1, i.toLong())
+                stmt.bindString(2, "perf_key_$i")
+                stmt.bindString(3, "com.perf.app_${i % 20}")
+                stmt.bindString(4, "Perf App ${i % 20}")
+                stmt.bindString(5, "Benchmark Notification $i")
+                stmt.bindString(6, "High-load dataset benchmark payload $i")
+                stmt.bindLong(7, 1000000L + i)
+                stmt.bindLong(8, if (i % 2 == 0) 1L else 0L)
+                stmt.bindLong(9, if (i % 500 == 0) 1L else 0L)
+                stmt.bindLong(10, 0L)
+                stmt.bindLong(11, 0L)
+                stmt.bindLong(12, 0L)
+                stmt.bindLong(13, 0L)
+                stmt.bindLong(14, 1L)
+                stmt.executeInsert()
+            }
+        }
+
+        assertEquals(50_000, dao.getNotificationCount())
+
+        // Measure full active notification list read query response time
+        val queryDurationNs = measureNanoTime {
+            val activeList = dao.getActiveNotificationsList()
+            assertEquals(25_000, activeList.size)
+        }
+        val queryDurationMs = queryDurationNs / 1_000_000.0
+
+        println("50,000 entity active query duration: ${queryDurationMs} ms")
+        assertTrue(
+            "50,000 entity query response time ($queryDurationMs ms) must be within SLA limit (< 200.0 ms in Robolectric JVM)",
+            queryDurationMs < 200.0
+        )
+
+        // Single item indexed lookup by key SLA check (sub-10ms requirement for JVM Robolectric test runner)
+        val singleLookupNs = measureNanoTime {
+            val target = dao.getNotificationByKey("perf_key_25000")
+            assertNotNull(target)
+        }
+        val singleLookupMs = singleLookupNs / 1_000_000.0
+
+        println("50,000 dataset single key lookup duration: ${singleLookupMs} ms")
+        assertTrue(
+            "Single key query lookup ($singleLookupMs ms) on 50,000 records must satisfy sub-10ms SLA",
+            singleLookupMs < 10.0
+        )
     }
 }

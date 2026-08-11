@@ -32,7 +32,7 @@ class EndToEndAppLifecycleTest : BaseRobolectricTest() {
             Triple("com.google.android.gm", "Gmail", "Security Alert: New login"),
             Triple("com.slack", "Slack", "#general: Deploying v1.2"),
             Triple("com.twitter.android", "X", "X: New follower notification"),
-            Triple("com.google.android.calendar", "Calendar", "Sync meeting at 3pm")
+            Triple("com.google.android.calendar", "Calendar", "Calendar: Sync meeting at 3pm")
         )
 
         val sbns = apps.mapIndexed { idx, (pkg, appName, titleContent) ->

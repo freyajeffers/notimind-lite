@@ -36,10 +36,27 @@ class HighLoadBurstLifecycleTest : BaseRobolectricTest() {
                     isPinned = i % 100 == 0
                 )
             }
-            // Execute in batches to simulate fast high-burst ingestion
-            entities.chunked(1000).forEach { batch ->
-                batch.forEach { entity ->
-                    dao.insertNotification(entity)
+            database.runInTransaction {
+                val db = database.openHelper.writableDatabase
+                val stmt = db.compileStatement(
+                    "INSERT INTO notifications (key, packageName, appName, title, content, postTime, isDismissed, isPinned, isPersistent, priority, actionsCount, isOngoing, isClearable) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
+                )
+                for (i in 1..count) {
+                    stmt.clearBindings()
+                    stmt.bindString(1, "stress_key_$i")
+                    stmt.bindString(2, "com.stress.app_${i % 10}")
+                    stmt.bindString(3, "Stress App ${i % 10}")
+                    stmt.bindString(4, "Burst Notification $i")
+                    stmt.bindString(5, "High-load stress test payload body $i")
+                    stmt.bindLong(6, System.currentTimeMillis() + i)
+                    stmt.bindLong(7, if (i % 2 == 0) 1L else 0L)
+                    stmt.bindLong(8, if (i % 100 == 0) 1L else 0L)
+                    stmt.bindLong(9, 0L)
+                    stmt.bindLong(10, 0L)
+                    stmt.bindLong(11, 0L)
+                    stmt.bindLong(12, 0L)
+                    stmt.bindLong(13, 1L)
+                    stmt.executeInsert()
                 }
             }
         }

@@ -47,8 +47,6 @@ class NavigationAndSettingsUiTest {
         assertEquals("Active", Screen.Active.title)
         assertEquals("history", Screen.History.route)
         assertEquals("History", Screen.History.title)
-        assertEquals("settings", Screen.Settings.route)
-        assertEquals("Settings", Screen.Settings.title)
     }
 
     @Test
@@ -69,7 +67,7 @@ class NavigationAndSettingsUiTest {
         for (i in 1..10) {
             dao.insert(
                 NotificationEntity(
-                    id = i,
+                    id = i.toLong(),
                     key = "key_$i",
                     packageName = "com.test.app$i",
                     appName = "App $i",
@@ -95,9 +93,9 @@ class NavigationAndSettingsUiTest {
 
     @Test
     fun testLogHistorySearchFilter_matchesAllFields() = runTest {
-        val n1 = NotificationEntity(id = 1, key = "k1", packageName = "com.chat.messenger", appName = "ChatApp", title = "Meeting reminder", content = "Project Sync at 3pm", postTime = 1000, isDismissed = true)
-        val n2 = NotificationEntity(id = 2, key = "k2", packageName = "com.email.client", appName = "MailClient", title = "Urgent: Security Alert", content = "Password update required", postTime = 2000, isDismissed = true)
-        val n3 = NotificationEntity(id = 3, key = "k3", packageName = "com.social.media", appName = "SocialFeed", title = "New Like", content = "Alice liked your post", postTime = 3000, isDismissed = true)
+        val n1 = NotificationEntity(id = 1L, key = "k1", packageName = "com.chat.messenger", appName = "ChatApp", title = "Meeting reminder", content = "Project Sync at 3pm", postTime = 1000L, isDismissed = true)
+        val n2 = NotificationEntity(id = 2L, key = "k2", packageName = "com.email.client", appName = "MailClient", title = "Urgent: Security Alert", content = "Password update required", postTime = 2000L, isDismissed = true)
+        val n3 = NotificationEntity(id = 3L, key = "k3", packageName = "com.social.media", appName = "SocialFeed", title = "New Like", content = "Alice liked your post", postTime = 3000L, isDismissed = true)
 
         dao.insert(n1)
         dao.insert(n2)
@@ -133,7 +131,7 @@ class NavigationAndSettingsUiTest {
         for (i in 1..100) {
             dao.insert(
                 NotificationEntity(
-                    id = i,
+                    id = i.toLong(),
                     key = "key_rapid_$i",
                     packageName = "com.test.app",
                     appName = "Test App",

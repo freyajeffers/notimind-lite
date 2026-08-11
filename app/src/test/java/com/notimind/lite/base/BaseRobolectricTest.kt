@@ -30,6 +30,7 @@ abstract class BaseRobolectricTest {
         database = Room.inMemoryDatabaseBuilder(context, AppDatabase::class.java)
             .allowMainThreadQueries()
             .build()
+        database.openHelper.writableDatabase
         AppDatabase.setTestInstance(database)
         dao = database.notificationDao()
     }

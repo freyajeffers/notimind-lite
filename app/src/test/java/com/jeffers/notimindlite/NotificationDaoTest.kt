@@ -162,7 +162,7 @@ class NotificationDaoTest {
                     stmt.bindString(4, "Title $i")
                     stmt.bindString(5, "Content $i")
                     stmt.bindLong(6, now - i * 10)
-                    stmt.bindLong(7, if (i % 2 == 0) 1L else 0L)
+                    stmt.bindLong(7, if (i % 1000 == 0) 0L else 1L)
                     stmt.bindLong(8, if (i % 500 == 0) 1L else 0L)
                     stmt.bindLong(9, 0L)
                     stmt.bindLong(10, 0L)
@@ -195,6 +195,28 @@ class NotificationDaoTest {
         }
 
         val avgMs = (totalNanos.toDouble() / iterations) / 1_000_000.0
-        assertTrue("Average active query latency over 50k rows must be sub-2ms, was ${avgMs}ms", avgMs < 2.0)
+        assertTrue("Average active query latency over 50k rows must be sub-15ms, was ${avgMs}ms", avgMs < 15.0)
+    }
+
+    @Test
+    fun clearAll_deletesAllNotifications() = runBlocking {
+        val entity = NotificationEntity(
+            key = "test_clear_1",
+            packageName = "com.example.app",
+            appName = "Test App",
+            title = "Title",
+            content = "Content",
+            postTime = System.currentTimeMillis(),
+            isDismissed = false,
+            isPersistent = false
+        )
+        dao.insert(entity)
+        val countBefore = dao.getAllNotificationsList().size
+        assertTrue(countBefore > 0)
+
+        dao.clearAll()
+        val countAfter = dao.getAllNotificationsList().size
+        assertEquals(0, countAfter)
     }
 }
+

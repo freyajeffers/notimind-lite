@@ -103,35 +103,48 @@ class NotificationLoggerService : NotificationListenerService() {
             val bigText = extras?.getCharSequence(android.app.Notification.EXTRA_BIG_TEXT)?.toString()
             val category = notification.category
             val priority = notification.priority
+            val postTime = sbn.postTime
 
-            // ── System Notification Clutter Filter ──
-            // Filter out empty background system status/sync noise
-            if (title.isBlank() && content.isBlank()) {
-                Log.d(TAG, "Skipping empty notification clutter from $packageName")
-                return
-            }
-            if ((packageName == "android" || packageName == "com.android.systemui") &&
-                (priority <= -2 || category == "service" || category == "sys") &&
-                (title.contains("USB", ignoreCase = true) || title.contains("debugging", ignoreCase = true) || title.contains("charging", ignoreCase = true))
-            ) {
-                Log.d(TAG, "Filter out low-value system notification clutter: $packageName - $title")
-                return
-            }
+            // ── Extended Filters ──
 
-            // Filter out "x more notifications" summary noise (e.g., "3 more notifications")
-            val moreNotifsRegex = Regex(".*\\d+\\s+more notification.*", RegexOption.IGNORE_CASE)
-            if (title.matches(moreNotifsRegex) || content.matches(moreNotifsRegex) || (subText != null && subText.matches(moreNotifsRegex))) {
-                Log.d(TAG, "Filter out 'x more notifications' summary clutter from $packageName: $title / $content")
+            // 1. Package-based Black-list
+            val blacklistedPackages = setOf(
+                "android",
+                "com.android.systemui",
+                "com.android.shell",
+                "com.google.android.googlequicksearchbox"
+            )
+            if (packageName in blacklistedPackages) {
+                Log.d(TAG, "Black-list filter – skipping $packageName")
                 return
             }
 
-            // Filter out "Spam" summary / spam blocked notifications
-            if (title.equals("Spam", ignoreCase = true) ||
-                (subText != null && subText.equals("Spam", ignoreCase = true)) ||
-                category.equals("spam", ignoreCase = true) ||
-                (title.contains("spam", ignoreCase = true) && content.contains("blocked", ignoreCase = true))
-            ) {
-                Log.d(TAG, "Filter out Spam notification from $packageName: $title")
+            // 2. Age-based retention filter (30 days)
+            val maxAgeMs = 30L * 24 * 60 * 60 * 1000 // 30 days
+            val ageMs = System.currentTimeMillis() - postTime
+            if (ageMs > maxAgeMs) {
+                Log.d(TAG, "Age filter – skipping notification older than 30 days")
+                return
+            }
+
+            // 3. Spam-risk keyword filter
+            val spamKeywords = listOf("spam", "spam risk", "blocked", "risk")
+            if (spamKeywords.any { title.contains(it, ignoreCase = true) || content.contains(it, ignoreCase = true) }) {
+                Log.d(TAG, "Spam filter – skipping $title")
+                return
+            }
+
+            // 4. Summary / empty filter
+            val summaryRegex = Regex("""\d+\s+more\s+notifications?""", RegexOption.IGNORE_CASE)
+            if (summaryRegex.matches(title) || (title.isBlank() && content.isBlank())) {
+                Log.d(TAG, "Summary/empty filter – skipping $title")
+                return
+            }
+
+            // 5. Low-value system category filter
+            val lowValueCategories = setOf(android.app.Notification.CATEGORY_SERVICE, android.app.Notification.CATEGORY_SYSTEM)
+            if (category in lowValueCategories) {
+                Log.d(TAG, "Category filter – skipping $category")
                 return
             }
 
@@ -211,32 +224,29 @@ class NotificationLoggerService : NotificationListenerService() {
             val dedupKey = if (key.isNotBlank()) key else "${packageName}_${title}_${content}".hashCode().toString()
             scope.launch {
                 val existing = dao.getNotificationByKey(dedupKey)
-                if (existing != null) {
-                    Log.d(TAG, "Duplicate notification detected for key $dedupKey; skipping insertion.")
-                } else {
-                    val entity = NotificationEntity(
-                        key = dedupKey,
-                        packageName = packageName,
-                        appName = appName,
-                        title = title,
-                        content = content,
-                        postTime = postTime,
-                        isDismissed = false,
-                        isPersistent = isOngoing,
-                        category = category,
-                        channelId = channelId,
-                        subText = subText,
-                        bigText = bigText,
-                        priority = priority,
-                        groupKey = groupKey,
-                        isOngoing = isOngoing,
-                        isClearable = isClearable,
-                        actionsCount = actionsCount,
-                        intentUri = intentUri,
-                        actionLabels = actionLabelsJson
-                    )
-                    dao.insertNotification(entity)
-                }
+                val entity = NotificationEntity(
+                    id = existing?.id ?: 0,
+                    key = dedupKey,
+                    packageName = packageName,
+                    appName = appName,
+                    title = title,
+                    content = content,
+                    postTime = postTime,
+                    isDismissed = false,
+                    isPersistent = isOngoing,
+                    category = category,
+                    channelId = channelId,
+                    subText = subText,
+                    bigText = bigText,
+                    priority = priority,
+                    groupKey = groupKey,
+                    isOngoing = isOngoing,
+                    isClearable = isClearable,
+                    actionsCount = actionsCount,
+                    intentUri = intentUri,
+                    actionLabels = actionLabelsJson
+                )
+                dao.insertNotification(entity)
             }
         } catch (e: Exception) {
             Log.e(TAG, "Failed to log notification", e)

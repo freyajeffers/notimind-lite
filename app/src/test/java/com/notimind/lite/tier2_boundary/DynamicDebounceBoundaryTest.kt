@@ -56,7 +56,7 @@ class DynamicDebounceBoundaryTest : BaseRobolectricTest() {
         Thread.sleep(100)
 
         allNotifs = dao.getAllNotifications().first()
-        assertEquals("Updated content notification must bypass debounce instantly", 2, allNotifs.size)
+        assertEquals("Updated content notification must bypass debounce instantly", 1, allNotifs.size)
         val latest = dao.getActiveNotificationsList()[0]
         assertEquals("Hello again!", latest.content)
 

@@ -15,7 +15,7 @@ class PreferenceManager(context: Context) {
     }
 
     fun isRestoreOnBootEnabled(): Boolean {
-        return prefs.getBoolean("restore_on_boot", false)
+        return prefs.getBoolean("restore_on_boot", true)
     }
 
     fun setRestoreOnBootEnabled(enabled: Boolean) {
