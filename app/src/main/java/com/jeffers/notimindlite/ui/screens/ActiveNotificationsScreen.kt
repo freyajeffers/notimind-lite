@@ -298,7 +298,13 @@ fun ActiveNotificationsScreen(dao: NotificationDao) {
                                         scope.launch {
                                             NotificationLoggerService.dismissNotification(item.key)
                                             delay(300)
-                                            dao.markDismissedWithReason(item.key, 1) // User Swiped
+                                            dao.markDismissedWithReasonByMatching(
+                                                key = item.key,
+                                                packageName = item.packageName,
+                                                title = item.title,
+                                                content = item.content,
+                                                reason = 1 // User Swiped
+                                            )
                                             dismissingKeys = dismissingKeys - item.key
                                         }
                                     }
