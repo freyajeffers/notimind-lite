@@ -221,31 +221,30 @@ class NotificationLoggerService : NotificationListenerService() {
 
             // Determine deduplication key: prefer existing key, fallback to hash of packageName, title, and content
             val dedupKey = if (key.isNotBlank()) key else "${packageName}_${title}_${content}".hashCode().toString()
+            val entity = NotificationEntity(
+                key = dedupKey,
+                packageName = packageName,
+                appName = appName,
+                title = title,
+                content = content,
+                postTime = postTime,
+                isDismissed = false,
+                isPersistent = isOngoing,
+                category = category,
+                channelId = channelId,
+                subText = subText,
+                bigText = bigText,
+                priority = priority,
+                groupKey = groupKey,
+                isOngoing = isOngoing,
+                isClearable = isClearable,
+                actionsCount = actionsCount,
+                intentUri = intentUri,
+                actionLabels = actionLabelsJson
+            )
             scope.launch {
                 val existing = dao.getNotificationByKey(dedupKey)
-                val entity = NotificationEntity(
-                    id = existing?.id ?: 0,
-                    key = dedupKey,
-                    packageName = packageName,
-                    appName = appName,
-                    title = title,
-                    content = content,
-                    postTime = postTime,
-                    isDismissed = false,
-                    isPersistent = isOngoing,
-                    category = category,
-                    channelId = channelId,
-                    subText = subText,
-                    bigText = bigText,
-                    priority = priority,
-                    groupKey = groupKey,
-                    isOngoing = isOngoing,
-                    isClearable = isClearable,
-                    actionsCount = actionsCount,
-                    intentUri = intentUri,
-                    actionLabels = actionLabelsJson
-                )
-                dao.insertNotification(entity)
+                dao.insertNotification(entity.copy(id = existing?.id ?: 0))
             }
         } catch (e: Exception) {
             Log.e(TAG, "Failed to log notification", e)
