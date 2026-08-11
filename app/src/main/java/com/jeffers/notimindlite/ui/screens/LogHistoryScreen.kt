@@ -59,10 +59,11 @@ fun LogHistoryScreen(dao: NotificationDao) {
     val dateFormat = remember { SimpleDateFormat("MMM dd, HH:mm:ss", Locale.getDefault()) }
 
     val filteredNotifs = remember(activeList, searchQuery) {
+        val baseList = activeList.distinctBy { "${it.packageName}_${it.title}_${it.content}" }
         if (searchQuery.isBlank()) {
-            activeList
+            baseList
         } else {
-            activeList.filter {
+            baseList.filter {
                 it.appName.contains(searchQuery, ignoreCase = true) ||
                         it.title.contains(searchQuery, ignoreCase = true) ||
                         it.content.contains(searchQuery, ignoreCase = true) ||

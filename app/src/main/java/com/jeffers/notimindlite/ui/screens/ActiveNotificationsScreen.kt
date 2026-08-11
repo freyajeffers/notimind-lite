@@ -216,7 +216,7 @@ fun ActiveNotificationsScreen(dao: NotificationDao) {
                     NotificationSection.FILTERED -> emptyList()
                     NotificationSection.DISMISSED -> recentlyDismissed
                     NotificationSection.LOST -> lostNotifs
-                }
+                }.distinctBy { "${it.packageName}_${it.title}_${it.content}" }
 
                 // Section Header Card with expansion arrow rotation micro-animation
                 item(key = "header_${section.keyName}") {
