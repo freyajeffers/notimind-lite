@@ -122,7 +122,7 @@ class NotificationLoggerService : NotificationListenerService() {
             // 2. Age-based retention filter (30 days)
             val maxAgeMs = 30L * 24 * 60 * 60 * 1000 // 30 days
             val ageMs = System.currentTimeMillis() - postTime
-            if (ageMs > maxAgeMs) {
+            if (postTime > 0 && ageMs > maxAgeMs) {
                 Log.d(TAG, "Age filter – skipping notification older than 30 days")
                 return
             }
