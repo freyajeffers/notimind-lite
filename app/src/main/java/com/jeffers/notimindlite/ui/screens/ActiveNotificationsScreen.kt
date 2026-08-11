@@ -85,6 +85,7 @@ fun getPriorityLabel(priority: Int): String {
 enum class NotificationSection(val keyName: String, val title: String, val subtitle: String) {
     PINNED("PINNED", "Pinned Notifications", "Flagged & saved notifications for later reference"),
     ACTIVE("ACTIVE", "Active Notifications", "Currently active status bar notifications (sorted by time received)"),
+    FILTERED("FILTERED", "Filtered Notifications", "System, clutter, spam, and auto-filtered notifications"),
     DISMISSED("DISMISSED", "Recently Dismissed", "User swiped, clicked, or cleared notifications (sorted by time dismissed)"),
     LOST("LOST", "Lost Notifications", "App cancelled or package changed notifications (sorted by time dismissed)")
 }
@@ -126,9 +127,9 @@ fun ActiveNotificationsScreen(dao: NotificationDao) {
     // Dynamic ordering: placing the expanded section at the top, auto-hide empty Pinned
     val sectionOrder = remember(expandedSection, pinnedNotifs.size) {
         val defaultList = if (pinnedNotifs.isNotEmpty()) {
-            listOf(NotificationSection.PINNED, NotificationSection.ACTIVE, NotificationSection.DISMISSED, NotificationSection.LOST)
+            listOf(NotificationSection.PINNED, NotificationSection.ACTIVE, NotificationSection.FILTERED, NotificationSection.DISMISSED, NotificationSection.LOST)
         } else {
-            listOf(NotificationSection.ACTIVE, NotificationSection.DISMISSED, NotificationSection.LOST)
+            listOf(NotificationSection.ACTIVE, NotificationSection.FILTERED, NotificationSection.DISMISSED, NotificationSection.LOST)
         }
         val selected = defaultList.find { it.keyName == expandedSection }
         if (selected != null) {
@@ -212,6 +213,7 @@ fun ActiveNotificationsScreen(dao: NotificationDao) {
                 val itemsList = when (section) {
                     NotificationSection.PINNED -> pinnedNotifs
                     NotificationSection.ACTIVE -> activeNotifs
+                    NotificationSection.FILTERED -> emptyList()
                     NotificationSection.DISMISSED -> recentlyDismissed
                     NotificationSection.LOST -> lostNotifs
                 }
@@ -226,6 +228,7 @@ fun ActiveNotificationsScreen(dao: NotificationDao) {
                             containerColor = when (section) {
                                 NotificationSection.PINNED -> MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = 0.4f)
                                 NotificationSection.ACTIVE -> MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.4f)
+                                NotificationSection.FILTERED -> MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.6f)
                                 NotificationSection.DISMISSED -> MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.4f)
                                 NotificationSection.LOST -> MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.4f)
                             }
