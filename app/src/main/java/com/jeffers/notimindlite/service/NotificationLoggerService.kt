@@ -199,7 +199,6 @@ class NotificationLoggerService : NotificationListenerService() {
             val isClearable = sbn.isClearable
             val actions = notification.actions
             val actionsCount = actions?.size ?: 0
-            val postTime = sbn.postTime
 
             // Extract action button titles and register their PendingIntents
             val actionLabelsJson: String? = if (actions != null && actions.isNotEmpty()) {
