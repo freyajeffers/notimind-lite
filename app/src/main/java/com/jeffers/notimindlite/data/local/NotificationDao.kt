@@ -61,6 +61,12 @@ interface NotificationDao {
     @Query("UPDATE notifications SET isPinned = :isPinned WHERE key = :key")
     suspend fun updatePinnedStatus(key: String, isPinned: Boolean)
 
+    @Query("UPDATE notifications SET isDismissed = 1, dismissTime = :dismissTime WHERE key = :key OR (packageName = :packageName AND title = :title AND content = :content)")
+    suspend fun markDismissedByMatching(key: String, packageName: String, title: String, content: String, dismissTime: Long = System.currentTimeMillis())
+
+    @Query("UPDATE notifications SET isDismissed = 1, dismissReason = :reason, dismissTime = :dismissTime WHERE key = :key OR (packageName = :packageName AND title = :title AND content = :content)")
+    suspend fun markDismissedWithReasonByMatching(key: String, packageName: String, title: String, content: String, reason: Int, dismissTime: Long = System.currentTimeMillis())
+
     @Query("UPDATE notifications SET isDismissed = 1, dismissTime = :dismissTime WHERE key = :key")
     suspend fun markDismissed(key: String, dismissTime: Long = System.currentTimeMillis())
 
