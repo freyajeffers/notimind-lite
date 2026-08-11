@@ -268,11 +268,21 @@ class NotificationLoggerService : NotificationListenerService() {
         recentLogs.remove(sbn.key)
         recentContents.remove(sbn.key)
         val dismissTime = System.currentTimeMillis()
+
+        val notification = sbn.notification
+        val extras = notification?.extras
+        val title = extras?.getCharSequence(android.app.Notification.EXTRA_TITLE)?.toString()
+            ?: extras?.getString("android.title")
+            ?: ""
+        val content = extras?.getCharSequence(android.app.Notification.EXTRA_TEXT)?.toString()
+            ?: extras?.getString("android.text")
+            ?: ""
+
         scope.launch {
             if (reason != null) {
-                dao.markDismissedWithReason(sbn.key, reason, dismissTime)
+                dao.markDismissedWithReasonByMatching(sbn.key, sbn.packageName, title, content, reason, dismissTime)
             } else {
-                dao.markDismissed(sbn.key, dismissTime)
+                dao.markDismissedByMatching(sbn.key, sbn.packageName, title, content, dismissTime)
             }
         }
     }
