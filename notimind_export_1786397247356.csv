@@ -1,0 +1,71 @@
+ID,Package,AppName,Title,Content,PostTime,IsDismissed,DismissReason,IsPinned
+57,com.android.shell,"Shell","NotiMind","Test",2026-08-10 14:16:39,true,1,false
+56,com.att.mobilesecurity,"com.att.mobilesecurity","AT&T ActiveArmor® Mobile Security is active","Helping protect your device from security threats.",2026-08-10 14:16:02,false,,false
+2,com.android.shell,"Shell","NotiMind","Test",2026-08-10 14:15:04,true,1,false
+1,me.proton.android.drive,"me.proton.android.drive","Backing up photos to Proton Drive","Backup failed",2026-08-10 14:14:18,false,,false
+4,me.proton.android.drive,"me.proton.android.drive","Transferring data","",2026-08-10 14:14:15,false,,false
+3,com.instagram.android,"com.instagram.android","Follow request accepted","Lexi Smestad (lexismestad) accepted your follow request.",2026-08-10 14:13:36,true,1,false
+5,android,"Android System","USB for file transfer","Tap for other USB options.",2026-08-10 14:10:11,false,,false
+6,com.android.systemui,"System UI","9 more notifications","",2026-08-10 14:10:06,false,,false
+7,com.google.android.apps.messaging,"com.google.android.apps.messaging","(855) 809-4550","Hi, Freya! Your Indigo Mastercard Account Payment is Due Aug-17. Visit www.myindigocard.com or call 800-353-5920. Reply STOP to unsubscribe.",2026-08-10 13:51:22,false,,false
+9,com.att.mobilesecurity,"com.att.mobilesecurity","Spam Risk call received","775-484-2270",2026-08-10 13:50:57,false,,false
+8,com.google.android.apps.messaging,"com.google.android.apps.messaging","Casey <3","Silver legacy engineering department ",2026-08-10 13:49:58,false,,false
+11,ch.protonmail.android,"ch.protonmail.android","LinkedIn Job Alerts","New messages",2026-08-10 13:43:51,false,,false
+12,ch.protonmail.android,"ch.protonmail.android","LinkedIn Job Alerts","Remote Data Entry Clerk at Careerscape: up to $78K/year",2026-08-10 13:43:51,false,,false
+27,com.joinhandshake.student,"com.joinhandshake.student","Handshake Student: Top Applicant","You're a top applicant for Applications Engineer I - Early Career at Seagate Technology + more",2026-08-10 12:20:09,false,,false
+13,ch.protonmail.android,"ch.protonmail.android","William Potter","I want to connect",2026-08-10 11:44:04,false,,false
+28,com.google.android.apps.tasks,"com.google.android.apps.tasks","Finish Otter.ai Zoom integration setup","Finish setting up Zoom cloud sync or Otter Live Notes integration on Otter.ai.
+Source: https://mail.google.com/mail/u/0/#inbox/19fe56be9bcd7ec4",2026-08-10 11:30:00,true,2,false
+33,com.google.android.googlequicksearchbox,"Google","Apple explores major Apple Watch redesign","Testing includes circular displays and screenless bands to rival Whoop",2026-08-10 11:28:31,false,,false
+36,com.att.mobilesecurity,"com.att.mobilesecurity","App Scans Complete","Tap for security analysis",2026-08-10 11:24:22,false,,false
+10,com.att.mobilesecurity,"com.att.mobilesecurity","Spam Risk call received","775-877-4930",2026-08-10 11:22:40,false,,false
+37,com.sei.android,"com.sei.android","FREE 7-Select™ Soda 🥤","",2026-08-10 10:42:26,false,,false
+14,ch.protonmail.android,"ch.protonmail.android","William Potter via LinkedIn","William just messaged you",2026-08-10 10:26:36,false,,false
+38,com.linkedin.android,"com.linkedin.android","William Potter","sent you a connection request: ""Always accept new connections to increase your influence.
+Hello Freya, Thank you for your interest i...""",2026-08-10 10:03:23,false,,false
+39,com.linkedin.android,"com.linkedin.android","3 new messages: William Potter","Hello Freya,
+
+Are you Serious about Job Search Success? We turn resume maybes into resume winners! W",2026-08-10 10:03:23,false,,false
+15,ch.protonmail.android,"ch.protonmail.android","Priyanka Ariga via LinkedIn","Priyanka just messaged you",2026-08-10 09:45:27,false,,false
+16,ch.protonmail.android,"ch.protonmail.android","DoorDash","Here’s 40% off two orders, Freya",2026-08-10 09:44:04,false,,false
+17,ch.protonmail.android,"ch.protonmail.android","LinkedIn Job Alerts","Software Engineer at Temu: up to $300K/year",2026-08-10 09:43:50,false,,false
+40,com.linkedin.android,"com.linkedin.android","Explore your new prospects","See National Director, Campaign Development Support Alexandra Amato and 14 more daily prospect suggestions.",2026-08-10 09:30:42,false,,false
+34,com.google.android.googlequicksearchbox,"Google","The Hacker News","New Passkey Attacks Can Recover Synced Private Keys or Bypass Phishing-Resistant MFA",2026-08-10 09:28:34,false,,false
+41,com.linkedin.android,"com.linkedin.android","2 new messages: Priyanka Ariga","Hi! I hope you're doing well. I wanted to follow up on my proposal and see if you've had a chance to",2026-08-10 09:11:41,false,,false
+48,com.google.android.apps.tasks,"com.google.android.apps.tasks","Pay Cap One Savor: $250.00","From yesterday",2026-08-10 09:08:14,false,,false
+49,com.google.android.apps.tasks,"com.google.android.apps.tasks","Capital One payment due","From yesterday",2026-08-10 09:08:14,false,,false
+29,com.google.android.apps.tasks,"com.google.android.apps.tasks","Call Nikki at Battle Born Eye Care ((775) 360-6446) to schedule exam (referral from EyeZone)","",2026-08-10 09:08:14,false,,false
+42,com.linkedin.android,"com.linkedin.android","Fast-track your network 🏃","Connect with Botir Babadzhanov and other people you may know",2026-08-10 09:02:15,false,,false
+51,com.samsung.android.app.reminder,"com.samsung.android.app.reminder","Pay storage $240","09:00",2026-08-10 09:00:03,false,,false
+50,com.samsung.android.app.reminder,"com.samsung.android.app.reminder","Reminder","",2026-08-10 09:00:00,false,,false
+30,com.google.android.apps.tasks,"com.google.android.apps.tasks","Pay Kikoff August Statement ($35.00)","From yesterday",2026-08-10 09:00:00,false,,false
+31,com.google.android.apps.tasks,"com.google.android.apps.tasks","Send reply to Cassandra Monroe at Grounded Roots Therapy","",2026-08-10 09:00:00,false,,false
+52,com.samsung.android.app.reminder,"com.samsung.android.app.reminder","Respond to the counseling lady","All day",2026-08-10 09:00:00,false,,false
+32,com.google.android.apps.tasks,"com.google.android.apps.tasks","Pay Capital One Savor Program Payment ($36.00/mo)","From yesterday",2026-08-10 09:00:00,false,,false
+53,com.sec.android.app.shealth,"com.sec.android.app.shealth","Medications","Did you take your 08:00 medications? Don't forget to log them as taken.",2026-08-10 08:30:04,false,,false
+35,com.google.android.googlequicksearchbox,"Google","Scooter takeover events","Large groups of scooter riders recently flooded city streets and highways",2026-08-10 08:28:35,false,,false
+18,ch.protonmail.android,"ch.protonmail.android","Brendo Dano","I want to connect",2026-08-10 07:43:54,false,,false
+19,ch.protonmail.android,"ch.protonmail.android","Uha kasireddi via LinkedIn","Uha just messaged you",2026-08-10 07:19:42,false,,false
+54,com.sec.android.app.shealth,"com.sec.android.app.shealth","Energy score","81 | Good
+Keep Up the Good Work!",2026-08-10 07:19:17,false,,false
+43,com.linkedin.android,"com.linkedin.android","3 new messages: Uha kasireddi","Hi,
+
+I hope you're doing well.
+
+ I just wanted to kindly follow up to see if you’ve had a chance to ",2026-08-10 07:04:32,false,,false
+55,com.moneylion,"com.moneylion","We hope your Instacash® advance was helpful.","When you’re ready, you can repay your Instacash balance to access to future advances.",2026-08-10 06:52:20,false,,false
+44,com.linkedin.android,"com.linkedin.android","Brendo Dano","sent you a connection request",2026-08-10 05:46:52,false,,false
+20,ch.protonmail.android,"ch.protonmail.android","Uha kasireddi via LinkedIn","Uha just messaged you",2026-08-09 23:36:58,false,,false
+21,ch.protonmail.android,"ch.protonmail.android","Andrew Watkins, CPCC, CPRW, CPA via LinkedIn","Andrew just messaged you",2026-08-09 22:04:15,false,,false
+22,ch.protonmail.android,"ch.protonmail.android","LinkedIn","Freya, Andrew has sent you a proposal for your service project",2026-08-09 21:49:34,false,,false
+45,com.linkedin.android,"com.linkedin.android","1 new message: Andrew Watkins, CPCC, CPRW, CPA","Hello Freya,
+
+Please take a look at my proposal and let me know if you're interested in working with",2026-08-09 21:48:25,false,,false
+24,ch.protonmail.android,"ch.protonmail.android","Rizvi Z. via LinkedIn","Rizvi just messaged you",2026-08-09 20:07:38,false,,false
+46,com.linkedin.android,"com.linkedin.android","1 new message: Rizvi Z.","Hello Freya,
+
+Please take a look at my proposal and let me know if you're interested in working with",2026-08-09 19:52:28,false,,false
+23,ch.protonmail.android,"ch.protonmail.android","LinkedIn","Freya, Rizvi has sent you a proposal for your service project",2026-08-09 19:52:28,false,,false
+25,ch.protonmail.android,"ch.protonmail.android","LinkedIn","Betsy at GitHub posted: I'm hiring! 🚀 I'm looking for an exceptional Executive Assistant to support…",2026-08-09 19:52:28,false,,false
+47,com.linkedin.android,"com.linkedin.android","LinkedIn","Christina and 11 more pros are awaiting your response for your Resume Writing project.",2026-08-09 17:55:36,false,,false
+26,ch.protonmail.android,"ch.protonmail.android","Christina S. via LinkedIn","Christina just messaged you",2026-08-09 17:54:53,false,,false
