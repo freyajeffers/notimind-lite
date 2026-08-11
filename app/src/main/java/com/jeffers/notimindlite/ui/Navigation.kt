@@ -17,7 +17,6 @@ import androidx.navigation.compose.rememberNavController
 import com.jeffers.notimindlite.data.local.NotificationDao
 import com.jeffers.notimindlite.ui.screens.ActiveNotificationsScreen
 import com.jeffers.notimindlite.ui.screens.LogHistoryScreen
-import com.jeffers.notimindlite.ui.screens.SettingsScreen
 
 sealed class Screen(val route: String, val title: String, val icon: @Composable () -> Unit) {
     object Active : Screen(
