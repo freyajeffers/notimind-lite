@@ -24,13 +24,13 @@ import java.util.LinkedHashMap
 
 /**
  * Service that listens for posted and removed notifications.
- * It extracts a minimal set of fields and persists them in the Room database.
+ * It extracts a minimal set of fields and persists them in the Room database,
+ * with full Direct Boot (pre-PIN and post-PIN) storage routing.
  */
 class NotificationLoggerService : NotificationListenerService() {
     private val TAG = "NotificationLoggerSrv"
-    private val db by lazy { AppDatabase.getDatabase(applicationContext) }
-    private val dao by lazy { db.notificationDao() }
-    private val appDao by lazy { db.appDao() }
+
+    private fun getDb(): AppDatabase = AppDatabase.getDatabase(applicationContext)
     private val scope = CoroutineScope(Dispatchers.IO)
 
     companion object {
@@ -119,10 +119,11 @@ class NotificationLoggerService : NotificationListenerService() {
                 }
 
                 // Reconcile database: mark any notification previously marked as active as dismissed if no longer present
-                val dbActive = dao.getActiveNotificationsList()
+                val currentDao = getDb().notificationDao()
+                val dbActive = currentDao.getActiveNotificationsList()
                 for (entity in dbActive) {
                     if (!activeKeys.contains(entity.key)) {
-                        dao.markDismissed(entity.key)
+                        currentDao.markDismissed(entity.key)
                     }
                 }
             } catch (e: Exception) {
@@ -288,6 +289,10 @@ class NotificationLoggerService : NotificationListenerService() {
             val dedupKey = if (key.isNotBlank()) key else "${packageName}_${title}_${content}".hashCode().toString()
 
             scope.launch {
+                val db = getDb()
+                val appDao = db.appDao()
+                val dao = db.notificationDao()
+
                 // Upsert app metadata in normalized apps table
                 val existingApp = appDao.getAppByPackage(packageName)
                 val firstSeen = existingApp?.firstSeenTime ?: now
@@ -372,6 +377,7 @@ class NotificationLoggerService : NotificationListenerService() {
             ?: ""
 
         scope.launch {
+            val dao = getDb().notificationDao()
             if (reason != null) {
                 dao.markDismissedWithReasonByMatching(sbn.key, sbn.packageName, title, content, reason, dismissTime)
             } else {
