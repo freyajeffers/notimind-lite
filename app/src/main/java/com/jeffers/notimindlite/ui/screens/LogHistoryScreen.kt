@@ -10,9 +10,11 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Sort
 import androidx.compose.material.icons.filled.Bookmark
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Download
 import androidx.compose.material.icons.filled.ExpandLess
 import androidx.compose.material.icons.filled.ExpandMore
@@ -34,6 +36,7 @@ import com.jeffers.notimindlite.data.local.NotificationDao
 import com.jeffers.notimindlite.data.local.NotificationEntity
 import com.jeffers.notimindlite.util.DatabaseExporter
 import com.jeffers.notimindlite.util.NotificationLauncher
+import com.jeffers.notimindlite.util.SemanticSearchHelper
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import java.time.Instant
@@ -79,12 +82,7 @@ fun LogHistoryScreen(dao: NotificationDao) {
         val baseList = activeList.distinctBy { "${it.packageName}_${it.title}_${it.content}" }
         baseList.filter { item ->
             val matchesReason = selectedReasonFilter == null || item.dismissReason == selectedReasonFilter
-            val matchesSearch = searchQuery.isBlank() || (
-                item.appName.contains(searchQuery, ignoreCase = true) ||
-                item.title.contains(searchQuery, ignoreCase = true) ||
-                item.content.contains(searchQuery, ignoreCase = true) ||
-                item.packageName.contains(searchQuery, ignoreCase = true)
-            )
+            val matchesSearch = SemanticSearchHelper.matches(item, searchQuery)
             matchesReason && matchesSearch
         }
     }
@@ -235,7 +233,15 @@ fun LogHistoryScreen(dao: NotificationDao) {
                     Text("Search logs (${sortMode.label}$filterSuffix)...")
                 },
                 leadingIcon = { Icon(Icons.Default.Search, contentDescription = "Search") },
-                singleLine = true
+                trailingIcon = {
+                    if (searchQuery.isNotEmpty()) {
+                        IconButton(onClick = { searchQuery = "" }) {
+                            Icon(Icons.Default.Close, contentDescription = "Clear Search")
+                        }
+                    }
+                },
+                singleLine = true,
+                shape = RoundedCornerShape(12.dp)
             )
 
             if (filteredNotifs.isEmpty()) {
