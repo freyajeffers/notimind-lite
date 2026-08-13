@@ -7,7 +7,7 @@ import androidx.room.RoomDatabase
 import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
 
-@Database(entities = [NotificationEntity::class, AppEntity::class], version = 13, exportSchema = false)
+@Database(entities = [NotificationEntity::class, AppEntity::class, NotificationFtsEntity::class], version = 14, exportSchema = false)
 abstract class AppDatabase : RoomDatabase() {
 
     abstract fun notificationDao(): NotificationDao
@@ -86,6 +86,24 @@ abstract class AppDatabase : RoomDatabase() {
             }
         }
 
+        val MIGRATION_13_14 = object : Migration(13, 14) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("""
+                    CREATE VIRTUAL TABLE IF NOT EXISTS `notifications_fts` USING fts4(
+                        `title` TEXT NOT NULL,
+                        `content` TEXT NOT NULL,
+                        `appName` TEXT NOT NULL,
+                        `packageName` TEXT NOT NULL,
+                        content=`notifications`
+                    )
+                """.trimIndent())
+                db.execSQL("""
+                    INSERT INTO `notifications_fts` (`docid`, `title`, `content`, `appName`, `packageName`)
+                    SELECT `id`, `title`, `content`, `appName`, `packageName` FROM `notifications`
+                """.trimIndent())
+            }
+        }
+
         fun setTestInstance(db: AppDatabase) {
             synchronized(this) {
                 INSTANCE = db
@@ -105,7 +123,10 @@ abstract class AppDatabase : RoomDatabase() {
                     AppDatabase::class.java,
                     "notimind_lite_database"
                 )
-                .addMigrations(MIGRATION_7_8, MIGRATION_8_9, MIGRATION_9_10, MIGRATION_10_11, MIGRATION_11_12, MIGRATION_12_13)
+                .addMigrations(
+                    MIGRATION_7_8, MIGRATION_8_9, MIGRATION_9_10,
+                    MIGRATION_10_11, MIGRATION_11_12, MIGRATION_12_13, MIGRATION_13_14
+                )
                 .setJournalMode(RoomDatabase.JournalMode.WRITE_AHEAD_LOGGING)
                 .build()
                 INSTANCE = instance
