@@ -9,7 +9,7 @@ import java.util.concurrent.ConcurrentHashMap
 /**
  * Dynamically discovers, expands, and builds comprehensive semantic category clusters based on
  * installed applications, Android's ApplicationInfo.CATEGORY_* metadata, package classifications,
- * and high-dimensional semantic domain vocabularies.
+ * and an extensive vocabulary spanning 22+ semantic domains with 1,000+ keywords.
  */
 object DynamicClusterManager {
     private const val TAG = "DynamicClusterManager"
@@ -17,7 +17,7 @@ object DynamicClusterManager {
     // Maps category names to dynamically expanded keyword and app name clusters
     private val dynamicClusters = ConcurrentHashMap<String, MutableSet<String>>()
 
-    // Comprehensive base vocabulary per domain category (50+ keywords per cluster)
+    // Comprehensive base vocabulary across 22 distinct domain categories
     private val BASE_CATEGORY_VOCABULARY: Map<String, List<String>> = mapOf(
         "finance" to listOf(
             "finance", "banking", "money", "payment", "receipt", "transfer", "balance", "credit",
@@ -26,7 +26,8 @@ object DynamicClusterManager {
             "deposit", "withdrawal", "refund", "budget", "invest", "stock", "dividend", "interest",
             "loan", "atm", "statement", "wire", "autopay", "overdraft", "savings", "checking",
             "capital", "fidelity", "vanguard", "schwab", "coinbase", "binance", "stripe", "square",
-            "monzo", "sofi", "mint", "quickbooks", "robinhood", "wealth", "forex", "ledger"
+            "monzo", "sofi", "mint", "quickbooks", "robinhood", "wealth", "forex", "ledger", "apr",
+            "bonus", "cashback", "payout", "settlement", "remittance", "tax", "irs", "yield"
         ),
         "delivery" to listOf(
             "delivery", "food", "order", "package", "track", "courier", "uber", "eats", "doordash",
@@ -34,7 +35,8 @@ object DynamicClusterManager {
             "shipped", "arriving", "driver", "restaurant", "takeout", "groceries", "dispatch", "parcel",
             "carrier", "mailbox", "dropoff", "transit", "out for delivery", "delivered", "logistics",
             "tracking", "freight", "cargo", "order status", "meal", "pizza", "burger", "coffee",
-            "starbucks", "seamless", "deliveroo", "caviar", "ontrac", "lasership", "prime", "fresh"
+            "starbucks", "seamless", "deliveroo", "caviar", "ontrac", "lasership", "prime", "fresh",
+            "shipt", "gopuff", "cart", "fulfilled", "estimated arrival", "in transit", "locker"
         ),
         "security" to listOf(
             "code", "otp", "password", "2fa", "mfa", "security", "verify", "verification", "login",
@@ -42,7 +44,8 @@ object DynamicClusterManager {
             "fingerprint", "key", "unauthorized", "confirm", "session", "credential", "identity",
             "reset", "duo", "authenticator", "yubikey", "access", "permission", "lockout", "breach",
             "secure", "shield", "protect", "antivirus", "malware", "firewall", "vpn", "sign in",
-            "temporary code", "verification code", "one-time", "passkey", "authenticating"
+            "temporary code", "verification code", "one-time", "passkey", "authenticating", "compromised",
+            "detected", "unrecognized device", "security key", "vault", "encryption", "trusted device"
         ),
         "social" to listOf(
             "social", "chat", "message", "dm", "text", "conversation", "talk", "post", "friend",
@@ -50,7 +53,8 @@ object DynamicClusterManager {
             "discord", "slack", "instagram", "facebook", "twitter", "threads", "tiktok", "snapchat",
             "reddit", "linkedin", "group", "call", "voice", "channel", "mention", "reaction",
             "comment", "like", "share", "retweet", "follower", "story", "feed", "wechat", "viber",
-            "line", "skype", "teams", "status", "streamer", "subscriber", "unread", "direct message"
+            "line", "skype", "teams", "status", "streamer", "subscriber", "unread", "direct message",
+            "ping", "huddle", "room", "voice note", "hangout", "inbox message", "sent a photo"
         ),
         "travel" to listOf(
             "travel", "flight", "ride", "trip", "hotel", "uber", "lyft", "airline", "train",
@@ -58,65 +62,135 @@ object DynamicClusterManager {
             "airport", "checkin", "delay", "departure", "arrival", "luggage", "transit", "commute",
             "cab", "driver", "airbnb", "expedia", "delta", "united", "american airlines", "southwest",
             "amtrak", "subway", "metro", "passport", "visa", "rental", "hertz", "enterprise",
-            "hostel", "destination", "layover", "seat", "route", "mileage", "frequent flyer"
+            "hostel", "destination", "layover", "seat", "route", "mileage", "frequent flyer",
+            "kayak", "priceline", "hopper", "boarding pass", "tsa", "baggage claim", "cruise"
         ),
         "shopping" to listOf(
             "shopping", "deal", "discount", "sale", "coupon", "promo", "cart", "checkout", "store",
             "purchase", "bought", "item", "price", "offer", "clearance", "bogo", "ebay", "walmart",
             "target", "etsy", "shop", "retail", "receipt", "wishlist", "buy", "merchant", "savings",
             "reward", "points", "cashback", "mall", "black friday", "cyber monday", "voucher",
-            "haul", "outlet", "bestbuy", "costco", "aliexpress", "shein", "temu", "order placed"
+            "haul", "outlet", "bestbuy", "costco", "aliexpress", "shein", "temu", "order placed",
+            "promo code", "rebate", "gift card", "price drop", "flash sale", "back in stock"
         ),
         "productivity" to listOf(
             "productivity", "work", "office", "task", "todo", "calendar", "document", "sheet",
             "note", "meeting", "reminder", "agenda", "schedule", "alarm", "appointment", "deadline",
             "zoom", "teams", "meet", "conference", "due", "sync", "planner", "organizer", "memo",
             "notion", "trello", "asana", "jira", "docs", "excel", "powerpoint", "word", "workspace",
-            "evernote", "obsidian", "github", "gitlab", "bitbucket", "linear", "basecamp", "monday"
+            "evernote", "obsidian", "github", "gitlab", "bitbucket", "linear", "basecamp", "monday",
+            "kanban", "sprint", "milestone", "project", "presentation", "spreadsheet", "confluence"
         ),
         "media" to listOf(
             "media", "audio", "music", "song", "track", "podcast", "radio", "sound", "stream",
             "video", "movie", "film", "tv", "clip", "watch", "show", "play", "pause", "spotify",
             "youtube", "netflix", "hulu", "disney", "prime video", "hbo", "max", "twitch", "apple music",
             "soundcloud", "pandora", "deezer", "tidal", "vimeo", "audible", "episode", "playlist",
-            "album", "artist", "playing", "now playing", "headphones", "bluetooth audio", "equalizer"
+            "album", "artist", "playing", "now playing", "headphones", "bluetooth audio", "equalizer",
+            "trailer", "season", "premiere", "broadcast", "channel", "curated", "soundtrack"
         ),
         "health" to listOf(
             "health", "fitness", "workout", "gym", "run", "steps", "heart", "pulse", "sleep",
             "calories", "water", "doctor", "medicine", "prescription", "pharmacy", "appointment",
             "hospital", "clinic", "diet", "weight", "exercise", "walk", "activity", "fitbit",
             "garmin", "strava", "myfitnesspal", "headspace", "calm", "meditation", "blood pressure",
-            "glucose", "hydration", "cycle", "wellness", "cardio", "nutrition", "vitamins", "dosage"
+            "glucose", "hydration", "cycle", "wellness", "cardio", "nutrition", "vitamins", "dosage",
+            "peloton", "nike run", "whoop", "apple health", "telehealth", "refill", "dentist"
         ),
         "smarthome" to listOf(
             "home", "smart", "thermostat", "light", "lock", "doorbell", "camera", "motion",
             "sensor", "nest", "ring", "alexa", "google home", "hue", "alarm", "garage", "temperature",
             "plug", "device", "security cam", "smart life", "tuya", "matter", "zigbee", "z-wave",
-            "automation", "scene", "bulb", "switch", "vacuum", "roborock", "roomba", "appliance"
+            "automation", "scene", "bulb", "switch", "vacuum", "roborock", "roomba", "appliance",
+            "ecobee", "simplisafe", "arlo", "nanoleaf", "smartthings", "lutron", "refrigerator"
         ),
         "game" to listOf(
             "game", "gaming", "play", "player", "score", "level", "quest", "steam", "xbox",
             "playstation", "nintendo", "achievement", "trophy", "multiplayer", "match", "tournament",
             "guild", "clan", "raid", "respawn", "battle pass", "season", "arcade", "rpg", "fps",
-            "mmo", "gamer", "esports", "epic games", "roblox", "minecraft", "fortnite", "genshin"
+            "mmo", "gamer", "esports", "epic games", "roblox", "minecraft", "fortnite", "genshin",
+            "valorant", "league of legends", "discord gaming", "controller", "leaderboard", "inventory"
         ),
         "system" to listOf(
             "system", "battery", "update", "charging", "charger", "wifi", "bluetooth", "network",
             "storage", "download", "install", "memory", "cpu", "reboot", "os", "signal", "hotspot",
             "usb", "connected", "disconnected", "performance", "cleaner", "backup", "restore",
             "firmware", "patch", "data usage", "airplane mode", "low battery", "fully charged",
-            "android", "hardware", "diagnostic", "permission", "security patch", "developer"
+            "android", "hardware", "diagnostic", "permission", "security patch", "developer", "thermal"
+        ),
+        "education" to listOf(
+            "education", "learning", "course", "class", "school", "student", "university", "college",
+            "lesson", "study", "homework", "assignment", "exam", "grade", "duolingo", "canvas",
+            "blackboard", "coursera", "udemy", "khan", "quizlet", "tutor", "lecture", "textbook",
+            "academic", "degree", "syllabus", "flashcards", "practice", "vocabulary", "math", "science",
+            "language", "edx", "skillshare", "classroom", "semester", "diploma", "gpa", "quiz"
+        ),
+        "news" to listOf(
+            "news", "article", "headline", "breaking", "journal", "magazine", "newspaper", "press",
+            "editor", "broadcast", "report", "edition", "nytimes", "wsj", "bbc", "cnn", "reuters",
+            "bloomberg", "apnews", "feed", "newsletter", "politics", "world", "local", "weather",
+            "forecast", "radar", "temperature", "storm", "rain", "snow", "climate", "huffpost",
+            "washington post", "economist", "guardian", "daily", "breaking news", "front page"
+        ),
+        "food" to listOf(
+            "recipe", "cooking", "kitchen", "chef", "baking", "ingredients", "dinner", "lunch",
+            "breakfast", "snack", "restaurant", "reservation", "opentable", "yelp", "menu", "dining",
+            "coffee", "barista", "cocktail", "wine", "beer", "brewery", "tasting", "dish", "grocery",
+            "supermarket", "produce", "bakery", "deli", "culinary", "flavor", "cookbook", "tasty",
+            "allrecipes", "nytcars", "bon appetit", "roast", "grill", "dessert", "appetizer"
+        ),
+        "realestate" to listOf(
+            "real estate", "housing", "apartment", "house", "home", "rent", "lease", "mortgage",
+            "tenant", "landlord", "zillow", "redfin", "realtor", "trulia", "property", "listing",
+            "inspection", "closing", "broker", "condo", "townhouse", "sublet", "escrow", "hoa",
+            "realty", "move", "moving", "neighborhood", "open house", "square feet", "land", "appraisal"
+        ),
+        "automotive" to listOf(
+            "auto", "car", "vehicle", "truck", "motorcycle", "drive", "driving", "gas", "fuel",
+            "ev", "charging", "tesla", "supercharger", "service", "maintenance", "oil", "tire",
+            "mechanic", "dealer", "mileage", "odometer", "engine", "battery", "brake", "parking",
+            "toll", "speed", "traffic", "accident", "insurance", "geico", "progressive", "statefarm",
+            "waze", "gas station", "carplay", "android auto", "transmission", "recall", "registration"
+        ),
+        "dating" to listOf(
+            "dating", "match", "tinder", "bumble", "hinge", "okcupid", "coffee meets bagel", "relationship",
+            "single", "date", "crush", "swipe", "profile", "meetup", "flirt", "romance", "anniversary",
+            "partner", "couple", "marriage", "wedding", "engaged", "matchmaking", "sparks", "speed date"
+        ),
+        "events" to listOf(
+            "tickets", "concert", "festival", "event", "show", "theater", "broadway", "ticketmaster",
+            "stubhub", "seatgeek", "livenation", "venue", "stadium", "arena", "vip", "pass",
+            "wristband", "lineup", "performer", "stage", "curtain", "seating", "box office", "tour",
+            "showtime", "general admission", "doors open", "headliner", "merch", "amphitheater"
+        ),
+        "utilities" to listOf(
+            "utility", "electric", "power", "water", "gas", "internet", "wifi", "broadband", "cable",
+            "mobile", "cellular", "sim", "verizon", "att", "tmobile", "sprint", "vodafone", "billing",
+            "meter", "outage", "telecom", "provider", "hotspot", "roaming", "data plan", "carrier",
+            "spectrum", "xfinity", "comcast", "conedison", "pge", "energy", "kilowatt", "fiber"
+        ),
+        "pets" to listOf(
+            "pet", "dog", "cat", "puppy", "kitten", "vet", "veterinary", "clinic", "vaccine",
+            "chewy", "rover", "barkbox", "grooming", "walk", "walker", "foster", "adoption", "shelter",
+            "rescue", "collar", "microchip", "leash", "paws", "litter", "pet food", "kennel", "boarding",
+            "flea", "tick", "rabies", "petco", "petsmart", "aquarium", "bird", "reptile"
+        ),
+        "career" to listOf(
+            "job", "career", "recruiter", "interview", "hiring", "resume", "cv", "application",
+            "applied", "position", "salary", "offer", "linkedin", "indeed", "glassdoor", "monster",
+            "ziprecruiter", "employment", "employer", "candidate", "promotion", "workplace", "hr",
+            "onboarding", "headhunter", "job alert", "requisition", "cover letter", "internship", "benefits"
         )
     )
 
-    // Mapping Android OS ApplicationInfo.CATEGORY_* constants to our semantic category names
+    // Mapping Android OS ApplicationInfo.CATEGORY_* constants to semantic category names
     private val OS_CATEGORY_MAPPING: Map<Int, String> = mapOf(
         ApplicationInfo.CATEGORY_GAME to "game",
         ApplicationInfo.CATEGORY_AUDIO to "media",
         ApplicationInfo.CATEGORY_VIDEO to "media",
         ApplicationInfo.CATEGORY_IMAGE to "media",
         ApplicationInfo.CATEGORY_SOCIAL to "social",
-        ApplicationInfo.CATEGORY_NEWS to "social",
+        ApplicationInfo.CATEGORY_NEWS to "news",
         ApplicationInfo.CATEGORY_MAPS to "travel",
         ApplicationInfo.CATEGORY_PRODUCTIVITY to "productivity",
         ApplicationInfo.CATEGORY_ACCESSIBILITY to "system"
@@ -197,6 +271,16 @@ object DynamicClusterManager {
             combined.contains("chat") || combined.contains("message") || combined.contains("social") || combined.contains("talk") || combined.contains("mail") -> "social"
             combined.contains("task") || combined.contains("note") || combined.contains("cal") || combined.contains("office") || combined.contains("doc") || combined.contains("meet") -> "productivity"
             combined.contains("music") || combined.contains("video") || combined.contains("audio") || combined.contains("stream") || combined.contains("tube") || combined.contains("tv") -> "media"
+            combined.contains("learn") || combined.contains("edu") || combined.contains("course") || combined.contains("school") || combined.contains("study") -> "education"
+            combined.contains("news") || combined.contains("press") || combined.contains("weather") -> "news"
+            combined.contains("recipe") || combined.contains("cook") || combined.contains("dine") -> "food"
+            combined.contains("zillow") || combined.contains("rent") || combined.contains("estate") -> "realestate"
+            combined.contains("car") || combined.contains("auto") || combined.contains("drive") || combined.contains("gas") -> "automotive"
+            combined.contains("date") || combined.contains("match") || combined.contains("tinder") -> "dating"
+            combined.contains("ticket") || combined.contains("event") || combined.contains("concert") -> "events"
+            combined.contains("telecom") || combined.contains("mobile") || combined.contains("utility") -> "utilities"
+            combined.contains("pet") || combined.contains("vet") || combined.contains("dog") || combined.contains("cat") -> "pets"
+            combined.contains("job") || combined.contains("career") || combined.contains("hire") || combined.contains("workplace") -> "career"
             else -> null
         }
     }
