@@ -348,7 +348,7 @@ fun ActiveNotificationsScreen(dao: NotificationDao) {
                                         dismissingKeys = dismissingKeys + item.key
                                         scope.launch {
                                             NotificationLoggerService.dismissNotification(item.key)
-                                            delay(300)
+                                            kotlinx.coroutines.delay(300)
                                             dao.markDismissedWithReasonByMatching(
                                                 key = item.key,
                                                 packageName = item.packageName,
