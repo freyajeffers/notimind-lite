@@ -11,8 +11,9 @@ import com.jeffers.notimindlite.data.local.NotificationEntity
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import java.util.Collections
+import java.util.LinkedHashMap
 import java.util.Locale
-import java.util.concurrent.ConcurrentHashMap
 
 /**
  * Service that listens for posted and removed notifications.
@@ -26,8 +27,24 @@ class NotificationLoggerService : NotificationListenerService() {
 
     companion object {
         private const val DEBOUNCE_MS = 30000L // 30-second dynamic debounce
-        private val recentLogs = ConcurrentHashMap<String, Long>()
-        private val recentContents = ConcurrentHashMap<String, String>()
+        private const val MAX_CACHE_CAPACITY = 500
+
+        private val recentLogs: MutableMap<String, Long> = Collections.synchronizedMap(
+            object : LinkedHashMap<String, Long>(16, 0.75f, true) {
+                override fun removeEldestEntry(eldest: MutableMap.MutableEntry<String, Long>?): Boolean {
+                    return size > MAX_CACHE_CAPACITY
+                }
+            }
+        )
+
+        private val recentContents: MutableMap<String, String> = Collections.synchronizedMap(
+            object : LinkedHashMap<String, String>(16, 0.75f, true) {
+                override fun removeEldestEntry(eldest: MutableMap.MutableEntry<String, String>?): Boolean {
+                    return size > MAX_CACHE_CAPACITY
+                }
+            }
+        )
+
         private var instance: NotificationLoggerService? = null
 
         fun dismissNotification(key: String) {
@@ -186,7 +203,8 @@ class NotificationLoggerService : NotificationListenerService() {
                 val lastPart = parts.lastOrNull { part ->
                     part != "android" && part != "app" && part != "apps" && part != "mobile" && part != "lite"
                 } ?: parts.lastOrNull() ?: packageName
-                lastPart.replaceFirstChar { if (it.isLowerCase()) it.titlecase() else it.toString() }
+                val formatted = lastPart.replaceFirstChar { if (it.isLowerCase()) it.titlecase() else it.toString() }
+                formatted.ifBlank { packageName.ifBlank { "Unknown App" } }
             }
 
             val channelId = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
