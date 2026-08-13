@@ -57,6 +57,15 @@ interface NotificationDao {
     @Query("SELECT * FROM notifications WHERE isPinned = 1 ORDER BY postTime DESC")
     fun getPinnedNotificationsFlow(): Flow<List<NotificationEntity>>
 
+    // SQLite Full-Text Search (FTS4)
+    @Query("""
+        SELECT notifications.* FROM notifications
+        JOIN notifications_fts ON notifications.rowid = notifications_fts.docid
+        WHERE notifications_fts MATCH :searchQuery
+        ORDER BY postTime DESC
+    """)
+    fun searchNotificationsFts(searchQuery: String): Flow<List<NotificationEntity>>
+
     @Query("UPDATE notifications SET isPinned = :isPinned WHERE key = :key")
     suspend fun updatePinnedStatus(key: String, isPinned: Boolean)
 
