@@ -6,8 +6,7 @@ class PreferenceManager(context: Context) {
     private val prefs = context.getSharedPreferences("notimind_lite_prefs", Context.MODE_PRIVATE)
 
     fun getExpandedSection(): String {
-        val saved = prefs.getString("expanded_section", "ACTIVE") ?: "ACTIVE"
-        return if (saved == "NONE") "ACTIVE" else saved
+        return prefs.getString("expanded_section", "ACTIVE") ?: "ACTIVE"
     }
 
     fun setExpandedSection(section: String) {
