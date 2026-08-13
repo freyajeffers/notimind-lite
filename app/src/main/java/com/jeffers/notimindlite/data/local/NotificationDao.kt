@@ -60,6 +60,15 @@ interface NotificationDao {
     @Query("UPDATE notifications SET isPinned = :isPinned WHERE key = :key")
     suspend fun updatePinnedStatus(key: String, isPinned: Boolean)
 
+    @Query("UPDATE notifications SET isRead = 1 WHERE key = :key")
+    suspend fun markAsRead(key: String)
+
+    @Query("UPDATE notifications SET isRead = 1 WHERE isRead = 0")
+    suspend fun markAllAsRead()
+
+    @Query("SELECT COUNT(*) FROM notifications WHERE isRead = 0 AND isDismissed = 0")
+    fun getUnreadCountFlow(): Flow<Int>
+
     @Query("""
         UPDATE notifications 
         SET isDismissed = 1, dismissTime = :dismissTime 
@@ -104,6 +113,9 @@ interface NotificationDao {
 
     @Query("SELECT COUNT(*) FROM notifications")
     fun getTotalNotificationCountFlow(): Flow<Int>
+
+    @Query("DELETE FROM notifications WHERE isDismissed = 1 AND postTime < :cutoffTimeMs AND isPinned = 0")
+    suspend fun pruneOldLogs(cutoffTimeMs: Long)
 
     @Query("DELETE FROM notifications")
     suspend fun clearAll()
