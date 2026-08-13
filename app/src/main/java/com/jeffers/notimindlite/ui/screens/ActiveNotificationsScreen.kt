@@ -371,19 +371,15 @@ fun ActiveNotificationsScreen(dao: NotificationDao) {
                 }.distinctBy { "${it.packageName}_${it.title}_${it.content}" }
 
                 // Apply multi-filter: selectedPackages
-                val filteredList = remember(rawItemsList, selectedPackages) {
-                    var list = rawItemsList
-                    if (!selectedPackages.isNullOrEmpty()) {
-                        list = list.filter { selectedPackages!!.contains(it.packageName) }
-                    }
-                    list
+                val filteredList = if (!selectedPackages.isNullOrEmpty()) {
+                    rawItemsList.filter { selectedPackages!!.contains(it.packageName) }
+                } else {
+                    rawItemsList
                 }
 
                 // Combine Semantic Vector Embeddings + Full-Text Search with Best Match Ranking
-                val itemsList = remember(filteredList, searchQuery) {
-                    if (searchQuery.isBlank()) filteredList
-                    else HybridSearchEngine.searchAndRank(filteredList, searchQuery)
-                }
+                val itemsList = if (searchQuery.isBlank()) filteredList
+                else HybridSearchEngine.searchAndRank(filteredList, searchQuery)
 
                 // Persistent Sticky Section Header
                 stickyHeader(key = "sticky_header_${section.keyName}") {
