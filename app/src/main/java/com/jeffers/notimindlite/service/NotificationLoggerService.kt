@@ -376,12 +376,14 @@ class NotificationLoggerService : NotificationListenerService() {
             ?: extras?.getString("android.text")
             ?: ""
 
+        val sbnKey = if (sbn.key.isNotBlank()) sbn.key else "${sbn.packageName}_${title}_${content}".hashCode().toString()
+
         scope.launch {
             val dao = getDb().notificationDao()
             if (reason != null) {
-                dao.markDismissedWithReasonByMatching(sbn.key, sbn.packageName, title, content, reason, dismissTime)
+                dao.markDismissedWithReasonByMatching(sbnKey, sbn.packageName, title, content, reason, dismissTime)
             } else {
-                dao.markDismissedByMatching(sbn.key, sbn.packageName, title, content, dismissTime)
+                dao.markDismissedByMatching(sbnKey, sbn.packageName, title, content, dismissTime)
             }
         }
     }

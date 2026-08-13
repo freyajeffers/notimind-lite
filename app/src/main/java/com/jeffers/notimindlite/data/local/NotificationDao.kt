@@ -21,17 +21,15 @@ abstract class NotificationDao {
 
     @Transaction
     open suspend fun insert(entity: NotificationEntity): Long {
-        if (entity.packageName.isNotBlank()) {
-            insertAppInternal(
-                AppEntity(
-                    packageName = entity.packageName,
-                    appName = entity.appName.ifBlank { entity.packageName },
-                    firstSeenTime = entity.postTime,
-                    lastSeenTime = entity.postTime,
-                    appIconUri = entity.appIconUri
-                )
+        insertAppInternal(
+            AppEntity(
+                packageName = entity.packageName,
+                appName = entity.appName.ifBlank { entity.packageName.ifBlank { "Unknown App" } },
+                firstSeenTime = entity.postTime,
+                lastSeenTime = entity.postTime,
+                appIconUri = entity.appIconUri
             )
-        }
+        )
         return insertNotificationDirect(entity)
     }
 
@@ -114,8 +112,7 @@ abstract class NotificationDao {
         SET isDismissed = 1, dismissTime = :dismissTime 
         WHERE key = :key 
            OR (
-               :key = '' 
-               AND packageName = :packageName 
+               packageName = :packageName 
                AND title = :title 
                AND content = :content 
                AND title != '' 
@@ -129,8 +126,7 @@ abstract class NotificationDao {
         SET isDismissed = 1, dismissReason = :reason, dismissTime = :dismissTime 
         WHERE key = :key 
            OR (
-               :key = '' 
-               AND packageName = :packageName 
+               packageName = :packageName 
                AND title = :title 
                AND content = :content 
                AND title != '' 
