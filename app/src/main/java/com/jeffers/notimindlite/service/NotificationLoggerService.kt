@@ -296,6 +296,8 @@ class NotificationLoggerService : NotificationListenerService() {
                         packageName = packageName,
                         appName = appName,
                         appIconUri = appIconUri ?: existingApp?.appIconUri,
+                        statusBarIconRes = smallIconRes,
+                        statusBarIconPackage = packageName,
                         firstSeenTime = firstSeen,
                         lastSeenTime = now
                     )
