@@ -38,6 +38,17 @@ class HighLoadBurstLifecycleTest : BaseRobolectricTest() {
             }
             database.runInTransaction {
                 val db = database.openHelper.writableDatabase
+                val appStmt = db.compileStatement(
+                    "INSERT OR IGNORE INTO apps (packageName, appName, firstSeenTime, lastSeenTime) VALUES (?, ?, ?, ?)"
+                )
+                for (p in 0 until 10) {
+                    appStmt.clearBindings()
+                    appStmt.bindString(1, "com.stress.app_$p")
+                    appStmt.bindString(2, "Stress App $p")
+                    appStmt.bindLong(3, System.currentTimeMillis())
+                    appStmt.bindLong(4, System.currentTimeMillis())
+                    appStmt.executeInsert()
+                }
                 val stmt = db.compileStatement(
                     "INSERT INTO notifications (key, packageName, appName, title, content, postTime, isDismissed, isPinned, isPersistent, priority, actionsCount, isOngoing, isClearable) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
                 )

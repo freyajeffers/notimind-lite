@@ -200,6 +200,17 @@ class PersistenceBoundaryTest : BaseRobolectricTest() {
         // Fast batch insertion in single SQLite transaction
         database.runInTransaction {
             val db = database.openHelper.writableDatabase
+            val appStmt = db.compileStatement(
+                "INSERT OR IGNORE INTO apps (packageName, appName, firstSeenTime, lastSeenTime) VALUES (?, ?, ?, ?)"
+            )
+            for (p in 0 until 20) {
+                appStmt.clearBindings()
+                appStmt.bindString(1, "com.perf.app_$p")
+                appStmt.bindString(2, "Perf App $p")
+                appStmt.bindLong(3, 1000000L)
+                appStmt.bindLong(4, 1000000L)
+                appStmt.executeInsert()
+            }
             val stmt = db.compileStatement(
                 "INSERT INTO notifications (id, key, packageName, appName, title, content, postTime, isDismissed, isPinned, isPersistent, priority, actionsCount, isOngoing, isClearable) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
             )

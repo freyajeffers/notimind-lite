@@ -151,6 +151,17 @@ class NotificationDaoTest {
             val db = database.openHelper.writableDatabase
             db.beginTransaction()
             try {
+                val appStmt = db.compileStatement(
+                    "INSERT OR IGNORE INTO apps (packageName, appName, firstSeenTime, lastSeenTime) VALUES (?, ?, ?, ?)"
+                )
+                for (p in 0 until 100) {
+                    appStmt.clearBindings()
+                    appStmt.bindString(1, "com.test.app$p")
+                    appStmt.bindString(2, "App $p")
+                    appStmt.bindLong(3, now)
+                    appStmt.bindLong(4, now)
+                    appStmt.executeInsert()
+                }
                 val stmt = db.compileStatement(
                     "INSERT INTO notifications (key, packageName, appName, title, content, postTime, isDismissed, isPinned, isPersistent, priority, actionsCount, isOngoing, isClearable) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
                 )
