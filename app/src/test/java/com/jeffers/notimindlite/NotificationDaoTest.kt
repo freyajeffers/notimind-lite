@@ -154,10 +154,17 @@ class NotificationDaoTest {
                 val appStmt = db.compileStatement(
                     "INSERT OR IGNORE INTO apps (packageName, appName, firstSeenTime, lastSeenTime) VALUES (?, ?, ?, ?)"
                 )
-                for (p in 0 until 100) {
+                for (i in 1..totalEntities) {
                     appStmt.clearBindings()
-                    appStmt.bindString(1, "com.test.app$p")
-                    appStmt.bindString(2, "App $p")
+                    appStmt.bindString(1, "com.test.app${i % 100}")
+                    appStmt.bindString(2, "App ${i % 100}")
+                    appStmt.bindLong(3, now)
+                    appStmt.bindLong(4, now)
+                    appStmt.executeInsert()
+
+                    appStmt.clearBindings()
+                    appStmt.bindString(1, "pkg.app_$i")
+                    appStmt.bindString(2, "App $i")
                     appStmt.bindLong(3, now)
                     appStmt.bindLong(4, now)
                     appStmt.executeInsert()
