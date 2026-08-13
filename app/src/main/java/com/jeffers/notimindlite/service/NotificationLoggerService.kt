@@ -236,7 +236,7 @@ class NotificationLoggerService : NotificationListenerService() {
                 return
             }
 
-            val key = sbn.key
+            val key = if (!sbn.key.isNullOrBlank()) sbn.key else "${sbn.id}|${sbn.packageName}|${sbn.id}|${sbn.tag}|${sbn.postTime}"
             com.jeffers.notimindlite.util.NotificationLauncher.registerPendingIntent(key, notification.contentIntent)
 
             // ── Smart & Dynamic 30s Debounce ──
