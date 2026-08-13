@@ -50,7 +50,9 @@ import com.jeffers.notimindlite.data.local.PreferenceManager
 import com.jeffers.notimindlite.service.NotificationLoggerService
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import java.text.SimpleDateFormat
+import java.time.Instant
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
 import java.util.*
 
 fun checkNotificationPermission(context: Context): Boolean {
@@ -138,7 +140,9 @@ fun ActiveNotificationsScreen(dao: NotificationDao) {
     val activeNotifs by dao.getActiveNotificationsFlow().collectAsState(initial = emptyList())
     val recentlyDismissed by dao.getRecentlyDismissedFlow().collectAsState(initial = emptyList())
     val lostNotifs by dao.getLostNotificationsFlow().collectAsState(initial = emptyList())
-    val dateFormat = remember { SimpleDateFormat("MMM dd, HH:mm:ss", Locale.getDefault()) }
+    val dateTimeFormatter = remember {
+        DateTimeFormatter.ofPattern("MMM dd, HH:mm:ss", Locale.getDefault()).withZone(ZoneId.systemDefault())
+    }
 
     // Track dismissing items for swipe animation
     var dismissingKeys by remember { mutableStateOf(setOf<String>()) }
@@ -329,10 +333,9 @@ fun ActiveNotificationsScreen(dao: NotificationDao) {
                         }
                     } else {
                         items(
-                            count = itemsList.size,
-                            key = { index -> "${section.keyName}_${itemsList[index].id}" }
-                        ) { index ->
-                            val item = itemsList[index]
+                            items = itemsList,
+                            key = { item -> "${section.keyName}_${item.key}_${item.id}" }
+                        ) { item ->
                             val cardExpanded = expandedCards.contains(item.key)
                             val isDismissing = dismissingKeys.contains(item.key)
 
@@ -343,7 +346,7 @@ fun ActiveNotificationsScreen(dao: NotificationDao) {
                             ) {
                                 SystemSwipeToDismissCard(
                                     item = item,
-                                    dateFormat = dateFormat,
+                                    dateTimeFormatter = dateTimeFormatter,
                                     section = section,
                                     dao = dao,
                                     isExpanded = cardExpanded,
@@ -382,7 +385,7 @@ fun ActiveNotificationsScreen(dao: NotificationDao) {
 @Composable
 fun SystemSwipeToDismissCard(
     item: NotificationEntity,
-    dateFormat: SimpleDateFormat,
+    dateTimeFormatter: DateTimeFormatter,
     section: NotificationSection,
     dao: NotificationDao,
     isExpanded: Boolean,
@@ -431,7 +434,7 @@ fun SystemSwipeToDismissCard(
         ) {
             UnifiedNotificationCard(
                 item = item,
-                dateFormat = dateFormat,
+                dateTimeFormatter = dateTimeFormatter,
                 section = section,
                 dao = dao,
                 isExpanded = isExpanded,
@@ -442,7 +445,7 @@ fun SystemSwipeToDismissCard(
     } else {
         UnifiedNotificationCard(
             item = item,
-            dateFormat = dateFormat,
+            dateTimeFormatter = dateTimeFormatter,
             section = section,
             dao = dao,
             isExpanded = isExpanded,
@@ -455,7 +458,7 @@ fun SystemSwipeToDismissCard(
 @Composable
 fun UnifiedNotificationCard(
     item: NotificationEntity,
-    dateFormat: SimpleDateFormat,
+    dateTimeFormatter: DateTimeFormatter,
     section: NotificationSection,
     dao: NotificationDao,
     isExpanded: Boolean,
@@ -597,7 +600,7 @@ fun UnifiedNotificationCard(
                 enter = fadeIn() + expandVertically(animationSpec = spring(stiffness = 300f)),
                 exit = fadeOut() + shrinkVertically(animationSpec = spring(stiffness = 300f))
             ) {
-                NotificationDetailPanel(item = item, dateFormat = dateFormat)
+                NotificationDetailPanel(item = item, dateTimeFormatter = dateTimeFormatter)
             }
 
             Spacer(modifier = Modifier.height(8.dp))
@@ -606,14 +609,14 @@ fun UnifiedNotificationCard(
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 Text(
-                    text = "Received: ${dateFormat.format(Date(item.postTime))}",
+                    text = "Received: ${dateTimeFormatter.format(Instant.ofEpochMilli(item.postTime))}",
                     fontSize = 11.sp,
                     color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
                 )
                 if (item.isDismissed) {
                     val dismissTimestamp = item.dismissTime ?: item.postTime
                     Text(
-                        text = "Dismissed: ${dateFormat.format(Date(dismissTimestamp))}",
+                        text = "Dismissed: ${dateTimeFormatter.format(Instant.ofEpochMilli(dismissTimestamp))}",
                         fontSize = 11.sp,
                         color = MaterialTheme.colorScheme.secondary,
                         fontWeight = FontWeight.Medium
@@ -629,7 +632,7 @@ fun UnifiedNotificationCard(
  * with human-readable labels and visual hierarchy.
  */
 @Composable
-fun NotificationDetailPanel(item: NotificationEntity, dateFormat: SimpleDateFormat) {
+fun NotificationDetailPanel(item: NotificationEntity, dateTimeFormatter: DateTimeFormatter) {
     val context = LocalContext.current
 
     // Parse action labels from JSON

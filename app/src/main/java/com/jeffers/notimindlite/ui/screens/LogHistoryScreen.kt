@@ -34,9 +34,11 @@ import com.jeffers.notimindlite.data.local.NotificationDao
 import com.jeffers.notimindlite.data.local.NotificationEntity
 import com.jeffers.notimindlite.util.DatabaseExporter
 import com.jeffers.notimindlite.util.NotificationLauncher
-import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import java.text.SimpleDateFormat
+import java.time.Instant
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
 import java.util.*
 
 enum class SortMode(val label: String) {
@@ -64,7 +66,9 @@ fun LogHistoryScreen(dao: NotificationDao) {
 
     val activeList = if (sortMode == SortMode.DISMISSED) dismissedNotifsDismissed else dismissedNotifsReceived
     var searchQuery by remember { mutableStateOf("") }
-    val dateFormat = remember { SimpleDateFormat("MMM dd, HH:mm:ss", Locale.getDefault()) }
+    val dateTimeFormatter = remember {
+        DateTimeFormatter.ofPattern("MMM dd, HH:mm:ss", Locale.getDefault()).withZone(ZoneId.systemDefault())
+    }
 
     // Unique dismiss reasons present in the dataset for filtering dropdown
     val availableReasons = remember(activeList) {
@@ -103,8 +107,8 @@ fun LogHistoryScreen(dao: NotificationDao) {
                                 text = { Text("Export Logs to JSON") },
                                 onClick = {
                                     showExportMenu = false
-                                    scope.launch {
-                                        val allLogs = dao.getAllNotifications().first()
+                                    scope.launch(Dispatchers.IO) {
+                                        val allLogs = dao.getAllNotificationsList()
                                         DatabaseExporter.shareExportFile(context, allLogs, isJson = true)
                                     }
                                 }
@@ -113,8 +117,8 @@ fun LogHistoryScreen(dao: NotificationDao) {
                                 text = { Text("Export Logs to CSV") },
                                 onClick = {
                                     showExportMenu = false
-                                    scope.launch {
-                                        val allLogs = dao.getAllNotifications().first()
+                                    scope.launch(Dispatchers.IO) {
+                                        val allLogs = dao.getAllNotificationsList()
                                         DatabaseExporter.shareExportFile(context, allLogs, isJson = false)
                                     }
                                 }
@@ -264,11 +268,14 @@ fun LogHistoryScreen(dao: NotificationDao) {
                     contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    items(filteredNotifs, key = { it.id }) { item ->
+                    items(
+                        items = filteredNotifs,
+                        key = { item -> "history_${item.key}_${item.id}" }
+                    ) { item ->
                         val cardExpanded = expandedCards.contains(item.key)
                         LogHistoryCard(
                             item = item,
-                            dateFormat = dateFormat,
+                            dateTimeFormatter = dateTimeFormatter,
                             dao = dao,
                             isExpanded = cardExpanded,
                             onToggleExpand = {
@@ -285,7 +292,7 @@ fun LogHistoryScreen(dao: NotificationDao) {
 @Composable
 fun LogHistoryCard(
     item: NotificationEntity,
-    dateFormat: SimpleDateFormat,
+    dateTimeFormatter: DateTimeFormatter,
     dao: NotificationDao,
     isExpanded: Boolean,
     onToggleExpand: () -> Unit
@@ -389,7 +396,7 @@ fun LogHistoryCard(
                 enter = fadeIn() + androidx.compose.animation.expandVertically(animationSpec = spring(stiffness = 300f)),
                 exit = fadeOut() + shrinkVertically(animationSpec = spring(stiffness = 300f))
             ) {
-                NotificationDetailPanel(item = item, dateFormat = dateFormat)
+                NotificationDetailPanel(item = item, dateTimeFormatter = dateTimeFormatter)
             }
 
             Spacer(modifier = Modifier.height(6.dp))
@@ -398,13 +405,13 @@ fun LogHistoryCard(
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 Text(
-                    text = "Received: ${dateFormat.format(Date(item.postTime))}",
+                    text = "Received: ${dateTimeFormatter.format(Instant.ofEpochMilli(item.postTime))}",
                     fontSize = 11.sp,
                     color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
                 )
                 val dismissTimestamp = item.dismissTime ?: item.postTime
                 Text(
-                    text = "Dismissed: ${dateFormat.format(Date(dismissTimestamp))}",
+                    text = "Dismissed: ${dateTimeFormatter.format(Instant.ofEpochMilli(dismissTimestamp))}",
                     fontSize = 11.sp,
                     color = MaterialTheme.colorScheme.secondary,
                     fontWeight = FontWeight.Medium
