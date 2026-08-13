@@ -15,8 +15,9 @@ import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.material.icons.filled.KeyboardArrowDown
+import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Bookmark
@@ -65,8 +66,25 @@ fun getReasonLabel(reason: Int?): String {
         3 -> "User Clicked"
         4 -> "Listener Cancelled"
         5 -> "Package Changed"
+        6 -> "Package Banned"
+        7 -> "User Banned"
         8 -> "App Cancelled"
+        9 -> "App Cancelled All"
         10 -> "Timeout"
+        11 -> "Channel Banned"
+        12 -> "Snoozed"
+        13 -> "Group Summary Canceled"
+        14 -> "Listener Muted"
+        15 -> "Clearable Group Summary"
+        16 -> "Channel Changed"
+        17 -> "Group Threshold"
+        18 -> "Assistant Cancelled"
+        19 -> "User Cancelled"
+        20 -> "Profile Turned Off"
+        21 -> "Package Uninstalled"
+        22 -> "App Disallowed"
+        23 -> "User Dismissed"
+        24 -> "Review Dismissed"
         else -> if (reason != null) "Reason #$reason" else "System Dismissed"
     }
 }
@@ -139,6 +157,8 @@ fun ActiveNotificationsScreen(dao: NotificationDao) {
         }
     }
 
+    val listState = rememberLazyListState()
+
     fun toggleSection(sectionKey: String) {
         val newExpanded = if (expandedSection == sectionKey) "NONE" else sectionKey
         expandedSection = newExpanded
@@ -150,9 +170,40 @@ fun ActiveNotificationsScreen(dao: NotificationDao) {
             TopAppBar(
                 title = { Text("Active & Categorized Notifications", fontWeight = FontWeight.Bold) }
             )
+        },
+        floatingActionButton = {
+            Column(
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+                horizontalAlignment = Alignment.End
+            ) {
+                SmallFloatingActionButton(
+                    onClick = {
+                        scope.launch {
+                            listState.animateScrollToItem(0)
+                        }
+                    },
+                    containerColor = MaterialTheme.colorScheme.primaryContainer,
+                    contentColor = MaterialTheme.colorScheme.onPrimaryContainer
+                ) {
+                    Icon(Icons.Default.KeyboardArrowUp, contentDescription = "Scroll to Top")
+                }
+
+                SmallFloatingActionButton(
+                    onClick = {
+                        scope.launch {
+                            listState.animateScrollToItem(100) // Scroll toward end of list
+                        }
+                    },
+                    containerColor = MaterialTheme.colorScheme.primaryContainer,
+                    contentColor = MaterialTheme.colorScheme.onPrimaryContainer
+                ) {
+                    Icon(Icons.Default.KeyboardArrowDown, contentDescription = "Scroll to Bottom")
+                }
+            }
         }
     ) { innerPadding ->
         LazyColumn(
+            state = listState,
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)

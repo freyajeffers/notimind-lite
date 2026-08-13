@@ -9,13 +9,17 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Sort
 import androidx.compose.material.icons.filled.Bookmark
 import androidx.compose.material.icons.filled.Download
 import androidx.compose.material.icons.filled.ExpandLess
 import androidx.compose.material.icons.filled.ExpandMore
+import androidx.compose.material.icons.filled.FilterList
 import androidx.compose.material.icons.filled.History
+import androidx.compose.material.icons.filled.KeyboardArrowDown
+import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.outlined.BookmarkBorder
 import androidx.compose.material3.*
@@ -45,8 +49,12 @@ enum class SortMode(val label: String) {
 fun LogHistoryScreen(dao: NotificationDao) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
+    val listState = rememberLazyListState()
+
     var sortMode by remember { mutableStateOf(SortMode.DISMISSED) }
+    var selectedReasonFilter by remember { mutableStateOf<Int?>(null) } // null = All reasons
     var showSortMenu by remember { mutableStateOf(false) }
+    var showFilterMenu by remember { mutableStateOf(false) }
     var showExportMenu by remember { mutableStateOf(false) }
     var expandedCards by remember { mutableStateOf(setOf<String>()) }
 
@@ -58,24 +66,29 @@ fun LogHistoryScreen(dao: NotificationDao) {
     var searchQuery by remember { mutableStateOf("") }
     val dateFormat = remember { SimpleDateFormat("MMM dd, HH:mm:ss", Locale.getDefault()) }
 
-    val filteredNotifs = remember(activeList, searchQuery) {
+    // Unique dismiss reasons present in the dataset for filtering dropdown
+    val availableReasons = remember(activeList) {
+        activeList.mapNotNull { it.dismissReason }.distinct().sorted()
+    }
+
+    val filteredNotifs = remember(activeList, searchQuery, selectedReasonFilter) {
         val baseList = activeList.distinctBy { "${it.packageName}_${it.title}_${it.content}" }
-        if (searchQuery.isBlank()) {
-            baseList
-        } else {
-            baseList.filter {
-                it.appName.contains(searchQuery, ignoreCase = true) ||
-                        it.title.contains(searchQuery, ignoreCase = true) ||
-                        it.content.contains(searchQuery, ignoreCase = true) ||
-                        it.packageName.contains(searchQuery, ignoreCase = true)
-            }
+        baseList.filter { item ->
+            val matchesReason = selectedReasonFilter == null || item.dismissReason == selectedReasonFilter
+            val matchesSearch = searchQuery.isBlank() || (
+                item.appName.contains(searchQuery, ignoreCase = true) ||
+                item.title.contains(searchQuery, ignoreCase = true) ||
+                item.content.contains(searchQuery, ignoreCase = true) ||
+                item.packageName.contains(searchQuery, ignoreCase = true)
+            )
+            matchesReason && matchesSearch
         }
     }
 
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Log History ($totalCount)", fontWeight = FontWeight.Bold) },
+                title = { Text("Log History (${filteredNotifs.size}/$totalCount)", fontWeight = FontWeight.Bold) },
                 actions = {
                     // Export Database Button
                     Box {
@@ -109,6 +122,38 @@ fun LogHistoryScreen(dao: NotificationDao) {
                         }
                     }
 
+                    // Reason Filter Button
+                    Box {
+                        IconButton(onClick = { showFilterMenu = true }) {
+                            Icon(
+                                imageVector = Icons.Default.FilterList,
+                                contentDescription = "Filter by Dismiss Reason",
+                                tint = if (selectedReasonFilter != null) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
+                            )
+                        }
+                        DropdownMenu(
+                            expanded = showFilterMenu,
+                            onDismissRequest = { showFilterMenu = false }
+                        ) {
+                            DropdownMenuItem(
+                                text = { Text("All Reasons ${if (selectedReasonFilter == null) "✓" else ""}") },
+                                onClick = {
+                                    selectedReasonFilter = null
+                                    showFilterMenu = false
+                                }
+                            )
+                            availableReasons.forEach { reasonCode ->
+                                DropdownMenuItem(
+                                    text = { Text("${getReasonLabel(reasonCode)} (#$reasonCode) ${if (selectedReasonFilter == reasonCode) "✓" else ""}") },
+                                    onClick = {
+                                        selectedReasonFilter = reasonCode
+                                        showFilterMenu = false
+                                    }
+                                )
+                            }
+                        }
+                    }
+
                     // Sort Order Button
                     Box {
                         IconButton(onClick = { showSortMenu = true }) {
@@ -136,6 +181,38 @@ fun LogHistoryScreen(dao: NotificationDao) {
                     }
                 }
             )
+        },
+        floatingActionButton = {
+            if (filteredNotifs.isNotEmpty()) {
+                Column(
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                    horizontalAlignment = Alignment.End
+                ) {
+                    SmallFloatingActionButton(
+                        onClick = {
+                            scope.launch {
+                                listState.animateScrollToItem(0)
+                            }
+                        },
+                        containerColor = MaterialTheme.colorScheme.primaryContainer,
+                        contentColor = MaterialTheme.colorScheme.onPrimaryContainer
+                    ) {
+                        Icon(Icons.Default.KeyboardArrowUp, contentDescription = "Scroll to Top")
+                    }
+
+                    SmallFloatingActionButton(
+                        onClick = {
+                            scope.launch {
+                                listState.animateScrollToItem(filteredNotifs.size - 1)
+                            }
+                        },
+                        containerColor = MaterialTheme.colorScheme.primaryContainer,
+                        contentColor = MaterialTheme.colorScheme.onPrimaryContainer
+                    ) {
+                        Icon(Icons.Default.KeyboardArrowDown, contentDescription = "Scroll to Bottom")
+                    }
+                }
+            }
         }
     ) { innerPadding ->
         Column(
@@ -149,7 +226,10 @@ fun LogHistoryScreen(dao: NotificationDao) {
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 16.dp, vertical = 8.dp),
-                placeholder = { Text("Search dismissed logs (${sortMode.label})...") },
+                placeholder = {
+                    val filterSuffix = selectedReasonFilter?.let { " • Filter: ${getReasonLabel(it)}" } ?: ""
+                    Text("Search logs (${sortMode.label}$filterSuffix)...")
+                },
                 leadingIcon = { Icon(Icons.Default.Search, contentDescription = "Search") },
                 singleLine = true
             )
@@ -168,7 +248,10 @@ fun LogHistoryScreen(dao: NotificationDao) {
                         )
                         Spacer(modifier = Modifier.height(16.dp))
                         Text(
-                            text = if (searchQuery.isBlank()) "No dismissed notifications logged yet" else "No matching dismissed logs found",
+                            text = if (searchQuery.isBlank() && selectedReasonFilter == null)
+                                "No dismissed notifications logged yet"
+                            else
+                                "No matching dismissed logs found",
                             style = MaterialTheme.typography.bodyLarge,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -176,6 +259,7 @@ fun LogHistoryScreen(dao: NotificationDao) {
                 }
             } else {
                 LazyColumn(
+                    state = listState,
                     modifier = Modifier.fillMaxSize(),
                     contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
                     verticalArrangement = Arrangement.spacedBy(8.dp)
