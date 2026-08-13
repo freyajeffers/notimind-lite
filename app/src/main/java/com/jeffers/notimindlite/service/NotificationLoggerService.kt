@@ -142,8 +142,22 @@ class NotificationLoggerService : NotificationListenerService() {
         processNotification(sbn)
     }
 
+    private fun isListenerGranted(): Boolean {
+        val enabledListeners = android.provider.Settings.Secure.getString(
+            contentResolver,
+            "enabled_notification_listeners"
+        ) ?: ""
+        val myComponent = ComponentName(this, NotificationLoggerService::class.java).flattenToString()
+        val myComponentShort = ComponentName(this, NotificationLoggerService::class.java).flattenToShortString()
+        return enabledListeners.contains(myComponent) || enabledListeners.contains(myComponentShort)
+    }
+
     private fun processNotification(sbn: StatusBarNotification) {
         if (sbn.packageName == applicationContext.packageName) return
+        if (!isListenerGranted()) {
+            Log.d(TAG, "Notification listener permission is not granted. Skipping notification processing.")
+            return
+        }
         try {
             val notification = sbn.notification ?: return
             val packageName = sbn.packageName
@@ -376,14 +390,21 @@ class NotificationLoggerService : NotificationListenerService() {
             ?: extras?.getString("android.text")
             ?: ""
 
-        val sbnKey = if (sbn.key.isNotBlank()) sbn.key else "${sbn.packageName}_${title}_${content}".hashCode().toString()
-
         scope.launch {
             val dao = getDb().notificationDao()
-            if (reason != null) {
-                dao.markDismissedWithReasonByMatching(sbnKey, sbn.packageName, title, content, reason, dismissTime)
+            if (sbn.key.isNotBlank()) {
+                if (reason != null) {
+                    dao.markDismissedWithReason(sbn.key, reason, dismissTime)
+                } else {
+                    dao.markDismissed(sbn.key, dismissTime)
+                }
             } else {
-                dao.markDismissedByMatching(sbnKey, sbn.packageName, title, content, dismissTime)
+                val sbnKey = "${sbn.packageName}_${title}_${content}".hashCode().toString()
+                if (reason != null) {
+                    dao.markDismissedWithReasonByMatching(sbnKey, sbn.packageName, title, content, reason, dismissTime)
+                } else {
+                    dao.markDismissedByMatching(sbnKey, sbn.packageName, title, content, dismissTime)
+                }
             }
         }
     }
