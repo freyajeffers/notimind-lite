@@ -191,7 +191,7 @@ fun ActiveNotificationsScreen(dao: NotificationDao) {
                 SmallFloatingActionButton(
                     onClick = {
                         scope.launch {
-                            listState.animateScrollToItem(100) // Scroll toward end of list
+                            listState.animateScrollToItem(100)
                         }
                     },
                     containerColor = MaterialTheme.colorScheme.primaryContainer,
@@ -269,7 +269,7 @@ fun ActiveNotificationsScreen(dao: NotificationDao) {
                     NotificationSection.LOST -> lostNotifs
                 }.distinctBy { "${it.packageName}_${it.title}_${it.content}" }
 
-                // Section Header Card with expansion arrow rotation micro-animation
+                // Section Header Card
                 item(key = "header_${section.keyName}") {
                     Card(
                         modifier = Modifier
@@ -326,7 +326,11 @@ fun ActiveNotificationsScreen(dao: NotificationDao) {
                             )
                         }
                     } else {
-                        items(itemsList, key = { "${section.keyName}_${it.id}" }) { item ->
+                        items(
+                            count = itemsList.size,
+                            key = { index -> "${section.keyName}_${itemsList[index].id}" }
+                        ) { index ->
+                            val item = itemsList[index]
                             val cardExpanded = expandedCards.contains(item.key)
                             val isDismissing = dismissingKeys.contains(item.key)
 
