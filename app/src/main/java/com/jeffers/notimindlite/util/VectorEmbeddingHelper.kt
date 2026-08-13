@@ -5,23 +5,11 @@ import kotlin.math.sqrt
 /**
  * On-device vector embedding generator.
  * Produces normalized 128-dimensional dense vector embeddings using
- * subword n-gram hashing and semantic domain feature projections.
+ * subword n-gram hashing and dynamically generated ApplicationInfo category clusters.
  */
 object VectorEmbeddingHelper {
 
     const val EMBEDDING_DIM = 128
-
-    // Semantic category anchors projected onto dedicated vector dimensions
-    private val ANCHOR_DOMAINS: Map<String, List<String>> = mapOf(
-        "finance" to listOf("money", "bank", "payment", "receipt", "transfer", "balance", "credit", "debit", "card", "wallet", "cash", "bill", "invoice", "charge", "usd", "crypto", "paypal", "venmo", "zelle"),
-        "chat" to listOf("chat", "message", "dm", "text", "talk", "inbox", "conversation", "sms", "whatsapp", "telegram", "signal", "messenger", "discord", "slack", "reply"),
-        "delivery" to listOf("delivery", "food", "order", "package", "track", "courier", "uber", "doordash", "grubhub", "amazon", "ship", "shipped", "arriving", "driver"),
-        "security" to listOf("code", "otp", "password", "2fa", "security", "verify", "verification", "login", "auth", "pin", "token", "alert"),
-        "travel" to listOf("flight", "ride", "trip", "hotel", "uber", "lyft", "airline", "train", "bus", "ticket", "gate", "booking"),
-        "reminder" to listOf("reminder", "event", "calendar", "meeting", "agenda", "schedule", "alarm", "task", "todo", "appointment"),
-        "media" to listOf("music", "video", "song", "play", "pause", "spotify", "youtube", "netflix", "podcast", "movie", "audio"),
-        "system" to listOf("battery", "update", "charging", "wifi", "bluetooth", "network", "storage", "system", "download")
-    )
 
     /**
      * Computes a normalized dense vector embedding for arbitrary text.
@@ -49,13 +37,15 @@ object VectorEmbeddingHelper {
             }
         }
 
-        // 2. Semantic Anchor Domain Projection (Dimensions 96..127)
+        // 2. Dynamic Semantic Cluster Anchor Projection (Dimensions 96..127)
+        val dynamicClusters = DynamicClusterManager.getDynamicClusters()
         var anchorDimOffset = 96
-        for ((_, keywords) in ANCHOR_DOMAINS) {
+
+        for ((_, keywords) in dynamicClusters) {
             var domainMatchWeight = 0f
             for (kw in keywords) {
                 if (cleanText.contains(kw)) {
-                    domainMatchWeight += 2.0f
+                    domainMatchWeight += 1.8f
                 }
             }
             if (domainMatchWeight > 0f) {
