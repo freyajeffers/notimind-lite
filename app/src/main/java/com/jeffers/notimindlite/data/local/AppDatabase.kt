@@ -7,10 +7,11 @@ import androidx.room.RoomDatabase
 import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
 
-@Database(entities = [NotificationEntity::class], version = 9, exportSchema = false)
+@Database(entities = [NotificationEntity::class, AppEntity::class], version = 10, exportSchema = false)
 abstract class AppDatabase : RoomDatabase() {
 
     abstract fun notificationDao(): NotificationDao
+    abstract fun appDao(): AppDao
 
     companion object {
         @Volatile
@@ -24,7 +25,7 @@ abstract class AppDatabase : RoomDatabase() {
 
         val MIGRATION_8_9 = object : Migration(8, 9) {
             override fun migrate(db: SupportSQLiteDatabase) {
-                // Add new columns with safe default values to prevent data loss
+                // Add new columns with safe default values to preserve existing records
                 db.execSQL("ALTER TABLE `notifications` ADD COLUMN `lastUpdatedTime` INTEGER NOT NULL DEFAULT 0")
                 db.execSQL("ALTER TABLE `notifications` ADD COLUMN `updateCount` INTEGER NOT NULL DEFAULT 1")
                 db.execSQL("ALTER TABLE `notifications` ADD COLUMN `isRead` INTEGER NOT NULL DEFAULT 0")
@@ -38,6 +39,30 @@ abstract class AppDatabase : RoomDatabase() {
                 db.execSQL("CREATE INDEX IF NOT EXISTS `index_notifications_packageName_isDismissed` ON `notifications` (`packageName`, `isDismissed`)")
                 db.execSQL("CREATE INDEX IF NOT EXISTS `index_notifications_isPinned_postTime` ON `notifications` (`isPinned`, `postTime`)")
                 db.execSQL("CREATE INDEX IF NOT EXISTS `index_notifications_isRead` ON `notifications` (`isRead`)")
+            }
+        }
+
+        val MIGRATION_9_10 = object : Migration(9, 10) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                // 1. Create normalized apps table
+                db.execSQL("""
+                    CREATE TABLE IF NOT EXISTS `apps` (
+                        `packageName` TEXT NOT NULL,
+                        `appName` TEXT NOT NULL,
+                        `firstSeenTime` INTEGER NOT NULL DEFAULT 0,
+                        `lastSeenTime` INTEGER NOT NULL DEFAULT 0,
+                        PRIMARY KEY(`packageName`)
+                    )
+                """.trimIndent())
+
+                // 2. Populate apps table from existing notification records to preserve historical app names
+                db.execSQL("""
+                    INSERT OR IGNORE INTO `apps` (`packageName`, `appName`, `firstSeenTime`, `lastSeenTime`)
+                    SELECT `packageName`, `appName`, MIN(`postTime`), MAX(`postTime`)
+                    FROM `notifications`
+                    WHERE `packageName` != ''
+                    GROUP BY `packageName`
+                """.trimIndent())
             }
         }
 
@@ -60,7 +85,7 @@ abstract class AppDatabase : RoomDatabase() {
                     AppDatabase::class.java,
                     "notimind_lite_database"
                 )
-                .addMigrations(MIGRATION_7_8, MIGRATION_8_9)
+                .addMigrations(MIGRATION_7_8, MIGRATION_8_9, MIGRATION_9_10)
                 .setJournalMode(RoomDatabase.JournalMode.WRITE_AHEAD_LOGGING)
                 .build()
                 INSTANCE = instance
