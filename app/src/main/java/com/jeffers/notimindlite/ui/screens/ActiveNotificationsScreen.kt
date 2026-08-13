@@ -53,8 +53,8 @@ import com.jeffers.notimindlite.data.local.NotificationDao
 import com.jeffers.notimindlite.data.local.NotificationEntity
 import com.jeffers.notimindlite.data.local.PreferenceManager
 import com.jeffers.notimindlite.service.NotificationLoggerService
+import com.jeffers.notimindlite.util.HybridSearchEngine
 import com.jeffers.notimindlite.util.NotificationLauncher
-import com.jeffers.notimindlite.util.SemanticSearchHelper
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.time.Instant
@@ -263,7 +263,7 @@ fun ActiveNotificationsScreen(dao: NotificationDao) {
             verticalArrangement = Arrangement.spacedBy(12.dp),
             contentPadding = PaddingValues(vertical = 12.dp)
         ) {
-            // Hidden-by-default Semantic Search Bar (Revealed when scrolling to the top above cards or clicking search icon)
+            // Hidden-by-default Hybrid Search Bar (Revealed when scrolling to top above cards or clicking search icon)
             item(key = "active_search_header") {
                 AnimatedVisibility(
                     visible = isSearchExplicitlyOpened || searchQuery.isNotEmpty() || listState.firstVisibleItemIndex == 0,
@@ -276,7 +276,7 @@ fun ActiveNotificationsScreen(dao: NotificationDao) {
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(bottom = 6.dp),
-                        placeholder = { Text("Semantic search (e.g. 'uber', 'payment', 'code')...") },
+                        placeholder = { Text("Search (Vector + FTS hybrid search enabled)...") },
                         leadingIcon = { Icon(Icons.Default.Search, contentDescription = "Search") },
                         trailingIcon = {
                             if (searchQuery.isNotEmpty()) {
@@ -349,10 +349,10 @@ fun ActiveNotificationsScreen(dao: NotificationDao) {
                     NotificationSection.LOST -> lostNotifs
                 }.distinctBy { "${it.packageName}_${it.title}_${it.content}" }
 
-                // Apply simple semantic search matching
+                // Combine Semantic Vector Embeddings + Full-Text Search with Best Match Ranking
                 val itemsList = remember(rawItemsList, searchQuery) {
                     if (searchQuery.isBlank()) rawItemsList
-                    else rawItemsList.filter { SemanticSearchHelper.matches(it, searchQuery) }
+                    else HybridSearchEngine.searchAndRank(rawItemsList, searchQuery)
                 }
 
                 // Persistent Sticky Section Header (Keeps open section header accessible at all times for easy collapse)
@@ -392,7 +392,7 @@ fun ActiveNotificationsScreen(dao: NotificationDao) {
                                         color = MaterialTheme.colorScheme.onSurface
                                     )
                                     Text(
-                                        text = section.subtitle,
+                                        text = if (searchQuery.isNotBlank()) "Ranked by Best Match" else section.subtitle,
                                         style = MaterialTheme.typography.bodySmall,
                                         color = MaterialTheme.colorScheme.onSurfaceVariant
                                     )

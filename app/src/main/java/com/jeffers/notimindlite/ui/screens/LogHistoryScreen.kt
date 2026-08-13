@@ -35,8 +35,8 @@ import androidx.compose.ui.unit.sp
 import com.jeffers.notimindlite.data.local.NotificationDao
 import com.jeffers.notimindlite.data.local.NotificationEntity
 import com.jeffers.notimindlite.util.DatabaseExporter
+import com.jeffers.notimindlite.util.HybridSearchEngine
 import com.jeffers.notimindlite.util.NotificationLauncher
-import com.jeffers.notimindlite.util.SemanticSearchHelper
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import java.time.Instant
@@ -80,10 +80,12 @@ fun LogHistoryScreen(dao: NotificationDao) {
 
     val filteredNotifs = remember(activeList, searchQuery, selectedReasonFilter) {
         val baseList = activeList.distinctBy { "${it.packageName}_${it.title}_${it.content}" }
-        baseList.filter { item ->
-            val matchesReason = selectedReasonFilter == null || item.dismissReason == selectedReasonFilter
-            val matchesSearch = SemanticSearchHelper.matches(item, searchQuery)
-            matchesReason && matchesSearch
+        val reasonFiltered = if (selectedReasonFilter == null) baseList else baseList.filter { it.dismissReason == selectedReasonFilter }
+        if (searchQuery.isBlank()) {
+            reasonFiltered
+        } else {
+            // Sort by Best Match Hybrid Score (Vector Embeddings + FTS)
+            HybridSearchEngine.searchAndRank(reasonFiltered, searchQuery)
         }
     }
 
@@ -230,7 +232,8 @@ fun LogHistoryScreen(dao: NotificationDao) {
                     .padding(horizontal = 16.dp, vertical = 8.dp),
                 placeholder = {
                     val filterSuffix = selectedReasonFilter?.let { " • Filter: ${getReasonLabel(it)}" } ?: ""
-                    Text("Search logs (${sortMode.label}$filterSuffix)...")
+                    val sortLabel = if (searchQuery.isNotBlank()) "Best Match" else sortMode.label
+                    Text("Search logs ($sortLabel$filterSuffix)...")
                 },
                 leadingIcon = { Icon(Icons.Default.Search, contentDescription = "Search") },
                 trailingIcon = {
