@@ -2,12 +2,12 @@ package com.jeffers.notimindlite.data.local
 
 import androidx.room.Entity
 import androidx.room.PrimaryKey
-
 import androidx.room.Index
 
 @Entity(
     tableName = "notifications",
     indices = [
+        Index(value = ["key"], unique = true),
         Index(value = ["isDismissed"]),
         Index(value = ["isPinned"]),
         Index(value = ["postTime"])
