@@ -66,6 +66,9 @@ interface NotificationDao {
     """)
     fun searchNotificationsFts(searchQuery: String): Flow<List<NotificationEntity>>
 
+    @Query("INSERT INTO notifications_fts(notifications_fts) VALUES('rebuild')")
+    suspend fun rebuildFtsIndex()
+
     @Query("UPDATE notifications SET isPinned = :isPinned WHERE key = :key")
     suspend fun updatePinnedStatus(key: String, isPinned: Boolean)
 

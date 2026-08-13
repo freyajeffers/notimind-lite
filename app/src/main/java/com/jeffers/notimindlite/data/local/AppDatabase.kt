@@ -1,6 +1,7 @@
 package com.jeffers.notimindlite.data.local
 
 import android.content.Context
+import android.os.UserManager
 import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
@@ -14,8 +15,17 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun appDao(): AppDao
 
     companion object {
+        const val DE_DATABASE_NAME = "notimind_de.db"
+        const val CE_DATABASE_NAME = "notimind_lite_database"
+
         @Volatile
         private var INSTANCE: AppDatabase? = null
+
+        @Volatile
+        private var deInstance: AppDatabase? = null
+
+        @Volatile
+        private var ceInstance: AppDatabase? = null
 
         val MIGRATION_7_8 = object : Migration(7, 8) {
             override fun migrate(db: SupportSQLiteDatabase) {
@@ -107,31 +117,72 @@ abstract class AppDatabase : RoomDatabase() {
         fun setTestInstance(db: AppDatabase) {
             synchronized(this) {
                 INSTANCE = db
+                ceInstance = db
             }
         }
 
         fun resetInstance() {
             synchronized(this) {
                 INSTANCE = null
+                deInstance = null
+                ceInstance = null
+            }
+        }
+
+        fun getDeInstance(context: Context): AppDatabase {
+            return deInstance ?: synchronized(this) {
+                deInstance ?: run {
+                    val appContext = context.applicationContext
+                    val deContext = if (appContext.isDeviceProtectedStorage) appContext else appContext.createDeviceProtectedStorageContext()
+                    Room.databaseBuilder(deContext, AppDatabase::class.java, DE_DATABASE_NAME)
+                        .fallbackToDestructiveMigration()
+                        .setJournalMode(JournalMode.WRITE_AHEAD_LOGGING)
+                        .build().also { deInstance = it }
+                }
+            }
+        }
+
+        fun getCeInstance(context: Context): AppDatabase {
+            val appContext = context.applicationContext
+            val userManager = appContext.getSystemService(Context.USER_SERVICE) as? UserManager
+            check(userManager == null || userManager.isUserUnlocked) { "Attempted CE access while device is locked!" }
+
+            return ceInstance ?: synchronized(this) {
+                ceInstance ?: run {
+                    val instance = Room.databaseBuilder(
+                        appContext,
+                        AppDatabase::class.java,
+                        CE_DATABASE_NAME
+                    )
+                    .addMigrations(
+                        MIGRATION_7_8, MIGRATION_8_9, MIGRATION_9_10,
+                        MIGRATION_10_11, MIGRATION_11_12, MIGRATION_12_13, MIGRATION_13_14
+                    )
+                    .setJournalMode(JournalMode.WRITE_AHEAD_LOGGING)
+                    .build()
+                    ceInstance = instance
+                    INSTANCE = instance
+                    instance
+                }
             }
         }
 
         fun getDatabase(context: Context): AppDatabase {
-            return INSTANCE ?: synchronized(this) {
-                val instance = Room.databaseBuilder(
-                    context.applicationContext,
-                    AppDatabase::class.java,
-                    "notimind_lite_database"
-                )
-                .addMigrations(
-                    MIGRATION_7_8, MIGRATION_8_9, MIGRATION_9_10,
-                    MIGRATION_10_11, MIGRATION_11_12, MIGRATION_12_13, MIGRATION_13_14
-                )
-                .setJournalMode(RoomDatabase.JournalMode.WRITE_AHEAD_LOGGING)
-                .build()
-                INSTANCE = instance
-                instance
+            val appContext = context.applicationContext
+            val userManager = appContext.getSystemService(Context.USER_SERVICE) as? UserManager
+            val isUnlocked = userManager?.isUserUnlocked ?: true
+            return if (isUnlocked) {
+                getCeInstance(appContext)
+            } else {
+                getDeInstance(appContext)
             }
+        }
+
+        fun migrateDeDatabaseFileToCe(context: Context): Boolean {
+            val deContext = context.createDeviceProtectedStorageContext()
+            deInstance?.close()
+            deInstance = null
+            return context.moveDatabaseFrom(deContext, DE_DATABASE_NAME)
         }
     }
 }
