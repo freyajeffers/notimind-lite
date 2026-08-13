@@ -52,7 +52,6 @@ class PermissionRevocationLifecycleTest : BaseRobolectricTest() {
         }
 
         // 3. Permission re-grant simulation & Service rebind
-        val componentNameStr = "${context.packageName}/${NotificationLoggerService::class.java.canonicalName}"
         Settings.Secure.putString(context.contentResolver, "enabled_notification_listeners", componentNameStr)
         NotificationLoggerService.rebindService(context)
 
