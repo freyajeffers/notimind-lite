@@ -13,6 +13,7 @@ import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -20,8 +21,6 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.material.icons.filled.KeyboardArrowDown
-import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Bookmark
@@ -29,7 +28,10 @@ import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.ExpandLess
 import androidx.compose.material.icons.filled.ExpandMore
+import androidx.compose.material.icons.filled.KeyboardArrowDown
+import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material.icons.filled.PushPin
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.outlined.BookmarkBorder
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -51,6 +53,8 @@ import com.jeffers.notimindlite.data.local.NotificationDao
 import com.jeffers.notimindlite.data.local.NotificationEntity
 import com.jeffers.notimindlite.data.local.PreferenceManager
 import com.jeffers.notimindlite.service.NotificationLoggerService
+import com.jeffers.notimindlite.util.NotificationLauncher
+import com.jeffers.notimindlite.util.SemanticSearchHelper
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.time.Instant
@@ -138,7 +142,7 @@ fun AppIconImage(appIconUri: String?, modifier: Modifier = Modifier.size(20.dp))
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
 fun ActiveNotificationsScreen(dao: NotificationDao) {
     val context = LocalContext.current
@@ -148,6 +152,8 @@ fun ActiveNotificationsScreen(dao: NotificationDao) {
     var expandedSection by remember { mutableStateOf(prefManager.getExpandedSection()) }
     var expandedCards by remember { mutableStateOf(setOf<String>()) }
     var isGranted by remember { mutableStateOf(checkNotificationPermission(context)) }
+    var searchQuery by remember { mutableStateOf("") }
+    var isSearchExplicitlyOpened by remember { mutableStateOf(false) }
 
     // Auto refresh permission state on ON_RESUME
     DisposableEffect(lifecycleOwner) {
@@ -200,7 +206,21 @@ fun ActiveNotificationsScreen(dao: NotificationDao) {
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Active & Categorized Notifications", fontWeight = FontWeight.Bold) }
+                title = { Text("Active & Categorized Notifications", fontWeight = FontWeight.Bold) },
+                actions = {
+                    IconButton(onClick = {
+                        isSearchExplicitlyOpened = !isSearchExplicitlyOpened
+                        if (isSearchExplicitlyOpened) {
+                            scope.launch { listState.animateScrollToItem(0) }
+                        }
+                    }) {
+                        Icon(
+                            imageVector = Icons.Default.Search,
+                            contentDescription = "Search",
+                            tint = if (searchQuery.isNotEmpty() || isSearchExplicitlyOpened) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
+                        )
+                    }
+                }
             )
         },
         floatingActionButton = {
@@ -243,6 +263,34 @@ fun ActiveNotificationsScreen(dao: NotificationDao) {
             verticalArrangement = Arrangement.spacedBy(12.dp),
             contentPadding = PaddingValues(vertical = 12.dp)
         ) {
+            // Hidden-by-default Semantic Search Bar (Revealed when scrolling to the top above cards or clicking search icon)
+            item(key = "active_search_header") {
+                AnimatedVisibility(
+                    visible = isSearchExplicitlyOpened || searchQuery.isNotEmpty() || listState.firstVisibleItemIndex == 0,
+                    enter = fadeIn() + expandVertically(),
+                    exit = fadeOut() + shrinkVertically()
+                ) {
+                    OutlinedTextField(
+                        value = searchQuery,
+                        onValueChange = { searchQuery = it },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(bottom = 6.dp),
+                        placeholder = { Text("Semantic search (e.g. 'uber', 'payment', 'code')...") },
+                        leadingIcon = { Icon(Icons.Default.Search, contentDescription = "Search") },
+                        trailingIcon = {
+                            if (searchQuery.isNotEmpty()) {
+                                IconButton(onClick = { searchQuery = "" }) {
+                                    Icon(Icons.Default.Close, contentDescription = "Clear Search")
+                                }
+                            }
+                        },
+                        singleLine = true,
+                        shape = RoundedCornerShape(12.dp)
+                    )
+                }
+            }
+
             // Service Status Card
             item(key = "service_status_card") {
                 Card(
@@ -293,7 +341,7 @@ fun ActiveNotificationsScreen(dao: NotificationDao) {
 
             sectionOrder.forEach { section ->
                 val isExpanded = expandedSection == section.keyName
-                val itemsList = when (section) {
+                val rawItemsList = when (section) {
                     NotificationSection.PINNED -> pinnedNotifs
                     NotificationSection.ACTIVE -> activeNotifs
                     NotificationSection.FILTERED -> emptyList()
@@ -301,47 +349,60 @@ fun ActiveNotificationsScreen(dao: NotificationDao) {
                     NotificationSection.LOST -> lostNotifs
                 }.distinctBy { "${it.packageName}_${it.title}_${it.content}" }
 
-                // Section Header Card
-                item(key = "header_${section.keyName}") {
-                    Card(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clickable { toggleSection(section.keyName) },
-                        colors = CardDefaults.cardColors(
-                            containerColor = when (section) {
-                                NotificationSection.PINNED -> MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = 0.4f)
-                                NotificationSection.ACTIVE -> MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.4f)
-                                NotificationSection.FILTERED -> MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.6f)
-                                NotificationSection.DISMISSED -> MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.4f)
-                                NotificationSection.LOST -> MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.4f)
-                            }
-                        )
+                // Apply simple semantic search matching
+                val itemsList = remember(rawItemsList, searchQuery) {
+                    if (searchQuery.isBlank()) rawItemsList
+                    else rawItemsList.filter { SemanticSearchHelper.matches(it, searchQuery) }
+                }
+
+                // Persistent Sticky Section Header (Keeps open section header accessible at all times for easy collapse)
+                stickyHeader(key = "sticky_header_${section.keyName}") {
+                    Surface(
+                        modifier = Modifier.fillMaxWidth(),
+                        color = MaterialTheme.colorScheme.background,
+                        shadowElevation = if (isExpanded) 2.dp else 0.dp
                     ) {
-                        Row(
+                        Card(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(14.dp),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
+                                .padding(vertical = 4.dp)
+                                .clickable { toggleSection(section.keyName) },
+                            colors = CardDefaults.cardColors(
+                                containerColor = when (section) {
+                                    NotificationSection.PINNED -> MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = 0.85f)
+                                    NotificationSection.ACTIVE -> MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.85f)
+                                    NotificationSection.FILTERED -> MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.85f)
+                                    NotificationSection.DISMISSED -> MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.85f)
+                                    NotificationSection.LOST -> MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.85f)
+                                }
+                            )
                         ) {
-                            Column(modifier = Modifier.weight(1f)) {
-                                Text(
-                                    text = "${section.title} (${itemsList.size})",
-                                    style = MaterialTheme.typography.titleMedium,
-                                    fontWeight = FontWeight.Bold,
-                                    color = MaterialTheme.colorScheme.onSurface
-                                )
-                                Text(
-                                    text = section.subtitle,
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(14.dp),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Text(
+                                        text = "${section.title} (${itemsList.size})",
+                                        style = MaterialTheme.typography.titleMedium,
+                                        fontWeight = FontWeight.Bold,
+                                        color = MaterialTheme.colorScheme.onSurface
+                                    )
+                                    Text(
+                                        text = section.subtitle,
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                }
+                                Icon(
+                                    imageVector = if (isExpanded) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
+                                    contentDescription = if (isExpanded) "Collapse" else "Expand",
+                                    tint = MaterialTheme.colorScheme.primary
                                 )
                             }
-                            Icon(
-                                imageVector = if (isExpanded) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
-                                contentDescription = if (isExpanded) "Collapse" else "Expand",
-                                tint = MaterialTheme.colorScheme.primary
-                            )
                         }
                     }
                 }
@@ -351,7 +412,7 @@ fun ActiveNotificationsScreen(dao: NotificationDao) {
                     if (itemsList.isEmpty()) {
                         item(key = "empty_${section.keyName}") {
                             Text(
-                                text = "No ${section.title.lowercase()} logged",
+                                text = if (searchQuery.isBlank()) "No ${section.title.lowercase()} logged" else "No matching notifications in ${section.title.lowercase()}",
                                 style = MaterialTheme.typography.bodyMedium,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
                                 modifier = Modifier.padding(start = 8.dp, bottom = 4.dp)
@@ -383,7 +444,7 @@ fun ActiveNotificationsScreen(dao: NotificationDao) {
                                         dismissingKeys = dismissingKeys + item.key
                                         scope.launch {
                                             NotificationLoggerService.dismissNotification(item.key)
-                                            kotlinx.coroutines.delay(300)
+                                            delay(300)
                                             dao.markDismissedWithReasonByMatching(
                                                 key = item.key,
                                                 packageName = item.packageName,
@@ -501,7 +562,7 @@ fun UnifiedNotificationCard(
         modifier = Modifier
             .fillMaxWidth()
             .clickable {
-                com.jeffers.notimindlite.util.NotificationLauncher.launchNotification(context, item.packageName, item.key, item.intentUri)
+                NotificationLauncher.launchNotification(context, item.packageName, item.key, item.intentUri)
             },
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
@@ -701,7 +762,7 @@ fun NotificationDetailPanel(item: NotificationEntity, dateTimeFormatter: DateTim
                 actionLabels.forEachIndexed { index, label ->
                     OutlinedButton(
                         onClick = {
-                            val triggered = com.jeffers.notimindlite.util.NotificationLauncher.triggerAction(context, item.key, index)
+                            val triggered = NotificationLauncher.triggerAction(context, item.key, index)
                             if (!triggered) {
                                 android.widget.Toast.makeText(context, "Action expired — open the app instead", android.widget.Toast.LENGTH_SHORT).show()
                             }
