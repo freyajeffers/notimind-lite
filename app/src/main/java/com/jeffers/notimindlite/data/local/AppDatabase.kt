@@ -7,7 +7,7 @@ import androidx.room.RoomDatabase
 import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
 
-@Database(entities = [NotificationEntity::class, AppEntity::class], version = 10, exportSchema = false)
+@Database(entities = [NotificationEntity::class, AppEntity::class], version = 11, exportSchema = false)
 abstract class AppDatabase : RoomDatabase() {
 
     abstract fun notificationDao(): NotificationDao
@@ -66,6 +66,13 @@ abstract class AppDatabase : RoomDatabase() {
             }
         }
 
+        val MIGRATION_10_11 = object : Migration(10, 11) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                // Ensure foreign key index constraint compatibility on notifications table
+                db.execSQL("CREATE INDEX IF NOT EXISTS `index_notifications_packageName` ON `notifications` (`packageName`)")
+            }
+        }
+
         fun setTestInstance(db: AppDatabase) {
             synchronized(this) {
                 INSTANCE = db
@@ -85,7 +92,7 @@ abstract class AppDatabase : RoomDatabase() {
                     AppDatabase::class.java,
                     "notimind_lite_database"
                 )
-                .addMigrations(MIGRATION_7_8, MIGRATION_8_9, MIGRATION_9_10)
+                .addMigrations(MIGRATION_7_8, MIGRATION_8_9, MIGRATION_9_10, MIGRATION_10_11)
                 .setJournalMode(RoomDatabase.JournalMode.WRITE_AHEAD_LOGGING)
                 .build()
                 INSTANCE = instance
