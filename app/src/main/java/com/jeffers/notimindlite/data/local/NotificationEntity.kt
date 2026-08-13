@@ -1,11 +1,20 @@
 package com.jeffers.notimindlite.data.local
 
 import androidx.room.Entity
-import androidx.room.PrimaryKey
+import androidx.room.ForeignKey
 import androidx.room.Index
+import androidx.room.PrimaryKey
 
 @Entity(
     tableName = "notifications",
+    foreignKeys = [
+        ForeignKey(
+            entity = AppEntity::class,
+            parentColumns = ["packageName"],
+            childColumns = ["packageName"],
+            onDelete = ForeignKey.CASCADE
+        )
+    ],
     indices = [
         Index(value = ["key"], unique = true),
         Index(value = ["isDismissed", "postTime"]),
