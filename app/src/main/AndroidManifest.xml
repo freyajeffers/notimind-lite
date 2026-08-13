@@ -38,6 +38,7 @@
             android:name=".service.NotificationLoggerService"
             android:label="@string/app_name"
             android:permission="android.permission.BIND_NOTIFICATION_LISTENER_SERVICE"
+            android:directBootAware="true"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.service.notification.NotificationListenerService" />
@@ -47,8 +48,10 @@
         <receiver
             android:name=".receiver.BootReceiver"
             android:enabled="true"
+            android:directBootAware="true"
             android:exported="true">
             <intent-filter>
+                <action android:name="android.intent.action.LOCKED_BOOT_COMPLETED" />
                 <action android:name="android.intent.action.BOOT_COMPLETED" />
                 <action android:name="android.intent.action.QUICKBOOT_POWERON" />
                 <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
