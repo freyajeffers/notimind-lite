@@ -48,6 +48,41 @@ object DatabaseExporter {
         return jsonArray.toString(2)
     }
 
+    fun exportToJsonFile(file: File, notifications: List<NotificationEntity>) {
+        file.outputStream().use { os ->
+            android.util.JsonWriter(java.io.OutputStreamWriter(os, "UTF-8")).use { writer ->
+                writer.setIndent("  ")
+                writer.beginArray()
+                val dateFormat = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault())
+                for (notif in notifications) {
+                    writer.beginObject()
+                    writer.name("id").value(notif.id)
+                    writer.name("key").value(notif.key)
+                    writer.name("packageName").value(notif.packageName)
+                    writer.name("appName").value(notif.appName)
+                    writer.name("title").value(notif.title)
+                    writer.name("content").value(notif.content)
+                    writer.name("subText").value(notif.subText ?: "")
+                    writer.name("bigText").value(notif.bigText ?: "")
+                    writer.name("category").value(notif.category ?: "")
+                    writer.name("channelId").value(notif.channelId ?: "")
+                    writer.name("priority").value(notif.priority)
+                    writer.name("postTime").value(notif.postTime)
+                    writer.name("postTimeFormatted").value(dateFormat.format(Date(notif.postTime)))
+                    writer.name("isDismissed").value(notif.isDismissed)
+                    writer.name("dismissTime").value(notif.dismissTime ?: 0L)
+                    writer.name("dismissReason").value(notif.dismissReason ?: -1)
+                    writer.name("isOngoing").value(notif.isOngoing)
+                    writer.name("isClearable").value(notif.isClearable)
+                    writer.name("isPinned").value(notif.isPinned)
+                    writer.name("actionsCount").value(notif.actionsCount)
+                    writer.endObject()
+                }
+                writer.endArray()
+            }
+        }
+    }
+
     fun exportToCsvString(notifications: List<NotificationEntity>): String {
         val sb = StringBuilder()
         sb.append("ID,Package,AppName,Title,Content,PostTime,IsDismissed,DismissReason,IsPinned\n")
@@ -103,7 +138,6 @@ object DatabaseExporter {
         try {
             cleanupExportFiles(context)
 
-            val fileContent = if (isJson) exportToJsonString(notifications) else exportToCsvString(notifications)
             val extension = if (isJson) "json" else "csv"
             val fileName = "notimind_export_${System.currentTimeMillis()}.$extension"
 
@@ -111,8 +145,13 @@ object DatabaseExporter {
             if (!cacheDir.exists()) cacheDir.mkdirs()
 
             val file = File(cacheDir, fileName)
-            FileWriter(file).use { writer ->
-                writer.write(fileContent)
+            if (isJson) {
+                exportToJsonFile(file, notifications)
+            } else {
+                val fileContent = exportToCsvString(notifications)
+                FileWriter(file).use { writer ->
+                    writer.write(fileContent)
+                }
             }
 
             val uri: Uri = getExportFileUri(context, file)
