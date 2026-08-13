@@ -7,7 +7,7 @@ import androidx.room.RoomDatabase
 import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
 
-@Database(entities = [NotificationEntity::class, AppEntity::class], version = 11, exportSchema = false)
+@Database(entities = [NotificationEntity::class, AppEntity::class], version = 12, exportSchema = false)
 abstract class AppDatabase : RoomDatabase() {
 
     abstract fun notificationDao(): NotificationDao
@@ -68,8 +68,14 @@ abstract class AppDatabase : RoomDatabase() {
 
         val MIGRATION_10_11 = object : Migration(10, 11) {
             override fun migrate(db: SupportSQLiteDatabase) {
-                // Ensure foreign key index constraint compatibility on notifications table
                 db.execSQL("CREATE INDEX IF NOT EXISTS `index_notifications_packageName` ON `notifications` (`packageName`)")
+            }
+        }
+
+        val MIGRATION_11_12 = object : Migration(11, 12) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE `apps` ADD COLUMN `appIconUri` TEXT DEFAULT NULL")
+                db.execSQL("ALTER TABLE `notifications` ADD COLUMN `appIconUri` TEXT DEFAULT NULL")
             }
         }
 
@@ -92,7 +98,7 @@ abstract class AppDatabase : RoomDatabase() {
                     AppDatabase::class.java,
                     "notimind_lite_database"
                 )
-                .addMigrations(MIGRATION_7_8, MIGRATION_8_9, MIGRATION_9_10, MIGRATION_10_11)
+                .addMigrations(MIGRATION_7_8, MIGRATION_8_9, MIGRATION_9_10, MIGRATION_10_11, MIGRATION_11_12)
                 .setJournalMode(RoomDatabase.JournalMode.WRITE_AHEAD_LOGGING)
                 .build()
                 INSTANCE = instance
