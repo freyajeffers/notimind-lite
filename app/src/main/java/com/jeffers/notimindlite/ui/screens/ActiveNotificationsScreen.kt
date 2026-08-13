@@ -25,9 +25,11 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Bookmark
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.ExpandLess
 import androidx.compose.material.icons.filled.ExpandMore
+import androidx.compose.material.icons.filled.FilterList
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material.icons.filled.PushPin
@@ -53,6 +55,8 @@ import com.jeffers.notimindlite.data.local.NotificationDao
 import com.jeffers.notimindlite.data.local.NotificationEntity
 import com.jeffers.notimindlite.data.local.PreferenceManager
 import com.jeffers.notimindlite.service.NotificationLoggerService
+import com.jeffers.notimindlite.ui.dialogs.AppPackageSelectorDialog
+import com.jeffers.notimindlite.ui.dialogs.NotificationDateRangePicker
 import com.jeffers.notimindlite.util.HybridSearchEngine
 import com.jeffers.notimindlite.util.NotificationLauncher
 import kotlinx.coroutines.delay
@@ -155,6 +159,12 @@ fun ActiveNotificationsScreen(dao: NotificationDao) {
     var searchQuery by remember { mutableStateOf("") }
     var isSearchExplicitlyOpened by remember { mutableStateOf(false) }
 
+    var selectedPackages by remember { mutableStateOf<List<String>?>(null) }
+    var startDateMs by remember { mutableStateOf<Long?>(null) }
+    var endDateMs by remember { mutableStateOf<Long?>(null) }
+    var showDatePicker by remember { mutableStateOf(false) }
+    var showPackagePicker by remember { mutableStateOf(false) }
+
     // Auto refresh permission state on ON_RESUME
     DisposableEffect(lifecycleOwner) {
         val observer = LifecycleEventObserver { _, event ->
@@ -176,11 +186,17 @@ fun ActiveNotificationsScreen(dao: NotificationDao) {
         DateTimeFormatter.ofPattern("MMM dd, HH:mm:ss", Locale.getDefault()).withZone(ZoneId.systemDefault())
     }
 
-    // Track dismissing items for swipe animation
+    val allActiveList = remember(pinnedNotifs, activeNotifs, recentlyDismissed, lostNotifs) {
+        (pinnedNotifs + activeNotifs + recentlyDismissed + lostNotifs).distinctBy { it.packageName }
+    }
+
+    val availableApps = remember(allActiveList) {
+        allActiveList.map { it.packageName to it.appName }
+    }
+
     var dismissingKeys by remember { mutableStateOf(setOf<String>()) }
     val scope = rememberCoroutineScope()
 
-    // Dynamic ordering: placing the expanded section at the top, auto-hide empty Pinned
     val sectionOrder = remember(expandedSection, pinnedNotifs.size) {
         val defaultList = if (pinnedNotifs.isNotEmpty()) {
             listOf(NotificationSection.PINNED, NotificationSection.ACTIVE, NotificationSection.FILTERED, NotificationSection.DISMISSED, NotificationSection.LOST)
@@ -208,6 +224,25 @@ fun ActiveNotificationsScreen(dao: NotificationDao) {
             TopAppBar(
                 title = { Text("Active & Categorized Notifications", fontWeight = FontWeight.Bold) },
                 actions = {
+                    // App Package Filter
+                    IconButton(onClick = { showPackagePicker = true }) {
+                        Icon(
+                            imageVector = Icons.Default.FilterList,
+                            contentDescription = "Filter Apps",
+                            tint = if (!selectedPackages.isNullOrEmpty()) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
+                        )
+                    }
+
+                    // Date Range Filter
+                    IconButton(onClick = { showDatePicker = true }) {
+                        Icon(
+                            imageVector = Icons.Default.DateRange,
+                            contentDescription = "Filter Date Range",
+                            tint = if (startDateMs != null) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
+                        )
+                    }
+
+                    // Search Toggle
                     IconButton(onClick = {
                         isSearchExplicitlyOpened = !isSearchExplicitlyOpened
                         if (isSearchExplicitlyOpened) {
@@ -309,7 +344,7 @@ fun ActiveNotificationsScreen(dao: NotificationDao) {
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Column(modifier = Modifier.weight(1f)) {
+                        Column(modifier = Modifier.weight(1f)) {\
                             Text(
                                 text = "Notification Listener Service",
                                 style = MaterialTheme.typography.titleMedium,
@@ -324,7 +359,7 @@ fun ActiveNotificationsScreen(dao: NotificationDao) {
                         }
 
                         Button(
-                            onClick = {
+                            onClick = {\
                                 val intent = Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS)
                                 intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
                                 context.startActivity(intent)
@@ -349,13 +384,28 @@ fun ActiveNotificationsScreen(dao: NotificationDao) {
                     NotificationSection.LOST -> lostNotifs
                 }.distinctBy { "${it.packageName}_${it.title}_${it.content}" }
 
-                // Combine Semantic Vector Embeddings + Full-Text Search with Best Match Ranking
-                val itemsList = remember(rawItemsList, searchQuery) {
-                    if (searchQuery.isBlank()) rawItemsList
-                    else HybridSearchEngine.searchAndRank(rawItemsList, searchQuery)
+                // Apply multi-filters: selectedPackages, startDateMs, endDateMs
+                val filteredList = remember(rawItemsList, selectedPackages, startDateMs, endDateMs) {
+                    var list = rawItemsList
+                    if (!selectedPackages.isNullOrEmpty()) {
+                        list = list.filter { selectedPackages!!.contains(it.packageName) }
+                    }
+                    if (startDateMs != null) {
+                        list = list.filter { it.postTime >= startDateMs!! }
+                    }
+                    if (endDateMs != null) {
+                        list = list.filter { it.postTime <= endDateMs!! }
+                    }
+                    list
                 }
 
-                // Persistent Sticky Section Header (Keeps open section header accessible at all times for easy collapse)
+                // Combine Semantic Vector Embeddings + Full-Text Search with Best Match Ranking
+                val itemsList = remember(filteredList, searchQuery) {
+                    if (searchQuery.isBlank()) filteredList
+                    else HybridSearchEngine.searchAndRank(filteredList, searchQuery)
+                }
+
+                // Persistent Sticky Section Header
                 stickyHeader(key = "sticky_header_${section.keyName}") {
                     Surface(
                         modifier = Modifier.fillMaxWidth(),
@@ -412,7 +462,10 @@ fun ActiveNotificationsScreen(dao: NotificationDao) {
                     if (itemsList.isEmpty()) {
                         item(key = "empty_${section.keyName}") {
                             Text(
-                                text = if (searchQuery.isBlank()) "No ${section.title.lowercase()} logged" else "No matching notifications in ${section.title.lowercase()}",
+                                text = if (searchQuery.isBlank() && selectedPackages == null && startDateMs == null)
+                                    "No ${section.title.lowercase()} logged"
+                                else
+                                    "No matching notifications in ${section.title.lowercase()}",
                                 style = MaterialTheme.typography.bodyMedium,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
                                 modifier = Modifier.padding(start = 8.dp, bottom = 4.dp)
@@ -462,6 +515,29 @@ fun ActiveNotificationsScreen(dao: NotificationDao) {
                 }
             }
         }
+    }
+
+    if (showDatePicker) {
+        NotificationDateRangePicker(
+            onDismiss = { showDatePicker = false },
+            onDateRangeSelected = { start, end ->
+                startDateMs = start
+                endDateMs = end
+                showDatePicker = false
+            }
+        )
+    }
+
+    if (showPackagePicker) {
+        AppPackageSelectorDialog(
+            selectedPackages = selectedPackages ?: emptyList(),
+            availableApps = availableApps,
+            onDismiss = { showPackagePicker = false },
+            onPackagesSelected = { pkgs ->
+                selectedPackages = pkgs
+                showPackagePicker = false
+            }
+        )
     }
 }
 
@@ -737,7 +813,7 @@ fun NotificationDetailPanel(item: NotificationEntity, dateTimeFormatter: DateTim
                 val jsonArray = org.json.JSONArray(item.actionLabels)
                 (0 until jsonArray.length()).map { jsonArray.getString(it) }
             } catch (e: Exception) {
-                emptyList()
+                emptyList()\
             }
         } else {
             emptyList()
