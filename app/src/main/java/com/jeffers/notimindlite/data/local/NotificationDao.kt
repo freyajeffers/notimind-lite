@@ -51,7 +51,6 @@ interface NotificationDao {
     @Query("SELECT * FROM notifications WHERE isDismissed = 1 AND (dismissReason IN (5, 8) OR dismissReason NOT IN (1, 2, 3) OR dismissReason IS NULL) ORDER BY COALESCE(dismissTime, postTime) DESC")
     fun getLostNotificationsFlow(): Flow<List<NotificationEntity>>
 
-    // New method to fetch notification by key for deduplication
     @Query("SELECT * FROM notifications WHERE key = :key LIMIT 1")
     suspend fun getNotificationByKey(key: String): NotificationEntity?
 
@@ -61,10 +60,34 @@ interface NotificationDao {
     @Query("UPDATE notifications SET isPinned = :isPinned WHERE key = :key")
     suspend fun updatePinnedStatus(key: String, isPinned: Boolean)
 
-    @Query("UPDATE notifications SET isDismissed = 1, dismissTime = :dismissTime WHERE key = :key OR (packageName = :packageName AND title = :title AND content = :content)")
+    @Query("""
+        UPDATE notifications 
+        SET isDismissed = 1, dismissTime = :dismissTime 
+        WHERE key = :key 
+           OR (
+               :key = '' 
+               AND packageName = :packageName 
+               AND title = :title 
+               AND content = :content 
+               AND title != '' 
+               AND content != ''
+           )
+    """)
     suspend fun markDismissedByMatching(key: String, packageName: String, title: String, content: String, dismissTime: Long = System.currentTimeMillis())
 
-    @Query("UPDATE notifications SET isDismissed = 1, dismissReason = :reason, dismissTime = :dismissTime WHERE key = :key OR (packageName = :packageName AND title = :title AND content = :content)")
+    @Query("""
+        UPDATE notifications 
+        SET isDismissed = 1, dismissReason = :reason, dismissTime = :dismissTime 
+        WHERE key = :key 
+           OR (
+               :key = '' 
+               AND packageName = :packageName 
+               AND title = :title 
+               AND content = :content 
+               AND title != '' 
+               AND content != ''
+           )
+    """)
     suspend fun markDismissedWithReasonByMatching(key: String, packageName: String, title: String, content: String, reason: Int, dismissTime: Long = System.currentTimeMillis())
 
     @Query("UPDATE notifications SET isDismissed = 1, dismissTime = :dismissTime WHERE key = :key")
