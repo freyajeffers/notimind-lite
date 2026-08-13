@@ -6,7 +6,6 @@ import android.content.BroadcastReceiver
 import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
-import android.os.Build
 import android.service.notification.NotificationListenerService
 import android.util.Log
 import androidx.core.app.NotificationCompat
@@ -57,25 +56,19 @@ class BootReceiver : BroadcastReceiver() {
                     val notificationManager =
                         context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
 
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                        val channel = NotificationChannel(
-                            CHANNEL_ID_RESTORED,
-                            CHANNEL_NAME,
-                            NotificationManager.IMPORTANCE_DEFAULT
-                        ).apply {
-                            description = "Restored active status bar notifications on boot"
-                        }
-                        notificationManager.createNotificationChannel(channel)
+                    val channel = NotificationChannel(
+                        CHANNEL_ID_RESTORED,
+                        CHANNEL_NAME,
+                        NotificationManager.IMPORTANCE_DEFAULT
+                    ).apply {
+                        description = "Restored active status bar notifications on boot"
                     }
+                    notificationManager.createNotificationChannel(channel)
 
                     // Collect active status bar notifications for deduplication
-                    val activeStatusBarNotifs = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                        try {
-                            notificationManager.activeNotifications.toList()
-                        } catch (e: Exception) {
-                            emptyList()
-                        }
-                    } else {
+                    val activeStatusBarNotifs = try {
+                        notificationManager.activeNotifications.toList()
+                    } catch (e: Exception) {
                         emptyList()
                     }
                     val activeKeys = activeStatusBarNotifs.map { it.key }.toSet()
@@ -86,7 +79,7 @@ class BootReceiver : BroadcastReceiver() {
                             Log.d("BootReceiverLite", "Skipping ongoing notification from boot restoration: ${notif.title}")
                             continue
                         }
-                        
+
                         // Use unique notification ID for each restored notification to prevent overwriting
                         val notifId = (notif.id.hashCode() and 0x7FFFFFFF) + 1000
 

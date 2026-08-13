@@ -2,7 +2,7 @@ package com.jeffers.notimindlite.service
 
 import android.content.ComponentName
 import android.content.Context
-import android.os.Build
+import android.content.pm.PackageManager
 import android.service.notification.NotificationListenerService
 import android.service.notification.StatusBarNotification
 import android.util.Log
@@ -13,7 +13,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import java.util.Collections
 import java.util.LinkedHashMap
-import java.util.Locale
 
 /**
  * Service that listens for posted and removed notifications.
@@ -57,9 +56,7 @@ class NotificationLoggerService : NotificationListenerService() {
 
         fun rebindService(context: Context) {
             try {
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-                    requestRebind(ComponentName(context, NotificationLoggerService::class.java))
-                }
+                requestRebind(ComponentName(context, NotificationLoggerService::class.java))
             } catch (e: Exception) {
                 Log.e("NotificationLoggerSrv", "Failed to rebind notification listener service", e)
             }
@@ -185,11 +182,7 @@ class NotificationLoggerService : NotificationListenerService() {
             recentContents[key] = contentSignature
 
             val rawAppName = try {
-                val appInfo = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-                    packageManager.getApplicationInfo(packageName, android.content.pm.PackageManager.MATCH_UNINSTALLED_PACKAGES)
-                } else {
-                    packageManager.getApplicationInfo(packageName, 0)
-                }
+                val appInfo = packageManager.getApplicationInfo(packageName, PackageManager.MATCH_UNINSTALLED_PACKAGES)
                 packageManager.getApplicationLabel(appInfo).toString()
             } catch (e: Exception) {
                 null
@@ -207,11 +200,7 @@ class NotificationLoggerService : NotificationListenerService() {
                 formatted.ifBlank { packageName.ifBlank { "Unknown App" } }
             }
 
-            val channelId = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                notification.channelId
-            } else {
-                null
-            }
+            val channelId = notification.channelId
             val groupKey = sbn.groupKey
             val isOngoing = sbn.isOngoing
             val isClearable = sbn.isClearable
