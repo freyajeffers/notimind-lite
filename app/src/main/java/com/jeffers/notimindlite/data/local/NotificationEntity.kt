@@ -7,14 +7,6 @@ import androidx.room.PrimaryKey
 
 @Entity(
     tableName = "notifications",
-    foreignKeys = [
-        ForeignKey(
-            entity = AppEntity::class,
-            parentColumns = ["packageName"],
-            childColumns = ["packageName"],
-            onDelete = ForeignKey.CASCADE
-        )
-    ],
     indices = [
         Index(value = ["key"], unique = true),
         Index(value = ["isDismissed", "postTime"]),

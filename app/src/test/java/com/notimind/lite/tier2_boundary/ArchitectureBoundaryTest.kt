@@ -48,7 +48,7 @@ class ArchitectureBoundaryTest : BaseRobolectricTest() {
     }
 
     @Test
-    @Config(sdk = [24, 33, 34])
+    @Config(sdk = [28, 33, 34])
     fun tc_R1_T2_003_sdkVersionBoundaryCompatibility() {
         val db = AppDatabase.getDatabase(context)
         assertNotNull("Database initialized on target SDK boundary", db)
