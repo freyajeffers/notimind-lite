@@ -8,9 +8,11 @@ import androidx.room.Index
     tableName = "notifications",
     indices = [
         Index(value = ["key"], unique = true),
-        Index(value = ["isDismissed"]),
-        Index(value = ["isPinned"]),
-        Index(value = ["postTime"])
+        Index(value = ["isDismissed", "postTime"]),
+        Index(value = ["isDismissed", "dismissTime"]),
+        Index(value = ["packageName", "isDismissed"]),
+        Index(value = ["isPinned", "postTime"]),
+        Index(value = ["isRead"])
     ]
 )
 data class NotificationEntity(
@@ -21,12 +23,17 @@ data class NotificationEntity(
     val title: String,
     val content: String,
     val postTime: Long = System.currentTimeMillis(),
+    val lastUpdatedTime: Long = System.currentTimeMillis(),
+    val updateCount: Int = 1,
     val isDismissed: Boolean = false,
     val isPersistent: Boolean = false,
+    val isRead: Boolean = false,
+    val isGroupSummary: Boolean = false,
     val category: String? = null,
     val channelId: String? = null,
     val subText: String? = null,
     val bigText: String? = null,
+    val inboxLinesJson: String? = null,
     val priority: Int = 0,
     val groupKey: String? = null,
     val isOngoing: Boolean = false,
@@ -36,5 +43,6 @@ data class NotificationEntity(
     val dismissTime: Long? = null,
     val intentUri: String? = null,
     val isPinned: Boolean = false,
-    val actionLabels: String? = null
+    val actionLabels: String? = null,
+    val smallIconRes: Int = 0
 )
