@@ -15,7 +15,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Sort
 import androidx.compose.material.icons.filled.Bookmark
 import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Download
 import androidx.compose.material.icons.filled.ExpandLess
 import androidx.compose.material.icons.filled.ExpandMore
@@ -36,7 +35,6 @@ import androidx.compose.ui.unit.sp
 import com.jeffers.notimindlite.data.local.NotificationDao
 import com.jeffers.notimindlite.data.local.NotificationEntity
 import com.jeffers.notimindlite.ui.dialogs.AppPackageSelectorDialog
-import com.jeffers.notimindlite.ui.dialogs.NotificationDateRangePicker
 import com.jeffers.notimindlite.util.DatabaseExporter
 import com.jeffers.notimindlite.util.HybridSearchEngine
 import com.jeffers.notimindlite.util.NotificationLauncher
@@ -62,13 +60,10 @@ fun LogHistoryScreen(dao: NotificationDao) {
     var sortMode by remember { mutableStateOf(SortMode.DISMISSED) }
     var selectedReasonFilter by remember { mutableStateOf<Int?>(null) }
     var selectedPackages by remember { mutableStateOf<List<String>?>(null) }
-    var startDateMs by remember { mutableStateOf<Long?>(null) }
-    var endDateMs by remember { mutableStateOf<Long?>(null) }
 
     var showSortMenu by remember { mutableStateOf(false) }
     var showFilterMenu by remember { mutableStateOf(false) }
     var showExportMenu by remember { mutableStateOf(false) }
-    var showDatePicker by remember { mutableStateOf(false) }
     var showPackagePicker by remember { mutableStateOf(false) }
     var expandedCards by remember { mutableStateOf(setOf<String>()) }
 
@@ -90,7 +85,7 @@ fun LogHistoryScreen(dao: NotificationDao) {
         activeList.map { it.packageName to it.appName }.distinctBy { it.first }
     }
 
-    val filteredNotifs = remember(activeList, searchQuery, selectedReasonFilter, selectedPackages, startDateMs, endDateMs) {
+    val filteredNotifs = remember(activeList, searchQuery, selectedReasonFilter, selectedPackages) {
         var list = activeList.distinctBy { "${it.packageName}_${it.title}_${it.content}" }
 
         if (selectedReasonFilter != null) {
@@ -99,14 +94,6 @@ fun LogHistoryScreen(dao: NotificationDao) {
 
         if (!selectedPackages.isNullOrEmpty()) {
             list = list.filter { selectedPackages!!.contains(it.packageName) }
-        }
-
-        if (startDateMs != null) {
-            list = list.filter { it.postTime >= startDateMs!! }
-        }
-
-        if (endDateMs != null) {
-            list = list.filter { it.postTime <= endDateMs!! }
         }
 
         if (searchQuery.isBlank()) {
@@ -127,15 +114,6 @@ fun LogHistoryScreen(dao: NotificationDao) {
                             Icons.Default.FilterList,
                             contentDescription = "Filter Apps",
                             tint = if (!selectedPackages.isNullOrEmpty()) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
-                        )
-                    }
-
-                    // Date Range Picker Button
-                    IconButton(onClick = { showDatePicker = true }) {
-                        Icon(
-                            Icons.Default.DateRange,
-                            contentDescription = "Filter by Date Range",
-                            tint = if (startDateMs != null) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
                         )
                     }
 
@@ -306,7 +284,7 @@ fun LogHistoryScreen(dao: NotificationDao) {
                         )
                         Spacer(modifier = Modifier.height(16.dp))
                         Text(
-                            text = if (searchQuery.isBlank() && selectedReasonFilter == null && selectedPackages == null && startDateMs == null)
+                            text = if (searchQuery.isBlank() && selectedReasonFilter == null && selectedPackages == null)
                                 "No dismissed notifications logged yet"
                             else
                                 "No matching dismissed logs found",
@@ -340,17 +318,6 @@ fun LogHistoryScreen(dao: NotificationDao) {
                 }
             }
         }
-    }
-
-    if (showDatePicker) {
-        NotificationDateRangePicker(
-            onDismiss = { showDatePicker = false },
-            onDateRangeSelected = { start, end ->
-                startDateMs = start
-                endDateMs = end
-                showDatePicker = false
-            }
-        )
     }
 
     if (showPackagePicker) {

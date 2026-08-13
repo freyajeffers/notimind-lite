@@ -25,7 +25,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Bookmark
 import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.ExpandLess
 import androidx.compose.material.icons.filled.ExpandMore
@@ -56,7 +55,6 @@ import com.jeffers.notimindlite.data.local.NotificationEntity
 import com.jeffers.notimindlite.data.local.PreferenceManager
 import com.jeffers.notimindlite.service.NotificationLoggerService
 import com.jeffers.notimindlite.ui.dialogs.AppPackageSelectorDialog
-import com.jeffers.notimindlite.ui.dialogs.NotificationDateRangePicker
 import com.jeffers.notimindlite.util.HybridSearchEngine
 import com.jeffers.notimindlite.util.NotificationLauncher
 import kotlinx.coroutines.delay
@@ -160,9 +158,6 @@ fun ActiveNotificationsScreen(dao: NotificationDao) {
     var isSearchExplicitlyOpened by remember { mutableStateOf(false) }
 
     var selectedPackages by remember { mutableStateOf<List<String>?>(null) }
-    var startDateMs by remember { mutableStateOf<Long?>(null) }
-    var endDateMs by remember { mutableStateOf<Long?>(null) }
-    var showDatePicker by remember { mutableStateOf(false) }
     var showPackagePicker by remember { mutableStateOf(false) }
 
     // Auto refresh permission state on ON_RESUME
@@ -230,15 +225,6 @@ fun ActiveNotificationsScreen(dao: NotificationDao) {
                             imageVector = Icons.Default.FilterList,
                             contentDescription = "Filter Apps",
                             tint = if (!selectedPackages.isNullOrEmpty()) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
-                        )
-                    }
-
-                    // Date Range Filter
-                    IconButton(onClick = { showDatePicker = true }) {
-                        Icon(
-                            imageVector = Icons.Default.DateRange,
-                            contentDescription = "Filter Date Range",
-                            tint = if (startDateMs != null) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
                         )
                     }
 
@@ -344,7 +330,7 @@ fun ActiveNotificationsScreen(dao: NotificationDao) {
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Column(modifier = Modifier.weight(1f)) {\
+                        Column(modifier = Modifier.weight(1f)) {
                             Text(
                                 text = "Notification Listener Service",
                                 style = MaterialTheme.typography.titleMedium,
@@ -359,7 +345,7 @@ fun ActiveNotificationsScreen(dao: NotificationDao) {
                         }
 
                         Button(
-                            onClick = {\
+                            onClick = {
                                 val intent = Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS)
                                 intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
                                 context.startActivity(intent)
@@ -384,17 +370,11 @@ fun ActiveNotificationsScreen(dao: NotificationDao) {
                     NotificationSection.LOST -> lostNotifs
                 }.distinctBy { "${it.packageName}_${it.title}_${it.content}" }
 
-                // Apply multi-filters: selectedPackages, startDateMs, endDateMs
-                val filteredList = remember(rawItemsList, selectedPackages, startDateMs, endDateMs) {
+                // Apply multi-filter: selectedPackages
+                val filteredList = remember(rawItemsList, selectedPackages) {
                     var list = rawItemsList
                     if (!selectedPackages.isNullOrEmpty()) {
                         list = list.filter { selectedPackages!!.contains(it.packageName) }
-                    }
-                    if (startDateMs != null) {
-                        list = list.filter { it.postTime >= startDateMs!! }
-                    }
-                    if (endDateMs != null) {
-                        list = list.filter { it.postTime <= endDateMs!! }
                     }
                     list
                 }
@@ -462,7 +442,7 @@ fun ActiveNotificationsScreen(dao: NotificationDao) {
                     if (itemsList.isEmpty()) {
                         item(key = "empty_${section.keyName}") {
                             Text(
-                                text = if (searchQuery.isBlank() && selectedPackages == null && startDateMs == null)
+                                text = if (searchQuery.isBlank() && selectedPackages == null)
                                     "No ${section.title.lowercase()} logged"
                                 else
                                     "No matching notifications in ${section.title.lowercase()}",
@@ -515,17 +495,6 @@ fun ActiveNotificationsScreen(dao: NotificationDao) {
                 }
             }
         }
-    }
-
-    if (showDatePicker) {
-        NotificationDateRangePicker(
-            onDismiss = { showDatePicker = false },
-            onDateRangeSelected = { start, end ->
-                startDateMs = start
-                endDateMs = end
-                showDatePicker = false
-            }
-        )
     }
 
     if (showPackagePicker) {
@@ -631,7 +600,6 @@ fun UnifiedNotificationCard(
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
 
-    // Micro-animation scale for pin bookmark toggle
     val pinScale by animateFloatAsState(if (item.isPinned) 1.2f else 1.0f, animationSpec = spring(stiffness = 400f), label = "pin_scale")
 
     Card(
@@ -683,7 +651,6 @@ fun UnifiedNotificationCard(
                         )
                     }
 
-                    // Only show dismiss X if notification is active AND clearable
                     if (!item.isDismissed && item.isClearable) {
                         Spacer(modifier = Modifier.width(6.dp))
                         IconButton(
@@ -765,7 +732,6 @@ fun UnifiedNotificationCard(
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
 
-            // Enhanced full metadata details section with spring expand micro-animation
             AnimatedVisibility(
                 visible = isExpanded,
                 enter = fadeIn() + expandVertically(animationSpec = spring(stiffness = 300f)),
@@ -798,22 +764,17 @@ fun UnifiedNotificationCard(
     }
 }
 
-/**
- * Enhanced notification detail panel organized into logical groups
- * with human-readable labels and visual hierarchy.
- */
 @Composable
 fun NotificationDetailPanel(item: NotificationEntity, dateTimeFormatter: DateTimeFormatter) {
     val context = LocalContext.current
 
-    // Parse action labels from JSON
     val actionLabels = remember(item.actionLabels) {
         if (!item.actionLabels.isNullOrEmpty()) {
             try {
                 val jsonArray = org.json.JSONArray(item.actionLabels)
                 (0 until jsonArray.length()).map { jsonArray.getString(it) }
             } catch (e: Exception) {
-                emptyList()\
+                emptyList()
             }
         } else {
             emptyList()
