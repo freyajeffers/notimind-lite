@@ -1,6 +1,6 @@
 package com.jeffers.notimindlite.ui
 
-import android.content.Context
+import android.Manifest
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Build
@@ -8,82 +8,97 @@ import android.os.Bundle
 import android.provider.Settings
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.activity.enableEdgeToEdge
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.material3.*
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
-import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.LocalLifecycleOwner
+import androidx.lifecycle.lifecycleScope
 import com.jeffers.notimindlite.data.local.AppDatabase
 import com.jeffers.notimindlite.service.NotificationLoggerService
 import com.jeffers.notimindlite.ui.screens.checkNotificationPermission
-import com.jeffers.notimindlite.ui.theme.NotiMindLiteTheme
-
-fun checkPostNotificationsPermission(context: Context): Boolean {
-    return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-        ContextCompat.checkSelfPermission(context, android.Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED
-    } else {
-        true
-    }
-}
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 class MainActivity : ComponentActivity() {
 
+    private val requestPermissionLauncher =
+        registerForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted ->
+            if (isGranted) {
+                // Permission granted for post notifications
+            }
+        }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        enableEdgeToEdge()
+
         val database = AppDatabase.getDatabase(applicationContext)
+        val dao = database.notificationDao()
+
+        checkPostNotificationsPermission()
 
         setContent {
-            NotiMindLiteTheme {
-                var showPermissionDialog by remember { mutableStateOf(!checkNotificationPermission(this)) }
-                var hasPermission by remember { mutableStateOf(checkNotificationPermission(this)) }
-
-                LaunchedEffect(Unit) {
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                        if (!checkPostNotificationsPermission(this@MainActivity)) {
-                            ActivityCompat.requestPermissions(this@MainActivity, arrayOf(android.Manifest.permission.POST_NOTIFICATIONS), 101)
-                        }
-                    }
-                }
-
-                // Auto-refresh permission status on resume and rebind service if newly granted
-                DisposableEffect(Unit) {
-                    val observer = LifecycleEventObserver { _, event ->
-                        if (event == Lifecycle.Event.ON_RESUME) {
-                            val granted = checkNotificationPermission(this@MainActivity)
-                            if (granted && !hasPermission) {
-                                NotificationLoggerService.rebindService(this@MainActivity)
-                            }
-                            hasPermission = granted
-                            if (granted) {
-                                showPermissionDialog = false
-                            }
-                        }
-                    }
-                    lifecycle.addObserver(observer)
-                    onDispose {
-                        lifecycle.removeObserver(observer)
-                    }
-                }
-
+            MaterialTheme {
                 Surface(
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                    MainNavigationGraph(dao = database.notificationDao())
+                    var showPermissionDialog by remember { mutableStateOf(false) }
+                    var hasPermission by remember { mutableStateOf(checkNotificationPermission(this)) }
+                    val lifecycleOwner = LocalLifecycleOwner.current
+
+                    DisposableEffect(lifecycleOwner) {
+                        val observer = LifecycleEventObserver { _, event ->
+                            if (event == Lifecycle.Event.ON_RESUME) {
+                                lifecycleScope.launch(Dispatchers.IO) {
+                                    val granted = checkNotificationPermission(this@MainActivity)
+                                    withContext(Dispatchers.Main) {
+                                        if (granted && !hasPermission) {
+                                            NotificationLoggerService.rebindService(this@MainActivity)
+                                        }
+                                        hasPermission = granted
+                                        if (granted) {
+                                            showPermissionDialog = false
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        lifecycleOwner.lifecycle.addObserver(observer)
+                        onDispose {
+                            lifecycleOwner.lifecycle.removeObserver(observer)
+                        }
+                    }
+
+                    LaunchedEffect(Unit) {
+                        if (!hasPermission) {
+                            showPermissionDialog = true
+                        }
+                    }
+
+                    MainNavigationGraph(dao = dao)
 
                     if (showPermissionDialog && !hasPermission) {
                         AlertDialog(
                             onDismissRequest = { showPermissionDialog = false },
-                            title = { Text("Notification Access Required") },
-                            text = {
-                                Text("NotiMind Lite requires Notification Access to log active and dismissed notifications and restore them on device boot. Please enable access in System Settings.")
-                            },
+                            title = { Text("Notification Listener Required") },
+                            text = { Text("NotiMind Lite requires Notification Listener access to intercept, filter, and store notifications locally on your device.") },
                             confirmButton = {
                                 Button(
                                     onClick = {
+                                        showPermissionDialog = false
                                         val intent = Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS)
                                         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
                                         startActivity(intent)
@@ -94,12 +109,24 @@ class MainActivity : ComponentActivity() {
                             },
                             dismissButton = {
                                 TextButton(onClick = { showPermissionDialog = false }) {
-                                    Text("Dismiss")
+                                    Text("Later")
                                 }
                             }
                         )
                     }
                 }
+            }
+        }
+    }
+
+    private fun checkPostNotificationsPermission() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            if (ContextCompat.checkSelfPermission(
+                    this,
+                    Manifest.permission.POST_NOTIFICATIONS
+                ) != PackageManager.PERMISSION_GRANTED
+            ) {
+                requestPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
             }
         }
     }
