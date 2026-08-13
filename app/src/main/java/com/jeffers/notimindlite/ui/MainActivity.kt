@@ -27,6 +27,7 @@ import androidx.lifecycle.lifecycleScope
 import com.jeffers.notimindlite.data.local.AppDatabase
 import com.jeffers.notimindlite.service.NotificationLoggerService
 import com.jeffers.notimindlite.ui.screens.checkNotificationPermission
+import com.jeffers.notimindlite.util.DynamicClusterManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -48,6 +49,11 @@ class MainActivity : ComponentActivity() {
         val dao = database.notificationDao()
 
         checkPostNotificationsPermission()
+
+        // Asynchronously initialize dynamic semantic clusters from PackageManager
+        lifecycleScope.launch(Dispatchers.IO) {
+            DynamicClusterManager.initialize(applicationContext)
+        }
 
         setContent {
             MaterialTheme {
