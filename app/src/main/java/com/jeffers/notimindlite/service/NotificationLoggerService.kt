@@ -146,8 +146,7 @@ class NotificationLoggerService : NotificationListenerService() {
         val enabledListeners = android.provider.Settings.Secure.getString(
             contentResolver,
             "enabled_notification_listeners"
-        )
-        if (enabledListeners.isNullOrEmpty()) return true
+        ) ?: return true
         val myComponent = ComponentName(this, NotificationLoggerService::class.java).flattenToString()
         val myComponentShort = ComponentName(this, NotificationLoggerService::class.java).flattenToShortString()
         return enabledListeners.contains(myComponent) || enabledListeners.contains(myComponentShort)
