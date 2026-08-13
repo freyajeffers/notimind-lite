@@ -29,6 +29,7 @@ data class NotificationEntity(
     val key: String,
     val packageName: String,
     val appName: String,
+    val appIconUri: String? = null,
     val title: String,
     val content: String,
     val postTime: Long = System.currentTimeMillis(),
