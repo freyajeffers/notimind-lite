@@ -44,15 +44,7 @@ class BootReceiver : BroadcastReceiver() {
 
             receiverScope.launch {
                 try {
-                    // Check if a recent package update occurred; if so, skip restoration
                     val prefManager = com.jeffers.notimindlite.data.local.PreferenceManager(context)
-                    val lastUpdate = prefManager.getLastUpdateTime()
-                    val now = System.currentTimeMillis()
-                    val updateWindowMs = 5 * 60 * 1000L // 5 minutes
-                    if (now - lastUpdate < updateWindowMs) {
-                        Log.d("BootReceiverLite", "App was recently updated; skipping notification restoration.")
-                        return@launch
-                    }
 
                     if (!prefManager.isRestoreOnBootEnabled()) {
                         Log.d("BootReceiverLite", "Restore on boot is disabled by user preference. Skipping restoration.")
