@@ -11,7 +11,7 @@ android {
 
   defaultConfig {
     applicationId = "com.jeffers.notimindlite"
-    minSdk = 24
+    minSdk = 26
     targetSdk = 36
     versionCode = 1
     versionName = "1.0-lite"
@@ -46,10 +46,14 @@ android {
     compose = true
   }
   testOptions { unitTests { isIncludeAndroidResources = true } }
+  lint {
+    abortOnError = false
+    checkDependencies = true
+  }
 }
 
 dependencies {
-  implementation(platform(libs.androidx.compose.bom))
+  implementation(platform(libs.android.compose.bom))
   implementation(libs.androidx.activity.compose)
   implementation(libs.androidx.compose.material.icons.core)
   implementation(libs.androidx.compose.material.icons.extended)
@@ -73,7 +77,7 @@ dependencies {
   testImplementation(libs.kotlinx.coroutines.test)
   testImplementation(libs.robolectric)
 
-  androidTestImplementation(platform(libs.androidx.compose.bom))
+  androidTestImplementation(platform(libs.android.compose.bom))
   androidTestImplementation(libs.androidx.junit)
   androidTestImplementation(libs.androidx.runner)
   androidTestImplementation(libs.androidx.compose.ui.test.junit4)

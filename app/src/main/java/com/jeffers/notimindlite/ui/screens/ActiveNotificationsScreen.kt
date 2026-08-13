@@ -2,6 +2,7 @@ package com.jeffers.notimindlite.ui.screens
 
 import android.content.Context
 import android.content.Intent
+import android.graphics.BitmapFactory
 import android.provider.Settings
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateColorAsState
@@ -12,14 +13,14 @@ import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.material.icons.filled.KeyboardArrowDown
-import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Bookmark
@@ -27,7 +28,11 @@ import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.ExpandLess
 import androidx.compose.material.icons.filled.ExpandMore
+import androidx.compose.material.icons.filled.FilterList
+import androidx.compose.material.icons.filled.KeyboardArrowDown
+import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material.icons.filled.PushPin
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.outlined.BookmarkBorder
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -36,6 +41,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -48,9 +54,14 @@ import com.jeffers.notimindlite.data.local.NotificationDao
 import com.jeffers.notimindlite.data.local.NotificationEntity
 import com.jeffers.notimindlite.data.local.PreferenceManager
 import com.jeffers.notimindlite.service.NotificationLoggerService
+import com.jeffers.notimindlite.ui.dialogs.AppPackageSelectorDialog
+import com.jeffers.notimindlite.util.HybridSearchEngine
+import com.jeffers.notimindlite.util.NotificationLauncher
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import java.text.SimpleDateFormat
+import java.time.Instant
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
 import java.util.*
 
 fun checkNotificationPermission(context: Context): Boolean {
@@ -110,7 +121,30 @@ enum class NotificationSection(val keyName: String, val title: String, val subti
     LOST("LOST", "Lost Notifications", "App cancelled or package changed notifications (sorted by time dismissed)")
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun AppIconImage(appIconUri: String?, modifier: Modifier = Modifier.size(20.dp)) {
+    val imageBitmap = remember(appIconUri) {
+        if (!appIconUri.isNullOrEmpty()) {
+            try {
+                BitmapFactory.decodeFile(appIconUri)?.asImageBitmap()
+            } catch (e: Exception) {
+                null
+            }
+        } else {
+            null
+        }
+    }
+
+    if (imageBitmap != null) {
+        Image(
+            bitmap = imageBitmap,
+            contentDescription = "App Icon",
+            modifier = modifier
+        )
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
 fun ActiveNotificationsScreen(dao: NotificationDao) {
     val context = LocalContext.current
@@ -120,6 +154,11 @@ fun ActiveNotificationsScreen(dao: NotificationDao) {
     var expandedSection by remember { mutableStateOf(prefManager.getExpandedSection()) }
     var expandedCards by remember { mutableStateOf(setOf<String>()) }
     var isGranted by remember { mutableStateOf(checkNotificationPermission(context)) }
+    var searchQuery by remember { mutableStateOf("") }
+    var isSearchExplicitlyOpened by remember { mutableStateOf(false) }
+
+    var selectedPackages by remember { mutableStateOf<List<String>?>(null) }
+    var showPackagePicker by remember { mutableStateOf(false) }
 
     // Auto refresh permission state on ON_RESUME
     DisposableEffect(lifecycleOwner) {
@@ -138,13 +177,21 @@ fun ActiveNotificationsScreen(dao: NotificationDao) {
     val activeNotifs by dao.getActiveNotificationsFlow().collectAsState(initial = emptyList())
     val recentlyDismissed by dao.getRecentlyDismissedFlow().collectAsState(initial = emptyList())
     val lostNotifs by dao.getLostNotificationsFlow().collectAsState(initial = emptyList())
-    val dateFormat = remember { SimpleDateFormat("MMM dd, HH:mm:ss", Locale.getDefault()) }
+    val dateTimeFormatter = remember {
+        DateTimeFormatter.ofPattern("MMM dd, HH:mm:ss", Locale.getDefault()).withZone(ZoneId.systemDefault())
+    }
 
-    // Track dismissing items for swipe animation
+    val allActiveList = remember(pinnedNotifs, activeNotifs, recentlyDismissed, lostNotifs) {
+        (pinnedNotifs + activeNotifs + recentlyDismissed + lostNotifs).distinctBy { it.packageName }
+    }
+
+    val availableApps = remember(allActiveList) {
+        allActiveList.map { it.packageName to it.appName }
+    }
+
     var dismissingKeys by remember { mutableStateOf(setOf<String>()) }
     val scope = rememberCoroutineScope()
 
-    // Dynamic ordering: placing the expanded section at the top, auto-hide empty Pinned
     val sectionOrder = remember(expandedSection, pinnedNotifs.size) {
         val defaultList = if (pinnedNotifs.isNotEmpty()) {
             listOf(NotificationSection.PINNED, NotificationSection.ACTIVE, NotificationSection.FILTERED, NotificationSection.DISMISSED, NotificationSection.LOST)
@@ -170,7 +217,31 @@ fun ActiveNotificationsScreen(dao: NotificationDao) {
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Active & Categorized Notifications", fontWeight = FontWeight.Bold) }
+                title = { Text("Active & Categorized Notifications", fontWeight = FontWeight.Bold) },
+                actions = {
+                    // App Package Filter
+                    IconButton(onClick = { showPackagePicker = true }) {
+                        Icon(
+                            imageVector = Icons.Default.FilterList,
+                            contentDescription = "Filter Apps",
+                            tint = if (!selectedPackages.isNullOrEmpty()) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
+                        )
+                    }
+
+                    // Search Toggle
+                    IconButton(onClick = {
+                        isSearchExplicitlyOpened = !isSearchExplicitlyOpened
+                        if (isSearchExplicitlyOpened) {
+                            scope.launch { listState.animateScrollToItem(0) }
+                        }
+                    }) {
+                        Icon(
+                            imageVector = Icons.Default.Search,
+                            contentDescription = "Search",
+                            tint = if (searchQuery.isNotEmpty() || isSearchExplicitlyOpened) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
+                        )
+                    }
+                }
             )
         },
         floatingActionButton = {
@@ -213,6 +284,34 @@ fun ActiveNotificationsScreen(dao: NotificationDao) {
             verticalArrangement = Arrangement.spacedBy(12.dp),
             contentPadding = PaddingValues(vertical = 12.dp)
         ) {
+            // Hidden-by-default Hybrid Search Bar (Revealed when scrolling to top above cards or clicking search icon)
+            item(key = "active_search_header") {
+                AnimatedVisibility(
+                    visible = isSearchExplicitlyOpened || searchQuery.isNotEmpty() || listState.firstVisibleItemIndex == 0,
+                    enter = fadeIn() + expandVertically(),
+                    exit = fadeOut() + shrinkVertically()
+                ) {
+                    OutlinedTextField(
+                        value = searchQuery,
+                        onValueChange = { searchQuery = it },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(bottom = 6.dp),
+                        placeholder = { Text("Search (Vector + FTS hybrid search enabled)...") },
+                        leadingIcon = { Icon(Icons.Default.Search, contentDescription = "Search") },
+                        trailingIcon = {
+                            if (searchQuery.isNotEmpty()) {
+                                IconButton(onClick = { searchQuery = "" }) {
+                                    Icon(Icons.Default.Close, contentDescription = "Clear Search")
+                                }
+                            }
+                        },
+                        singleLine = true,
+                        shape = RoundedCornerShape(12.dp)
+                    )
+                }
+            }
+
             // Service Status Card
             item(key = "service_status_card") {
                 Card(
@@ -263,7 +362,7 @@ fun ActiveNotificationsScreen(dao: NotificationDao) {
 
             sectionOrder.forEach { section ->
                 val isExpanded = expandedSection == section.keyName
-                val itemsList = when (section) {
+                val rawItemsList = when (section) {
                     NotificationSection.PINNED -> pinnedNotifs
                     NotificationSection.ACTIVE -> activeNotifs
                     NotificationSection.FILTERED -> emptyList()
@@ -271,47 +370,69 @@ fun ActiveNotificationsScreen(dao: NotificationDao) {
                     NotificationSection.LOST -> lostNotifs
                 }.distinctBy { "${it.packageName}_${it.title}_${it.content}" }
 
-                // Section Header Card
-                item(key = "header_${section.keyName}") {
-                    Card(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clickable { toggleSection(section.keyName) },
-                        colors = CardDefaults.cardColors(
-                            containerColor = when (section) {
-                                NotificationSection.PINNED -> MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = 0.4f)
-                                NotificationSection.ACTIVE -> MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.4f)
-                                NotificationSection.FILTERED -> MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.6f)
-                                NotificationSection.DISMISSED -> MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.4f)
-                                NotificationSection.LOST -> MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.4f)
-                            }
-                        )
+                // Apply multi-filter: selectedPackages
+                val filteredList = remember(rawItemsList, selectedPackages) {
+                    var list = rawItemsList
+                    if (!selectedPackages.isNullOrEmpty()) {
+                        list = list.filter { selectedPackages!!.contains(it.packageName) }
+                    }
+                    list
+                }
+
+                // Combine Semantic Vector Embeddings + Full-Text Search with Best Match Ranking
+                val itemsList = remember(filteredList, searchQuery) {
+                    if (searchQuery.isBlank()) filteredList
+                    else HybridSearchEngine.searchAndRank(filteredList, searchQuery)
+                }
+
+                // Persistent Sticky Section Header
+                stickyHeader(key = "sticky_header_${section.keyName}") {
+                    Surface(
+                        modifier = Modifier.fillMaxWidth(),
+                        color = MaterialTheme.colorScheme.background,
+                        shadowElevation = if (isExpanded) 2.dp else 0.dp
                     ) {
-                        Row(
+                        Card(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(14.dp),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
+                                .padding(vertical = 4.dp)
+                                .clickable { toggleSection(section.keyName) },
+                            colors = CardDefaults.cardColors(
+                                containerColor = when (section) {
+                                    NotificationSection.PINNED -> MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = 0.85f)
+                                    NotificationSection.ACTIVE -> MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.85f)
+                                    NotificationSection.FILTERED -> MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.85f)
+                                    NotificationSection.DISMISSED -> MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.85f)
+                                    NotificationSection.LOST -> MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.85f)
+                                }
+                            )
                         ) {
-                            Column(modifier = Modifier.weight(1f)) {
-                                Text(
-                                    text = "${section.title} (${itemsList.size})",
-                                    style = MaterialTheme.typography.titleMedium,
-                                    fontWeight = FontWeight.Bold,
-                                    color = MaterialTheme.colorScheme.onSurface
-                                )
-                                Text(
-                                    text = section.subtitle,
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(14.dp),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Text(
+                                        text = "${section.title} (${itemsList.size})",
+                                        style = MaterialTheme.typography.titleMedium,
+                                        fontWeight = FontWeight.Bold,
+                                        color = MaterialTheme.colorScheme.onSurface
+                                    )
+                                    Text(
+                                        text = if (searchQuery.isNotBlank()) "Ranked by Best Match" else section.subtitle,
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                }
+                                Icon(
+                                    imageVector = if (isExpanded) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
+                                    contentDescription = if (isExpanded) "Collapse" else "Expand",
+                                    tint = MaterialTheme.colorScheme.primary
                                 )
                             }
-                            Icon(
-                                imageVector = if (isExpanded) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
-                                contentDescription = if (isExpanded) "Collapse" else "Expand",
-                                tint = MaterialTheme.colorScheme.primary
-                            )
                         }
                     }
                 }
@@ -321,7 +442,10 @@ fun ActiveNotificationsScreen(dao: NotificationDao) {
                     if (itemsList.isEmpty()) {
                         item(key = "empty_${section.keyName}") {
                             Text(
-                                text = "No ${section.title.lowercase()} logged",
+                                text = if (searchQuery.isBlank() && selectedPackages == null)
+                                    "No ${section.title.lowercase()} logged"
+                                else
+                                    "No matching notifications in ${section.title.lowercase()}",
                                 style = MaterialTheme.typography.bodyMedium,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
                                 modifier = Modifier.padding(start = 8.dp, bottom = 4.dp)
@@ -329,10 +453,9 @@ fun ActiveNotificationsScreen(dao: NotificationDao) {
                         }
                     } else {
                         items(
-                            count = itemsList.size,
-                            key = { index -> "${section.keyName}_${itemsList[index].id}" }
-                        ) { index ->
-                            val item = itemsList[index]
+                            items = itemsList,
+                            key = { item -> "${section.keyName}_${item.key}_${item.id}" }
+                        ) { item ->
                             val cardExpanded = expandedCards.contains(item.key)
                             val isDismissing = dismissingKeys.contains(item.key)
 
@@ -343,7 +466,7 @@ fun ActiveNotificationsScreen(dao: NotificationDao) {
                             ) {
                                 SystemSwipeToDismissCard(
                                     item = item,
-                                    dateFormat = dateFormat,
+                                    dateTimeFormatter = dateTimeFormatter,
                                     section = section,
                                     dao = dao,
                                     isExpanded = cardExpanded,
@@ -354,7 +477,7 @@ fun ActiveNotificationsScreen(dao: NotificationDao) {
                                         dismissingKeys = dismissingKeys + item.key
                                         scope.launch {
                                             NotificationLoggerService.dismissNotification(item.key)
-                                            kotlinx.coroutines.delay(300)
+                                            delay(300)
                                             dao.markDismissedWithReasonByMatching(
                                                 key = item.key,
                                                 packageName = item.packageName,
@@ -373,6 +496,18 @@ fun ActiveNotificationsScreen(dao: NotificationDao) {
             }
         }
     }
+
+    if (showPackagePicker) {
+        AppPackageSelectorDialog(
+            selectedPackages = selectedPackages ?: emptyList(),
+            availableApps = availableApps,
+            onDismiss = { showPackagePicker = false },
+            onPackagesSelected = { pkgs ->
+                selectedPackages = pkgs
+                showPackagePicker = false
+            }
+        )
+    }
 }
 
 /**
@@ -382,7 +517,7 @@ fun ActiveNotificationsScreen(dao: NotificationDao) {
 @Composable
 fun SystemSwipeToDismissCard(
     item: NotificationEntity,
-    dateFormat: SimpleDateFormat,
+    dateTimeFormatter: DateTimeFormatter,
     section: NotificationSection,
     dao: NotificationDao,
     isExpanded: Boolean,
@@ -431,7 +566,7 @@ fun SystemSwipeToDismissCard(
         ) {
             UnifiedNotificationCard(
                 item = item,
-                dateFormat = dateFormat,
+                dateTimeFormatter = dateTimeFormatter,
                 section = section,
                 dao = dao,
                 isExpanded = isExpanded,
@@ -442,7 +577,7 @@ fun SystemSwipeToDismissCard(
     } else {
         UnifiedNotificationCard(
             item = item,
-            dateFormat = dateFormat,
+            dateTimeFormatter = dateTimeFormatter,
             section = section,
             dao = dao,
             isExpanded = isExpanded,
@@ -455,7 +590,7 @@ fun SystemSwipeToDismissCard(
 @Composable
 fun UnifiedNotificationCard(
     item: NotificationEntity,
-    dateFormat: SimpleDateFormat,
+    dateTimeFormatter: DateTimeFormatter,
     section: NotificationSection,
     dao: NotificationDao,
     isExpanded: Boolean,
@@ -465,14 +600,13 @@ fun UnifiedNotificationCard(
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
 
-    // Micro-animation scale for pin bookmark toggle
     val pinScale by animateFloatAsState(if (item.isPinned) 1.2f else 1.0f, animationSpec = spring(stiffness = 400f), label = "pin_scale")
 
     Card(
         modifier = Modifier
             .fillMaxWidth()
             .clickable {
-                com.jeffers.notimindlite.util.NotificationLauncher.launchNotification(context, item.packageName, item.key, item.intentUri)
+                NotificationLauncher.launchNotification(context, item.packageName, item.key, item.intentUri)
             },
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
@@ -483,13 +617,21 @@ fun UnifiedNotificationCard(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Text(
-                    text = item.appName,
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 14.sp,
-                    color = MaterialTheme.colorScheme.primary,
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
                     modifier = Modifier.weight(1f)
-                )
+                ) {
+                    AppIconImage(appIconUri = item.appIconUri)
+                    if (!item.appIconUri.isNullOrEmpty()) {
+                        Spacer(modifier = Modifier.width(6.dp))
+                    }
+                    Text(
+                        text = item.appName,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 14.sp,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                }
 
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     IconButton(
@@ -509,7 +651,6 @@ fun UnifiedNotificationCard(
                         )
                     }
 
-                    // Only show dismiss X if notification is active AND clearable
                     if (!item.isDismissed && item.isClearable) {
                         Spacer(modifier = Modifier.width(6.dp))
                         IconButton(
@@ -591,13 +732,12 @@ fun UnifiedNotificationCard(
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
 
-            // Enhanced full metadata details section with spring expand micro-animation
             AnimatedVisibility(
                 visible = isExpanded,
                 enter = fadeIn() + expandVertically(animationSpec = spring(stiffness = 300f)),
                 exit = fadeOut() + shrinkVertically(animationSpec = spring(stiffness = 300f))
             ) {
-                NotificationDetailPanel(item = item, dateFormat = dateFormat)
+                NotificationDetailPanel(item = item, dateTimeFormatter = dateTimeFormatter)
             }
 
             Spacer(modifier = Modifier.height(8.dp))
@@ -606,14 +746,14 @@ fun UnifiedNotificationCard(
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 Text(
-                    text = "Received: ${dateFormat.format(Date(item.postTime))}",
+                    text = "Received: ${dateTimeFormatter.format(Instant.ofEpochMilli(item.postTime))}",
                     fontSize = 11.sp,
                     color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
                 )
                 if (item.isDismissed) {
                     val dismissTimestamp = item.dismissTime ?: item.postTime
                     Text(
-                        text = "Dismissed: ${dateFormat.format(Date(dismissTimestamp))}",
+                        text = "Dismissed: ${dateTimeFormatter.format(Instant.ofEpochMilli(dismissTimestamp))}",
                         fontSize = 11.sp,
                         color = MaterialTheme.colorScheme.secondary,
                         fontWeight = FontWeight.Medium
@@ -624,15 +764,10 @@ fun UnifiedNotificationCard(
     }
 }
 
-/**
- * Enhanced notification detail panel organized into logical groups
- * with human-readable labels and visual hierarchy.
- */
 @Composable
-fun NotificationDetailPanel(item: NotificationEntity, dateFormat: SimpleDateFormat) {
+fun NotificationDetailPanel(item: NotificationEntity, dateTimeFormatter: DateTimeFormatter) {
     val context = LocalContext.current
 
-    // Parse action labels from JSON
     val actionLabels = remember(item.actionLabels) {
         if (!item.actionLabels.isNullOrEmpty()) {
             try {
@@ -664,7 +799,7 @@ fun NotificationDetailPanel(item: NotificationEntity, dateFormat: SimpleDateForm
                 actionLabels.forEachIndexed { index, label ->
                     OutlinedButton(
                         onClick = {
-                            val triggered = com.jeffers.notimindlite.util.NotificationLauncher.triggerAction(context, item.key, index)
+                            val triggered = NotificationLauncher.triggerAction(context, item.key, index)
                             if (!triggered) {
                                 android.widget.Toast.makeText(context, "Action expired — open the app instead", android.widget.Toast.LENGTH_SHORT).show()
                             }

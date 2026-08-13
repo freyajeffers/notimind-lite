@@ -1,33 +1,58 @@
 package com.jeffers.notimindlite.service
 
+import android.app.Notification
 import android.content.ComponentName
 import android.content.Context
-import android.os.Build
+import android.content.pm.PackageManager
+import android.graphics.Bitmap
+import android.graphics.Canvas
+import android.graphics.drawable.BitmapDrawable
 import android.service.notification.NotificationListenerService
 import android.service.notification.StatusBarNotification
 import android.util.Log
 import com.jeffers.notimindlite.data.local.AppDatabase
+import com.jeffers.notimindlite.data.local.AppEntity
 import com.jeffers.notimindlite.data.local.NotificationEntity
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import java.util.Locale
-import java.util.concurrent.ConcurrentHashMap
+import org.json.JSONArray
+import java.io.File
+import java.io.FileOutputStream
+import java.util.Collections
+import java.util.LinkedHashMap
 
 /**
  * Service that listens for posted and removed notifications.
- * It extracts a minimal set of fields and persists them in the Room database.
+ * It extracts a minimal set of fields and persists them in the Room database,
+ * with full Direct Boot (pre-PIN and post-PIN) storage routing.
  */
 class NotificationLoggerService : NotificationListenerService() {
     private val TAG = "NotificationLoggerSrv"
-    private val db by lazy { AppDatabase.getDatabase(applicationContext) }
-    private val dao by lazy { db.notificationDao() }
+
+    private fun getDb(): AppDatabase = AppDatabase.getDatabase(applicationContext)
     private val scope = CoroutineScope(Dispatchers.IO)
 
     companion object {
         private const val DEBOUNCE_MS = 30000L // 30-second dynamic debounce
-        private val recentLogs = ConcurrentHashMap<String, Long>()
-        private val recentContents = ConcurrentHashMap<String, String>()
+        private const val MAX_CACHE_CAPACITY = 500
+
+        private val recentLogs: MutableMap<String, Long> = Collections.synchronizedMap(
+            object : LinkedHashMap<String, Long>(16, 0.75f, true) {
+                override fun removeEldestEntry(eldest: MutableMap.MutableEntry<String, Long>?): Boolean {
+                    return size > MAX_CACHE_CAPACITY
+                }
+            }
+        )
+
+        private val recentContents: MutableMap<String, String> = Collections.synchronizedMap(
+            object : LinkedHashMap<String, String>(16, 0.75f, true) {
+                override fun removeEldestEntry(eldest: MutableMap.MutableEntry<String, String>?): Boolean {
+                    return size > MAX_CACHE_CAPACITY
+                }
+            }
+        )
+
         private var instance: NotificationLoggerService? = null
 
         fun dismissNotification(key: String) {
@@ -40,12 +65,42 @@ class NotificationLoggerService : NotificationListenerService() {
 
         fun rebindService(context: Context) {
             try {
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-                    requestRebind(ComponentName(context, NotificationLoggerService::class.java))
-                }
+                requestRebind(ComponentName(context, NotificationLoggerService::class.java))
             } catch (e: Exception) {
                 Log.e("NotificationLoggerSrv", "Failed to rebind notification listener service", e)
             }
+        }
+    }
+
+    private fun getOrSaveAppIconUri(packageName: String): String? {
+        val iconsDir = File(cacheDir, "app_icons")
+        if (!iconsDir.exists()) iconsDir.mkdirs()
+        val iconFile = File(iconsDir, "$packageName.png")
+        if (iconFile.exists() && iconFile.length() > 0) return iconFile.absolutePath
+
+        return try {
+            val appInfo = packageManager.getApplicationInfo(packageName, 0)
+            val drawable = packageManager.getApplicationIcon(appInfo)
+            val bitmap = when (drawable) {
+                is BitmapDrawable -> drawable.bitmap
+                else -> {
+                    val bmp = Bitmap.createBitmap(
+                        drawable.intrinsicWidth.coerceAtLeast(1),
+                        drawable.intrinsicHeight.coerceAtLeast(1),
+                        Bitmap.Config.ARGB_8888
+                    )
+                    val canvas = Canvas(bmp)
+                    drawable.setBounds(0, 0, canvas.width, canvas.height)
+                    drawable.draw(canvas)
+                    bmp
+                }
+            }
+            FileOutputStream(iconFile).use { out ->
+                bitmap.compress(Bitmap.CompressFormat.PNG, 100, out)
+            }
+            iconFile.absolutePath
+        } catch (e: Exception) {
+            null
         }
     }
 
@@ -64,10 +119,11 @@ class NotificationLoggerService : NotificationListenerService() {
                 }
 
                 // Reconcile database: mark any notification previously marked as active as dismissed if no longer present
-                val dbActive = dao.getActiveNotificationsList()
+                val currentDao = getDb().notificationDao()
+                val dbActive = currentDao.getActiveNotificationsList()
                 for (entity in dbActive) {
                     if (!activeKeys.contains(entity.key)) {
-                        dao.markDismissed(entity.key)
+                        currentDao.markDismissed(entity.key)
                     }
                 }
             } catch (e: Exception) {
@@ -93,17 +149,35 @@ class NotificationLoggerService : NotificationListenerService() {
             val packageName = sbn.packageName
 
             val extras = notification.extras
-            val title = extras?.getCharSequence(android.app.Notification.EXTRA_TITLE)?.toString()
+            val title = extras?.getCharSequence(Notification.EXTRA_TITLE)?.toString()
                 ?: extras?.getString("android.title")
                 ?: ""
-            val content = extras?.getCharSequence(android.app.Notification.EXTRA_TEXT)?.toString()
+            val content = extras?.getCharSequence(Notification.EXTRA_TEXT)?.toString()
                 ?: extras?.getString("android.text")
                 ?: ""
-            val subText = extras?.getCharSequence(android.app.Notification.EXTRA_SUB_TEXT)?.toString()
-            val bigText = extras?.getCharSequence(android.app.Notification.EXTRA_BIG_TEXT)?.toString()
+            val subText = extras?.getCharSequence(Notification.EXTRA_SUB_TEXT)?.toString()
+            val bigText = extras?.getCharSequence(Notification.EXTRA_BIG_TEXT)?.toString()
+
+            // Extract EXTRA_TEXT_LINES for InboxStyle notifications
+            val textLines = extras?.getCharSequenceArray(Notification.EXTRA_TEXT_LINES)
+            val inboxLinesJson: String? = if (!textLines.isNullOrEmpty()) {
+                val linesList = textLines.map { it.toString() }
+                JSONArray(linesList).toString()
+            } else {
+                null
+            }
+
             val category = notification.category
             val priority = notification.priority
             val postTime = sbn.postTime
+            val now = System.currentTimeMillis()
+
+            // Group summary flag check
+            val isGroupSummary = (notification.flags and Notification.FLAG_GROUP_SUMMARY) != 0
+            val smallIconRes = notification.smallIcon?.resId ?: 0
+
+            // Cache status bar app icon image
+            val appIconUri = getOrSaveAppIconUri(packageName)
 
             // ── Extended Filters ──
 
@@ -121,7 +195,7 @@ class NotificationLoggerService : NotificationListenerService() {
 
             // 2. Age-based retention filter (30 days)
             val maxAgeMs = 30L * 24 * 60 * 60 * 1000 // 30 days
-            val ageMs = System.currentTimeMillis() - postTime
+            val ageMs = now - postTime
             if (postTime > 0 && ageMs > maxAgeMs) {
                 Log.d(TAG, "Age filter – skipping notification older than 30 days")
                 return
@@ -142,7 +216,7 @@ class NotificationLoggerService : NotificationListenerService() {
             }
 
             // 5. Low-value system category filter
-            val lowValueCategories = setOf(android.app.Notification.CATEGORY_SERVICE, android.app.Notification.CATEGORY_SYSTEM)
+            val lowValueCategories = setOf(Notification.CATEGORY_SERVICE, Notification.CATEGORY_SYSTEM)
             if (category in lowValueCategories) {
                 Log.d(TAG, "Category filter – skipping $category")
                 return
@@ -152,7 +226,6 @@ class NotificationLoggerService : NotificationListenerService() {
             com.jeffers.notimindlite.util.NotificationLauncher.registerPendingIntent(key, notification.contentIntent)
 
             // ── Smart & Dynamic 30s Debounce ──
-            val now = System.currentTimeMillis()
             val contentSignature = "$title|$content"
             val lastLogTime = recentLogs[key] ?: 0L
             val lastContent = recentContents[key]
@@ -168,11 +241,7 @@ class NotificationLoggerService : NotificationListenerService() {
             recentContents[key] = contentSignature
 
             val rawAppName = try {
-                val appInfo = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-                    packageManager.getApplicationInfo(packageName, android.content.pm.PackageManager.MATCH_UNINSTALLED_PACKAGES)
-                } else {
-                    packageManager.getApplicationInfo(packageName, 0)
-                }
+                val appInfo = packageManager.getApplicationInfo(packageName, PackageManager.MATCH_UNINSTALLED_PACKAGES)
                 packageManager.getApplicationLabel(appInfo).toString()
             } catch (e: Exception) {
                 null
@@ -186,14 +255,11 @@ class NotificationLoggerService : NotificationListenerService() {
                 val lastPart = parts.lastOrNull { part ->
                     part != "android" && part != "app" && part != "apps" && part != "mobile" && part != "lite"
                 } ?: parts.lastOrNull() ?: packageName
-                lastPart.replaceFirstChar { if (it.isLowerCase()) it.titlecase() else it.toString() }
+                val formatted = lastPart.replaceFirstChar { if (it.isLowerCase()) it.titlecase() else it.toString() }
+                formatted.ifBlank { packageName.ifBlank { "Unknown App" } }
             }
 
-            val channelId = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                notification.channelId
-            } else {
-                null
-            }
+            val channelId = notification.channelId
             val groupKey = sbn.groupKey
             val isOngoing = sbn.isOngoing
             val isClearable = sbn.isClearable
@@ -208,7 +274,7 @@ class NotificationLoggerService : NotificationListenerService() {
                     labels.add(label)
                     com.jeffers.notimindlite.util.NotificationLauncher.registerActionIntent(key, index, action.actionIntent)
                 }
-                org.json.JSONArray(labels).toString()
+                JSONArray(labels).toString()
             } else {
                 null
             }
@@ -221,30 +287,62 @@ class NotificationLoggerService : NotificationListenerService() {
 
             // Determine deduplication key: prefer existing key, fallback to hash of packageName, title, and content
             val dedupKey = if (key.isNotBlank()) key else "${packageName}_${title}_${content}".hashCode().toString()
-            val entity = NotificationEntity(
-                key = dedupKey,
-                packageName = packageName,
-                appName = appName,
-                title = title,
-                content = content,
-                postTime = postTime,
-                isDismissed = false,
-                isPersistent = isOngoing,
-                category = category,
-                channelId = channelId,
-                subText = subText,
-                bigText = bigText,
-                priority = priority,
-                groupKey = groupKey,
-                isOngoing = isOngoing,
-                isClearable = isClearable,
-                actionsCount = actionsCount,
-                intentUri = intentUri,
-                actionLabels = actionLabelsJson
-            )
+
             scope.launch {
+                val db = getDb()
+                val appDao = db.appDao()
+                val dao = db.notificationDao()
+
+                // Upsert app metadata in normalized apps table
+                val existingApp = appDao.getAppByPackage(packageName)
+                val firstSeen = existingApp?.firstSeenTime ?: now
+                appDao.insertOrUpdateApp(
+                    AppEntity(
+                        packageName = packageName,
+                        appName = appName,
+                        appIconUri = appIconUri ?: existingApp?.appIconUri,
+                        statusBarIconRes = smallIconRes,
+                        statusBarIconPackage = packageName,
+                        firstSeenTime = firstSeen,
+                        lastSeenTime = now
+                    )
+                )
+
                 val existing = dao.getNotificationByKey(dedupKey)
-                dao.insertNotification(entity.copy(id = existing?.id ?: 0))
+                val updateCount = (existing?.updateCount ?: 0) + 1
+                val originalPostTime = if (existing != null && existing.postTime > 0) existing.postTime else postTime
+
+                val entity = NotificationEntity(
+                    id = existing?.id ?: 0,
+                    key = dedupKey,
+                    packageName = packageName,
+                    appName = appName,
+                    appIconUri = appIconUri ?: existing?.appIconUri,
+                    title = title,
+                    content = content,
+                    postTime = originalPostTime,
+                    lastUpdatedTime = now,
+                    updateCount = updateCount,
+                    isDismissed = false,
+                    isPersistent = isOngoing,
+                    isRead = existing?.isRead ?: false,
+                    isGroupSummary = isGroupSummary,
+                    category = category,
+                    channelId = channelId,
+                    subText = subText,
+                    bigText = bigText,
+                    inboxLinesJson = inboxLinesJson,
+                    priority = priority,
+                    groupKey = groupKey,
+                    isOngoing = isOngoing,
+                    isClearable = isClearable,
+                    actionsCount = actionsCount,
+                    intentUri = intentUri,
+                    isPinned = existing?.isPinned ?: false,
+                    actionLabels = actionLabelsJson,
+                    smallIconRes = smallIconRes
+                )
+                dao.insertNotification(entity)
             }
         } catch (e: Exception) {
             Log.e(TAG, "Failed to log notification", e)
@@ -271,14 +369,15 @@ class NotificationLoggerService : NotificationListenerService() {
 
         val notification = sbn.notification
         val extras = notification?.extras
-        val title = extras?.getCharSequence(android.app.Notification.EXTRA_TITLE)?.toString()
+        val title = extras?.getCharSequence(Notification.EXTRA_TITLE)?.toString()
             ?: extras?.getString("android.title")
             ?: ""
-        val content = extras?.getCharSequence(android.app.Notification.EXTRA_TEXT)?.toString()
+        val content = extras?.getCharSequence(Notification.EXTRA_TEXT)?.toString()
             ?: extras?.getString("android.text")
             ?: ""
 
         scope.launch {
+            val dao = getDb().notificationDao()
             if (reason != null) {
                 dao.markDismissedWithReasonByMatching(sbn.key, sbn.packageName, title, content, reason, dismissTime)
             } else {
