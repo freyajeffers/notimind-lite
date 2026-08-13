@@ -8,6 +8,7 @@ import android.service.notification.NotificationListenerService
 import android.service.notification.StatusBarNotification
 import android.util.Log
 import com.jeffers.notimindlite.data.local.AppDatabase
+import com.jeffers.notimindlite.data.local.AppEntity
 import com.jeffers.notimindlite.data.local.NotificationEntity
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -24,6 +25,7 @@ class NotificationLoggerService : NotificationListenerService() {
     private val TAG = "NotificationLoggerSrv"
     private val db by lazy { AppDatabase.getDatabase(applicationContext) }
     private val dao by lazy { db.notificationDao() }
+    private val appDao by lazy { db.appDao() }
     private val scope = CoroutineScope(Dispatchers.IO)
 
     companion object {
@@ -246,6 +248,18 @@ class NotificationLoggerService : NotificationListenerService() {
             val dedupKey = if (key.isNotBlank()) key else "${packageName}_${title}_${content}".hashCode().toString()
 
             scope.launch {
+                // Upsert app metadata in normalized apps table
+                val existingApp = appDao.getAppByPackage(packageName)
+                val firstSeen = existingApp?.firstSeenTime ?: now
+                appDao.insertOrUpdateApp(
+                    AppEntity(
+                        packageName = packageName,
+                        appName = appName,
+                        firstSeenTime = firstSeen,
+                        lastSeenTime = now
+                    )
+                )
+
                 val existing = dao.getNotificationByKey(dedupKey)
                 val updateCount = (existing?.updateCount ?: 0) + 1
                 val originalPostTime = if (existing != null && existing.postTime > 0) existing.postTime else postTime
