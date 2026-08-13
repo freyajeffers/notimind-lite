@@ -4,6 +4,9 @@ import android.app.Notification
 import android.content.ComponentName
 import android.content.Context
 import android.content.pm.PackageManager
+import android.graphics.Bitmap
+import android.graphics.Canvas
+import android.graphics.drawable.BitmapDrawable
 import android.service.notification.NotificationListenerService
 import android.service.notification.StatusBarNotification
 import android.util.Log
@@ -14,6 +17,8 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import org.json.JSONArray
+import java.io.File
+import java.io.FileOutputStream
 import java.util.Collections
 import java.util.LinkedHashMap
 
@@ -64,6 +69,38 @@ class NotificationLoggerService : NotificationListenerService() {
             } catch (e: Exception) {
                 Log.e("NotificationLoggerSrv", "Failed to rebind notification listener service", e)
             }
+        }
+    }
+
+    private fun getOrSaveAppIconUri(packageName: String): String? {
+        val iconsDir = File(cacheDir, "app_icons")
+        if (!iconsDir.exists()) iconsDir.mkdirs()
+        val iconFile = File(iconsDir, "$packageName.png")
+        if (iconFile.exists() && iconFile.length() > 0) return iconFile.absolutePath
+
+        return try {
+            val appInfo = packageManager.getApplicationInfo(packageName, 0)
+            val drawable = packageManager.getApplicationIcon(appInfo)
+            val bitmap = when (drawable) {
+                is BitmapDrawable -> drawable.bitmap
+                else -> {
+                    val bmp = Bitmap.createBitmap(
+                        drawable.intrinsicWidth.coerceAtLeast(1),
+                        drawable.intrinsicHeight.coerceAtLeast(1),
+                        Bitmap.Config.ARGB_8888
+                    )
+                    val canvas = Canvas(bmp)
+                    drawable.setBounds(0, 0, canvas.width, canvas.height)
+                    drawable.draw(canvas)
+                    bmp
+                }
+            }
+            FileOutputStream(iconFile).use { out ->
+                bitmap.compress(Bitmap.CompressFormat.PNG, 100, out)
+            }
+            iconFile.absolutePath
+        } catch (e: Exception) {
+            null
         }
     }
 
@@ -137,6 +174,9 @@ class NotificationLoggerService : NotificationListenerService() {
             // Group summary flag check
             val isGroupSummary = (notification.flags and Notification.FLAG_GROUP_SUMMARY) != 0
             val smallIconRes = notification.smallIcon?.resId ?: 0
+
+            // Cache status bar app icon image
+            val appIconUri = getOrSaveAppIconUri(packageName)
 
             // ── Extended Filters ──
 
@@ -255,6 +295,7 @@ class NotificationLoggerService : NotificationListenerService() {
                     AppEntity(
                         packageName = packageName,
                         appName = appName,
+                        appIconUri = appIconUri ?: existingApp?.appIconUri,
                         firstSeenTime = firstSeen,
                         lastSeenTime = now
                     )
@@ -269,6 +310,7 @@ class NotificationLoggerService : NotificationListenerService() {
                     key = dedupKey,
                     packageName = packageName,
                     appName = appName,
+                    appIconUri = appIconUri ?: existing?.appIconUri,
                     title = title,
                     content = content,
                     postTime = originalPostTime,
