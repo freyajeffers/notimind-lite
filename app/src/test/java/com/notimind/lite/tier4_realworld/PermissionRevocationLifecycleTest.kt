@@ -33,7 +33,7 @@ class PermissionRevocationLifecycleTest : BaseRobolectricTest() {
         assertEquals("SBN 1 should be logged when permission is active", 1, dao.getNotificationCount())
 
         // 2. Permission revocation simulation: settings listener component String cleared
-        Settings.Secure.putString(context.contentResolver, "enabled_notification_listeners", "")
+        Settings.Secure.putString(context.contentResolver, "enabled_notification_listeners", "NONE")
 
         val sbn2 = createMockStatusBarNotification(
             key = "perm_k2",
