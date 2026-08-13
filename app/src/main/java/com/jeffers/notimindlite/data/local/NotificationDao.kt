@@ -4,6 +4,8 @@ import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
+import androidx.room.RawQuery
+import androidx.sqlite.db.SupportSQLiteQuery
 import kotlinx.coroutines.flow.Flow
 
 @Dao
@@ -65,6 +67,9 @@ interface NotificationDao {
         ORDER BY postTime DESC
     """)
     fun searchNotificationsFts(searchQuery: String): Flow<List<NotificationEntity>>
+
+    @RawQuery(observedEntities = [NotificationEntity::class])
+    fun searchNotificationsRaw(query: SupportSQLiteQuery): Flow<List<NotificationEntity>>
 
     @Query("INSERT INTO notifications_fts(notifications_fts) VALUES('rebuild')")
     suspend fun rebuildFtsIndex()
