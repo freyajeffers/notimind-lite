@@ -20,7 +20,6 @@ class RoomDatabaseRule : TestWatcher() {
         val context = ApplicationProvider.getApplicationContext<Context>()
         database = Room.inMemoryDatabaseBuilder(context, AppDatabase::class.java)
             .allowMainThreadQueries()
-            .fullForeignKeyConstraints(false)
             .build()
         dao = database.notificationDao()
     }

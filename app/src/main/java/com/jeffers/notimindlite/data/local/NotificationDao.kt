@@ -8,14 +8,37 @@ import androidx.room.RawQuery
 import androidx.sqlite.db.SupportSQLiteQuery
 import kotlinx.coroutines.flow.Flow
 
+import androidx.room.Transaction
+
 @Dao
-interface NotificationDao {
+abstract class NotificationDao {
+
+    @Insert(onConflict = OnConflictStrategy.IGNORE)
+    abstract suspend fun insertAppInternal(app: AppEntity): Long
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insert(entity: NotificationEntity): Long
+    abstract suspend fun insertNotificationDirect(entity: NotificationEntity): Long
 
-    @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insertNotification(notification: NotificationEntity): Long
+    @Transaction
+    open suspend fun insert(entity: NotificationEntity): Long {
+        if (entity.packageName.isNotBlank()) {
+            insertAppInternal(
+                AppEntity(
+                    packageName = entity.packageName,
+                    appName = entity.appName.ifBlank { entity.packageName },
+                    firstSeenTime = entity.postTime,
+                    lastSeenTime = entity.postTime,
+                    appIconUri = entity.appIconUri
+                )
+            )
+        }
+        return insertNotificationDirect(entity)
+    }
+
+    @Transaction
+    open suspend fun insertNotification(notification: NotificationEntity): Long {
+        return insert(notification)
+    }
 
     @Query("SELECT * FROM notifications ORDER BY postTime DESC")
     fun getAllNotifications(): Flow<List<NotificationEntity>>
