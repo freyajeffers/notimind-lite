@@ -8,6 +8,8 @@ data class AppEntity(
     @PrimaryKey val packageName: String,
     val appName: String,
     val appIconUri: String? = null,
+    val statusBarIconRes: Int = 0,
+    val statusBarIconPackage: String? = null,
     val firstSeenTime: Long = System.currentTimeMillis(),
     val lastSeenTime: Long = System.currentTimeMillis()
 )
