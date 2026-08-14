@@ -395,14 +395,21 @@ fun ActiveNotificationsScreen(dao: NotificationDao) {
                                 .clickable { toggleSection(section.keyName) },
                             colors = CardDefaults.cardColors(
                                 containerColor = when (section) {
-                                    NotificationSection.PINNED -> MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = 0.85f)
-                                    NotificationSection.ACTIVE -> MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.85f)
-                                    NotificationSection.FILTERED -> MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.85f)
-                                    NotificationSection.DISMISSED -> MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.85f)
-                                    NotificationSection.LOST -> MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.85f)
+                                    NotificationSection.PINNED -> MaterialTheme.colorScheme.tertiaryContainer
+                                    NotificationSection.ACTIVE -> MaterialTheme.colorScheme.primaryContainer
+                                    NotificationSection.FILTERED -> MaterialTheme.colorScheme.surfaceVariant
+                                    NotificationSection.DISMISSED -> MaterialTheme.colorScheme.secondaryContainer
+                                    NotificationSection.LOST -> MaterialTheme.colorScheme.errorContainer
                                 }
                             )
                         ) {
+                            val contentColor = when (section) {
+                                NotificationSection.PINNED -> MaterialTheme.colorScheme.onTertiaryContainer
+                                NotificationSection.ACTIVE -> MaterialTheme.colorScheme.onPrimaryContainer
+                                NotificationSection.FILTERED -> MaterialTheme.colorScheme.onSurfaceVariant
+                                NotificationSection.DISMISSED -> MaterialTheme.colorScheme.onSecondaryContainer
+                                NotificationSection.LOST -> MaterialTheme.colorScheme.onErrorContainer
+                            }
                             Row(
                                 modifier = Modifier
                                     .fillMaxWidth()
@@ -415,18 +422,18 @@ fun ActiveNotificationsScreen(dao: NotificationDao) {
                                         text = "${section.title} (${itemsList.size})",
                                         style = MaterialTheme.typography.titleMedium,
                                         fontWeight = FontWeight.Bold,
-                                        color = MaterialTheme.colorScheme.onSurface
+                                        color = contentColor
                                     )
                                     Text(
                                         text = if (searchQuery.isNotBlank()) "Ranked by Best Match" else section.subtitle,
                                         style = MaterialTheme.typography.bodySmall,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                        color = contentColor.copy(alpha = 0.8f)
                                     )
                                 }
                                 Icon(
                                     imageVector = if (isExpanded) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
                                     contentDescription = if (isExpanded) "Collapse" else "Expand",
-                                    tint = MaterialTheme.colorScheme.primary
+                                    tint = contentColor
                                 )
                             }
                         }
@@ -686,7 +693,7 @@ fun UnifiedNotificationCard(
                             imageVector = Icons.Default.PushPin,
                             contentDescription = "Ongoing",
                             modifier = Modifier.size(16.dp),
-                            tint = Color(0xFFE65100)
+                            tint = MaterialTheme.colorScheme.tertiary
                         )
                     }
 
@@ -839,7 +846,7 @@ fun NotificationDetailPanel(item: NotificationEntity, dateTimeFormatter: DateTim
                     else -> MaterialTheme.colorScheme.onSurfaceVariant
                 }
             )
-            if (item.isOngoing) StatusPill("Ongoing", Color(0xFFE65100))
+            if (item.isOngoing) StatusPill("Ongoing", MaterialTheme.colorScheme.tertiary)
             if (!item.isClearable) StatusPill("Non-Clearable", MaterialTheme.colorScheme.error)
             if (item.isPinned) StatusPill("Pinned", MaterialTheme.colorScheme.primary)
         }
