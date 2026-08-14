@@ -244,7 +244,7 @@ fun ActiveNotificationsScreen(dao: NotificationDao) {
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Active & Categorized Notifications", fontWeight = FontWeight.Bold) },
+                title = { Text("NotiMind", fontWeight = FontWeight.Bold) },
                 actions = {
                     // App Package Filter
                     TooltipBox(
@@ -366,7 +366,7 @@ fun ActiveNotificationsScreen(dao: NotificationDao) {
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .padding(bottom = 6.dp),
-                            placeholder = { Text("Search (Vector + FTS hybrid search enabled)...") },
+                            placeholder = { Text("Search") },
                             leadingIcon = { Icon(Icons.Default.Search, contentDescription = "Search") },
                             trailingIcon = {
                                 if (searchQuery.isNotEmpty()) {

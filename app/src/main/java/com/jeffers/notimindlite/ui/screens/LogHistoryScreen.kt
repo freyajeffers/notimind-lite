@@ -114,7 +114,7 @@ fun LogHistoryScreen(dao: NotificationDao) {
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Log History (${filteredNotifs.size}/$totalCount)", fontWeight = FontWeight.Bold) },
+                title = { Text("Log (${filteredNotifs.size}/$totalCount)", fontWeight = FontWeight.Bold) },
                 actions = {
                     // App Package Filter Button
                     TooltipBox(
@@ -315,11 +315,7 @@ fun LogHistoryScreen(dao: NotificationDao) {
                     value = searchQuery,
                     onValueChange = { searchQuery = it },
                     modifier = Modifier.fillMaxWidth(),
-                    placeholder = {
-                        val filterSuffix = selectedReasonFilter?.let { " • Filter: ${getReasonLabel(it)}" } ?: ""
-                        val sortLabel = if (searchQuery.isNotBlank()) "Best Match" else sortMode.label
-                        Text("Search logs ($sortLabel$filterSuffix)...")
-                    },
+                    placeholder = { Text("Search") },
                     leadingIcon = { Icon(Icons.Default.Search, contentDescription = "Search") },
                     trailingIcon = {
                         if (searchQuery.isNotEmpty()) {
