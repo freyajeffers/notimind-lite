@@ -14,9 +14,12 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import com.jeffers.notimindlite.data.auth.AuthManager
+import com.jeffers.notimindlite.data.local.AppDatabase
 import com.jeffers.notimindlite.data.local.NotificationDao
 import com.jeffers.notimindlite.ui.screens.ActiveNotificationsScreen
 import com.jeffers.notimindlite.ui.screens.LogHistoryScreen
+import com.jeffers.notimindlite.ui.screens.SettingsScreen
 
 sealed class Screen(val route: String, val title: String, val icon: @Composable () -> Unit) {
     object Active : Screen(
@@ -30,12 +33,18 @@ sealed class Screen(val route: String, val title: String, val icon: @Composable 
         title = "History",
         icon = { Icon(Icons.Default.History, contentDescription = "Log History") }
     )
+
+    object Settings : Screen(
+        route = "settings",
+        title = "Settings",
+        icon = { Icon(Icons.Default.Settings, contentDescription = "Settings") }
+    )
 }
 
 @Composable
-fun MainNavigationGraph(dao: NotificationDao) {
+fun MainNavigationGraph(dao: NotificationDao, db: AppDatabase, authManager: AuthManager) {
     val navController = rememberNavController()
-    val items = listOf(Screen.Active, Screen.History)
+    val items = listOf(Screen.Active, Screen.History, Screen.Settings)
 
     Scaffold(
         bottomBar = {
@@ -74,6 +83,9 @@ fun MainNavigationGraph(dao: NotificationDao) {
             }
             composable(Screen.History.route) {
                 LogHistoryScreen(dao = dao)
+            }
+            composable(Screen.Settings.route) {
+                SettingsScreen(authManager = authManager, db = db)
             }
         }
     }

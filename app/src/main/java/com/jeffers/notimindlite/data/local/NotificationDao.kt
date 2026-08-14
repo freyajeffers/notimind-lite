@@ -153,6 +153,18 @@ abstract class NotificationDao {
     @Query("DELETE FROM notifications WHERE isDismissed = 1 AND postTime < :cutoffTimeMs AND isPinned = 0")
     abstract suspend fun pruneOldLogs(cutoffTimeMs: Long)
 
+    @Query("SELECT * FROM notifications WHERE syncStatus != 'SYNCED'")
+    abstract suspend fun getUnsyncedNotifications(): List<NotificationEntity>
+
+    @Query("UPDATE notifications SET syncStatus = :status, lastSyncedAt = :syncedAt WHERE key = :key")
+    abstract suspend fun updateSyncStatus(key: String, status: SyncStatus, syncedAt: Long = System.currentTimeMillis())
+
+    @Query("UPDATE notifications SET syncStatus = 'PENDING_DELETE' WHERE key = :key")
+    abstract suspend fun markPendingDelete(key: String)
+
+    @Query("DELETE FROM notifications WHERE syncStatus = 'PENDING_DELETE'")
+    abstract suspend fun purgePendingDeletes()
+
     @Query("DELETE FROM notifications")
     abstract suspend fun clearAll()
 }

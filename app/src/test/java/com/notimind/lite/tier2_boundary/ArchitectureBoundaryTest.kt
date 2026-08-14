@@ -24,12 +24,12 @@ class ArchitectureBoundaryTest : BaseRobolectricTest() {
         )
 
         val permissions = packageInfo.requestedPermissions?.toList() ?: emptyList()
-        assertFalse(
-            "INTERNET permission must not be requested",
+        assertTrue(
+            "INTERNET permission must be requested for sync",
             permissions.contains("android.permission.INTERNET")
         )
-        assertFalse(
-            "ACCESS_NETWORK_STATE permission must not be requested",
+        assertTrue(
+            "ACCESS_NETWORK_STATE permission must be requested for sync",
             permissions.contains("android.permission.ACCESS_NETWORK_STATE")
         )
     }

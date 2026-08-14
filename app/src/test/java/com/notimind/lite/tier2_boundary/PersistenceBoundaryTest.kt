@@ -201,7 +201,7 @@ class PersistenceBoundaryTest : BaseRobolectricTest() {
         database.runInTransaction {
             val db = database.openHelper.writableDatabase
             val appStmt = db.compileStatement(
-                "INSERT OR IGNORE INTO apps (packageName, appName, firstSeenTime, lastSeenTime) VALUES (?, ?, ?, ?)"
+                "INSERT OR IGNORE INTO apps (packageName, appName, firstSeenTime, lastSeenTime, syncStatus, lastSyncedAt) VALUES (?, ?, ?, ?, ?, ?)"
             )
             for (p in 0..20) {
                 appStmt.clearBindings()
@@ -209,10 +209,12 @@ class PersistenceBoundaryTest : BaseRobolectricTest() {
                 appStmt.bindString(2, "Perf App $p")
                 appStmt.bindLong(3, 1000000L)
                 appStmt.bindLong(4, 1000000L)
+                appStmt.bindString(5, "PENDING_UPLOAD")
+                appStmt.bindLong(6, 0L)
                 appStmt.executeInsert()
             }
             val stmt = db.compileStatement(
-                "INSERT INTO notifications (id, key, packageName, appName, title, content, postTime, lastUpdatedTime, updateCount, isDismissed, isPinned, isPersistent, isRead, isGroupSummary, priority, isOngoing, isClearable, actionsCount, smallIconRes) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
+                "INSERT INTO notifications (id, key, packageName, appName, title, content, postTime, lastUpdatedTime, updateCount, isDismissed, isPinned, isPersistent, isRead, isGroupSummary, priority, isOngoing, isClearable, actionsCount, smallIconRes, syncStatus, lastSyncedAt) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
             )
             for (i in 1..count) {
                 stmt.clearBindings()
@@ -235,6 +237,8 @@ class PersistenceBoundaryTest : BaseRobolectricTest() {
                 stmt.bindLong(17, 1L)
                 stmt.bindLong(18, 0L)
                 stmt.bindLong(19, 0L)
+                stmt.bindString(20, "PENDING_UPLOAD")
+                stmt.bindLong(21, 0L)
                 stmt.executeInsert()
             }
         }

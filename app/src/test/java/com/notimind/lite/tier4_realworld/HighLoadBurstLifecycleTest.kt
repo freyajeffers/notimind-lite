@@ -39,7 +39,7 @@ class HighLoadBurstLifecycleTest : BaseRobolectricTest() {
             database.runInTransaction {
                 val db = database.openHelper.writableDatabase
                 val appStmt = db.compileStatement(
-                    "INSERT OR IGNORE INTO apps (packageName, appName, firstSeenTime, lastSeenTime) VALUES (?, ?, ?, ?)"
+                    "INSERT OR IGNORE INTO apps (packageName, appName, firstSeenTime, lastSeenTime, syncStatus, lastSyncedAt) VALUES (?, ?, ?, ?, ?, ?)"
                 )
                 for (p in 0..10) {
                     appStmt.clearBindings()
@@ -47,10 +47,12 @@ class HighLoadBurstLifecycleTest : BaseRobolectricTest() {
                     appStmt.bindString(2, "Stress App $p")
                     appStmt.bindLong(3, System.currentTimeMillis())
                     appStmt.bindLong(4, System.currentTimeMillis())
+                    appStmt.bindString(5, "PENDING_UPLOAD")
+                    appStmt.bindLong(6, 0L)
                     appStmt.executeInsert()
                 }
                 val stmt = db.compileStatement(
-                    "INSERT INTO notifications (key, packageName, appName, title, content, postTime, lastUpdatedTime, updateCount, isDismissed, isPinned, isPersistent, isRead, isGroupSummary, priority, isOngoing, isClearable, actionsCount, smallIconRes) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
+                    "INSERT INTO notifications (key, packageName, appName, title, content, postTime, lastUpdatedTime, updateCount, isDismissed, isPinned, isPersistent, isRead, isGroupSummary, priority, isOngoing, isClearable, actionsCount, smallIconRes, syncStatus, lastSyncedAt) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
                 )
                 for (i in 1..count) {
                     stmt.clearBindings()
@@ -72,6 +74,8 @@ class HighLoadBurstLifecycleTest : BaseRobolectricTest() {
                     stmt.bindLong(16, 1L)
                     stmt.bindLong(17, 0L)
                     stmt.bindLong(18, 0L)
+                    stmt.bindString(19, "PENDING_UPLOAD")
+                    stmt.bindLong(20, 0L)
                     stmt.executeInsert()
                 }
             }

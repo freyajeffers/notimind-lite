@@ -3,6 +3,7 @@ plugins {
   alias(libs.plugins.kotlin.android)
   alias(libs.plugins.kotlin.compose)
   alias(libs.plugins.google.devtools.ksp)
+  alias(libs.plugins.google.services)
 }
 
 android {
@@ -71,6 +72,17 @@ dependencies {
   implementation(libs.kotlinx.coroutines.android)
   implementation(libs.kotlinx.coroutines.core)
 
+  // Firebase & Google Auth
+  implementation(platform(libs.firebase.bom))
+  implementation(libs.firebase.auth)
+  implementation(libs.firebase.firestore)
+  implementation(libs.androidx.credentials)
+  implementation(libs.androidx.credentials.play.services)
+  implementation(libs.google.id)
+
+  // WorkManager for Sync
+  implementation(libs.androidx.work.runtime.ktx)
+
   testImplementation(libs.junit)
   testImplementation(libs.androidx.junit)
   testImplementation(libs.androidx.core)
@@ -86,3 +98,4 @@ dependencies {
   debugImplementation(libs.androidx.compose.ui.test.manifest)
   "ksp"(libs.androidx.room.compiler)
 }
+

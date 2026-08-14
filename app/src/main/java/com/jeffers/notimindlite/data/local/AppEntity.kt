@@ -11,5 +11,7 @@ data class AppEntity(
     val statusBarIconRes: Int = 0,
     val statusBarIconPackage: String? = null,
     val firstSeenTime: Long = System.currentTimeMillis(),
-    val lastSeenTime: Long = System.currentTimeMillis()
+    val lastSeenTime: Long = System.currentTimeMillis(),
+    val syncStatus: SyncStatus = SyncStatus.PENDING_UPLOAD,
+    val lastSyncedAt: Long = 0
 )
