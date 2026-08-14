@@ -116,71 +116,19 @@ fun LogHistoryScreen(dao: NotificationDao) {
             TopAppBar(
                 title = { Text("Log (${filteredNotifs.size}/$totalCount)", fontWeight = FontWeight.Bold) },
                 actions = {
-                    // App Package Filter Button
-                    TooltipBox(
-                        positionProvider = TooltipDefaults.rememberPlainTooltipPositionProvider(),
-                        tooltip = { PlainTooltip { Text("Filter Apps") } },
-                        state = rememberTooltipState()
-                    ) {
-                        IconButton(onClick = { showPackagePicker = true }) {
-                            Icon(
-                                Icons.Default.FilterList,
-                                contentDescription = "Filter Apps",
-                                tint = if (!selectedPackages.isNullOrEmpty()) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
-                            )
-                        }
-                    }
-
-                    // Export Database Button
+                    // Consolidated Filter Menu (App Filter + Reason Filter)
                     Box {
+                        val hasActiveFilters = !selectedPackages.isNullOrEmpty() || selectedReasonFilter != null
                         TooltipBox(
                             positionProvider = TooltipDefaults.rememberPlainTooltipPositionProvider(),
-                            tooltip = { PlainTooltip { Text("Export Logs") } },
-                            state = rememberTooltipState()
-                        ) {
-                            IconButton(onClick = { showExportMenu = true }) {
-                                Icon(Icons.Default.Download, contentDescription = "Export Database Logs")
-                            }
-                        }
-                        DropdownMenu(
-                            expanded = showExportMenu,
-                            onDismissRequest = { showExportMenu = false }
-                        ) {
-                            DropdownMenuItem(
-                                text = { Text("Export Logs to JSON") },
-                                onClick = {
-                                    showExportMenu = false
-                                    scope.launch(Dispatchers.IO) {
-                                        val allLogs = dao.getAllNotificationsList()
-                                        DatabaseExporter.shareExportFile(context, allLogs, isJson = true)
-                                    }
-                                }
-                            )
-                            DropdownMenuItem(
-                                text = { Text("Export Logs to CSV") },
-                                onClick = {
-                                    showExportMenu = false
-                                    scope.launch(Dispatchers.IO) {
-                                        val allLogs = dao.getAllNotificationsList()
-                                        DatabaseExporter.shareExportFile(context, allLogs, isJson = false)
-                                    }
-                                }
-                            )
-                        }
-                    }
-
-                    // Reason Filter Menu
-                    Box {
-                        TooltipBox(
-                            positionProvider = TooltipDefaults.rememberPlainTooltipPositionProvider(),
-                            tooltip = { PlainTooltip { Text("Filter Reason") } },
+                            tooltip = { PlainTooltip { Text("Filter Logs") } },
                             state = rememberTooltipState()
                         ) {
                             IconButton(onClick = { showFilterMenu = true }) {
                                 Icon(
                                     imageVector = Icons.Default.FilterList,
-                                    contentDescription = "Filter by Dismiss Reason",
-                                    tint = if (selectedReasonFilter != null) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
+                                    contentDescription = "Filter Logs",
+                                    tint = if (hasActiveFilters) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
                                 )
                             }
                         }
@@ -188,6 +136,14 @@ fun LogHistoryScreen(dao: NotificationDao) {
                             expanded = showFilterMenu,
                             onDismissRequest = { showFilterMenu = false }
                         ) {
+                            DropdownMenuItem(
+                                text = { Text("Filter by App (${selectedPackages?.size ?: "All"})") },
+                                onClick = {
+                                    showFilterMenu = false
+                                    showPackagePicker = true
+                                }
+                            )
+                            HorizontalDivider()
                             DropdownMenuItem(
                                 text = { Text("All Reasons ${if (selectedReasonFilter == null) "✓" else ""}") },
                                 onClick = {

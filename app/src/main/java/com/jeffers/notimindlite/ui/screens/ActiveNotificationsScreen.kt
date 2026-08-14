@@ -39,6 +39,9 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
@@ -241,6 +244,9 @@ fun ActiveNotificationsScreen(dao: NotificationDao) {
         prefManager.setExpandedSection(newExpanded)
     }
 
+    val searchFocusRequester = remember { FocusRequester() }
+    var isSearchFocused by remember { mutableStateOf(false) }
+
     Scaffold(
         topBar = {
             TopAppBar(
@@ -270,13 +276,16 @@ fun ActiveNotificationsScreen(dao: NotificationDao) {
                         IconButton(onClick = {
                             isSearchExplicitlyOpened = !isSearchExplicitlyOpened
                             if (isSearchExplicitlyOpened) {
-                                scope.launch { listState.animateScrollToItem(0) }
+                                scope.launch {
+                                    listState.animateScrollToItem(0)
+                                    searchFocusRequester.requestFocus()
+                                }
                             }
                         }) {
                             Icon(
                                 imageVector = Icons.Default.Search,
                                 contentDescription = "Search",
-                                tint = if (searchQuery.isNotEmpty() || isSearchExplicitlyOpened) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
+                                tint = if (searchQuery.isNotEmpty() || isSearchExplicitlyOpened || isSearchFocused) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
                             )
                         }
                     }
@@ -336,10 +345,10 @@ fun ActiveNotificationsScreen(dao: NotificationDao) {
             verticalArrangement = Arrangement.spacedBy(12.dp),
             contentPadding = PaddingValues(vertical = 12.dp)
         ) {
-            // Hidden-by-default Hybrid Search Bar (Revealed when scrolling to top above cards or clicking search icon)
+            // Search Bar in Header (hidden unless focused, explicitly opened via top bar icon, or non-empty query)
             item(key = "active_search_header") {
                 AnimatedVisibility(
-                    visible = isSearchExplicitlyOpened || searchQuery.isNotEmpty() || listState.firstVisibleItemIndex == 0,
+                    visible = isSearchExplicitlyOpened || searchQuery.isNotEmpty() || isSearchFocused,
                     enter = fadeIn() + expandVertically(),
                     exit = fadeOut() + shrinkVertically()
                 ) {
@@ -365,7 +374,9 @@ fun ActiveNotificationsScreen(dao: NotificationDao) {
                             onValueChange = { searchQuery = it },
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(bottom = 6.dp),
+                                .padding(bottom = 6.dp)
+                                .focusRequester(searchFocusRequester)
+                                .onFocusChanged { isSearchFocused = it.isFocused },
                             placeholder = { Text("Search") },
                             leadingIcon = { Icon(Icons.Default.Search, contentDescription = "Search") },
                             trailingIcon = {
