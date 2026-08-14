@@ -182,6 +182,7 @@ class NotificationLoggerService : NotificationListenerService() {
             }
 
             val category = notification.category
+            @Suppress("DEPRECATION")
             val priority = notification.priority
             val postTime = sbn.postTime
             val now = System.currentTimeMillis()
