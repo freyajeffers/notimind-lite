@@ -30,8 +30,8 @@ sealed class Screen(val route: String, val title: String, val icon: @Composable 
 
     object History : Screen(
         route = "history",
-        title = "History",
-        icon = { Icon(Icons.Default.History, contentDescription = "Log History") }
+        title = "Log",
+        icon = { Icon(Icons.Default.History, contentDescription = "Log") }
     )
 
     object Settings : Screen(
