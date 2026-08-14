@@ -392,7 +392,8 @@ fun ActiveNotificationsScreen(dao: NotificationDao) {
                                 context.startActivity(intent)
                             },
                             colors = ButtonDefaults.buttonColors(
-                                containerColor = if (isGranted) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error
+                                containerColor = if (isGranted) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.errorContainer,
+                                contentColor = if (isGranted) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onErrorContainer
                             )
                         ) {
                             Text(if (isGranted) "Settings" else "Grant")
@@ -436,19 +437,19 @@ fun ActiveNotificationsScreen(dao: NotificationDao) {
                                 .clickable { toggleSection(section.keyName) },
                             colors = CardDefaults.cardColors(
                                 containerColor = when (section) {
-                                    NotificationSection.PINNED -> MaterialTheme.colorScheme.tertiaryContainer
-                                    NotificationSection.ACTIVE -> MaterialTheme.colorScheme.primaryContainer
+                                    NotificationSection.PINNED -> MaterialTheme.colorScheme.primaryContainer
+                                    NotificationSection.ACTIVE -> MaterialTheme.colorScheme.secondaryContainer
                                     NotificationSection.FILTERED -> MaterialTheme.colorScheme.surfaceVariant
-                                    NotificationSection.DISMISSED -> MaterialTheme.colorScheme.secondaryContainer
+                                    NotificationSection.DISMISSED -> MaterialTheme.colorScheme.tertiaryContainer
                                     NotificationSection.LOST -> MaterialTheme.colorScheme.errorContainer
                                 }
                             )
                         ) {
                             val contentColor = when (section) {
-                                NotificationSection.PINNED -> MaterialTheme.colorScheme.onTertiaryContainer
-                                NotificationSection.ACTIVE -> MaterialTheme.colorScheme.onPrimaryContainer
+                                NotificationSection.PINNED -> MaterialTheme.colorScheme.onPrimaryContainer
+                                NotificationSection.ACTIVE -> MaterialTheme.colorScheme.onSecondaryContainer
                                 NotificationSection.FILTERED -> MaterialTheme.colorScheme.onSurfaceVariant
-                                NotificationSection.DISMISSED -> MaterialTheme.colorScheme.onSecondaryContainer
+                                NotificationSection.DISMISSED -> MaterialTheme.colorScheme.onTertiaryContainer
                                 NotificationSection.LOST -> MaterialTheme.colorScheme.onErrorContainer
                             }
                             Row(
