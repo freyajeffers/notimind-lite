@@ -4,10 +4,10 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.NotificationsActive
-import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.compose.NavHost
@@ -17,65 +17,51 @@ import androidx.navigation.compose.rememberNavController
 import com.jeffers.notimindlite.data.auth.AuthManager
 import com.jeffers.notimindlite.data.local.AppDatabase
 import com.jeffers.notimindlite.data.local.NotificationDao
-import com.jeffers.notimindlite.ui.screens.ActiveNotificationsScreen
+import com.jeffers.notimindlite.ui.screens.HomeScreen
 import com.jeffers.notimindlite.ui.screens.LogHistoryScreen
-import com.jeffers.notimindlite.ui.screens.SettingsScreen
+import com.jeffers.notimindlite.ui.screens.OnboardingScreen
 
 sealed class Screen(val route: String, val title: String, val icon: @Composable () -> Unit) {
-    object Active : Screen(
-        route = "active",
+    object Home : Screen(
+        route = "home",
         title = "Active",
-        icon = { Icon(Icons.Default.NotificationsActive, contentDescription = "Active Notifications") }
+        icon = { Icon(Icons.Default.NotificationsActive, contentDescription = "Active") }
     )
-
     object History : Screen(
         route = "history",
-        title = "Log",
-        icon = { Icon(Icons.Default.History, contentDescription = "Log") }
-    )
-
-    object Settings : Screen(
-        route = "settings",
-        title = "Settings",
-        icon = { Icon(Icons.Default.Settings, contentDescription = "Settings") }
+        title = "History",
+        icon = { Icon(Icons.Default.History, contentDescription = "History") }
     )
 }
 
 @Composable
-fun MainNavigationGraph(dao: NotificationDao, db: AppDatabase, authManager: AuthManager) {
+fun MainNavigation(
+    modifier: Modifier = Modifier,
+    notificationDao: NotificationDao,
+    authManager: AuthManager,
+    db: AppDatabase
+) {
     val navController = rememberNavController()
-    val items = listOf(Screen.Active, Screen.History, Screen.Settings)
+    val items = listOf(Screen.Home, Screen.History)
 
     Scaffold(
+        topBar = {
+            // Placeholder for future top bar actions (e.g., Settings)
+        },
         bottomBar = {
-            NavigationBar(
-                containerColor = MaterialTheme.colorScheme.surfaceContainer,
-                contentColor = MaterialTheme.colorScheme.onSurfaceVariant
-            ) {
+            NavigationBar {
                 val navBackStackEntry by navController.currentBackStackEntryAsState()
                 val currentRoute = navBackStackEntry?.destination?.route
-
                 items.forEach { screen ->
                     NavigationBarItem(
                         icon = screen.icon,
                         label = { Text(screen.title) },
                         selected = currentRoute == screen.route,
-                        colors = NavigationBarItemDefaults.colors(
-                            selectedIconColor = MaterialTheme.colorScheme.onPrimaryContainer,
-                            selectedTextColor = MaterialTheme.colorScheme.primary,
-                            indicatorColor = MaterialTheme.colorScheme.primaryContainer,
-                            unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                            unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant
-                        ),
                         onClick = {
-                            if (currentRoute != screen.route) {
-                                navController.navigate(screen.route) {
-                                    popUpTo(navController.graph.findStartDestination().id) {
-                                        saveState = true
-                                    }
-                                    launchSingleTop = true
-                                    restoreState = true
-                                }
+                            navController.navigate(screen.route) {
+                                popUpTo(navController.graph.findStartDestination().id) { saveState = true }
+                                launchSingleTop = true
+                                restoreState = true
                             }
                         }
                     )
@@ -85,17 +71,21 @@ fun MainNavigationGraph(dao: NotificationDao, db: AppDatabase, authManager: Auth
     ) { innerPadding ->
         NavHost(
             navController = navController,
-            startDestination = Screen.Active.route,
-            modifier = Modifier.padding(innerPadding)
+            startDestination = "onboarding",
+            modifier = modifier.padding(innerPadding)
         ) {
-            composable(Screen.Active.route) {
-                ActiveNotificationsScreen(dao = dao)
+            composable("onboarding") {
+                OnboardingScreen(onFinish = {
+                    navController.navigate(Screen.Home.route) {
+                        popUpTo("onboarding") { inclusive = true }
+                    }
+                })
+            }
+            composable(Screen.Home.route) {
+                HomeScreen(notificationDao, authManager, db)
             }
             composable(Screen.History.route) {
-                LogHistoryScreen(dao = dao)
-            }
-            composable(Screen.Settings.route) {
-                SettingsScreen(authManager = authManager, db = db)
+                LogHistoryScreen(notificationDao, authManager, db)
             }
         }
     }

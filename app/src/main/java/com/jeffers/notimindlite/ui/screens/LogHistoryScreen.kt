@@ -36,6 +36,8 @@ import com.jeffers.notimindlite.data.local.NotificationDao
 import com.jeffers.notimindlite.data.local.NotificationEntity
 import com.jeffers.notimindlite.ui.dialogs.AppPackageSelectorDialog
 import com.jeffers.notimindlite.util.DatabaseExporter
+import com.jeffers.notimindlite.data.auth.AuthManager
+import com.jeffers.notimindlite.data.local.AppDatabase
 import com.jeffers.notimindlite.util.HybridSearchEngine
 import com.jeffers.notimindlite.util.NotificationLauncher
 import kotlinx.coroutines.Dispatchers
@@ -53,7 +55,7 @@ enum class SortMode(val label: String) {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun LogHistoryScreen(dao: NotificationDao) {
+fun LogHistoryScreen(dao: NotificationDao, authManager: AuthManager, db: AppDatabase) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     val listState = rememberLazyListState()

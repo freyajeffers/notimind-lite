@@ -28,6 +28,7 @@ import com.jeffers.notimindlite.data.local.AppDatabase
 import com.jeffers.notimindlite.service.NotificationLoggerService
 import com.jeffers.notimindlite.ui.screens.checkNotificationPermission
 import com.jeffers.notimindlite.util.DynamicClusterManager
+import com.jeffers.notimindlite.ui.screens.OnboardingScreen
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -95,7 +96,7 @@ class MainActivity : ComponentActivity() {
                         }
                     }
 
-                    MainNavigationGraph(dao = dao, db = database, authManager = authManager)
+                    MainNavigation(notificationDao = dao, authManager = authManager, db = database)
 
                     if (showPermissionDialog && !hasPermission) {
                         AlertDialog(

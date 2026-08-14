@@ -3,8 +3,8 @@ package com.jeffers.notimindlite.ui.screens
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CloudSync
-import androidx.compose.material.icons.filled.Login
-import androidx.compose.material.icons.filled.Logout
+import androidx.compose.material.icons.automirrored.filled.Login
+import androidx.compose.material.icons.automirrored.filled.Logout
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -85,7 +85,7 @@ fun SettingsScreen(
                         },
                         colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
                     ) {
-                        Icon(Icons.Default.Logout, contentDescription = null)
+                        Icon(Icons.AutoMirrored.Filled.Logout, contentDescription = null)
                         Spacer(Modifier.width(8.dp))
                         Text("Sign Out")
                     }
@@ -108,7 +108,7 @@ fun SettingsScreen(
                             contentColor = MaterialTheme.colorScheme.onPrimaryContainer
                         )
                     ) {
-                        Icon(Icons.Default.Login, contentDescription = null)
+                        Icon(Icons.AutoMirrored.Filled.Login, contentDescription = null)
                         Spacer(Modifier.width(8.dp))
                         Text(if (session.isAuthenticating) "Signing In..." else "Sign in with Google")
                     }

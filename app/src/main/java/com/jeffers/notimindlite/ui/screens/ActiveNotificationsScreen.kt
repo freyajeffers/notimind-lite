@@ -61,6 +61,8 @@ import com.jeffers.notimindlite.service.NotificationLoggerService
 import com.jeffers.notimindlite.ui.dialogs.AppPackageSelectorDialog
 import com.jeffers.notimindlite.util.HybridSearchEngine
 import com.jeffers.notimindlite.util.NotificationLauncher
+import com.jeffers.notimindlite.data.auth.AuthManager
+import com.jeffers.notimindlite.data.local.AppDatabase
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.time.Instant
@@ -150,7 +152,7 @@ fun AppIconImage(appIconUri: String?, modifier: Modifier = Modifier.size(20.dp))
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
-fun ActiveNotificationsScreen(dao: NotificationDao) {
+fun ActiveNotificationsScreen(dao: NotificationDao, authManager: AuthManager, db: AppDatabase) {
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
     val prefManager = remember { PreferenceManager(context) }
