@@ -156,7 +156,13 @@ fun ActiveNotificationsScreen(dao: NotificationDao) {
     var expandedCards by remember { mutableStateOf(setOf<String>()) }
     var isGranted by remember { mutableStateOf(checkNotificationPermission(context)) }
     var searchQuery by remember { mutableStateOf("") }
+    var debouncedSearchQuery by remember { mutableStateOf("") }
     var isSearchExplicitlyOpened by remember { mutableStateOf(false) }
+
+    LaunchedEffect(searchQuery) {
+        delay(300L)
+        debouncedSearchQuery = searchQuery
+    }
 
     var selectedPackages by remember { mutableStateOf<List<String>?>(null) }
     var showPackagePicker by remember { mutableStateOf(false) }
@@ -292,24 +298,58 @@ fun ActiveNotificationsScreen(dao: NotificationDao) {
                     enter = fadeIn() + expandVertically(),
                     exit = fadeOut() + shrinkVertically()
                 ) {
-                    OutlinedTextField(
-                        value = searchQuery,
-                        onValueChange = { searchQuery = it },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(bottom = 6.dp),
-                        placeholder = { Text("Search (Vector + FTS hybrid search enabled)...") },
-                        leadingIcon = { Icon(Icons.Default.Search, contentDescription = "Search") },
-                        trailingIcon = {
-                            if (searchQuery.isNotEmpty()) {
-                                IconButton(onClick = { searchQuery = "" }) {
-                                    Icon(Icons.Default.Close, contentDescription = "Clear Search")
+                    val searchSuggestions = remember(searchQuery, pinnedNotifs, activeNotifs, recentlyDismissed, lostNotifs) {
+                        if (searchQuery.length < 2) emptyList()
+                        else {
+                            val allNotifs = pinnedNotifs + activeNotifs + recentlyDismissed + lostNotifs
+                            (allNotifs.map { it.appName } + allNotifs.map { it.title })
+                                .filter { it.contains(searchQuery, ignoreCase = true) }
+                                .distinct()
+                                .take(4)
+                        }
+                    }
+                    var expandedDropdown by remember { mutableStateOf(false) }
+
+                    LaunchedEffect(searchSuggestions) {
+                        expandedDropdown = searchSuggestions.isNotEmpty()
+                    }
+
+                    Box(modifier = Modifier.fillMaxWidth()) {
+                        OutlinedTextField(
+                            value = searchQuery,
+                            onValueChange = { searchQuery = it },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(bottom = 6.dp),
+                            placeholder = { Text("Search (Vector + FTS hybrid search enabled)...") },
+                            leadingIcon = { Icon(Icons.Default.Search, contentDescription = "Search") },
+                            trailingIcon = {
+                                if (searchQuery.isNotEmpty()) {
+                                    IconButton(onClick = { searchQuery = "" }) {
+                                        Icon(Icons.Default.Close, contentDescription = "Clear Search")
+                                    }
                                 }
+                            },
+                            singleLine = true,
+                            shape = RoundedCornerShape(12.dp)
+                        )
+
+                        DropdownMenu(
+                            expanded = expandedDropdown && searchSuggestions.isNotEmpty(),
+                            onDismissRequest = { expandedDropdown = false },
+                            modifier = Modifier.fillMaxWidth(0.9f)
+                        ) {
+                            searchSuggestions.forEach { suggestion ->
+                                DropdownMenuItem(
+                                    text = { Text(suggestion, fontSize = 14.sp) },
+                                    onClick = {
+                                        searchQuery = suggestion
+                                        expandedDropdown = false
+                                    }
+                                )
                             }
-                        },
-                        singleLine = true,
-                        shape = RoundedCornerShape(12.dp)
-                    )
+                        }
+                    }
                 }
             }
 
@@ -379,8 +419,8 @@ fun ActiveNotificationsScreen(dao: NotificationDao) {
                 }
 
                 // Combine Semantic Vector Embeddings + Full-Text Search with Best Match Ranking
-                val itemsList = if (searchQuery.isBlank()) filteredList
-                else HybridSearchEngine.searchAndRank(filteredList, searchQuery)
+                val itemsList = if (debouncedSearchQuery.isBlank()) filteredList
+                else HybridSearchEngine.searchAndRank(filteredList, debouncedSearchQuery)
 
                 // Persistent Sticky Section Header
                 stickyHeader(key = "sticky_header_${section.keyName}") {

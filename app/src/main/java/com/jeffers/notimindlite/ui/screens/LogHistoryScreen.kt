@@ -39,6 +39,7 @@ import com.jeffers.notimindlite.util.DatabaseExporter
 import com.jeffers.notimindlite.util.HybridSearchEngine
 import com.jeffers.notimindlite.util.NotificationLauncher
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.time.Instant
 import java.time.ZoneId
@@ -73,6 +74,13 @@ fun LogHistoryScreen(dao: NotificationDao) {
 
     val activeList = if (sortMode == SortMode.DISMISSED) dismissedNotifsDismissed else dismissedNotifsReceived
     var searchQuery by remember { mutableStateOf("") }
+    var debouncedSearchQuery by remember { mutableStateOf("") }
+
+    LaunchedEffect(searchQuery) {
+        delay(300L)
+        debouncedSearchQuery = searchQuery
+    }
+
     val dateTimeFormatter = remember {
         DateTimeFormatter.ofPattern("MMM dd, HH:mm:ss", Locale.getDefault()).withZone(ZoneId.systemDefault())
     }
@@ -85,7 +93,7 @@ fun LogHistoryScreen(dao: NotificationDao) {
         activeList.map { it.packageName to it.appName }.distinctBy { it.first }
     }
 
-    val filteredNotifs = remember(activeList, searchQuery, selectedReasonFilter, selectedPackages) {
+    val filteredNotifs = remember(activeList, debouncedSearchQuery, selectedReasonFilter, selectedPackages) {
         var list = activeList.distinctBy { "${it.packageName}_${it.title}_${it.content}" }
 
         if (selectedReasonFilter != null) {
@@ -96,10 +104,10 @@ fun LogHistoryScreen(dao: NotificationDao) {
             list = list.filter { selectedPackages!!.contains(it.packageName) }
         }
 
-        if (searchQuery.isBlank()) {
+        if (debouncedSearchQuery.isBlank()) {
             list
         } else {
-            HybridSearchEngine.searchAndRank(list, searchQuery)
+            HybridSearchEngine.searchAndRank(list, debouncedSearchQuery)
         }
     }
 
@@ -247,28 +255,63 @@ fun LogHistoryScreen(dao: NotificationDao) {
                 .fillMaxSize()
                 .padding(innerPadding)
         ) {
-            OutlinedTextField(
-                value = searchQuery,
-                onValueChange = { searchQuery = it },
+            val searchSuggestions = remember(searchQuery, activeList) {
+                if (searchQuery.length < 2) emptyList()
+                else {
+                    (activeList.map { it.appName } + activeList.map { it.title })
+                        .filter { it.contains(searchQuery, ignoreCase = true) }
+                        .distinct()
+                        .take(4)
+                }
+            }
+            var expandedDropdown by remember { mutableStateOf(false) }
+
+            LaunchedEffect(searchSuggestions) {
+                expandedDropdown = searchSuggestions.isNotEmpty()
+            }
+
+            Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 8.dp),
-                placeholder = {
-                    val filterSuffix = selectedReasonFilter?.let { " • Filter: ${getReasonLabel(it)}" } ?: ""
-                    val sortLabel = if (searchQuery.isNotBlank()) "Best Match" else sortMode.label
-                    Text("Search logs ($sortLabel$filterSuffix)...")
-                },
-                leadingIcon = { Icon(Icons.Default.Search, contentDescription = "Search") },
-                trailingIcon = {
-                    if (searchQuery.isNotEmpty()) {
-                        IconButton(onClick = { searchQuery = "" }) {
-                            Icon(Icons.Default.Close, contentDescription = "Clear Search")
+                    .padding(horizontal = 16.dp, vertical = 8.dp)
+            ) {
+                OutlinedTextField(
+                    value = searchQuery,
+                    onValueChange = { searchQuery = it },
+                    modifier = Modifier.fillMaxWidth(),
+                    placeholder = {
+                        val filterSuffix = selectedReasonFilter?.let { " • Filter: ${getReasonLabel(it)}" } ?: ""
+                        val sortLabel = if (searchQuery.isNotBlank()) "Best Match" else sortMode.label
+                        Text("Search logs ($sortLabel$filterSuffix)...")
+                    },
+                    leadingIcon = { Icon(Icons.Default.Search, contentDescription = "Search") },
+                    trailingIcon = {
+                        if (searchQuery.isNotEmpty()) {
+                            IconButton(onClick = { searchQuery = "" }) {
+                                Icon(Icons.Default.Close, contentDescription = "Clear Search")
+                            }
                         }
+                    },
+                    singleLine = true,
+                    shape = RoundedCornerShape(12.dp)
+                )
+
+                DropdownMenu(
+                    expanded = expandedDropdown && searchSuggestions.isNotEmpty(),
+                    onDismissRequest = { expandedDropdown = false },
+                    modifier = Modifier.fillMaxWidth(0.9f)
+                ) {
+                    searchSuggestions.forEach { suggestion ->
+                        DropdownMenuItem(
+                            text = { Text(suggestion, fontSize = 14.sp) },
+                            onClick = {
+                                searchQuery = suggestion
+                                expandedDropdown = false
+                            }
+                        )
                     }
-                },
-                singleLine = true,
-                shape = RoundedCornerShape(12.dp)
-            )
+                }
+            }
 
             if (filteredNotifs.isEmpty()) {
                 Box(
