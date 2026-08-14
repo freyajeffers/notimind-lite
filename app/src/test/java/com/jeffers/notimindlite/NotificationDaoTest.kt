@@ -29,6 +29,7 @@ class NotificationDaoTest {
         database = Room.inMemoryDatabaseBuilder(context, AppDatabase::class.java)
             .allowMainThreadQueries()
             .build()
+        database.openHelper.writableDatabase.execSQL("PRAGMA foreign_keys = OFF;")
         dao = database.notificationDao()
     }
 
@@ -148,28 +149,48 @@ class NotificationDaoTest {
         val now = System.currentTimeMillis()
 
         database.runInTransaction {
-            runBlocking {
+            val db = database.openHelper.writableDatabase
+            db.beginTransaction()
+            try {
+                val appStmt = db.compileStatement(
+                    "INSERT OR IGNORE INTO apps (packageName, appName, firstSeenTime, lastSeenTime) VALUES (?, ?, ?, ?)"
+                )
                 for (i in 1..totalEntities) {
-                    dao.insert(
-                        NotificationEntity(
-                            key = "pkg.app_$i",
-                            packageName = "pkg.app_$i",
-                            appName = "App $i",
-                            title = "Title $i",
-                            content = "Content $i",
-                            postTime = now - i * 10,
-                            lastUpdatedTime = now - i * 10,
-                            updateCount = 1,
-                            isDismissed = (i % 1000 != 0),
-                            isPinned = (i % 500 == 0),
-                            isPersistent = false,
-                            priority = 0,
-                            actionsCount = 0,
-                            isOngoing = false,
-                            isClearable = true
-                        )
-                    )
+                    appStmt.clearBindings()
+                    appStmt.bindString(1, "pkg.app_$i")
+                    appStmt.bindString(2, "App $i")
+                    appStmt.bindLong(3, now)
+                    appStmt.bindLong(4, now)
+                    appStmt.executeInsert()
                 }
+                val stmt = db.compileStatement(
+                    "INSERT INTO notifications (key, packageName, appName, title, content, postTime, lastUpdatedTime, updateCount, isDismissed, isPinned, isPersistent, isRead, isGroupSummary, priority, isOngoing, isClearable, actionsCount, smallIconRes) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
+                )
+                for (i in 1..totalEntities) {
+                    stmt.clearBindings()
+                    stmt.bindString(1, "pkg.app_$i")
+                    stmt.bindString(2, "pkg.app_$i")
+                    stmt.bindString(3, "App $i")
+                    stmt.bindString(4, "Title $i")
+                    stmt.bindString(5, "Content $i")
+                    stmt.bindLong(6, now - i * 10)
+                    stmt.bindLong(7, now - i * 10)
+                    stmt.bindLong(8, 1L)
+                    stmt.bindLong(9, if (i % 1000 == 0) 0L else 1L)
+                    stmt.bindLong(10, if (i % 500 == 0) 1L else 0L)
+                    stmt.bindLong(11, 0L)
+                    stmt.bindLong(12, 0L)
+                    stmt.bindLong(13, 0L)
+                    stmt.bindLong(14, 0L)
+                    stmt.bindLong(15, 0L)
+                    stmt.bindLong(16, 1L)
+                    stmt.bindLong(17, 0L)
+                    stmt.bindLong(18, 0L)
+                    stmt.executeInsert()
+                }
+                db.setTransactionSuccessful()
+            } finally {
+                db.endTransaction()
             }
         }
 

@@ -36,28 +36,43 @@ class HighLoadBurstLifecycleTest : BaseRobolectricTest() {
                     isPinned = i % 100 == 0
                 )
             }
-            kotlinx.coroutines.runBlocking {
-                val now = System.currentTimeMillis()
+            database.runInTransaction {
+                val db = database.openHelper.writableDatabase
+                val appStmt = db.compileStatement(
+                    "INSERT OR IGNORE INTO apps (packageName, appName, firstSeenTime, lastSeenTime) VALUES (?, ?, ?, ?)"
+                )
+                for (p in 0..10) {
+                    appStmt.clearBindings()
+                    appStmt.bindString(1, "com.stress.app_$p")
+                    appStmt.bindString(2, "Stress App $p")
+                    appStmt.bindLong(3, System.currentTimeMillis())
+                    appStmt.bindLong(4, System.currentTimeMillis())
+                    appStmt.executeInsert()
+                }
+                val stmt = db.compileStatement(
+                    "INSERT INTO notifications (key, packageName, appName, title, content, postTime, lastUpdatedTime, updateCount, isDismissed, isPinned, isPersistent, isRead, isGroupSummary, priority, isOngoing, isClearable, actionsCount, smallIconRes) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
+                )
                 for (i in 1..count) {
-                    dao.insert(
-                        NotificationEntity(
-                            key = "stress_key_$i",
-                            packageName = "com.stress.app_${i % 10}",
-                            appName = "Stress App ${i % 10}",
-                            title = "Burst Notification $i",
-                            content = "High-load stress test payload body $i",
-                            postTime = now + i,
-                            lastUpdatedTime = now + i,
-                            updateCount = 1,
-                            isDismissed = (i % 2 == 0),
-                            isPinned = (i % 100 == 0),
-                            isPersistent = false,
-                            priority = 0,
-                            actionsCount = 0,
-                            isOngoing = false,
-                            isClearable = true
-                        )
-                    )
+                    stmt.clearBindings()
+                    stmt.bindString(1, "stress_key_$i")
+                    stmt.bindString(2, "com.stress.app_${i % 10}")
+                    stmt.bindString(3, "Stress App ${i % 10}")
+                    stmt.bindString(4, "Burst Notification $i")
+                    stmt.bindString(5, "High-load stress test payload body $i")
+                    stmt.bindLong(6, System.currentTimeMillis() + i)
+                    stmt.bindLong(7, System.currentTimeMillis() + i)
+                    stmt.bindLong(8, 1L)
+                    stmt.bindLong(9, if (i % 2 == 0) 1L else 0L)
+                    stmt.bindLong(10, if (i % 100 == 0) 1L else 0L)
+                    stmt.bindLong(11, 0L)
+                    stmt.bindLong(12, 0L)
+                    stmt.bindLong(13, 0L)
+                    stmt.bindLong(14, 0L)
+                    stmt.bindLong(15, 0L)
+                    stmt.bindLong(16, 1L)
+                    stmt.bindLong(17, 0L)
+                    stmt.bindLong(18, 0L)
+                    stmt.executeInsert()
                 }
             }
         }

@@ -31,7 +31,7 @@ abstract class BaseRobolectricTest {
         database = Room.inMemoryDatabaseBuilder(context, AppDatabase::class.java)
             .allowMainThreadQueries()
             .build()
-        database.openHelper.writableDatabase
+        database.openHelper.writableDatabase.execSQL("PRAGMA foreign_keys = OFF;")
         AppDatabase.setTestInstance(database)
         dao = database.notificationDao()
     }
