@@ -77,7 +77,7 @@ fun LogHistoryScreen(dao: NotificationDao) {
     var debouncedSearchQuery by remember { mutableStateOf("") }
 
     LaunchedEffect(searchQuery) {
-        delay(300L)
+        delay(100L)
         debouncedSearchQuery = searchQuery
     }
 

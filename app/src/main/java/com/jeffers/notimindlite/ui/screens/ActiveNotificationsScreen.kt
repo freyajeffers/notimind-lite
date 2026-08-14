@@ -160,7 +160,7 @@ fun ActiveNotificationsScreen(dao: NotificationDao) {
     var isSearchExplicitlyOpened by remember { mutableStateOf(false) }
 
     LaunchedEffect(searchQuery) {
-        delay(300L)
+        delay(100L)
         debouncedSearchQuery = searchQuery
     }
 
@@ -211,6 +211,26 @@ fun ActiveNotificationsScreen(dao: NotificationDao) {
         } else {
             defaultList
         }
+    }
+
+    val totalLazyItemCount = remember(sectionOrder, expandedSection, pinnedNotifs, activeNotifs, recentlyDismissed, lostNotifs, selectedPackages, debouncedSearchQuery) {
+        var count = 2 // active_search_header + service_status_card
+        sectionOrder.forEach { section ->
+            count += 1 // sticky header
+            if (expandedSection == section.keyName) {
+                val rawList = when (section) {
+                    NotificationSection.PINNED -> pinnedNotifs
+                    NotificationSection.ACTIVE -> activeNotifs
+                    NotificationSection.FILTERED -> emptyList()
+                    NotificationSection.DISMISSED -> recentlyDismissed
+                    NotificationSection.LOST -> lostNotifs
+                }.distinctBy { "${it.packageName}_${it.title}_${it.content}" }
+                val filtered = if (!selectedPackages.isNullOrEmpty()) rawList.filter { selectedPackages!!.contains(it.packageName) } else rawList
+                val items = if (debouncedSearchQuery.isBlank()) filtered else HybridSearchEngine.searchAndRank(filtered, debouncedSearchQuery)
+                count += if (items.isEmpty()) 1 else items.size
+            }
+        }
+        count
     }
 
     val listState = rememberLazyListState()
@@ -271,7 +291,8 @@ fun ActiveNotificationsScreen(dao: NotificationDao) {
                 SmallFloatingActionButton(
                     onClick = {
                         scope.launch {
-                            listState.animateScrollToItem(100)
+                            val targetIndex = (totalLazyItemCount - 1).coerceAtLeast(0)
+                            listState.animateScrollToItem(targetIndex)
                         }
                     },
                     containerColor = MaterialTheme.colorScheme.primaryContainer,
