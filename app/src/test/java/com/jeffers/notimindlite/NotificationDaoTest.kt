@@ -153,7 +153,7 @@ class NotificationDaoTest {
             db.beginTransaction()
             try {
                 val appStmt = db.compileStatement(
-                    "INSERT OR IGNORE INTO apps (packageName, appName, firstSeenTime, lastSeenTime) VALUES (?, ?, ?, ?)"
+                    "INSERT OR IGNORE INTO apps (packageName, appName, firstSeenTime, lastSeenTime, syncStatus, lastSyncedAt) VALUES (?, ?, ?, ?, ?, ?)"
                 )
                 for (i in 1..totalEntities) {
                     appStmt.clearBindings()
@@ -161,14 +161,16 @@ class NotificationDaoTest {
                     appStmt.bindString(2, "App $i")
                     appStmt.bindLong(3, now)
                     appStmt.bindLong(4, now)
+                    appStmt.bindString(5, "PENDING_UPLOAD")
+                    appStmt.bindLong(6, 0L)
                     appStmt.executeInsert()
                 }
                 val stmt = db.compileStatement(
-                    "INSERT INTO notifications (key, packageName, appName, title, content, postTime, lastUpdatedTime, updateCount, isDismissed, isPinned, isPersistent, isRead, isGroupSummary, priority, isOngoing, isClearable, actionsCount, smallIconRes) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
+                    "INSERT INTO notifications (key, packageName, appName, title, content, postTime, lastUpdatedTime, updateCount, isDismissed, isPinned, isPersistent, isRead, isGroupSummary, priority, isOngoing, isClearable, actionsCount, smallIconRes, syncStatus, lastSyncedAt) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
                 )
                 for (i in 1..totalEntities) {
                     stmt.clearBindings()
-                    stmt.bindString(1, "pkg.app_$i")
+                    stmt.bindString(1, "key_pkg.app_$i")
                     stmt.bindString(2, "pkg.app_$i")
                     stmt.bindString(3, "App $i")
                     stmt.bindString(4, "Title $i")
@@ -186,6 +188,8 @@ class NotificationDaoTest {
                     stmt.bindLong(16, 1L)
                     stmt.bindLong(17, 0L)
                     stmt.bindLong(18, 0L)
+                    stmt.bindString(19, "PENDING_UPLOAD")
+                    stmt.bindLong(20, 0L)
                     stmt.executeInsert()
                 }
                 db.setTransactionSuccessful()

@@ -7,14 +7,6 @@ import androidx.room.PrimaryKey
 
 @Entity(
     tableName = "notifications",
-    foreignKeys = [
-        ForeignKey(
-            entity = AppEntity::class,
-            parentColumns = ["packageName"],
-            childColumns = ["packageName"],
-            onDelete = ForeignKey.CASCADE
-        )
-    ],
     indices = [
         Index(value = ["key"], unique = true),
         Index(value = ["isDismissed", "postTime"]),
@@ -54,5 +46,7 @@ data class NotificationEntity(
     val intentUri: String? = null,
     val isPinned: Boolean = false,
     val actionLabels: String? = null,
-    val smallIconRes: Int = 0
+    val smallIconRes: Int = 0,
+    val syncStatus: SyncStatus = SyncStatus.PENDING_UPLOAD,
+    val lastSyncedAt: Long = 0
 )

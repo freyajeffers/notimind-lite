@@ -47,6 +47,7 @@ class MainActivity : ComponentActivity() {
 
         val database = AppDatabase.getDatabase(applicationContext)
         val dao = database.notificationDao()
+        val authManager = com.jeffers.notimindlite.data.auth.AuthManager(applicationContext)
 
         checkPostNotificationsPermission()
 
@@ -94,7 +95,7 @@ class MainActivity : ComponentActivity() {
                         }
                     }
 
-                    MainNavigationGraph(dao = dao)
+                    MainNavigationGraph(dao = dao, db = database, authManager = authManager)
 
                     if (showPermissionDialog && !hasPermission) {
                         AlertDialog(
