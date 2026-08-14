@@ -102,7 +102,11 @@ fun SettingsScreen(
                                 SyncWorker.schedulePeriodicSync(context)
                             }
                         },
-                        enabled = !session.isAuthenticating
+                        enabled = !session.isAuthenticating,
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = MaterialTheme.colorScheme.primaryContainer,
+                            contentColor = MaterialTheme.colorScheme.onPrimaryContainer
+                        )
                     ) {
                         Icon(Icons.Default.Login, contentDescription = null)
                         Spacer(Modifier.width(8.dp))

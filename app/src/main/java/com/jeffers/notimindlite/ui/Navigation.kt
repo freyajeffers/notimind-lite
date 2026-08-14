@@ -48,7 +48,10 @@ fun MainNavigationGraph(dao: NotificationDao, db: AppDatabase, authManager: Auth
 
     Scaffold(
         bottomBar = {
-            NavigationBar {
+            NavigationBar(
+                containerColor = MaterialTheme.colorScheme.surfaceContainer,
+                contentColor = MaterialTheme.colorScheme.onSurfaceVariant
+            ) {
                 val navBackStackEntry by navController.currentBackStackEntryAsState()
                 val currentRoute = navBackStackEntry?.destination?.route
 
@@ -57,6 +60,13 @@ fun MainNavigationGraph(dao: NotificationDao, db: AppDatabase, authManager: Auth
                         icon = screen.icon,
                         label = { Text(screen.title) },
                         selected = currentRoute == screen.route,
+                        colors = NavigationBarItemDefaults.colors(
+                            selectedIconColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                            selectedTextColor = MaterialTheme.colorScheme.primary,
+                            indicatorColor = MaterialTheme.colorScheme.primaryContainer,
+                            unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                            unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant
+                        ),
                         onClick = {
                             if (currentRoute != screen.route) {
                                 navController.navigate(screen.route) {
