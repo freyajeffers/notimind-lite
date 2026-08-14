@@ -17,6 +17,7 @@ import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -590,6 +591,7 @@ fun SystemSwipeToDismissCard(
     }
 }
 
+@OptIn(ExperimentalFoundationApi::class, ExperimentalMaterial3Api::class)
 @Composable
 fun UnifiedNotificationCard(
     item: NotificationEntity,
@@ -604,163 +606,179 @@ fun UnifiedNotificationCard(
     val scope = rememberCoroutineScope()
 
     val pinScale by animateFloatAsState(if (item.isPinned) 1.2f else 1.0f, animationSpec = spring(stiffness = 400f), label = "pin_scale")
+    val tooltipState = rememberTooltipState()
 
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable {
-                NotificationLauncher.launchNotification(context, item.packageName, item.key, item.intentUri)
-            },
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
+    TooltipBox(
+        positionProvider = TooltipDefaults.rememberPlainTooltipPositionProvider(),
+        tooltip = {
+            PlainTooltip {
+                Text("Tap to open app • Long press for options")
+            }
+        },
+        state = tooltipState
     ) {
-        Column(modifier = Modifier.padding(16.dp)) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier.weight(1f)
-                ) {
-                    AppIconImage(appIconUri = item.appIconUri)
-                    if (!item.appIconUri.isNullOrEmpty()) {
-                        Spacer(modifier = Modifier.width(6.dp))
+        Card(
+            modifier = Modifier
+                .fillMaxWidth()
+                .combinedClickable(
+                    onClick = {
+                        NotificationLauncher.launchNotification(context, item.packageName, item.key, item.intentUri)
+                    },
+                    onLongClick = {
+                        scope.launch { tooltipState.show() }
                     }
-                    Text(
-                        text = item.appName,
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 14.sp,
-                        color = MaterialTheme.colorScheme.primary
-                    )
-                }
-
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    IconButton(
-                        onClick = {
-                            scope.launch {
-                                dao.updatePinnedStatus(item.key, !item.isPinned)
-                            }
-                        },
-                        modifier = Modifier
-                            .size(24.dp)
-                            .scale(pinScale)
+                ),
+            elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
+        ) {
+            Column(modifier = Modifier.padding(16.dp)) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.weight(1f)
                     ) {
-                        Icon(
-                            imageVector = if (item.isPinned) Icons.Default.Bookmark else Icons.Outlined.BookmarkBorder,
-                            contentDescription = if (item.isPinned) "Unpin" else "Pin",
-                            tint = if (item.isPinned) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
+                        AppIconImage(appIconUri = item.appIconUri)
+                        if (!item.appIconUri.isNullOrEmpty()) {
+                            Spacer(modifier = Modifier.width(6.dp))
+                        }
+                        Text(
+                            text = item.appName,
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 14.sp,
+                            color = MaterialTheme.colorScheme.primary
                         )
                     }
 
-                    if (!item.isDismissed && item.isClearable) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        IconButton(
+                            onClick = {
+                                scope.launch {
+                                    dao.updatePinnedStatus(item.key, !item.isPinned)
+                                }
+                            },
+                            modifier = Modifier
+                                .size(24.dp)
+                                .scale(pinScale)
+                        ) {
+                            Icon(
+                                imageVector = if (item.isPinned) Icons.Default.Bookmark else Icons.Outlined.BookmarkBorder,
+                                contentDescription = if (item.isPinned) "Unpin" else "Pin",
+                                tint = if (item.isPinned) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+
+                        if (!item.isDismissed && item.isClearable) {
+                            Spacer(modifier = Modifier.width(6.dp))
+                            IconButton(
+                                onClick = onDismiss,
+                                modifier = Modifier.size(24.dp)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Close,
+                                    contentDescription = "Dismiss Notification",
+                                    tint = MaterialTheme.colorScheme.error
+                                )
+                            }
+                        }
+
+                        if (section != NotificationSection.ACTIVE && item.isDismissed) {
+                            Spacer(modifier = Modifier.width(6.dp))
+                            val badgeColor = if (section == NotificationSection.LOST)
+                                MaterialTheme.colorScheme.error
+                            else
+                                MaterialTheme.colorScheme.secondary
+
+                            Surface(
+                                color = badgeColor.copy(alpha = 0.2f),
+                                shape = MaterialTheme.shapes.extraSmall
+                            ) {
+                                Text(
+                                    text = getReasonLabel(item.dismissReason),
+                                    fontSize = 10.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = badgeColor,
+                                    modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                                )
+                            }
+                        } else if (item.isPersistent) {
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Icon(
+                                imageVector = Icons.Default.PushPin,
+                                contentDescription = "Ongoing",
+                                modifier = Modifier.size(16.dp),
+                                tint = MaterialTheme.colorScheme.tertiary
+                            )
+                        }
+
                         Spacer(modifier = Modifier.width(6.dp))
                         IconButton(
-                            onClick = onDismiss,
+                            onClick = onToggleExpand,
                             modifier = Modifier.size(24.dp)
                         ) {
                             Icon(
-                                imageVector = Icons.Default.Close,
-                                contentDescription = "Dismiss Notification",
-                                tint = MaterialTheme.colorScheme.error
+                                imageVector = if (isExpanded) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
+                                contentDescription = "Toggle Details",
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                         }
-                    }
-
-                    if (section != NotificationSection.ACTIVE && item.isDismissed) {
-                        Spacer(modifier = Modifier.width(6.dp))
-                        val badgeColor = if (section == NotificationSection.LOST)
-                            MaterialTheme.colorScheme.error
-                        else
-                            MaterialTheme.colorScheme.secondary
-
-                        Surface(
-                            color = badgeColor.copy(alpha = 0.2f),
-                            shape = MaterialTheme.shapes.extraSmall
-                        ) {
-                            Text(
-                                text = getReasonLabel(item.dismissReason),
-                                fontSize = 10.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = badgeColor,
-                                modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
-                            )
-                        }
-                    } else if (item.isPersistent) {
-                        Spacer(modifier = Modifier.width(6.dp))
-                        Icon(
-                            imageVector = Icons.Default.PushPin,
-                            contentDescription = "Ongoing",
-                            modifier = Modifier.size(16.dp),
-                            tint = MaterialTheme.colorScheme.tertiary
-                        )
-                    }
-
-                    Spacer(modifier = Modifier.width(6.dp))
-                    IconButton(
-                        onClick = onToggleExpand,
-                        modifier = Modifier.size(24.dp)
-                    ) {
-                        Icon(
-                            imageVector = if (isExpanded) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
-                            contentDescription = "Toggle Details",
-                            tint = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
                     }
                 }
-            }
 
-            Spacer(modifier = Modifier.height(6.dp))
-            Text(
-                text = item.title,
-                fontWeight = FontWeight.SemiBold,
-                fontSize = 16.sp,
-                color = MaterialTheme.colorScheme.onSurface
-            )
-
-            if (!item.subText.isNullOrEmpty()) {
+                Spacer(modifier = Modifier.height(6.dp))
                 Text(
-                    text = item.subText,
-                    fontSize = 12.sp,
-                    color = MaterialTheme.colorScheme.tertiary,
-                    fontWeight = FontWeight.Medium
+                    text = item.title,
+                    fontWeight = FontWeight.SemiBold,
+                    fontSize = 16.sp,
+                    color = MaterialTheme.colorScheme.onSurface
                 )
-            }
 
-            Spacer(modifier = Modifier.height(4.dp))
-            Text(
-                text = item.bigText ?: item.content,
-                fontSize = 14.sp,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-
-            AnimatedVisibility(
-                visible = isExpanded,
-                enter = fadeIn() + expandVertically(animationSpec = spring(stiffness = 300f)),
-                exit = fadeOut() + shrinkVertically(animationSpec = spring(stiffness = 300f))
-            ) {
-                NotificationDetailPanel(item = item, dateTimeFormatter = dateTimeFormatter)
-            }
-
-            Spacer(modifier = Modifier.height(8.dp))
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                Text(
-                    text = "Received: ${dateTimeFormatter.format(Instant.ofEpochMilli(item.postTime))}",
-                    fontSize = 11.sp,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
-                )
-                if (item.isDismissed) {
-                    val dismissTimestamp = item.dismissTime ?: item.postTime
+                if (!item.subText.isNullOrEmpty()) {
                     Text(
-                        text = "Dismissed: ${dateTimeFormatter.format(Instant.ofEpochMilli(dismissTimestamp))}",
-                        fontSize = 11.sp,
-                        color = MaterialTheme.colorScheme.secondary,
+                        text = item.subText,
+                        fontSize = 12.sp,
+                        color = MaterialTheme.colorScheme.tertiary,
                         fontWeight = FontWeight.Medium
                     )
+                }
+
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(
+                    text = item.bigText ?: item.content,
+                    fontSize = 14.sp,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+
+                AnimatedVisibility(
+                    visible = isExpanded,
+                    enter = fadeIn() + expandVertically(animationSpec = spring(stiffness = 300f)),
+                    exit = fadeOut() + shrinkVertically(animationSpec = spring(stiffness = 300f))
+                ) {
+                    NotificationDetailPanel(item = item, dateTimeFormatter = dateTimeFormatter)
+                }
+
+                Spacer(modifier = Modifier.height(8.dp))
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Text(
+                        text = "Received: ${dateTimeFormatter.format(Instant.ofEpochMilli(item.postTime))}",
+                        fontSize = 11.sp,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
+                    )
+                    if (item.isDismissed) {
+                        val dismissTimestamp = item.dismissTime ?: item.postTime
+                        Text(
+                            text = "Dismissed: ${dateTimeFormatter.format(Instant.ofEpochMilli(dismissTimestamp))}",
+                            fontSize = 11.sp,
+                            color = MaterialTheme.colorScheme.secondary,
+                            fontWeight = FontWeight.Medium
+                        )
+                    }
                 }
             }
         }
@@ -771,11 +789,18 @@ fun UnifiedNotificationCard(
 fun NotificationDetailPanel(item: NotificationEntity, dateTimeFormatter: DateTimeFormatter) {
     val context = LocalContext.current
 
-    val actionLabels = remember(item.actionLabels) {
+    val availableActionLabels = remember(item.actionLabels, item.key) {
         if (!item.actionLabels.isNullOrEmpty()) {
             try {
                 val jsonArray = org.json.JSONArray(item.actionLabels)
-                (0 until jsonArray.length()).map { jsonArray.getString(it) }
+                (0 until jsonArray.length()).mapNotNull { index ->
+                    val label = jsonArray.getString(index)
+                    if (NotificationLauncher.isActionAvailable(item.key, index)) {
+                        index to label
+                    } else {
+                        null
+                    }
+                }
             } catch (e: Exception) {
                 emptyList()
             }
@@ -793,13 +818,13 @@ fun NotificationDetailPanel(item: NotificationEntity, dateTimeFormatter: DateTim
         Spacer(modifier = Modifier.height(10.dp))
 
         // ── Actions ──
-        if (actionLabels.isNotEmpty()) {
+        if (availableActionLabels.isNotEmpty()) {
             DetailSectionHeader("Actions")
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                actionLabels.forEachIndexed { index, label ->
+                availableActionLabels.forEach { (index, label) ->
                     OutlinedButton(
                         onClick = {
                             val triggered = NotificationLauncher.triggerAction(context, item.key, index)
