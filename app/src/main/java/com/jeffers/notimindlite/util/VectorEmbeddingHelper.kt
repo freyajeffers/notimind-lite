@@ -10,13 +10,17 @@ import kotlin.math.sqrt
 object VectorEmbeddingHelper {
 
     const val EMBEDDING_DIM = 128
+    private val embeddingCache = android.util.LruCache<String, FloatArray>(256)
 
     /**
      * Computes a normalized dense vector embedding for arbitrary text.
      */
     fun computeEmbedding(text: String): FloatArray {
+        if (text.isBlank()) return FloatArray(EMBEDDING_DIM)
+        val cached = embeddingCache.get(text)
+        if (cached != null) return cached
+
         val vector = FloatArray(EMBEDDING_DIM)
-        if (text.isBlank()) return vector
 
         val cleanText = text.lowercase()
         val words = cleanText.split("\\s+".toRegex()).filter { it.isNotBlank() }
@@ -68,6 +72,7 @@ object VectorEmbeddingHelper {
             }
         }
 
+        embeddingCache.put(text, vector)
         return vector
     }
 
