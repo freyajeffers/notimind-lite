@@ -66,6 +66,7 @@ abstract class BaseRobolectricTest {
         )
     }
 
+    @Suppress("DEPRECATION")
     protected fun createMockStatusBarNotification(
         key: String = "com.example.app|101|null|10001",
         packageName: String = "com.example.app",

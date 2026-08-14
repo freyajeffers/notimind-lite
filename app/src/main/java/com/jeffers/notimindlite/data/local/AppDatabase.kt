@@ -181,7 +181,7 @@ abstract class AppDatabase : RoomDatabase() {
                     val appContext = context.applicationContext
                     val deContext = if (appContext.isDeviceProtectedStorage) appContext else appContext.createDeviceProtectedStorageContext()
                     Room.databaseBuilder(deContext, AppDatabase::class.java, DE_DATABASE_NAME)
-                        .fallbackToDestructiveMigration()
+                        .fallbackToDestructiveMigration(dropAllTables = true)
                         .setJournalMode(JournalMode.WRITE_AHEAD_LOGGING)
                         .build().also { deInstance = it }
                 }
