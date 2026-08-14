@@ -299,6 +299,7 @@ fun LogHistoryScreen(dao: NotificationDao) {
                 DropdownMenu(
                     expanded = expandedDropdown && searchSuggestions.isNotEmpty(),
                     onDismissRequest = { expandedDropdown = false },
+                    properties = androidx.compose.ui.window.PopupProperties(focusable = false),
                     modifier = Modifier.fillMaxWidth(0.9f)
                 ) {
                     searchSuggestions.forEach { suggestion ->
