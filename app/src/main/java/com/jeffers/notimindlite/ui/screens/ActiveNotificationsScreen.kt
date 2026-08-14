@@ -247,26 +247,38 @@ fun ActiveNotificationsScreen(dao: NotificationDao) {
                 title = { Text("Active & Categorized Notifications", fontWeight = FontWeight.Bold) },
                 actions = {
                     // App Package Filter
-                    IconButton(onClick = { showPackagePicker = true }) {
-                        Icon(
-                            imageVector = Icons.Default.FilterList,
-                            contentDescription = "Filter Apps",
-                            tint = if (!selectedPackages.isNullOrEmpty()) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
-                        )
+                    TooltipBox(
+                        positionProvider = TooltipDefaults.rememberPlainTooltipPositionProvider(),
+                        tooltip = { PlainTooltip { Text("Filter Apps") } },
+                        state = rememberTooltipState()
+                    ) {
+                        IconButton(onClick = { showPackagePicker = true }) {
+                            Icon(
+                                imageVector = Icons.Default.FilterList,
+                                contentDescription = "Filter Apps",
+                                tint = if (!selectedPackages.isNullOrEmpty()) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
+                            )
+                        }
                     }
 
                     // Search Toggle
-                    IconButton(onClick = {
-                        isSearchExplicitlyOpened = !isSearchExplicitlyOpened
-                        if (isSearchExplicitlyOpened) {
-                            scope.launch { listState.animateScrollToItem(0) }
+                    TooltipBox(
+                        positionProvider = TooltipDefaults.rememberPlainTooltipPositionProvider(),
+                        tooltip = { PlainTooltip { Text("Search Notifications") } },
+                        state = rememberTooltipState()
+                    ) {
+                        IconButton(onClick = {
+                            isSearchExplicitlyOpened = !isSearchExplicitlyOpened
+                            if (isSearchExplicitlyOpened) {
+                                scope.launch { listState.animateScrollToItem(0) }
+                            }
+                        }) {
+                            Icon(
+                                imageVector = Icons.Default.Search,
+                                contentDescription = "Search",
+                                tint = if (searchQuery.isNotEmpty() || isSearchExplicitlyOpened) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
+                            )
                         }
-                    }) {
-                        Icon(
-                            imageVector = Icons.Default.Search,
-                            contentDescription = "Search",
-                            tint = if (searchQuery.isNotEmpty() || isSearchExplicitlyOpened) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
-                        )
                     }
                 }
             )
@@ -276,29 +288,41 @@ fun ActiveNotificationsScreen(dao: NotificationDao) {
                 verticalArrangement = Arrangement.spacedBy(8.dp),
                 horizontalAlignment = Alignment.End
             ) {
-                SmallFloatingActionButton(
-                    onClick = {
-                        scope.launch {
-                            listState.animateScrollToItem(0)
-                        }
-                    },
-                    containerColor = MaterialTheme.colorScheme.primaryContainer,
-                    contentColor = MaterialTheme.colorScheme.onPrimaryContainer
+                TooltipBox(
+                    positionProvider = TooltipDefaults.rememberPlainTooltipPositionProvider(),
+                    tooltip = { PlainTooltip { Text("Scroll to Top") } },
+                    state = rememberTooltipState()
                 ) {
-                    Icon(Icons.Default.KeyboardArrowUp, contentDescription = "Scroll to Top")
+                    SmallFloatingActionButton(
+                        onClick = {
+                            scope.launch {
+                                listState.animateScrollToItem(0)
+                            }
+                        },
+                        containerColor = MaterialTheme.colorScheme.primaryContainer,
+                        contentColor = MaterialTheme.colorScheme.onPrimaryContainer
+                    ) {
+                        Icon(Icons.Default.KeyboardArrowUp, contentDescription = "Scroll to Top")
+                    }
                 }
 
-                SmallFloatingActionButton(
-                    onClick = {
-                        scope.launch {
-                            val targetIndex = (totalLazyItemCount - 1).coerceAtLeast(0)
-                            listState.animateScrollToItem(targetIndex)
-                        }
-                    },
-                    containerColor = MaterialTheme.colorScheme.primaryContainer,
-                    contentColor = MaterialTheme.colorScheme.onPrimaryContainer
+                TooltipBox(
+                    positionProvider = TooltipDefaults.rememberPlainTooltipPositionProvider(),
+                    tooltip = { PlainTooltip { Text("Scroll to Bottom") } },
+                    state = rememberTooltipState()
                 ) {
-                    Icon(Icons.Default.KeyboardArrowDown, contentDescription = "Scroll to Bottom")
+                    SmallFloatingActionButton(
+                        onClick = {
+                            scope.launch {
+                                val targetIndex = (totalLazyItemCount - 1).coerceAtLeast(0)
+                                listState.animateScrollToItem(targetIndex)
+                            }
+                        },
+                        containerColor = MaterialTheme.colorScheme.primaryContainer,
+                        contentColor = MaterialTheme.colorScheme.onPrimaryContainer
+                    ) {
+                        Icon(Icons.Default.KeyboardArrowDown, contentDescription = "Scroll to Bottom")
+                    }
                 }
             }
         }
@@ -717,34 +741,46 @@ fun UnifiedNotificationCard(
                     }
 
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        IconButton(
-                            onClick = {
-                                scope.launch {
-                                    dao.updatePinnedStatus(item.key, !item.isPinned)
-                                }
-                            },
-                            modifier = Modifier
-                                .size(24.dp)
-                                .scale(pinScale)
+                        TooltipBox(
+                            positionProvider = TooltipDefaults.rememberPlainTooltipPositionProvider(),
+                            tooltip = { PlainTooltip { Text(if (item.isPinned) "Unpin notification" else "Pin notification") } },
+                            state = rememberTooltipState()
                         ) {
-                            Icon(
-                                imageVector = if (item.isPinned) Icons.Default.Bookmark else Icons.Outlined.BookmarkBorder,
-                                contentDescription = if (item.isPinned) "Unpin" else "Pin",
-                                tint = if (item.isPinned) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
-                            )
+                            IconButton(
+                                onClick = {
+                                    scope.launch {
+                                        dao.updatePinnedStatus(item.key, !item.isPinned)
+                                    }
+                                },
+                                modifier = Modifier
+                                    .size(24.dp)
+                                    .scale(pinScale)
+                            ) {
+                                Icon(
+                                    imageVector = if (item.isPinned) Icons.Default.Bookmark else Icons.Outlined.BookmarkBorder,
+                                    contentDescription = if (item.isPinned) "Unpin" else "Pin",
+                                    tint = if (item.isPinned) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
                         }
 
                         if (!item.isDismissed && item.isClearable) {
                             Spacer(modifier = Modifier.width(6.dp))
-                            IconButton(
-                                onClick = onDismiss,
-                                modifier = Modifier.size(24.dp)
+                            TooltipBox(
+                                positionProvider = TooltipDefaults.rememberPlainTooltipPositionProvider(),
+                                tooltip = { PlainTooltip { Text("Dismiss notification") } },
+                                state = rememberTooltipState()
                             ) {
-                                Icon(
-                                    imageVector = Icons.Default.Close,
-                                    contentDescription = "Dismiss Notification",
-                                    tint = MaterialTheme.colorScheme.error
-                                )
+                                IconButton(
+                                    onClick = onDismiss,
+                                    modifier = Modifier.size(24.dp)
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.Close,
+                                        contentDescription = "Dismiss Notification",
+                                        tint = MaterialTheme.colorScheme.error
+                                    )
+                                }
                             }
                         }
 
@@ -778,15 +814,21 @@ fun UnifiedNotificationCard(
                         }
 
                         Spacer(modifier = Modifier.width(6.dp))
-                        IconButton(
-                            onClick = onToggleExpand,
-                            modifier = Modifier.size(24.dp)
+                        TooltipBox(
+                            positionProvider = TooltipDefaults.rememberPlainTooltipPositionProvider(),
+                            tooltip = { PlainTooltip { Text(if (isExpanded) "Collapse details" else "Expand details") } },
+                            state = rememberTooltipState()
                         ) {
-                            Icon(
-                                imageVector = if (isExpanded) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
-                                contentDescription = "Toggle Details",
-                                tint = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
+                            IconButton(
+                                onClick = onToggleExpand,
+                                modifier = Modifier.size(24.dp)
+                            ) {
+                                Icon(
+                                    imageVector = if (isExpanded) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
+                                    contentDescription = "Toggle Details",
+                                    tint = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
                         }
                     }
                 }

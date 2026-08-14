@@ -117,18 +117,30 @@ fun LogHistoryScreen(dao: NotificationDao) {
                 title = { Text("Log History (${filteredNotifs.size}/$totalCount)", fontWeight = FontWeight.Bold) },
                 actions = {
                     // App Package Filter Button
-                    IconButton(onClick = { showPackagePicker = true }) {
-                        Icon(
-                            Icons.Default.FilterList,
-                            contentDescription = "Filter Apps",
-                            tint = if (!selectedPackages.isNullOrEmpty()) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
-                        )
+                    TooltipBox(
+                        positionProvider = TooltipDefaults.rememberPlainTooltipPositionProvider(),
+                        tooltip = { PlainTooltip { Text("Filter Apps") } },
+                        state = rememberTooltipState()
+                    ) {
+                        IconButton(onClick = { showPackagePicker = true }) {
+                            Icon(
+                                Icons.Default.FilterList,
+                                contentDescription = "Filter Apps",
+                                tint = if (!selectedPackages.isNullOrEmpty()) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
+                            )
+                        }
                     }
 
                     // Export Database Button
                     Box {
-                        IconButton(onClick = { showExportMenu = true }) {
-                            Icon(Icons.Default.Download, contentDescription = "Export Database Logs")
+                        TooltipBox(
+                            positionProvider = TooltipDefaults.rememberPlainTooltipPositionProvider(),
+                            tooltip = { PlainTooltip { Text("Export Logs") } },
+                            state = rememberTooltipState()
+                        ) {
+                            IconButton(onClick = { showExportMenu = true }) {
+                                Icon(Icons.Default.Download, contentDescription = "Export Database Logs")
+                            }
                         }
                         DropdownMenu(
                             expanded = showExportMenu,
@@ -159,12 +171,18 @@ fun LogHistoryScreen(dao: NotificationDao) {
 
                     // Reason Filter Menu
                     Box {
-                        IconButton(onClick = { showFilterMenu = true }) {
-                            Icon(
-                                imageVector = Icons.Default.FilterList,
-                                contentDescription = "Filter by Dismiss Reason",
-                                tint = if (selectedReasonFilter != null) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
-                            )
+                        TooltipBox(
+                            positionProvider = TooltipDefaults.rememberPlainTooltipPositionProvider(),
+                            tooltip = { PlainTooltip { Text("Filter Reason") } },
+                            state = rememberTooltipState()
+                        ) {
+                            IconButton(onClick = { showFilterMenu = true }) {
+                                Icon(
+                                    imageVector = Icons.Default.FilterList,
+                                    contentDescription = "Filter by Dismiss Reason",
+                                    tint = if (selectedReasonFilter != null) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
+                                )
+                            }
                         }
                         DropdownMenu(
                             expanded = showFilterMenu,
@@ -191,8 +209,14 @@ fun LogHistoryScreen(dao: NotificationDao) {
 
                     // Sort Order Button
                     Box {
-                        IconButton(onClick = { showSortMenu = true }) {
-                            Icon(Icons.AutoMirrored.Filled.Sort, contentDescription = "Sort Log History")
+                        TooltipBox(
+                            positionProvider = TooltipDefaults.rememberPlainTooltipPositionProvider(),
+                            tooltip = { PlainTooltip { Text("Sort Logs") } },
+                            state = rememberTooltipState()
+                        ) {
+                            IconButton(onClick = { showSortMenu = true }) {
+                                Icon(Icons.AutoMirrored.Filled.Sort, contentDescription = "Sort Log History")
+                            }
                         }
                         DropdownMenu(
                             expanded = showSortMenu,
@@ -223,28 +247,40 @@ fun LogHistoryScreen(dao: NotificationDao) {
                     verticalArrangement = Arrangement.spacedBy(8.dp),
                     horizontalAlignment = Alignment.End
                 ) {
-                    SmallFloatingActionButton(
-                        onClick = {
-                            scope.launch {
-                                listState.animateScrollToItem(0)
-                            }
-                        },
-                        containerColor = MaterialTheme.colorScheme.primaryContainer,
-                        contentColor = MaterialTheme.colorScheme.onPrimaryContainer
+                    TooltipBox(
+                        positionProvider = TooltipDefaults.rememberPlainTooltipPositionProvider(),
+                        tooltip = { PlainTooltip { Text("Scroll to Top") } },
+                        state = rememberTooltipState()
                     ) {
-                        Icon(Icons.Default.KeyboardArrowUp, contentDescription = "Scroll to Top")
+                        SmallFloatingActionButton(
+                            onClick = {
+                                scope.launch {
+                                    listState.animateScrollToItem(0)
+                                }
+                            },
+                            containerColor = MaterialTheme.colorScheme.primaryContainer,
+                            contentColor = MaterialTheme.colorScheme.onPrimaryContainer
+                        ) {
+                            Icon(Icons.Default.KeyboardArrowUp, contentDescription = "Scroll to Top")
+                        }
                     }
 
-                    SmallFloatingActionButton(
-                        onClick = {
-                            scope.launch {
-                                listState.animateScrollToItem(filteredNotifs.size - 1)
-                            }
-                        },
-                        containerColor = MaterialTheme.colorScheme.primaryContainer,
-                        contentColor = MaterialTheme.colorScheme.onPrimaryContainer
+                    TooltipBox(
+                        positionProvider = TooltipDefaults.rememberPlainTooltipPositionProvider(),
+                        tooltip = { PlainTooltip { Text("Scroll to Bottom") } },
+                        state = rememberTooltipState()
                     ) {
-                        Icon(Icons.Default.KeyboardArrowDown, contentDescription = "Scroll to Bottom")
+                        SmallFloatingActionButton(
+                            onClick = {
+                                scope.launch {
+                                    listState.animateScrollToItem(filteredNotifs.size - 1)
+                                }
+                            },
+                            containerColor = MaterialTheme.colorScheme.primaryContainer,
+                            contentColor = MaterialTheme.colorScheme.onPrimaryContainer
+                        ) {
+                            Icon(Icons.Default.KeyboardArrowDown, contentDescription = "Scroll to Bottom")
+                        }
                     }
                 }
             }
@@ -377,6 +413,7 @@ fun LogHistoryScreen(dao: NotificationDao) {
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun LogHistoryCard(
     item: NotificationEntity,
@@ -421,19 +458,25 @@ fun LogHistoryCard(
                 }
 
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    IconButton(
-                        onClick = {
-                            scope.launch {
-                                dao.updatePinnedStatus(item.key, !item.isPinned)
-                            }
-                        },
-                        modifier = Modifier.size(24.dp)
+                    TooltipBox(
+                        positionProvider = TooltipDefaults.rememberPlainTooltipPositionProvider(),
+                        tooltip = { PlainTooltip { Text(if (item.isPinned) "Unpin notification" else "Pin notification") } },
+                        state = rememberTooltipState()
                     ) {
-                        Icon(
-                            imageVector = if (item.isPinned) Icons.Default.Bookmark else Icons.Outlined.BookmarkBorder,
-                            contentDescription = if (item.isPinned) "Unpin" else "Pin",
-                            tint = if (item.isPinned) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
-                        )
+                        IconButton(
+                            onClick = {
+                                scope.launch {
+                                    dao.updatePinnedStatus(item.key, !item.isPinned)
+                                }
+                            },
+                            modifier = Modifier.size(24.dp)
+                        ) {
+                            Icon(
+                                imageVector = if (item.isPinned) Icons.Default.Bookmark else Icons.Outlined.BookmarkBorder,
+                                contentDescription = if (item.isPinned) "Unpin" else "Pin",
+                                tint = if (item.isPinned) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
                     }
 
                     Spacer(modifier = Modifier.width(6.dp))
@@ -451,15 +494,21 @@ fun LogHistoryCard(
                     }
 
                     Spacer(modifier = Modifier.width(6.dp))
-                    IconButton(
-                        onClick = onToggleExpand,
-                        modifier = Modifier.size(24.dp)
+                    TooltipBox(
+                        positionProvider = TooltipDefaults.rememberPlainTooltipPositionProvider(),
+                        tooltip = { PlainTooltip { Text(if (isExpanded) "Collapse details" else "Expand details") } },
+                        state = rememberTooltipState()
                     ) {
-                        Icon(
-                            imageVector = if (isExpanded) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
-                            contentDescription = "Toggle Details",
-                            tint = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
+                        IconButton(
+                            onClick = onToggleExpand,
+                            modifier = Modifier.size(24.dp)
+                        ) {
+                            Icon(
+                                imageVector = if (isExpanded) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
+                                contentDescription = "Toggle Details",
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
                     }
                 }
             }
