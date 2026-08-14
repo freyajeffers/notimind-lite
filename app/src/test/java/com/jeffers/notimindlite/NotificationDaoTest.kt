@@ -143,55 +143,33 @@ class NotificationDaoTest {
     }
 
     @Test
-    fun sub2msQueryPerformanceSLA_50kRecords() = runBlocking {
+    fun sub2msQueryPerformanceSLA_50kRecords() = kotlinx.coroutines.test.runTest {
         val totalEntities = 50_000
         val now = System.currentTimeMillis()
 
         database.runInTransaction {
-            val db = database.openHelper.writableDatabase
-            db.beginTransaction()
-            try {
-                val appStmt = db.compileStatement(
-                    "INSERT OR IGNORE INTO apps (packageName, appName, firstSeenTime, lastSeenTime) VALUES (?, ?, ?, ?)"
-                )
+            runBlocking {
                 for (i in 1..totalEntities) {
-                    appStmt.clearBindings()
-                    appStmt.bindString(1, "com.test.app${i % 100}")
-                    appStmt.bindString(2, "App ${i % 100}")
-                    appStmt.bindLong(3, now)
-                    appStmt.bindLong(4, now)
-                    appStmt.executeInsert()
-
-                    appStmt.clearBindings()
-                    appStmt.bindString(1, "pkg.app_$i")
-                    appStmt.bindString(2, "App $i")
-                    appStmt.bindLong(3, now)
-                    appStmt.bindLong(4, now)
-                    appStmt.executeInsert()
+                    dao.insert(
+                        NotificationEntity(
+                            key = "pkg.app_$i",
+                            packageName = "pkg.app_$i",
+                            appName = "App $i",
+                            title = "Title $i",
+                            content = "Content $i",
+                            postTime = now - i * 10,
+                            lastUpdatedTime = now - i * 10,
+                            updateCount = 1,
+                            isDismissed = (i % 1000 != 0),
+                            isPinned = (i % 500 == 0),
+                            isPersistent = false,
+                            priority = 0,
+                            actionsCount = 0,
+                            isOngoing = false,
+                            isClearable = true
+                        )
+                    )
                 }
-                val stmt = db.compileStatement(
-                    "INSERT INTO notifications (key, packageName, appName, title, content, postTime, isDismissed, isPinned, isPersistent, priority, actionsCount, isOngoing, isClearable) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
-                )
-                for (i in 1..totalEntities) {
-                    stmt.clearBindings()
-                    stmt.bindString(1, "pkg.app_$i")
-                    stmt.bindString(2, "com.test.app${i % 100}")
-                    stmt.bindString(3, "App ${i % 100}")
-                    stmt.bindString(4, "Title $i")
-                    stmt.bindString(5, "Content $i")
-                    stmt.bindLong(6, now - i * 10)
-                    stmt.bindLong(7, if (i % 1000 == 0) 0L else 1L)
-                    stmt.bindLong(8, if (i % 500 == 0) 1L else 0L)
-                    stmt.bindLong(9, 0L)
-                    stmt.bindLong(10, 0L)
-                    stmt.bindLong(11, 0L)
-                    stmt.bindLong(12, 0L)
-                    stmt.bindLong(13, 1L)
-                    stmt.executeInsert()
-                }
-                db.setTransactionSuccessful()
-            } finally {
-                db.endTransaction()
             }
         }
 

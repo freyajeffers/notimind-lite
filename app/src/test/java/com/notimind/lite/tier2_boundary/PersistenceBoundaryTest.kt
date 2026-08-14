@@ -199,38 +199,29 @@ class PersistenceBoundaryTest : BaseRobolectricTest() {
 
         // Fast batch insertion in single SQLite transaction
         database.runInTransaction {
-            val db = database.openHelper.writableDatabase
-            val appStmt = db.compileStatement(
-                "INSERT OR IGNORE INTO apps (packageName, appName, firstSeenTime, lastSeenTime) VALUES (?, ?, ?, ?)"
-            )
-            for (p in 0 until 20) {
-                appStmt.clearBindings()
-                appStmt.bindString(1, "com.perf.app_$p")
-                appStmt.bindString(2, "Perf App $p")
-                appStmt.bindLong(3, 1000000L)
-                appStmt.bindLong(4, 1000000L)
-                appStmt.executeInsert()
-            }
-            val stmt = db.compileStatement(
-                "INSERT INTO notifications (id, key, packageName, appName, title, content, postTime, isDismissed, isPinned, isPersistent, priority, actionsCount, isOngoing, isClearable) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
-            )
-            for (i in 1..count) {
-                stmt.clearBindings()
-                stmt.bindLong(1, i.toLong())
-                stmt.bindString(2, "perf_key_$i")
-                stmt.bindString(3, "com.perf.app_${i % 20}")
-                stmt.bindString(4, "Perf App ${i % 20}")
-                stmt.bindString(5, "Benchmark Notification $i")
-                stmt.bindString(6, "High-load dataset benchmark payload $i")
-                stmt.bindLong(7, 1000000L + i)
-                stmt.bindLong(8, if (i % 2 == 0) 1L else 0L)
-                stmt.bindLong(9, if (i % 500 == 0) 1L else 0L)
-                stmt.bindLong(10, 0L)
-                stmt.bindLong(11, 0L)
-                stmt.bindLong(12, 0L)
-                stmt.bindLong(13, 0L)
-                stmt.bindLong(14, 1L)
-                stmt.executeInsert()
+            kotlinx.coroutines.runBlocking {
+                for (i in 1..count) {
+                    dao.insert(
+                        NotificationEntity(
+                            id = i.toLong(),
+                            key = "perf_key_$i",
+                            packageName = "com.perf.app_${i % 20}",
+                            appName = "Perf App ${i % 20}",
+                            title = "Benchmark Notification $i",
+                            content = "High-load dataset benchmark payload $i",
+                            postTime = 1000000L + i,
+                            lastUpdatedTime = 1000000L + i,
+                            updateCount = 1,
+                            isDismissed = (i % 2 == 0),
+                            isPinned = (i % 500 == 0),
+                            isPersistent = false,
+                            priority = 0,
+                            actionsCount = 0,
+                            isOngoing = false,
+                            isClearable = true
+                        )
+                    )
+                }
             }
         }
 

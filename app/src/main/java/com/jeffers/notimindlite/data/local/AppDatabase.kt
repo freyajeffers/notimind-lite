@@ -27,6 +27,46 @@ abstract class AppDatabase : RoomDatabase() {
         @Volatile
         private var ceInstance: AppDatabase? = null
 
+        val MIGRATION_2_3 = object : Migration(2, 3) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                // Ensure key unique index exists
+                db.execSQL("CREATE UNIQUE INDEX IF NOT EXISTS `index_notifications_key` ON `notifications` (`key`)")
+            }
+        }
+
+        val MIGRATION_3_4 = object : Migration(3, 4) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE `notifications` ADD COLUMN `category` TEXT DEFAULT NULL")
+                db.execSQL("ALTER TABLE `notifications` ADD COLUMN `channelId` TEXT DEFAULT NULL")
+            }
+        }
+
+        val MIGRATION_4_5 = object : Migration(4, 5) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE `notifications` ADD COLUMN `subText` TEXT DEFAULT NULL")
+                db.execSQL("ALTER TABLE `notifications` ADD COLUMN `bigText` TEXT DEFAULT NULL")
+            }
+        }
+
+        val MIGRATION_5_6 = object : Migration(5, 6) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE `notifications` ADD COLUMN `groupKey` TEXT DEFAULT NULL")
+                db.execSQL("ALTER TABLE `notifications` ADD COLUMN `isOngoing` INTEGER NOT NULL DEFAULT 0")
+                db.execSQL("ALTER TABLE `notifications` ADD COLUMN `isClearable` INTEGER NOT NULL DEFAULT 1")
+                db.execSQL("ALTER TABLE `notifications` ADD COLUMN `actionsCount` INTEGER NOT NULL DEFAULT 0")
+            }
+        }
+
+        val MIGRATION_6_7 = object : Migration(6, 7) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE `notifications` ADD COLUMN `dismissReason` INTEGER DEFAULT NULL")
+                db.execSQL("ALTER TABLE `notifications` ADD COLUMN `dismissTime` INTEGER DEFAULT NULL")
+                db.execSQL("ALTER TABLE `notifications` ADD COLUMN `intentUri` TEXT DEFAULT NULL")
+                db.execSQL("ALTER TABLE `notifications` ADD COLUMN `isPinned` INTEGER NOT NULL DEFAULT 0")
+                db.execSQL("ALTER TABLE `notifications` ADD COLUMN `actionLabels` TEXT DEFAULT NULL")
+            }
+        }
+
         val MIGRATION_7_8 = object : Migration(7, 8) {
             override fun migrate(db: SupportSQLiteDatabase) {
                 db.execSQL("CREATE INDEX IF NOT EXISTS `index_notifications_postTime` ON `notifications` (`postTime`)")
@@ -155,9 +195,11 @@ abstract class AppDatabase : RoomDatabase() {
                         CE_DATABASE_NAME
                     )
                     .addMigrations(
+                        MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7,
                         MIGRATION_7_8, MIGRATION_8_9, MIGRATION_9_10,
                         MIGRATION_10_11, MIGRATION_11_12, MIGRATION_12_13, MIGRATION_13_14
                     )
+                    .fallbackToDestructiveMigration(dropAllTables = true)
                     .setJournalMode(JournalMode.WRITE_AHEAD_LOGGING)
                     .build()
                     ceInstance = instance

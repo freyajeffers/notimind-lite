@@ -36,38 +36,28 @@ class HighLoadBurstLifecycleTest : BaseRobolectricTest() {
                     isPinned = i % 100 == 0
                 )
             }
-            database.runInTransaction {
-                val db = database.openHelper.writableDatabase
-                val appStmt = db.compileStatement(
-                    "INSERT OR IGNORE INTO apps (packageName, appName, firstSeenTime, lastSeenTime) VALUES (?, ?, ?, ?)"
-                )
-                for (p in 0 until 10) {
-                    appStmt.clearBindings()
-                    appStmt.bindString(1, "com.stress.app_$p")
-                    appStmt.bindString(2, "Stress App $p")
-                    appStmt.bindLong(3, System.currentTimeMillis())
-                    appStmt.bindLong(4, System.currentTimeMillis())
-                    appStmt.executeInsert()
-                }
-                val stmt = db.compileStatement(
-                    "INSERT INTO notifications (key, packageName, appName, title, content, postTime, isDismissed, isPinned, isPersistent, priority, actionsCount, isOngoing, isClearable) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
-                )
+            kotlinx.coroutines.runBlocking {
+                val now = System.currentTimeMillis()
                 for (i in 1..count) {
-                    stmt.clearBindings()
-                    stmt.bindString(1, "stress_key_$i")
-                    stmt.bindString(2, "com.stress.app_${i % 10}")
-                    stmt.bindString(3, "Stress App ${i % 10}")
-                    stmt.bindString(4, "Burst Notification $i")
-                    stmt.bindString(5, "High-load stress test payload body $i")
-                    stmt.bindLong(6, System.currentTimeMillis() + i)
-                    stmt.bindLong(7, if (i % 2 == 0) 1L else 0L)
-                    stmt.bindLong(8, if (i % 100 == 0) 1L else 0L)
-                    stmt.bindLong(9, 0L)
-                    stmt.bindLong(10, 0L)
-                    stmt.bindLong(11, 0L)
-                    stmt.bindLong(12, 0L)
-                    stmt.bindLong(13, 1L)
-                    stmt.executeInsert()
+                    dao.insert(
+                        NotificationEntity(
+                            key = "stress_key_$i",
+                            packageName = "com.stress.app_${i % 10}",
+                            appName = "Stress App ${i % 10}",
+                            title = "Burst Notification $i",
+                            content = "High-load stress test payload body $i",
+                            postTime = now + i,
+                            lastUpdatedTime = now + i,
+                            updateCount = 1,
+                            isDismissed = (i % 2 == 0),
+                            isPinned = (i % 100 == 0),
+                            isPersistent = false,
+                            priority = 0,
+                            actionsCount = 0,
+                            isOngoing = false,
+                            isClearable = true
+                        )
+                    )
                 }
             }
         }

@@ -236,7 +236,7 @@ class NotificationLoggerService : NotificationListenerService() {
                 return
             }
 
-            val key = if (!sbn.key.isNullOrBlank()) sbn.key else "${sbn.id}|${sbn.packageName}|${sbn.id}|${sbn.tag}|${sbn.postTime}"
+            val key = sbn.key ?: "${sbn.id}|${sbn.packageName}|${sbn.id}|${sbn.tag}|${sbn.postTime}"
             com.jeffers.notimindlite.util.NotificationLauncher.registerPendingIntent(key, notification.contentIntent)
 
             // ── Smart & Dynamic 30s Debounce ──
@@ -376,9 +376,10 @@ class NotificationLoggerService : NotificationListenerService() {
     private fun handleNotificationRemoved(sbn: StatusBarNotification, reason: Int?) {
         if (sbn.packageName == applicationContext.packageName) return
         Log.d(TAG, "Notification removed: ${sbn.key}, reason: $reason. Marking as isDismissed = 1")
-        com.jeffers.notimindlite.util.NotificationLauncher.unregisterPendingIntent(sbn.key)
-        recentLogs.remove(sbn.key)
-        recentContents.remove(sbn.key)
+        val key = sbn.key ?: "${sbn.id}|${sbn.packageName}|${sbn.id}|${sbn.tag}|${sbn.postTime}"
+        com.jeffers.notimindlite.util.NotificationLauncher.unregisterPendingIntent(key)
+        recentLogs.remove(key)
+        recentContents.remove(key)
         val dismissTime = System.currentTimeMillis()
 
         val notification = sbn.notification
@@ -392,19 +393,10 @@ class NotificationLoggerService : NotificationListenerService() {
 
         scope.launch {
             val dao = getDb().notificationDao()
-            if (sbn.key.isNotBlank()) {
-                if (reason != null) {
-                    dao.markDismissedWithReason(sbn.key, reason, dismissTime)
-                } else {
-                    dao.markDismissed(sbn.key, dismissTime)
-                }
+            if (reason != null) {
+                dao.markDismissedWithReason(key, reason, dismissTime)
             } else {
-                val sbnKey = "${sbn.packageName}_${title}_${content}".hashCode().toString()
-                if (reason != null) {
-                    dao.markDismissedWithReasonByMatching(sbnKey, sbn.packageName, title, content, reason, dismissTime)
-                } else {
-                    dao.markDismissedByMatching(sbnKey, sbn.packageName, title, content, dismissTime)
-                }
+                dao.markDismissed(key, dismissTime)
             }
         }
     }
