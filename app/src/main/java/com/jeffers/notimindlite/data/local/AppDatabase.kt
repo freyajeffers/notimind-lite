@@ -8,11 +8,11 @@ import androidx.room.RoomDatabase
 import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
 
-@Database(entities = [NotificationEntity::class, AppEntity::class, NotificationFtsEntity::class], version = 15, exportSchema = false)
+@Database(entities = [NotificationEntity::class, AppEntity::class, NotificationFtsEntity::class, BackupRecord::class], version = 16, exportSchema = false)
 abstract class AppDatabase : RoomDatabase() {
-
     abstract fun notificationDao(): NotificationDao
     abstract fun appDao(): AppDao
+    abstract fun backupDao(): BackupDao
 
     companion object {
         const val DE_DATABASE_NAME = "notimind_de.db"
@@ -185,6 +185,20 @@ abstract class AppDatabase : RoomDatabase() {
                 db.execSQL("DROP INDEX IF EXISTS `index_notifications_isPinned` ")
                 db.execSQL("DROP INDEX IF EXISTS `index_notifications_packageName` ")
                 db.execSQL("DROP INDEX IF EXISTS `index_notifications_postTime` ")
+            }
+        }
+
+        val MIGRATION_15_16 = object : Migration(15, 16) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("""
+                    CREATE TABLE IF NOT EXISTS `backup_records` (
+                        `id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+                        `fileHash` TEXT NOT NULL,
+                        `signature` TEXT NOT NULL,
+                        `timestamp` INTEGER NOT NULL,
+                        `fileName` TEXT
+                    )
+                """.trimIndent())
             }
         }
 

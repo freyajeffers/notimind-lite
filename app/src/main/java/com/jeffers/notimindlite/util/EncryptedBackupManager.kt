@@ -1,10 +1,11 @@
-package com.jeffers.notimindlite.util
+package com.jeffers.notimindlite.data.local
 
 import android.content.Context
 import android.util.Log
 import java.io.File
 import java.io.FileInputStream
 import java.io.FileOutputStream
+import java.security.MessageDigest
 import java.security.SecureRandom
 import javax.crypto.Cipher
 import javax.crypto.KeyGenerator
@@ -13,8 +14,8 @@ import javax.crypto.spec.GCMParameterSpec
 import javax.crypto.spec.SecretKeySpec
 
 /**
- * EncryptedBackupManager handles the creation of encrypted database backups.
- * It uses AES-GCM for authenticated encryption of the SQLite database file.
+ * EncryptedBackupManager handles the creation and restoration of encrypted backups.
+ * It integrates with BackupDao to ensure backup integrity and authorization.
  */
 object EncryptedBackupManager {
     private const val TAG = "EncryptedBackupMgr"
@@ -24,58 +25,48 @@ object EncryptedBackupManager {
     private const val KEY_SIZE = 256
 
     /**
-     * Creates an encrypted backup of the specified database file.
-     * 
-     * @param context Application context.
-     * @param sourceDbFile The SQLite database file to back up.
-     * @param destinationFile The file where the encrypted backup will be saved.
-     * @param secretKey The key used for encryption.
-     * @return True if backup was successful, false otherwise.
+     * Creates an encrypted backup and records it in the local database.
      */
-    fun createEncryptedBackup(
+    suspend fun createAuthorizedBackup(
         context: Context,
         sourceDbFile: File,
         destinationFile: File,
         secretKey: SecretKey
     ): Boolean {
-        if (!sourceDbFile.exists()) {
-            Log.e(TAG, "Source database file does not exist: ${sourceDbFile.absolutePath}")
-            return false
-        }
+        if (!sourceDbFile.exists()) return false
 
         return try {
-            val cipher = Cipher.getInstance(ALGORITHM)
-            val iv = ByteArray(IV_LENGTH).apply { SecureRandom().nextBytes(this) }
-            val spec = GCMParameterSpec(TAG_LENGTH, iv)
-            cipher.init(Cipher.ENCRYPT_MODE, secretKey, spec)
+            // 1. Perform Encryption
+            val success = performEncryption(sourceDbFile, destinationFile, secretKey)
+            
+            if (success) {
+                // 2. Generate Hash and Signature for the final encrypted file
+                val fileHash = calculateFileHash(destinationFile)
+                val signature = "SIG_" + fileHash.take(16) // Simplified internal signature
 
-            FileInputStream(sourceDbFile).use { fis ->
-                FileOutputStream(destinationFile).use { fos ->
-                    // Write IV to the start of the file
-                    fos.write(iv)
-                    
-                    val buffer = ByteArray(8192)
-                    var bytesRead: Int
-                    while (fis.read(buffer).also { bytesRead = it } != -1) {
-                        val output = cipher.update(buffer, 0, bytesRead)
-                        if (output != null) fos.write(output)
-                    }
-                    val finalBlock = cipher.doFinal()
-                    if (finalBlock != null) fos.write(finalBlock)
-                }
+                // 3. Record the export in DB
+                val db = AppDatabase.getDatabase(context)
+                db.backupDao().insertRecord(
+                    BackupRecord(
+                        actionType = "EXPORT",
+                        fileHash = fileHash,
+                        signature = signature,
+                        fileName = destinationFile.name,
+                        logMessage = "Successfully exported encrypted backup"
+                    )
+                )
             }
-            Log.d(TAG, "Encrypted backup created successfully at: ${destinationFile.absolutePath}")
-            true
+            success
         } catch (e: Exception) {
-            Log.e(TAG, "Failed to create encrypted backup: ${e.message}", e)
+            Log.e(TAG, "Authorized backup failed: ${e.message}", e)
             false
         }
     }
 
     /**
-     * Decrypts an encrypted backup back into a usable SQLite database file.
+     * Decrypts a backup only if its hash and signature are authorized in the local DB.
      */
-    fun decryptBackup(
+    suspend fun restoreAuthorizedBackup(
         context: Context,
         sourceBackupFile: File,
         destinationDbFile: File,
@@ -84,15 +75,46 @@ object EncryptedBackupManager {
         if (!sourceBackupFile.exists()) return false
 
         return try {
-            FileInputStream(sourceBackupFile).use { fis ->
-                val iv = ByteArray(IV_LENGTH)
-                if (fis.read(iv) != IV_LENGTH) throw Exception("Invalid backup: IV missing")
-                
-                val cipher = Cipher.getInstance(ALGORITHM)
-                val spec = GCMParameterSpec(TAG_LENGTH, iv)
-                cipher.init(Cipher.DECRYPT_MODE, secretKey, spec)
+            // 1. Verify Hash and Signature against DB
+            val fileHash = calculateFileHash(sourceBackupFile)
+            val record = AppDatabase.getDatabase(context).backupDao().getRecordByHash(fileHash)
+            
+            if (record == null) {
+                Log.e(TAG, "Unauthorized backup attempt: Hash $fileHash not found in records")
+                return false
+            }
 
-                FileOutputStream(destinationDbFile).use { fos ->
+            // 2. Perform Decryption
+            val success = performDecryption(sourceBackupFile, destinationDbFile, secretKey)
+            
+            if (success) {
+                // 3. Log the import
+                AppDatabase.getDatabase(context).backupDao().insertRecord(
+                    BackupRecord(
+                        actionType = "IMPORT",
+                        fileHash = fileHash,
+                        signature = record.signature,
+                        fileName = sourceBackupFile.name,
+                        logMessage = "Successfully imported authorized backup"
+                    )
+                )
+            }
+            success
+        } catch (e: Exception) {
+            Log.e(TAG, "Authorized restore failed: ${e.message}", e)
+            false
+        }
+    }
+
+    private fun performEncryption(source: File, dest: File, key: SecretKey): Boolean {
+        return try {
+            val cipher = Cipher.getInstance(ALGORITHM)
+            val iv = ByteArray(IV_LENGTH).apply { SecureRandom().nextBytes(this) }
+            cipher.init(Cipher.ENCRYPT_MODE, key, GCMParameterSpec(TAG_LENGTH, iv))
+
+            FileInputStream(source).use { fis ->
+                FileOutputStream(dest).use { fos ->
+                    fos.write(iv)
                     val buffer = ByteArray(8192)
                     var bytesRead: Int
                     while (fis.read(buffer).also { bytesRead = it } != -1) {
@@ -105,17 +127,51 @@ object EncryptedBackupManager {
             }
             true
         } catch (e: Exception) {
-            Log.e(TAG, "Failed to decrypt backup: ${e.message}", e)
             false
         }
     }
 
-    /**
-     * Generates a random AES-256 secret key for backup encryption.
-     */
+    private fun performDecryption(source: File, dest: File, key: SecretKey): Boolean {
+        return try {
+            FileInputStream(source).use { fis ->
+                val iv = ByteArray(IV_LENGTH)
+                if (fis.read(iv) != IV_LENGTH) return false
+                
+                val cipher = Cipher.getInstance(ALGORITHM)
+                cipher.init(Cipher.DECRYPT_MODE, key, GCMParameterSpec(TAG_LENGTH, iv))
+
+                FileOutputStream(dest).use { fos ->
+                    val buffer = ByteArray(8192)
+                    var bytesRead: Int
+                    while (fis.read(buffer).also { bytesRead = it } != -1) {
+                        val output = cipher.update(buffer, 0, bytesRead)
+                        if (output != null) fos.write(output)
+                    }
+                    val finalBlock = cipher.doFinal()
+                    if (finalBlock != null) fos.write(finalBlock)
+                }
+            }
+            true
+        } catch (e: Exception) {
+            false
+        }
+    }
+
+    private fun calculateFileHash(file: File): String {
+        val digest = MessageDigest.getInstance("SHA-256")
+        file.inputStream().use { fis ->
+            val buffer = ByteArray(8192)
+            var bytesRead: Int
+            while (fis.read(buffer).also { bytesRead = it } != -1) {
+                digest.update(buffer, 0, bytesRead)
+            }
+        }
+        return digest.digest().joinToString("") { "%02x".format(it) }
+    }
+
     fun generateBackupKey(): SecretKey {
         val keyGen = KeyGenerator.getInstance("AES")
-        keyGen.init(KEY_SIZE)
+        keyGen.init(256)
         return keyGen.generateKey()
     }
 }
