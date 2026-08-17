@@ -33,6 +33,7 @@ android {
     release {
       isMinifyEnabled = false
       proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
+      signingConfig = signingConfigs.getByName("debugConfig")
     }
     debug { signingConfig = signingConfigs.getByName("debugConfig") }
   }
@@ -41,7 +42,12 @@ android {
     targetCompatibility = JavaVersion.VERSION_17
   }
   kotlinOptions {
-    jvmTarget = "17"
+      jvmTarget = "17"
+      freeCompilerArgs += listOf(
+          "-Xjvm-default=all",
+          "-Xopt-in=kotlin.RequiresOptIn",
+          "-Xjvm-experimental-extensions"
+      )
   }
   buildFeatures {
     compose = true
