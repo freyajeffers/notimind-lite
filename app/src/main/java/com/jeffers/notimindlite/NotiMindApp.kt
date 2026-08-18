@@ -1,5 +1,6 @@
 package com.jeffers.notimindlite
 
+import android.app.Application
 import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
@@ -7,14 +8,14 @@ import android.content.IntentFilter
 import android.content.res.Configuration
 import android.os.Bundle
 import android.util.Log
-import androidx.multidex.MultiDexApplication
+import com.jeffers.notimindlite.util.AppIconCache
 
 /**
  * NotiMindApp is the main application class.
  * It implements ComponentCallbacks2 to manage memory trimming and 
  * ensures the application responds to OS memory pressure events.
  */
-class NotiMindApp : MultiDexApplication(), android.content.ComponentCallbacks2 {
+class NotiMindApp : Application(), android.content.ComponentCallbacks2 {
     companion object {
         private const val TAG = "NotiMindApp"
     }
@@ -34,19 +35,16 @@ class NotiMindApp : MultiDexApplication(), android.content.ComponentCallbacks2 {
         
         when (level) {
             android.content.ComponentCallbacks2.TRIM_MEMORY_UI_HIDDEN -> {
-                // UI is no longer visible; we can release some UI-specific resources
-                com.jeffers.notimindlite.util.AppIconCache.clearCache()
+                AppIconCache.clearCache()
                 Log.d(TAG, "UI Hidden: Cleared AppIconCache")
             }
             android.content.ComponentCallbacks2.TRIM_MEMORY_RUNNING_LOW,
             android.content.ComponentCallbacks2.TRIM_MEMORY_RUNNING_CRITICAL -> {
-                // App is running but memory is critical; clear all caches immediately
-                com.jeffers.notimindlite.util.AppIconCache.clearCache()
+                AppIconCache.clearCache()
                 Log.w(TAG, "Running Low/Critical: Forced cache clear")
             }
             android.content.ComponentCallbacks2.TRIM_MEMORY_COMPLETE -> {
-                // OS is about to kill the process; clear everything
-                com.jeffers.notimindlite.util.AppIconCache.clearCache()
+                AppIconCache.clearCache()
                 Log.w(TAG, "Trim Memory Complete: Final cache clear")
             }
         }
@@ -54,12 +52,11 @@ class NotiMindApp : MultiDexApplication(), android.content.ComponentCallbacks2 {
 
     override fun onConfigurationChanged(newConfig: Configuration) {
         super.onConfigurationChanged(newConfig)
-        // Handle global configuration changes if necessary
     }
 
     override fun onLowMemory() {
         super.onLowMemory()
         Log.w(TAG, "onLowMemory triggered: Clearing all caches")
-        com.jeffers.notimindlite.util.AppIconCache.clearCache()
+        AppIconCache.clearCache()
     }
 }
