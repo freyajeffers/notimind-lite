@@ -295,7 +295,27 @@ fun ActiveNotificationsScreen(dao: NotificationDao, authManager: AuthManager, db
         floatingActionButton = {
             SpeedDialSettingsFab(
                 onSyncClick = { },
-                onBackupClick = { },
+                onBackupClick = {
+                    scope.launch {
+                        try {
+                            val secretKey = com.jeffers.notimindlite.data.local.EncryptedBackupManager.generateBackupKey()
+                            val result = com.jeffers.notimindlite.util.DatabaseExporter.performEncryptedBackup(context, secretKey)
+                            
+                            if (result.isSuccess) {
+                                val backupFile = result.getOrThrow()
+                                val shareIntent = Intent(Intent.ACTION_SEND).apply {
+                                    type = "application/octet-stream"
+                                    putExtra(Intent.EXTRA_STREAM, com.jeffers.notimindlite.util.DatabaseExporter.getExportFileUri(context, backupFile))
+                                    addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                                    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                                }
+                                context.startActivity(Intent.createChooser(shareIntent, "Share Encrypted Backup"))
+                            }
+                        } catch (e: Exception) {
+                            Log.e("ActiveNotifications", "Backup failed", e)
+                        }
+                    }
+                },
                 onSettingsClick = { }
             )
         }
