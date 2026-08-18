@@ -20,10 +20,11 @@ import com.jeffers.notimindlite.data.local.NotificationDao
 import com.jeffers.notimindlite.ui.screens.HomeScreen
 import com.jeffers.notimindlite.ui.screens.LogHistoryScreen
 import com.jeffers.notimindlite.ui.screens.OnboardingScreen
+import com.jeffers.notimindlite.ui.screens.SplashScreen
 
 sealed class Screen(val route: String, val title: String, val icon: @Composable () -> Unit) {
-    object Home : Screen(
-        route = "home",
+    object Active : Screen(
+        route = "active",
         title = "Active",
         icon = { Icon(Icons.Default.NotificationsActive, contentDescription = "Active") }
     )
@@ -42,7 +43,7 @@ fun MainNavigation(
     db: AppDatabase
 ) {
     val navController = rememberNavController()
-    val items = listOf(Screen.Home, Screen.History)
+    val items = listOf(Screen.Active, Screen.History)
 
     Scaffold(
         topBar = {
@@ -71,18 +72,18 @@ fun MainNavigation(
     ) { innerPadding ->
         NavHost(
             navController = navController,
-            startDestination = "onboarding",
+            startDestination = "splash",
             modifier = modifier.padding(innerPadding)
         ) {
-            composable("onboarding") {
-                OnboardingScreen(onFinish = {
-                    navController.navigate(Screen.Home.route) {
-                        popUpTo("onboarding") { inclusive = true }
+            composable("splash") {
+                SplashScreen(onTimeout = {
+                    navController.navigate(Screen.Active.route) {
+                        popUpTo("splash") { inclusive = true }
                     }
                 })
             }
-            composable(Screen.Home.route) {
-                HomeScreen(notificationDao, authManager, db)
+            composable(Screen.Active.route) {
+                ActiveNotificationsScreen(notificationDao, authManager, db)
             }
             composable(Screen.History.route) {
                 LogHistoryScreen(notificationDao, authManager, db)
