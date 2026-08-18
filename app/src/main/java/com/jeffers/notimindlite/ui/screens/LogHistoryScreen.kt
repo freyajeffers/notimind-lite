@@ -38,6 +38,7 @@ import com.jeffers.notimindlite.ui.dialogs.AppPackageSelectorDialog
 import com.jeffers.notimindlite.util.DatabaseExporter
 import com.jeffers.notimindlite.data.auth.AuthManager
 import com.jeffers.notimindlite.data.local.AppDatabase
+import com.jeffers.notimindlite.ui.components.ActionableChips
 import com.jeffers.notimindlite.util.HybridSearchEngine
 import com.jeffers.notimindlite.util.NotificationLauncher
 import kotlinx.coroutines.Dispatchers
@@ -494,7 +495,10 @@ fun LogHistoryCard(
                 enter = fadeIn() + androidx.compose.animation.expandVertically(animationSpec = spring(stiffness = 300f)),
                 exit = fadeOut() + shrinkVertically(animationSpec = spring(stiffness = 300f))
             ) {
-                NotificationDetailPanel(item = item, dateTimeFormatter = dateTimeFormatter)
+                Column {
+                    ActionableChips(text = item.content)
+                    NotificationDetailPanel(item = item, dateTimeFormatter = dateTimeFormatter)
+                }
             }
 
             Spacer(modifier = Modifier.height(6.dp))

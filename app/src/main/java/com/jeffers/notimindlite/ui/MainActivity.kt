@@ -28,7 +28,6 @@ import com.jeffers.notimindlite.data.local.AppDatabase
 import com.jeffers.notimindlite.service.NotificationLoggerService
 import com.jeffers.notimindlite.ui.screens.checkNotificationPermission
 import com.jeffers.notimindlite.util.DynamicClusterManager
-import com.jeffers.notimindlite.ui.screens.OnboardingScreen
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
