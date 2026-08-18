@@ -40,6 +40,7 @@ import com.jeffers.notimindlite.util.DatabaseExporter
 import com.jeffers.notimindlite.data.auth.AuthManager
 import com.jeffers.notimindlite.data.local.AppDatabase
 import com.jeffers.notimindlite.ui.components.ActionableChips
+import com.jeffers.notimindlite.ui.components.NotificationDetailPanel
 import com.jeffers.notimindlite.util.HybridSearchEngine
 import com.jeffers.notimindlite.util.NotificationLauncher
 import kotlinx.coroutines.Dispatchers
