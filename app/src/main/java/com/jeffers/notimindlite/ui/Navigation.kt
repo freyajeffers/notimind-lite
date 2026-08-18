@@ -17,9 +17,8 @@ import androidx.navigation.compose.rememberNavController
 import com.jeffers.notimindlite.data.auth.AuthManager
 import com.jeffers.notimindlite.data.local.AppDatabase
 import com.jeffers.notimindlite.data.local.NotificationDao
-import com.jeffers.notimindlite.ui.screens.HomeScreen
+import com.jeffers.notimindlite.ui.screens.ActiveNotificationsScreen
 import com.jeffers.notimindlite.ui.screens.LogHistoryScreen
-import com.jeffers.notimindlite.ui.screens.OnboardingScreen
 import com.jeffers.notimindlite.ui.screens.SplashScreen
 
 sealed class Screen(val route: String, val title: String, val icon: @Composable () -> Unit) {
