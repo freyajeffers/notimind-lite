@@ -14,10 +14,11 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.scale
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.AnnotatedString
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.jeffers.notimindlite.util.ActionableEntityExtractor
@@ -82,7 +83,7 @@ private fun ActionChip(
                 Text(
                     text = "${label}: ${entity.value}",
                     fontSize = 12.sp,
-                    fontWeight = FontWeight.Medium,
+                    fontWeight = androidx.compose.ui.text.font.FontWeight.Medium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
@@ -121,8 +122,7 @@ private fun ActionChip(
             DropdownMenuItem(
                 text = { Text("Share") },
                 onClick = {
-                    val shareIntent = Intent().apply {
-                        action = Intent.ACTION_SEND
+                    val shareIntent = Intent(Intent.ACTION_SEND).apply {
                         type = "text/plain"
                         putExtra(Intent.EXTRA_TEXT, entity.value)
                     }

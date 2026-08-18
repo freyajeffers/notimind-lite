@@ -37,6 +37,7 @@ import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.outlined.BookmarkBorder
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import android.util.Log
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
@@ -61,6 +62,7 @@ import com.jeffers.notimindlite.service.NotificationLoggerService
 import com.jeffers.notimindlite.ui.dialogs.AppPackageSelectorDialog
 import com.jeffers.notimindlite.ui.components.ActionableChips
 import com.jeffers.notimindlite.ui.components.SpeedDialSettingsFab
+import com.jeffers.notimindlite.ui.components.BackupKeyDialog
 import com.jeffers.notimindlite.util.HybridSearchEngine
 import com.jeffers.notimindlite.util.NotificationLauncher
 import com.jeffers.notimindlite.data.auth.AuthManager
@@ -71,6 +73,7 @@ import java.time.Instant
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.util.*
+import javax.crypto.SecretKey
 
 fun checkNotificationPermission(context: Context): Boolean {
     val flat = Settings.Secure.getString(
@@ -165,6 +168,11 @@ fun ActiveNotificationsScreen(dao: NotificationDao, authManager: AuthManager, db
     var searchQuery by remember { mutableStateOf("") }
     var debouncedSearchQuery by remember { mutableStateOf("") }
     var isSearchExplicitlyOpened by remember { mutableStateOf(false) }
+
+    // Backup state
+    var showBackupKeyDialog by remember { mutableStateOf(false) }
+    var currentBackupKey by remember { mutableStateOf("") }
+    var currentPendingSecretKey by remember { mutableStateOf<SecretKey?>(null) }
 
     LaunchedEffect(searchQuery) {
         delay(100L)
@@ -299,20 +307,13 @@ fun ActiveNotificationsScreen(dao: NotificationDao, authManager: AuthManager, db
                     scope.launch {
                         try {
                             val secretKey = com.jeffers.notimindlite.data.local.EncryptedBackupManager.generateBackupKey()
-                            val result = com.jeffers.notimindlite.util.DatabaseExporter.performEncryptedBackup(context, secretKey)
+                            val keyBase64 = com.jeffers.notimindlite.data.local.BackupKeyCodec.encode(secretKey)
                             
-                            if (result.isSuccess) {
-                                val backupFile = result.getOrThrow()
-                                val shareIntent = Intent(Intent.ACTION_SEND).apply {
-                                    type = "application/octet-stream"
-                                    putExtra(Intent.EXTRA_STREAM, com.jeffers.notimindlite.util.DatabaseExporter.getExportFileUri(context, backupFile))
-                                    addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-                                    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                                }
-                                context.startActivity(Intent.createChooser(shareIntent, "Share Encrypted Backup"))
-                            }
+                            showBackupKeyDialog = true
+                            currentBackupKey = keyBase64
+                            currentPendingSecretKey = secretKey
                         } catch (e: Exception) {
-                            Log.e("ActiveNotifications", "Backup failed", e)
+                            Log.e("ActiveNotifications", "Backup key generation failed", e)
                         }
                     }
                 },
@@ -320,193 +321,227 @@ fun ActiveNotificationsScreen(dao: NotificationDao, authManager: AuthManager, db
             )
         }
     ) { innerPadding ->
-        LazyColumn(
-            state = listState,
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(innerPadding)
-                .padding(horizontal = 16.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp),
-            contentPadding = PaddingValues(vertical = 12.dp)
-        ) {
-            item(key = "active_search_header") {
-                AnimatedVisibility(
-                    visible = isSearchExplicitlyOpened || searchQuery.isNotEmpty() || isSearchFocused,
-                    enter = fadeIn() + expandVertically(),
-                    exit = fadeOut() + shrinkVertically()
-                ) {
-                    val searchSuggestions = remember(searchQuery, pinnedNotifs, activeNotifs, recentlyDismissed, lostNotifs) {
-                        if (searchQuery.length < 2) emptyList()
-                        else {
-                            val allNotifs = pinnedNotifs + activeNotifs + recentlyDismissed + lostNotifs
-                            (allNotifs.map { it.appName } + allNotifs.map { it.title })
-                                .filter { it.contains(searchQuery, ignoreCase = true) }
-                                .distinct()
-                                .take(4)
-                        }
-                    }
-                    var expandedDropdown by remember { mutableStateOf(false) }
-
-                    LaunchedEffect(searchSuggestions) {
-                        expandedDropdown = searchSuggestions.isNotEmpty()
-                    }
-
-                    Box(modifier = Modifier.fillMaxWidth()) {
-                        OutlinedTextField(
-                            value = searchQuery,
-                            onValueChange = { searchQuery = it },
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(bottom = 6.dp)
-                                .focusRequester(searchFocusRequester)
-                                .onFocusChanged { isSearchFocused = it.isFocused },
-                            placeholder = { Text("Search") },
-                            leadingIcon = { Icon(Icons.Default.Search, contentDescription = "Search") },
-                            trailingIcon = {
-                                if (searchQuery.isNotEmpty()) {
-                                    IconButton(onClick = { searchQuery = "" }) {
-                                        Icon(Icons.Default.Close, contentDescription = "Clear Search")
-                                    }
-                                }
-                            },
-                            singleLine = true,
-                            shape = RoundedCornerShape(12.dp)
-                        )
-
-                        DropdownMenu(
-                            expanded = expandedDropdown && searchSuggestions.isNotEmpty(),
-                            onDismissRequest = { expandedDropdown = false },
-                            properties = androidx.compose.ui.window.PopupProperties(focusable = false),
-                            modifier = Modifier.fillMaxWidth(0.9f)
-                        ) {
-                            searchSuggestions.forEach { suggestion ->
-                                DropdownMenuItem(
-                                    text = { Text(suggestion, fontSize = 14.sp) },
-                                    onClick = {
-                                        searchQuery = suggestion
-                                        expandedDropdown = false
-                                    }
-                                )
+        Box(modifier = Modifier.fillMaxSize()) {
+            LazyColumn(
+                state = listState,
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(innerPadding)
+                    .padding(horizontal = 16.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp),
+                contentPadding = PaddingValues(vertical = 12.dp)
+            ) {
+                item(key = "active_search_header") {
+                    AnimatedVisibility(
+                        visible = isSearchExplicitlyOpened || searchQuery.isNotEmpty() || isSearchFocused,
+                        enter = fadeIn() + expandVertically(),
+                        exit = fadeOut() + shrinkVertically()
+                    ) {
+                        val searchSuggestions = remember(searchQuery, pinnedNotifs, activeNotifs, recentlyDismissed, lostNotifs) {
+                            if (searchQuery.length < 2) emptyList()
+                            else {
+                                val allNotifs = pinnedNotifs + activeNotifs + recentlyDismissed + lostNotifs
+                                (allNotifs.map { it.appName } + allNotifs.map { it.title })
+                                    .filter { it.contains(searchQuery, ignoreCase = true) }
+                                    .distinct()
+                                    .take(4)
                             }
                         }
-                    }
-                }
-            }
+                        var expandedDropdown by remember { mutableStateOf(false) }
 
-            item(key = "service_status_card") {
-                Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = CardDefaults.cardColors(
-                        containerColor = if (isGranted)
-                            MaterialTheme.colorScheme.surfaceVariant
-                        else
-                            MaterialTheme.colorScheme.errorContainer
-                    )
-                ) {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(14.dp),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Column(modifier = Modifier.weight(1f)) {
-                            Text(
-                                text = "Notification Listener Service",
-                                style = MaterialTheme.typography.titleMedium,
-                                fontWeight = FontWeight.Bold,
-                                color = if (isGranted) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.onErrorContainer
-                            )
-                            Text(
-                                text = if (isGranted) "Status: Active & Listening" else "Status: Permission Required",
-                                fontSize = 12.sp,
-                                color = if (isGranted) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error
-                            )
+                        LaunchedEffect(searchSuggestions) {
+                            expandedDropdown = searchSuggestions.isNotEmpty()
                         }
 
-                        Button(
-                            onClick = {
-                                val intent = Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS)
-                                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                                context.startActivity(intent)
-                            },
-                            colors = ButtonDefaults.buttonColors(
-                                containerColor = if (isGranted) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.errorContainer,
-                                contentColor = if (isGranted) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onErrorContainer
-                            )
-                        ) {
-                            Text(if (isGranted) "Settings" else "Grant")
-                        }
-                    }
-                }
-            }
-
-            sectionOrder.forEach { section ->
-                val isExpanded = expandedSection == section.keyName
-                val rawItemsList = when (section) {
-                    NotificationSection.PINNED -> pinnedNotifs
-                    NotificationSection.ACTIVE -> activeNotifs
-                    NotificationSection.FILTERED -> emptyList()
-                    NotificationSection.DISMISSED -> recentlyDismissed
-                    NotificationSection.LOST -> lostNotifs
-                }.distinctBy { "${it.packageName}_${it.title}_${it.content}" }
-
-                val filteredList = if (!selectedPackages.isNullOrEmpty()) {
-                    rawItemsList.filter { selectedPackages!!.contains(it.packageName) }
-                } else {
-                    rawItemsList
-                }
-
-                val itemsList = if (debouncedSearchQuery.isBlank()) filteredList
-                else HybridSearchEngine.searchAndRank(filteredList, debouncedSearchQuery)
-
-                stickyHeader(key = "sticky_header_${section.keyName}") {
-                    Surface(
-                        modifier = Modifier.fillMaxWidth(),
-                        color = MaterialTheme.colorScheme.background,
-                        shadowElevation = if (isExpanded) 2.dp else 0.dp
-                    ) {
-                        Card(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(vertical = 4.dp)
-                                .clickable { toggleSection(section.keyName) },
-                            colors = CardDefaults.cardColors(
-                                containerColor = when (section) {
-                                    NotificationSection.PINNED -> MaterialTheme.colorScheme.primaryContainer
-                                    NotificationSection.ACTIVE -> MaterialTheme.colorScheme.secondaryContainer
-                                    NotificationSection.FILTERED -> MaterialTheme.colorScheme.surfaceVariant
-                                    NotificationSection.DISMISSED -> MaterialTheme.colorScheme.tertiaryContainer
-                                    NotificationSection.LOST -> MaterialTheme.colorScheme.errorContainer
-                                }
-                            )
-                        ) {
-                            val contentColor = when (section) {
-                                NotificationSection.PINNED -> MaterialTheme.colorScheme.onPrimaryContainer
-                                NotificationSection.ACTIVE -> MaterialTheme.colorScheme.onSecondaryContainer
-                                NotificationSection.FILTERED -> MaterialTheme.colorScheme.onSurfaceVariant
-                                NotificationSection.DISMISSED -> MaterialTheme.colorScheme.onTertiaryContainer
-                                NotificationSection.LOST -> MaterialTheme.colorScheme.onErrorContainer
-                            }
-                            Row(
+                        Box(modifier = Modifier.fillMaxWidth()) {
+                            OutlinedTextField(
+                                value = searchQuery,
+                                onValueChange = { searchQuery = it },
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .padding(14.dp),
-                                horizontalArrangement = Arrangement.SpaceBetween,
-                                verticalAlignment = Alignment.CenterVertically
+                                    .padding(bottom = 6.dp)
+                                    .focusRequester(searchFocusRequester)
+                                    .onFocusChanged { isSearchFocused = it.isFocused },
+                                placeholder = { Text("Search") },
+                                leadingIcon = { Icon(Icons.Default.Search, contentDescription = "Search") },
+                                trailingIcon = {
+                                    if (searchQuery.isNotEmpty()) {
+                                        IconButton(onClick = { searchQuery = "" }) {
+                                            Icon(Icons.Default.Close, contentDescription = "Clear Search")
+                                        }
+                                    }
+                                },
+                                singleLine = true,
+                                shape = RoundedCornerShape(12.dp)
+                            )
+
+                            DropdownMenu(
+                                expanded = expandedDropdown && searchSuggestions.isNotEmpty(),
+                                onDismissRequest = { expandedDropdown = false },
+                                properties = androidx.compose.ui.window.PopupProperties(focusable = false),
+                                modifier = Modifier.fillMaxWidth(0.9f)
                             ) {
-                                Column(modifier = Modifier.weight(1f)) {
-                                    Text(
-                                        text = "${section.title} (${itemsList.size})",
-                                        style = MaterialTheme.typography.titleMedium,
-                                        fontWeight = FontWeight.Bold,
-                                        color = contentColor
+                                searchSuggestions.forEach { suggestion ->
+                                    DropdownMenuItem(
+                                        text = { Text(suggestion, fontSize = 14.sp) },
+                                        onClick = {
+                                            searchQuery = suggestion
+                                            expandedDropdown = false
+                                        }
                                     )
                                 }
                             }
                         }
                     }
                 }
+
+                item(key = "service_status_card") {
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = CardDefaults.cardColors(
+                            containerColor = if (isGranted)
+                                MaterialTheme.colorScheme.surfaceVariant
+                            else
+                                MaterialTheme.colorScheme.errorContainer
+                        )
+                    ) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(14.dp),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(
+                                    text = "Notification Listener Service",
+                                    style = MaterialTheme.typography.titleMedium,
+                                    fontWeight = FontWeight.Bold,
+                                    color = if (isGranted) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.onErrorContainer
+                                )
+                                Text(
+                                    text = if (isGranted) "Status: Active & Listening" else "Status: Permission Required",
+                                    fontSize = 12.sp,
+                                    color = if (isGranted) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error
+                                )
+                            }
+
+                            Button(
+                                onClick = {
+                                    val intent = Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS)
+                                    intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                                    context.startActivity(intent)
+                                },
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = if (isGranted) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.errorContainer,
+                                    contentColor = if (isGranted) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onErrorContainer
+                                )
+                            ) {
+                                Text(if (isGranted) "Settings" else "Grant")
+                            }
+                        }
+                    }
+                }
+
+                sectionOrder.forEach { section ->
+                    val isExpanded = expandedSection == section.keyName
+                    val rawItemsList = when (section) {
+                        NotificationSection.PINNED -> pinnedNotifs
+                        NotificationSection.ACTIVE -> activeNotifs
+                        NotificationSection.FILTERED -> emptyList()
+                        NotificationSection.DISMISSED -> recentlyDismissed
+                        NotificationSection.LOST -> lostNotifs
+                    }.distinctBy { "${it.packageName}_${it.title}_${it.content}" }
+
+                    val filteredList = if (!selectedPackages.isNullOrEmpty()) {
+                        rawItemsList.filter { selectedPackages!!.contains(it.packageName) }
+                    } else {
+                        rawItemsList
+                    }
+
+                    val itemsList = if (debouncedSearchQuery.isBlank()) filteredList
+                    else HybridSearchEngine.searchAndRank(filteredList, debouncedSearchQuery)
+
+                    stickyHeader(key = "sticky_header_${section.keyName}") {
+                        Surface(
+                            modifier = Modifier.fillMaxWidth(),
+                            color = MaterialTheme.colorScheme.background,
+                            shadowElevation = if (isExpanded) 2.dp else 0.dp
+                        ) {
+                            Card(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(vertical = 4.dp)
+                                    .clickable { toggleSection(section.keyName) },
+                                colors = CardDefaults.cardColors(
+                                    containerColor = when (section) {
+                                        NotificationSection.PINNED -> MaterialTheme.colorScheme.primaryContainer
+                                        NotificationSection.ACTIVE -> MaterialTheme.colorScheme.secondaryContainer
+                                        NotificationSection.FILTERED -> MaterialTheme.colorScheme.surfaceVariant
+                                        NotificationSection.DISMISSED -> MaterialTheme.colorScheme.tertiaryContainer
+                                        NotificationSection.LOST -> MaterialTheme.colorScheme.errorContainer
+                                    }
+                                )
+                            ) {
+                                val contentColor = when (section) {
+                                    NotificationSection.PINNED -> MaterialTheme.colorScheme.onPrimaryContainer
+                                    NotificationSection.ACTIVE -> MaterialTheme.colorScheme.onSecondaryContainer
+                                    NotificationSection.FILTERED -> MaterialTheme.colorScheme.onSurfaceVariant
+                                    NotificationSection.DISMISSED -> MaterialTheme.colorScheme.onTertiaryContainer
+                                    NotificationSection.LOST -> MaterialTheme.colorScheme.onErrorContainer
+                                }
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(14.dp),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Column(modifier = Modifier.weight(1f)) {
+                                        Text(
+                                            text = "${section.title} (${itemsList.size})",
+                                            style = MaterialTheme.typography.titleMedium,
+                                            fontWeight = FontWeight.Bold,
+                                            color = contentColor
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            
+            if (showBackupKeyDialog) {
+                BackupKeyDialog(
+                    keyBase64 = currentBackupKey,
+                    onDismiss = { showBackupKeyDialog = false },
+                    onConfirm = {
+                        showBackupKeyDialog = false
+                        scope.launch {
+                            try {
+                                val secretKey = currentPendingSecretKey ?: return@launch
+                                val result = com.jeffers.notimindlite.util.DatabaseExporter.performEncryptedBackup(
+                                    context = context,
+                                    secretKey = secretKey
+                                )
+                                
+                                if (result.isSuccess) {
+                                    val backupFile = result.getOrThrow()
+                                    val shareIntent = Intent(Intent.ACTION_SEND).apply {
+                                        type = "application/octet-stream"
+                                        putExtra(Intent.EXTRA_STREAM, com.jeffers.notimindlite.util.DatabaseExporter.getExportFileUri(context, backupFile))
+                                        addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                                        addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                                    }
+                                    context.startActivity(Intent.createChooser(shareIntent, "Share Encrypted Backup"))
+                                }
+                            } catch (e: Exception) {
+                                Log.e("ActiveNotifications", "Confirmed backup failed", e)
+                            }
+                        }
+                    }
+                )
             }
         }
     }

@@ -15,5 +15,6 @@ data class BackupRecord(
     val signature: String,
     val timestamp: Long = System.currentTimeMillis(),
     val fileName: String? = null,
-    val logMessage: String? = null
+    val logMessage: String? = null,
+    val encryptionKeyBase64: String? = null
 )
