@@ -1,13 +1,10 @@
 package com.jeffers.notimindlite.ui.components
 
-import android.content.Intent
-import android.net.Uri
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.OpenInNew
-import androidx.compose.material.icons.filled.Place
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -16,12 +13,17 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import android.content.Intent
+import android.net.Uri
 import com.jeffers.notimindlite.util.ActionableEntityExtractor
 
+/**
+ * ActionableChips renders a row of interactive chips based on entities extracted from text.
+ * Tapping a chip opens a contextual menu of actions.
+ */
 @Composable
 fun ActionableChips(
     text: String,
@@ -57,8 +59,6 @@ private fun ActionChip(
             Triple(Icons.Default.ContentCopy, "OTP", MaterialTheme.colorScheme.primaryContainer)
         ActionableEntityExtractor.EntityType.URL -> 
             Triple(Icons.Default.OpenInNew, "Link", MaterialTheme.colorScheme.secondaryContainer)
-        ActionableEntityExtractor.EntityType.LOCATION -> 
-            Triple(Icons.Default.Place, "Place", MaterialTheme.colorScheme.tertiaryContainer)
     }
 
     Box {
@@ -92,32 +92,36 @@ private fun ActionChip(
             expanded = expanded,
             onDismissRequest = { expanded = false }
         ) {
+            // Action 1: Copy (Always available)
             DropdownMenuItem(
-                text = { Text("Copy ${if (entity.type == ActionableEntityExtractor.EntityType.OTP) "Code" else if (entity.type == ActionableEntityExtractor.EntityType.URL) "Link" else "Address"}") },
+                text = { Text("Copy ${if (entity.type == ActionableEntityExtractor.EntityType.OTP) "Code" else "Link"}") },
                 onClick = {
-                    clipboardManager.setText(AnnotatedString(entity.value))
+                    clipboardManager.setText(entity.value)
                     expanded = false
                 },
                 leadingIcon = { Icon(Icons.Default.ContentCopy, contentDescription = null, modifier = Modifier.size(18.dp)) }
             )
 
-            if (entity.type == ActionableEntityExtractor.EntityType.URL || entity.type == ActionableEntityExtractor.EntityType.LOCATION) {
+            // Action 2: Specific Action (Open for URL)
+            if (entity.type == ActionableEntityExtractor.EntityType.URL) {
                 DropdownMenuItem(
-                    text = { Text(if (entity.type == ActionableEntityExtractor.EntityType.URL) "Open in Browser" else "Open in Maps") },
+                    text = { Text("Open in Browser") },
                     onClick = {
                         try {
-                            val uriString = if (entity.type == ActionableEntityExtractor.EntityType.URL) entity.value else "geo:0,0?q=${Uri.encode(entity.value)}"
-                            val intent = Intent(Intent.ACTION_VIEW, Uri.parse(uriString)).apply {
+                            val intent = Intent(Intent.ACTION_VIEW, Uri.parse(entity.value)).apply {
                                 addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
                             }
                             context.startActivity(intent)
-                        } catch (e: Exception) { }
+                        } catch (e: Exception) {
+                            // Handle failure silently or show toast
+                        }
                         expanded = false
                     },
                     leadingIcon = { Icon(Icons.Default.OpenInNew, contentDescription = null, modifier = Modifier.size(18.dp)) }
                 )
             }
 
+            // Action 3: Share (Always available)
             DropdownMenuItem(
                 text = { Text("Share") },
                 onClick = {

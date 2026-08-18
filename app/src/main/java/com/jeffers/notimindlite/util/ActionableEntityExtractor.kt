@@ -23,7 +23,7 @@ object ActionableEntityExtractor {
     )
 
     enum class EntityType {
-        OTP, URL
+        OTP, URL, LOCATION
     }
 
     /**
@@ -45,6 +45,10 @@ object ActionableEntityExtractor {
         while (otpMatcher.find()) {
             entities.add(ActionableEntity(otpMatcher.group(), EntityType.OTP, otpMatcher.start()..otpMatcher.end()-1))
         }
+        
+        // Detect Locations via GeminiMapsDetector
+        val locations = com.jeffers.notimindlite.data.maps.GeminiMapsDetector.detect(text)
+        entities.addAll(locations)
         
         return entities.sortedBy { it.range.first }
     }
