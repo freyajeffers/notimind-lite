@@ -5,6 +5,8 @@ import android.content.Intent
 import android.net.Uri
 import android.util.Log
 import androidx.core.content.FileProvider
+import com.jeffers.notimindlite.data.local.AppDatabase
+import com.jeffers.notimindlite.data.local.EncryptedBackupManager
 import com.jeffers.notimindlite.data.local.NotificationEntity
 import org.json.JSONArray
 import org.json.JSONObject
@@ -13,10 +15,36 @@ import java.io.FileWriter
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+import javax.crypto.SecretKey
 
 object DatabaseExporter {
 
     private const val TAG = "DatabaseExporter"
+
+    /**
+     * Orchestrates a full encrypted backup of the local database.
+     */
+    suspend fun performEncryptedBackup(context: Context, secretKey: SecretKey): Result<File> {
+        return try {
+            val dbFile = context.getDatabasePath("notifications.db")
+            if (!dbFile.exists()) return Result.failure(Exception("Database file not found"))
+
+            val backupFile = File(context.cacheDir, "notimind_backup_${System.currentTimeMillis()}.enc")
+            
+            val success = EncryptedBackupManager.createAuthorizedBackup(
+                context = context,
+                sourceDbFile = dbFile,
+                destinationFile = backupFile,
+                secretKey = secretKey
+            )
+
+            if (success) Result.success(backupFile)
+            else Result.failure(Exception("Encryption failed"))
+        } catch (e: Exception) {
+            Log.e(TAG, "Backup process failed", e)
+            Result.failure(e)
+        }
+    }
 
     fun exportToJsonString(notifications: List<NotificationEntity>): String {
         val jsonArray = JSONArray()
