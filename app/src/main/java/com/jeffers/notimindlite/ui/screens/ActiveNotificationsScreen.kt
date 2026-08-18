@@ -39,6 +39,9 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import com.jeffers.notimindlite.ui.components.SpeedDialSettingsFab
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
@@ -296,47 +299,17 @@ fun ActiveNotificationsScreen(dao: NotificationDao, authManager: AuthManager, db
             )
         },
         floatingActionButton = {
-            Column(
-                verticalArrangement = Arrangement.spacedBy(8.dp),
-                horizontalAlignment = Alignment.End
-            ) {
-                TooltipBox(
-                    positionProvider = TooltipDefaults.rememberPlainTooltipPositionProvider(),
-                    tooltip = { PlainTooltip { Text("Scroll to Top") } },
-                    state = rememberTooltipState()
-                ) {
-                    SmallFloatingActionButton(
-                        onClick = {
-                            scope.launch {
-                                listState.animateScrollToItem(0)
-                            }
-                        },
-                        containerColor = MaterialTheme.colorScheme.primaryContainer,
-                        contentColor = MaterialTheme.colorScheme.onPrimaryContainer
-                    ) {
-                        Icon(Icons.Default.KeyboardArrowUp, contentDescription = "Scroll to Top")
-                    }
+            SpeedDialSettingsFab(
+                onSyncClick = {
+                    // Trigger manual sync
+                },
+                onBackupClick = {
+                    // Trigger backup logic
+                },
+                onSettingsClick = {
+                    // Navigate to Settings
                 }
-
-                TooltipBox(
-                    positionProvider = TooltipDefaults.rememberPlainTooltipPositionProvider(),
-                    tooltip = { PlainTooltip { Text("Scroll to Bottom") } },
-                    state = rememberTooltipState()
-                ) {
-                    SmallFloatingActionButton(
-                        onClick = {
-                            scope.launch {
-                                val targetIndex = (totalLazyItemCount - 1).coerceAtLeast(0)
-                                listState.animateScrollToItem(targetIndex)
-                            }
-                        },
-                        containerColor = MaterialTheme.colorScheme.primaryContainer,
-                        contentColor = MaterialTheme.colorScheme.onPrimaryContainer
-                    ) {
-                        Icon(Icons.Default.KeyboardArrowDown, contentDescription = "Scroll to Bottom")
-                    }
-                }
-            }
+            )
         }
     ) { innerPadding ->
         LazyColumn(
