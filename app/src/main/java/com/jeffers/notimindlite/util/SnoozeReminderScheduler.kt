@@ -4,9 +4,8 @@ import android.app.AlarmManager
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
+import android.os.Build
 import android.util.Log
-import androidx.core.app.NotificationCompat
-import androidx.core.app.NotificationManagerCompat
 import java.util.*
 
 /**
@@ -16,7 +15,6 @@ import java.util.*
 object SnoozeReminderScheduler {
     private const val TAG = "SnoozeScheduler"
     private const val CHANNEL_ID = "snooze_reminders"
-    private const val NOTIFICATION_ID_PREFIX = "snooze_"
 
     /**
      * Schedules a reminder notification for a specific notification item.
@@ -47,13 +45,17 @@ object SnoozeReminderScheduler {
                 PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
             )
 
-            // In a real implementation, we would use AlarmManager.setExactAndAllowWhileIdle()
-            // For the purpose of this commit, we focus on the scheduling logic and the receiver's existence.
-            Log.d(TAG, "Scheduled snooze reminder for $notificationId in ${delayMs / 1000}s")
+            val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
+            val triggerAt = System.currentTimeMillis() + delayMs
+
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, triggerAt, pendingIntent)
+            } else {
+                @Suppress("DEPRECATION")
+                alarmManager.setExact(AlarmManager.RTC_WAKEUP, triggerAt, pendingIntent)
+            }
             
-            // Simulated AlarmManager call
-            // val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
-            // alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, System.currentTimeMillis() + delayMs, pendingIntent)
+            Log.d(TAG, "Successfully scheduled snooze reminder for $notificationId to trigger at $triggerAt")
             
         } catch (e: Exception) {
             Log.e(TAG, "Failed to schedule snooze reminder", e)
@@ -70,7 +72,8 @@ object SnoozeReminderScheduler {
                 PendingIntent.FLAG_NO_CREATE or PendingIntent.FLAG_IMMUTABLE
             )
             if (pendingIntent != null) {
-                // Use AlarmManager to cancel
+                val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
+                alarmManager.cancel(pendingIntent)
                 Log.d(TAG, "Cancelled snooze reminder for $notificationId")
             }
         } catch (e: Exception) {
