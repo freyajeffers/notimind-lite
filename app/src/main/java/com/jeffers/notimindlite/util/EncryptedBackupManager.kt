@@ -31,7 +31,8 @@ object EncryptedBackupManager {
         context: Context,
         sourceDbFile: File,
         destinationFile: File,
-        secretKey: SecretKey
+        secretKey: SecretKey,
+        encryptionKeyBase64: String? = null
     ): Boolean {
         if (!sourceDbFile.exists()) return false
 
@@ -40,9 +41,11 @@ object EncryptedBackupManager {
             val success = performEncryption(sourceDbFile, destinationFile, secretKey)
             
             if (success) {
-                // 2. Generate Hash and Signature for the final encrypted file
+                // 2. Generate Hash and Remote Signature for the final encrypted file
                 val fileHash = calculateFileHash(destinationFile)
-                val signature = "SIG_" + fileHash.take(16) // Simplified internal signature
+                
+                // Offload signing to the remote Notary Server
+                val signature = generateSecureSignature(fileHash, secretKey, context)
 
                 // 3. Record the export in DB
                 val db = AppDatabase.getDatabase(context)
@@ -52,7 +55,8 @@ object EncryptedBackupManager {
                         fileHash = fileHash,
                         signature = signature,
                         fileName = destinationFile.name,
-                        logMessage = "Successfully exported encrypted backup"
+                        logMessage = "Successfully exported encrypted backup",
+                        encryptionKeyBase64 = encryptionKeyBase64
                     )
                 )
             }
@@ -169,9 +173,18 @@ object EncryptedBackupManager {
         return digest.digest().joinToString("") { "%02x".format(it) }
     }
 
-    fun generateBackupKey(): SecretKey {
-        val keyGen = KeyGenerator.getInstance("AES")
-        keyGen.init(256)
-        return keyGen.generateKey()
+    private suspend fun generateSecureSignature(hash: String, secretKey: SecretKey, context: android.content.Context): String {
+        return try {
+            com.jeffers.notimindlite.util.BackupNotaryClient.getSignature(context, hash)
+        } catch (e: Exception) {
+            Log.e(TAG, "Remote notary signing failed", e)
+            throw e
+        }
     }
+}
+
+fun generateBackupKey(): SecretKey {
+    val keyGen = KeyGenerator.getInstance("AES")
+    keyGen.init(256)
+    return keyGen.generateKey()
 }
