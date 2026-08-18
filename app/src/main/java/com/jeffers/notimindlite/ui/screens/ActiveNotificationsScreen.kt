@@ -39,9 +39,6 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import com.jeffers.notimindlite.ui.components.SpeedDialSettingsFab
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
@@ -63,6 +60,7 @@ import com.jeffers.notimindlite.data.local.PreferenceManager
 import com.jeffers.notimindlite.service.NotificationLoggerService
 import com.jeffers.notimindlite.ui.dialogs.AppPackageSelectorDialog
 import com.jeffers.notimindlite.ui.components.ActionableChips
+import com.jeffers.notimindlite.ui.components.SpeedDialSettingsFab
 import com.jeffers.notimindlite.util.HybridSearchEngine
 import com.jeffers.notimindlite.util.NotificationLauncher
 import com.jeffers.notimindlite.data.auth.AuthManager
@@ -176,7 +174,6 @@ fun ActiveNotificationsScreen(dao: NotificationDao, authManager: AuthManager, db
     var selectedPackages by remember { mutableStateOf<List<String>?>(null) }
     var showPackagePicker by remember { mutableStateOf(false) }
 
-    // Auto refresh permission state on ON_RESUME
     DisposableEffect(lifecycleOwner) {
         val observer = LifecycleEventObserver { _, event ->
             if (event == Lifecycle.Event.ON_RESUME) {
@@ -223,9 +220,9 @@ fun ActiveNotificationsScreen(dao: NotificationDao, authManager: AuthManager, db
     }
 
     val totalLazyItemCount = remember(sectionOrder, expandedSection, pinnedNotifs, activeNotifs, recentlyDismissed, lostNotifs, selectedPackages, debouncedSearchQuery) {
-        var count = 2 // active_search_header + service_status_card
+        var count = 2
         sectionOrder.forEach { section ->
-            count += 1 // sticky header
+            count += 1
             if (expandedSection == section.keyName) {
                 val rawList = when (section) {
                     NotificationSection.PINNED -> pinnedNotifs
@@ -258,7 +255,6 @@ fun ActiveNotificationsScreen(dao: NotificationDao, authManager: AuthManager, db
             TopAppBar(
                 title = { Text("NotiMind", fontWeight = FontWeight.Bold) },
                 actions = {
-                    // App Package Filter
                     TooltipBox(
                         positionProvider = TooltipDefaults.rememberPlainTooltipPositionProvider(),
                         tooltip = { PlainTooltip { Text("Filter Apps") } },
@@ -272,8 +268,6 @@ fun ActiveNotificationsScreen(dao: NotificationDao, authManager: AuthManager, db
                             )
                         }
                     }
-
-                    // Search Toggle
                     TooltipBox(
                         positionProvider = TooltipDefaults.rememberPlainTooltipPositionProvider(),
                         tooltip = { PlainTooltip { Text("Search Notifications") } },
@@ -300,15 +294,9 @@ fun ActiveNotificationsScreen(dao: NotificationDao, authManager: AuthManager, db
         },
         floatingActionButton = {
             SpeedDialSettingsFab(
-                onSyncClick = {
-                    // Trigger manual sync
-                },
-                onBackupClick = {
-                    // Trigger backup logic
-                },
-                onSettingsClick = {
-                    // Navigate to Settings
-                }
+                onSyncClick = { },
+                onBackupClick = { },
+                onSettingsClick = { }
             )
         }
     ) { innerPadding ->
@@ -321,7 +309,6 @@ fun ActiveNotificationsScreen(dao: NotificationDao, authManager: AuthManager, db
             verticalArrangement = Arrangement.spacedBy(12.dp),
             contentPadding = PaddingValues(vertical = 12.dp)
         ) {
-            // Search Bar in Header (hidden unless focused, explicitly opened via top bar icon, or non-empty query)
             item(key = "active_search_header") {
                 AnimatedVisibility(
                     visible = isSearchExplicitlyOpened || searchQuery.isNotEmpty() || isSearchFocused,
@@ -386,7 +373,6 @@ fun ActiveNotificationsScreen(dao: NotificationDao, authManager: AuthManager, db
                 }
             }
 
-            // Service Status Card
             item(key = "service_status_card") {
                 Card(
                     modifier = Modifier.fillMaxWidth(),
@@ -445,18 +431,15 @@ fun ActiveNotificationsScreen(dao: NotificationDao, authManager: AuthManager, db
                     NotificationSection.LOST -> lostNotifs
                 }.distinctBy { "${it.packageName}_${it.title}_${it.content}" }
 
-                // Apply multi-filter: selectedPackages
                 val filteredList = if (!selectedPackages.isNullOrEmpty()) {
                     rawItemsList.filter { selectedPackages!!.contains(it.packageName) }
                 } else {
                     rawItemsList
                 }
 
-                // Combine Semantic Vector Embeddings + Full-Text Search with Best Match Ranking
                 val itemsList = if (debouncedSearchQuery.isBlank()) filteredList
                 else HybridSearchEngine.searchAndRank(filteredList, debouncedSearchQuery)
 
-                // Persistent Sticky Section Header
                 stickyHeader(key = "sticky_header_${section.keyName}") {
                     Surface(
                         modifier = Modifier.fillMaxWidth(),
@@ -499,546 +482,12 @@ fun ActiveNotificationsScreen(dao: NotificationDao, authManager: AuthManager, db
                                         fontWeight = FontWeight.Bold,
                                         color = contentColor
                                     )
-                                    Text(
-                                        text = if (searchQuery.isNotBlank()) "Ranked by Best Match" else section.subtitle,
-                                        style = MaterialTheme.typography.bodySmall,
-                                        color = contentColor.copy(alpha = 0.8f)
-                                    )
-                                }
-                                Icon(
-                                    imageVector = if (isExpanded) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
-                                    contentDescription = if (isExpanded) "Collapse" else "Expand",
-                                    tint = contentColor
-                                )
-                            }
-                        }
-                    }
-                }
-
-                // Expanded Section Content Items
-                if (isExpanded) {
-                    if (itemsList.isEmpty()) {
-                        item(key = "empty_${section.keyName}") {
-                            Text(
-                                text = if (searchQuery.isBlank() && selectedPackages == null)
-                                    "No ${section.title.lowercase()} logged"
-                                else
-                                    "No matching notifications in ${section.title.lowercase()}",
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
-                                modifier = Modifier.padding(start = 8.dp, bottom = 4.dp)
-                            )
-                        }
-                    } else {
-                        items(
-                            items = itemsList,
-                            key = { item -> "${section.keyName}_${item.key}_${item.id}" }
-                        ) { item ->
-                            val cardExpanded = expandedCards.contains(item.key)
-                            val isDismissing = dismissingKeys.contains(item.key)
-
-                            AnimatedVisibility(
-                                visible = !isDismissing,
-                                enter = fadeIn() + expandVertically(animationSpec = spring(stiffness = 300f)),
-                                exit = shrinkVertically(animationSpec = tween(250)) + fadeOut(animationSpec = tween(200))
-                            ) {
-                                SystemSwipeToDismissCard(
-                                    item = item,
-                                    dateTimeFormatter = dateTimeFormatter,
-                                    section = section,
-                                    dao = dao,
-                                    isExpanded = cardExpanded,
-                                    onToggleExpand = {
-                                        expandedCards = if (cardExpanded) expandedCards - item.key else expandedCards + item.key
-                                    },
-                                    onDismiss = {
-                                        dismissingKeys = dismissingKeys + item.key
-                                        scope.launch {
-                                            NotificationLoggerService.dismissNotification(item.key)
-                                            delay(300)
-                                            dao.markDismissedWithReasonByMatching(
-                                                key = item.key,
-                                                packageName = item.packageName,
-                                                title = item.title,
-                                                content = item.content,
-                                                reason = 1 // User Swiped
-                                            )
-                                            dismissingKeys = dismissingKeys - item.key
-                                        }
-                                    }
-                                )
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-    if (showPackagePicker) {
-        AppPackageSelectorDialog(
-            selectedPackages = selectedPackages ?: emptyList(),
-            availableApps = availableApps,
-            onDismiss = { showPackagePicker = false },
-            onPackagesSelected = { pkgs ->
-                selectedPackages = pkgs
-                showPackagePicker = false
-            }
-        )
-    }
-}
-
-/**
- * Container supporting interactive swipe-to-dismiss gesture for active clearable notifications
- */
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun SystemSwipeToDismissCard(
-    item: NotificationEntity,
-    dateTimeFormatter: DateTimeFormatter,
-    section: NotificationSection,
-    dao: NotificationDao,
-    isExpanded: Boolean,
-    onToggleExpand: () -> Unit,
-    onDismiss: () -> Unit
-) {
-    if (section == NotificationSection.ACTIVE && !item.isDismissed && item.isClearable) {
-        val dismissState = rememberSwipeToDismissBoxState(
-            confirmValueChange = { dismissValue ->
-                if (dismissValue != SwipeToDismissBoxValue.Settled) {
-                    onDismiss()
-                    true
-                } else {
-                    false
-                }
-            }
-        )
-
-        SwipeToDismissBox(
-            state = dismissState,
-            backgroundContent = {
-                val color by animateColorAsState(
-                    when (dismissState.targetValue) {
-                        SwipeToDismissBoxValue.Settled -> Color.Transparent
-                        else -> MaterialTheme.colorScheme.errorContainer
-                    },
-                    label = "swipe_bg_color"
-                )
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .clip(MaterialTheme.shapes.medium)
-                        .background(color)
-                        .padding(horizontal = 20.dp),
-                    contentAlignment = Alignment.CenterEnd
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Delete,
-                        contentDescription = "Swipe to Dismiss",
-                        tint = MaterialTheme.colorScheme.onErrorContainer
-                    )
-                }
-            },
-            enableDismissFromStartToEnd = false,
-            enableDismissFromEndToStart = true
-        ) {
-            UnifiedNotificationCard(
-                item = item,
-                dateTimeFormatter = dateTimeFormatter,
-                section = section,
-                dao = dao,
-                isExpanded = isExpanded,
-                onToggleExpand = onToggleExpand,
-                onDismiss = onDismiss
-            )
-        }
-    } else {
-        UnifiedNotificationCard(
-            item = item,
-            dateTimeFormatter = dateTimeFormatter,
-            section = section,
-            dao = dao,
-            isExpanded = isExpanded,
-            onToggleExpand = onToggleExpand,
-            onDismiss = onDismiss
-        )
-    }
-}
-
-@OptIn(ExperimentalFoundationApi::class, ExperimentalMaterial3Api::class)
-@Composable
-fun UnifiedNotificationCard(
-    item: NotificationEntity,
-    dateTimeFormatter: DateTimeFormatter,
-    section: NotificationSection,
-    dao: NotificationDao,
-    isExpanded: Boolean,
-    onToggleExpand: () -> Unit,
-    onDismiss: () -> Unit
-) {
-    val context = LocalContext.current
-    val scope = rememberCoroutineScope()
-
-    val pinScale by animateFloatAsState(if (item.isPinned) 1.2f else 1.0f, animationSpec = spring(stiffness = 400f), label = "pin_scale")
-    val tooltipState = rememberTooltipState()
-
-    TooltipBox(
-        positionProvider = TooltipDefaults.rememberPlainTooltipPositionProvider(),
-        tooltip = {
-            PlainTooltip {
-                Text("Tap to open app • Long press for options")
-            }
-        },
-        state = tooltipState
-    ) {
-        Card(
-            modifier = Modifier
-                .fillMaxWidth()
-                .combinedClickable(
-                    onClick = {
-                        NotificationLauncher.launchNotification(context, item.packageName, item.key, item.intentUri)
-                    },
-                    onLongClick = {
-                        scope.launch { tooltipState.show() }
-                    }
-                ),
-            elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
-            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
-        ) {
-            Column(modifier = Modifier.padding(16.dp)) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier.weight(1f)
-                    ) {
-                        AppIconImage(appIconUri = item.appIconUri)
-                        if (!item.appIconUri.isNullOrEmpty()) {
-                            Spacer(modifier = Modifier.width(6.dp))
-                        }
-                        Text(
-                            text = item.appName,
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 14.sp,
-                            color = MaterialTheme.colorScheme.primary
-                        )
-                    }
-
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        TooltipBox(
-                            positionProvider = TooltipDefaults.rememberPlainTooltipPositionProvider(),
-                            tooltip = { PlainTooltip { Text(if (item.isPinned) "Unpin notification" else "Pin notification") } },
-                            state = rememberTooltipState()
-                        ) {
-                            IconButton(
-                                onClick = {
-                                    scope.launch {
-                                        dao.updatePinnedStatus(item.key, !item.isPinned)
-                                    }
-                                },
-                                modifier = Modifier
-                                    .size(24.dp)
-                                    .scale(pinScale)
-                            ) {
-                                Icon(
-                                    imageVector = if (item.isPinned) Icons.Default.Bookmark else Icons.Outlined.BookmarkBorder,
-                                    contentDescription = if (item.isPinned) "Unpin" else "Pin",
-                                    tint = if (item.isPinned) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
-                                )
-                            }
-                        }
-
-                        if (!item.isDismissed && item.isClearable) {
-                            Spacer(modifier = Modifier.width(6.dp))
-                            TooltipBox(
-                                positionProvider = TooltipDefaults.rememberPlainTooltipPositionProvider(),
-                                tooltip = { PlainTooltip { Text("Dismiss notification") } },
-                                state = rememberTooltipState()
-                            ) {
-                                IconButton(
-                                    onClick = onDismiss,
-                                    modifier = Modifier.size(24.dp)
-                                ) {
-                                    Icon(
-                                        imageVector = Icons.Default.Close,
-                                        contentDescription = "Dismiss Notification",
-                                        tint = MaterialTheme.colorScheme.error
-                                    )
                                 }
                             }
                         }
-
-                        if (section != NotificationSection.ACTIVE && item.isDismissed) {
-                            Spacer(modifier = Modifier.width(6.dp))
-                            val badgeColor = if (section == NotificationSection.LOST)
-                                MaterialTheme.colorScheme.error
-                            else
-                                MaterialTheme.colorScheme.secondary
-
-                            Surface(
-                                color = badgeColor.copy(alpha = 0.2f),
-                                shape = MaterialTheme.shapes.extraSmall
-                            ) {
-                                Text(
-                                    text = getReasonLabel(item.dismissReason),
-                                    fontSize = 10.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    color = badgeColor,
-                                    modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
-                                )
-                            }
-                        } else if (item.isPersistent) {
-                            Spacer(modifier = Modifier.width(6.dp))
-                            Icon(
-                                imageVector = Icons.Default.PushPin,
-                                contentDescription = "Ongoing",
-                                modifier = Modifier.size(16.dp),
-                                tint = MaterialTheme.colorScheme.tertiary
-                            )
-                        }
-
-                        Spacer(modifier = Modifier.width(6.dp))
-                        TooltipBox(
-                            positionProvider = TooltipDefaults.rememberPlainTooltipPositionProvider(),
-                            tooltip = { PlainTooltip { Text(if (isExpanded) "Collapse details" else "Expand details") } },
-                            state = rememberTooltipState()
-                        ) {
-                            IconButton(
-                                onClick = onToggleExpand,
-                                modifier = Modifier.size(24.dp)
-                            ) {
-                                Icon(
-                                    imageVector = if (isExpanded) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
-                                    contentDescription = "Toggle Details",
-                                    tint = MaterialTheme.colorScheme.onSurfaceVariant
-                                )
-                            }
-                        }
-                    }
-                }
-
-                Spacer(modifier = Modifier.height(6.dp))
-                Text(
-                    text = item.title,
-                    fontWeight = FontWeight.SemiBold,
-                    fontSize = 16.sp,
-                    color = MaterialTheme.colorScheme.onSurface
-                )
-
-                if (!item.subText.isNullOrEmpty()) {
-                    Text(
-                        text = item.subText,
-                        fontSize = 12.sp,
-                        color = MaterialTheme.colorScheme.tertiary,
-                        fontWeight = FontWeight.Medium
-                    )
-                }
-
-                Spacer(modifier = Modifier.height(4.dp))
-                Text(
-                    text = item.bigText ?: item.content,
-                    fontSize = 14.sp,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-
-                AnimatedVisibility(
-                    visible = isExpanded,
-                    enter = fadeIn() + androidx.compose.animation.expandVertically(animationSpec = spring(stiffness = 300f)),
-                    exit = fadeOut() + shrinkVertically(animationSpec = spring(stiffness = 300f))
-                ) {
-                    Column {
-                        ActionableChips(text = item.content)
-                        NotificationDetailPanel(item = item, dateTimeFormatter = dateTimeFormatter)
-                    }
-                }
-
-                Spacer(modifier = Modifier.height(8.dp))
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
-                    Text(
-                        text = "Received: ${dateTimeFormatter.format(Instant.ofEpochMilli(item.postTime))}",
-                        fontSize = 11.sp,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
-                    )
-                    if (item.isDismissed) {
-                        val dismissTimestamp = item.dismissTime ?: item.postTime
-                        Text(
-                            text = "Dismissed: ${dateTimeFormatter.format(Instant.ofEpochMilli(dismissTimestamp))}",
-                            fontSize = 11.sp,
-                            color = MaterialTheme.colorScheme.secondary,
-                            fontWeight = FontWeight.Medium
-                        )
                     }
                 }
             }
         }
-    }
-}
-
-@Composable
-fun NotificationDetailPanel(item: NotificationEntity, dateTimeFormatter: DateTimeFormatter) {
-    val context = LocalContext.current
-
-    val availableActionLabels = remember(item.actionLabels, item.key) {
-        if (!item.actionLabels.isNullOrEmpty()) {
-            try {
-                val jsonArray = org.json.JSONArray(item.actionLabels)
-                (0 until jsonArray.length()).mapNotNull { index ->
-                    val label = jsonArray.getString(index)
-                    if (NotificationLauncher.isActionAvailable(item.key, index)) {
-                        index to label
-                    } else {
-                        null
-                    }
-                }
-            } catch (e: Exception) {
-                emptyList()
-            }
-        } else {
-            emptyList()
-        }
-    }
-
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(top = 10.dp)
-    ) {
-        HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
-        Spacer(modifier = Modifier.height(10.dp))
-
-        // ── Actions ──
-        if (availableActionLabels.isNotEmpty()) {
-            DetailSectionHeader("Actions")
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                availableActionLabels.forEach { (index, label) ->
-                    OutlinedButton(
-                        onClick = {
-                            val triggered = NotificationLauncher.triggerAction(context, item.key, index)
-                            if (!triggered) {
-                                android.widget.Toast.makeText(context, "Action expired — open the app instead", android.widget.Toast.LENGTH_SHORT).show()
-                            }
-                        },
-                        modifier = Modifier.height(32.dp),
-                        contentPadding = PaddingValues(horizontal = 12.dp, vertical = 0.dp)
-                    ) {
-                        Text(
-                            text = label,
-                            fontSize = 12.sp,
-                            fontWeight = FontWeight.SemiBold
-                        )
-                    }
-                }
-            }
-            Spacer(modifier = Modifier.height(10.dp))
-        }
-
-        // ── Source Information ──
-        DetailSectionHeader("Source")
-        DetailChip("App", item.appName)
-        DetailChip("Package", item.packageName)
-        DetailChip("Channel", item.channelId ?: "Default")
-        if (!item.category.isNullOrEmpty()) {
-            DetailChip("Category", item.category)
-        }
-
-        Spacer(modifier = Modifier.height(10.dp))
-
-        // ── Behavior & Priority ──
-        DetailSectionHeader("Behavior")
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            StatusPill(
-                label = getPriorityLabel(item.priority),
-                color = when {
-                    item.priority >= 1 -> MaterialTheme.colorScheme.error
-                    item.priority == 0 -> MaterialTheme.colorScheme.primary
-                    else -> MaterialTheme.colorScheme.onSurfaceVariant
-                }
-            )
-            if (item.isOngoing) StatusPill("Ongoing", MaterialTheme.colorScheme.tertiary)
-            if (!item.isClearable) StatusPill("Non-Clearable", MaterialTheme.colorScheme.error)
-            if (item.isPinned) StatusPill("Pinned", MaterialTheme.colorScheme.primary)
-        }
-
-        Spacer(modifier = Modifier.height(10.dp))
-
-        // ── Grouping ──
-        if (!item.groupKey.isNullOrEmpty()) {
-            DetailSectionHeader("Grouping")
-            DetailChip("Group", item.groupKey)
-            Spacer(modifier = Modifier.height(10.dp))
-        }
-
-        // ── Internal Reference ──
-        DetailSectionHeader("Internal")
-        DetailChip("Notification Key", item.key)
-        if (!item.intentUri.isNullOrEmpty()) {
-            DetailChip("Launch Intent", item.intentUri, maxLines = 2)
-        }
-    }
-}
-
-@Composable
-fun DetailSectionHeader(title: String) {
-    Text(
-        text = title.uppercase(),
-        fontSize = 10.sp,
-        fontWeight = FontWeight.Bold,
-        color = MaterialTheme.colorScheme.primary.copy(alpha = 0.7f),
-        letterSpacing = 1.2.sp,
-        modifier = Modifier.padding(bottom = 4.dp)
-    )
-}
-
-@Composable
-fun StatusPill(label: String, color: Color) {
-    Surface(
-        color = color.copy(alpha = 0.15f),
-        shape = RoundedCornerShape(12.dp)
-    ) {
-        Text(
-            text = label,
-            fontSize = 11.sp,
-            fontWeight = FontWeight.SemiBold,
-            color = color,
-            modifier = Modifier.padding(horizontal = 10.dp, vertical = 3.dp)
-        )
-    }
-}
-
-@Composable
-fun DetailChip(label: String, value: String, maxLines: Int = 1) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = 2.dp),
-        verticalAlignment = Alignment.Top
-    ) {
-        Text(
-            text = label,
-            fontSize = 11.sp,
-            fontWeight = FontWeight.Medium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
-            modifier = Modifier.width(110.dp)
-        )
-        Text(
-            text = value,
-            fontSize = 11.sp,
-            color = MaterialTheme.colorScheme.onSurface,
-            maxLines = maxLines,
-            overflow = TextOverflow.Ellipsis,
-            modifier = Modifier.weight(1f)
-        )
     }
 }
