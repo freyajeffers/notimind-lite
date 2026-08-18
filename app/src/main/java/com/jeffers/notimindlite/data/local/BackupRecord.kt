@@ -5,12 +5,12 @@ import androidx.room.PrimaryKey
 
 /**
  * BackupRecord tracks the history of backup operations (Export/Import).
- * It stores checksums and signatures to ensure only authorized backups are imported.
+ * This ensures that only authorized, internally-generated backups are imported.
  */
-@Entity(tableName = \"backup_records\")
+@Entity(tableName = "backup_records")
 data class BackupRecord(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
-    val actionType: String, // \"EXPORT\" or \"IMPORT\"
+    val actionType: String, // "EXPORT" or "IMPORT"
     val fileHash: String,
     val signature: String,
     val timestamp: Long = System.currentTimeMillis(),
