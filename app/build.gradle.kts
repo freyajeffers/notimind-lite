@@ -4,6 +4,8 @@ plugins {
   alias(libs.plugins.kotlin.compose)
   alias(libs.plugins.google.devtools.ksp)
   alias(libs.plugins.google.services)
+  alias(libs.plugins.detekt)
+  id("jacoco")
 }
 
 android {
@@ -27,13 +29,20 @@ android {
       keyAlias = "androiddebugkey"
       keyPassword = "android"
     }
+    create("releaseConfig") {
+      storeFile = file(System.getenv("SIGNING_STORE_FILE") ?: "${rootDir}/release.keystore")
+      storePassword = System.getenv("SIGNING_STORE_PASSWORD") ?: "placeholder"
+      keyAlias = System.getenv("SIGNING_KEY_ALIAS") ?: "placeholder"
+      keyPassword = System.getenv("SIGNING_KEY_PASSWORD") ?: "placeholder"
+    }
   }
 
   buildTypes {
     release {
-      isMinifyEnabled = false
+      isMinifyEnabled = true
+      isShrinkResources = true
       proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
-      signingConfig = signingConfigs.getByName("debugConfig")
+      signingConfig = signingConfigs.getByName("releaseConfig")
     }
     debug { signingConfig = signingConfigs.getByName("debugConfig") }
   }
@@ -54,9 +63,42 @@ android {
   }
   testOptions { unitTests { isIncludeAndroidResources = true } }
   lint {
-    abortOnError = false
+    abortOnError = true
     checkDependencies = true
+    baseline = file("lint-baseline.xml")
   }
+}
+
+jacoco {
+    toolVersion = "0.8.12"
+}
+
+tasks.withType<Test> {
+    configure<JacocoTaskExtension> {
+        isIncludeNoLocationClasses = true
+        excludes = listOf("jdk.internal.*")
+    }
+}
+
+tasks.register<JacocoReport>("testCoverageReport") {
+    dependsOn("testDebugUnitTest")
+    reports {
+        xml.required.set(true)
+        html.required.set(true)
+    }
+    classDirectories.setFrom(
+        files(
+            "${buildDir}/tmp/kotlin-classes/debug"
+        )
+    )
+    sourceDirectories.setFrom(
+        files("${projectDir}/src/main/java")
+    )
+    executionData.setFrom(
+        fileTree(buildDir) {
+            include("jacoco/test-debug-UnitTest.exec")
+        }
+    )
 }
 
 dependencies {
@@ -82,6 +124,8 @@ dependencies {
   implementation(platform(libs.firebase.bom))
   implementation(libs.firebase.auth)
   implementation(libs.firebase.firestore)
+  implementation(libs.firebase.crashlytics)
+  implementation(libs.firebase.analytics)
   implementation(libs.androidx.credentials)
   implementation(libs.androidx.credentials.play.services)
   implementation(libs.google.id)
@@ -90,6 +134,7 @@ dependencies {
   implementation(libs.androidx.work.runtime.ktx)
 
   testImplementation(libs.junit)
+  testImplementation(libs.mockk)
   testImplementation(libs.androidx.junit)
   testImplementation(libs.androidx.core)
   testImplementation(libs.kotlinx.coroutines.test)
