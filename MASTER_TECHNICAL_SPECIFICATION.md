@@ -17,11 +17,13 @@ The system is governed by four non-negotiable engineering constraints:
 4. **System-Level Resilience**: The app remains functional through Direct Boot (DE storage) and responds dynamically to Android OS memory pressure.
 
 ### 1.3 High-Level Component Diagram
-- **Capture Layer**: `NotificationListenerService` $\rightarrow$ `NotificationLoggerService`
-- **Persistence Layer**: Room DB (SQLite) $\rightarrow$ `AppDatabase` $\rightarrow$ `NotificationDao`
-- **Intelligence Layer**: `HybridSearchEngine` $\rightarrow$ `VectorEmbeddingHelper` $\rightarrow$ `DynamicClusterManager`
-- **Security Layer**: `EncryptedBackupManager` $\rightarrow$ `BackupNotaryClient` $\rightarrow$ Google Play Integrity API
-- **UI Layer**: Jetpack Compose $\rightarrow$ Material 3 $\rightarrow$ `MainActivity` $\rightarrow$ `Navigation`
+- **Capture Layer**: `NotificationListenerService` $\\rightarrow$ `NotificationLoggerService`
+- **Persistence Layer**: Room DB (SQLite) $\\rightarrow$ `AppDatabase` $\\rightarrow$ `NotificationDao`
+- **Intelligence Layer**: `HybridSearchEngine` $\\rightarrow$ `VectorEmbeddingHelper` $\\rightarrow$ `DynamicClusterManager`
+- **Security Layer**: `EncryptedBackupManager` $\\rightarrow$ `BackupNotaryClient` $\\rightarrow$ Google Play Integrity API
+- **Cloud Sync Layer**: `SyncWorker` $\\rightarrow$ `FirestoreSyncRepository` $\\rightarrow$ Google Cloud Firestore
+- **Identity Layer**: `AuthManager` $\\rightarrow$ `UserSession` $\\rightarrow$ Firebase Auth
+- **UI Layer**: Jetpack Compose $\\rightarrow$ Material 3 $\\rightarrow$ `MainActivity` $\\rightarrow$ `Navigation`
 
 ---
 
