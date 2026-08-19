@@ -36,7 +36,7 @@ class NotiMindApp : Application(), android.content.ComponentCallbacks2 {
         when (level) {
             android.content.ComponentCallbacks2.TRIM_MEMORY_UI_HIDDEN -> {
                 AppIconCache.clearCache()
-                Log.d(TAG, "UI Hidden: Cleared AppIconCache")
+                
             }
             android.content.ComponentCallbacks2.TRIM_MEMORY_RUNNING_LOW,
             android.content.ComponentCallbacks2.TRIM_MEMORY_RUNNING_CRITICAL -> {

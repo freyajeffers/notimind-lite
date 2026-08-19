@@ -98,21 +98,23 @@ fun LogHistoryScreen(dao: NotificationDao, authManager: AuthManager, db: AppData
         activeList.map { it.packageName to it.appName }.distinctBy { it.first }
     }
 
-    val filteredNotifs = remember(activeList, debouncedSearchQuery, selectedReasonFilter, selectedPackages) {
-        var list = activeList.distinctBy { "${it.packageName}_${it.title}_${it.content}" }
+    val filteredNotifs by remember {
+        derivedStateOf {
+            var list = activeList.distinctBy { "${it.packageName}_${it.title}_${it.content}" }
 
-        if (selectedReasonFilter != null) {
-            list = list.filter { it.dismissReason == selectedReasonFilter }
-        }
+            if (selectedReasonFilter != null) {
+                list = list.filter { it.dismissReason == selectedReasonFilter }
+            }
 
-        if (!selectedPackages.isNullOrEmpty()) {
-            list = list.filter { selectedPackages!!.contains(it.packageName) }
-        }
+            if (!selectedPackages.isNullOrEmpty()) {
+                list = list.filter { selectedPackages!!.contains(it.packageName) }
+            }
 
-        if (debouncedSearchQuery.isBlank()) {
-            list
-        } else {
-            HybridSearchEngine.searchAndRank(list, debouncedSearchQuery)
+            if (debouncedSearchQuery.isBlank()) {
+                list
+            } else {
+                HybridSearchEngine.searchAndRank(list, debouncedSearchQuery)
+            }
         }
     }
 

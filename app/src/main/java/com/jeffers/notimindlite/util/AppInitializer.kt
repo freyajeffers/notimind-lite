@@ -16,7 +16,7 @@ object AppInitializer {
 
     fun initialize(context: Context) {
         if (isInitialized.getAndSet(true)) {
-            Log.d(TAG, "AppInitializer: Already initialized. Skipping.")
+            
             return
         }
 
@@ -27,7 +27,7 @@ object AppInitializer {
             // Guarded to prevent crashes in headless test environments
             if (FirebaseApp.getApps(context).isEmpty()) {
                 FirebaseApp.initializeApp(context)
-                Log.d(TAG, "Firebase initialized successfully.")
+                
             }
 
             // 2. Database & Logger Initialization
@@ -45,6 +45,6 @@ object AppInitializer {
 
     private fun setupInternalLogging() {
         // Placeholder for internal logger setup
-        Log.d(TAG, "Internal logging system configured.")
+        
     }
 }

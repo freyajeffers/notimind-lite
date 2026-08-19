@@ -48,5 +48,6 @@ data class NotificationEntity(
     val actionLabels: String? = null,
     val smallIconRes: Int = 0,
     val syncStatus: SyncStatus = SyncStatus.PENDING_UPLOAD,
-    val lastSyncedAt: Long = 0
+    val lastSyncedAt: Long = 0,
+    val embedding: FloatArray? = null
 )

@@ -37,18 +37,18 @@ class BootReceiver : BroadcastReceiver() {
         val userManager = context.getSystemService(Context.USER_SERVICE) as? UserManager
         val isUserUnlocked = userManager?.isUserUnlocked ?: true
 
-        Log.d("BootReceiverLite", "Received broadcast action: $action, isUserUnlocked: $isUserUnlocked")
+        
 
         if (action == Intent.ACTION_MY_PACKAGE_REPLACED) {
             val prefMgr = com.jeffers.notimindlite.data.local.PreferenceManager(context)
             prefMgr.setLastUpdateTime(System.currentTimeMillis())
-            Log.d("BootReceiverLite", "Package replaced; recorded update timestamp.")
+            
             return
         } else if (action == Intent.ACTION_LOCKED_BOOT_COMPLETED ||
             action == Intent.ACTION_BOOT_COMPLETED ||
             action == "android.intent.action.QUICKBOOT_POWERON"
         ) {
-            Log.d("BootReceiverLite", "Device boot detected ($action). Restoring active status bar notifications...")
+            
 
             val pendingResult = goAsync()
 
@@ -59,21 +59,21 @@ class BootReceiver : BroadcastReceiver() {
                         NotificationListenerService.requestRebind(
                             ComponentName(context, NotificationLoggerService::class.java)
                         )
-                        Log.d("BootReceiverLite", "Requested NotificationLoggerService rebind.")
+                        
                     } catch (e: Exception) {
-                        Log.d("BootReceiverLite", "NotificationListenerService rebind attempt: ${e.message}")
+                        
                     }
 
                     // Check preferences
                     val prefManager = com.jeffers.notimindlite.data.local.PreferenceManager(context)
                     if (!prefManager.isRestoreOnBootEnabled()) {
-                        Log.d("BootReceiverLite", "Restore on boot is disabled by user preference. Skipping restoration.")
+                        
                         return@launch
                     }
 
                     // Only query credential-encrypted Room database if user is unlocked
                     if (!isUserUnlocked) {
-                        Log.d("BootReceiverLite", "Direct boot active (User locked). Rebound service and deferred DB restore until unlock.")
+                        
                         return@launch
                     }
 
@@ -112,7 +112,7 @@ class BootReceiver : BroadcastReceiver() {
                         restoredCount++
                     }
 
-                    Log.d("BootReceiverLite", "Restored $restoredCount notifications on boot.")
+                    
                 } catch (e: Exception) {
                     Log.e("BootReceiverLite", "Failed to restore notifications on boot: ${e.message}")
                 } finally {

@@ -21,7 +21,7 @@ object UrlLauncher {
                 addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
             }
             context.startActivity(intent)
-            Log.d(TAG, "Successfully launched URL: $url")
+            
         } catch (e: Exception) {
             Log.e(TAG, "Failed to launch URL: $url", e)
         }

@@ -252,7 +252,7 @@ class PersistenceBoundaryTest : BaseRobolectricTest() {
         }
         val queryDurationMs = queryDurationNs / 1_000_000.0
 
-        println("50,000 entity active query duration: ${queryDurationMs} ms")
+        
         assertTrue(
             "50,000 entity query response time ($queryDurationMs ms) must be within SLA limit (< 2000.0 ms in Robolectric JVM)",
             queryDurationMs < 2000.0
@@ -265,7 +265,7 @@ class PersistenceBoundaryTest : BaseRobolectricTest() {
         }
         val singleLookupMs = singleLookupNs / 1_000_000.0
 
-        println("50,000 dataset single key lookup duration: ${singleLookupMs} ms")
+        
         assertTrue(
             "Single key query lookup ($singleLookupMs ms) on 50,000 records must satisfy sub-10ms SLA",
             singleLookupMs < 10.0
