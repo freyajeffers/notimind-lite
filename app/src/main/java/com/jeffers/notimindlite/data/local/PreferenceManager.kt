@@ -32,14 +32,25 @@ class PreferenceManager(context: Context) {
         prefs.edit().putBoolean("restore_on_boot", enabled).apply()
     }
 
-    // Preference for storing last app update timestamp
+    fun isStrictPrivacyEnabled(): Boolean {
+        return prefs.getBoolean("strict_privacy", false)
+    }
+
+    fun setStrictPrivacyEnabled(enabled: Boolean) {
+        prefs.edit().putBoolean("strict_privacy", enabled).apply()
+    }
+
     private val PREF_LAST_UPDATE_TIME = "pref_last_update_time"
 
     fun setLastUpdateTime(time: Long) {
         prefs.edit().putLong(PREF_LAST_UPDATE_TIME, time).apply()
     }
 
-    fun getLastUpdateTime(): Long {
-        return prefs.getLong(PREF_LAST_UPDATE_TIME, 0L)
+    fun hasCompletedOnboarding(): Boolean {
+        return prefs.getBoolean("has_completed_onboarding", false)
+    }
+
+    fun setOnboardingCompleted(completed: Boolean) {
+        prefs.edit().putBoolean("has_completed_onboarding", completed).apply()
     }
 }
