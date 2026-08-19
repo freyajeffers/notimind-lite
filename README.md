@@ -1,119 +1,98 @@
 # NotiMind Lite
 
-A privacy-focused, lightweight Android notification logger and boot recovery service designed for local notification persistence, filtering, and seamless reboot recovery without cloud or external AI/ML dependencies.
+NotiMind Lite is a privacy-focused Android notification insurance system. It captures, logs, and recovers system notifications using a sophisticated hybrid search architecture (Semantic + Keyword) and secure cloud synchronization, ensuring you never lose a critical alert.
 
 ---
 
-## Key Features
+## 🚀 Key Features
 
-- **Local Notification Ingestion & Persistence**: Uses Android `NotificationListenerService` and Room DB to capture status bar notifications locally on device.
-- **Smart Ingestion Filtering**:
-  - **Deduplication Guard**: Prevents ingesting duplicate notifications by hashing package, title, and content.
-  - **Blacklist Filter**: Filters system clutter (`android`, `com.android.systemui`, `com.android.shell`, `com.google.android.googlequicksearchbox`).
-  - **30-Day Retention Filter**: Drops notifications older than 30 days.
-  - **Spam & Clutter Filter**: Drops spam alerts, "X more notifications" summaries, and low-value system categories (`CATEGORY_SERVICE`, `CATEGORY_SYSTEM`).
-- **Boot Recovery Guard**:
-  - Automatically restores active notifications upon device reboot.
-  - **Update Protection**: Records package update timestamp (`MY_PACKAGE_REPLACED`) to avoid triggering unwanted restores when the app or service restarts after an update.
-- **Single-Card Enforcement**: Guaranteed max 1 card rendered per unique notification across screens.
-- **Synchronized Dismissal**: Dismissing a card marks all matching instances as dismissed and cancels the notification from the system status bar.
-- **Log History & Export**: Browse dismissed notifications with search and export capabilities (JSON/CSV).
-- **Deletion Safeguard**: Programmatic and UI protections prevent accidental or mass deletion of logged notification history (`clearAll` disabled).
+### 🔍 Advanced Discovery (The Intelligence Layer)
+- **Hybrid Semantic Search**: Combines traditional FTS4 keyword matching with vector embeddings for conceptual discovery (e.g., searching for "travel" finds "flight" or "hotel" notifications).
+- **RRF (Reciprocal Rank Fusion)**: A sophisticated merging algorithm that balances keyword precision and semantic relevance to provide the most accurate search results.
+- **Actionable Entity Extraction**: Automatically identifies and extracts actionable data from notifications to streamline recovery.
+- **Local Vector Processing**: Privacy-first embeddings processed on-device to maintain data sovereignty.
+
+### ☁️ Secure Synchronization & Backup
+- **Bidirectional Cloud Sync**: Real-time synchronization with Firestore, allowing notification recovery across device migrations.
+- **Encrypted Backups**: End-to-end encrypted local and cloud backups using a user-managed backup key.
+- **Google Sign-In Integration**: Secure, seamless authentication via Firebase Auth.
+- **Backup Notary Service**: Ensures backup integrity and versioning through a dedicated notary client.
+
+### 🛡️ Reliability & Persistence
+- **Direct Boot Awareness**: Critical services (`NotificationLoggerService`) and receivers are marked `directBootAware`, allowing notification capture and recovery immediately after reboot, even before user unlock.
+- **Boot Recovery Guard**: Automatically restores active notification state upon device restart.
+- **Snooze & Reminders**: Integrated `SnoozeReminderScheduler` to bring dismissed but important notifications back to the user's attention.
+- **Intelligent Filtering**: 
+  - **Deduplication**: Content-based hashing to prevent log clutter.
+  - **Blacklist**: Automatic filtering of system-level noise.
+  - **Retention**: Configurable cleanup of stale historical data.
+
+### 🎨 Modern UI/UX
+- **Material 3 Dynamic Theming**: A polished, dark-themed interface built with Jetpack Compose.
+- **Contextual Detail Panels**: Deep-dive views for notification metadata and actionable chips.
+- **Adaptive Navigation**: Seamless flow between Active Notifications, Log History, and System Settings.
 
 ---
 
-## Tech Stack & Architecture
+## 🛠️ Tech Stack & Architecture
 
 - **Language**: Kotlin
-- **UI Framework**: Jetpack Compose (Material 3 Dark Theme)
-- **Navigation**: Navigation Compose
-- **Database**: Room Persistence Library (`AppDatabase`, `NotificationDao`, `NotificationEntity`)
-- **Concurrency**: Kotlin Coroutines & Flow
-- **Testing**: JUnit 4, Robolectric, Room In-Memory DB
+- **UI**: Jetpack Compose (Material 3)
+- **Persistence**: 
+  - **Room SQLite**: Core storage with FTS4 for keyword search.
+  - **Vector Storage**: Local embedding persistence for semantic retrieval.
+- **Cloud**: Firebase Auth & Firestore
+- **Background Work**: `WorkManager` (Sync), `NotificationListenerService` (Capture)
+- **AI/ML**: On-device Vector Embeddings & Reciprocal Rank Fusion (RRF)
+- **Dependency Injection/Processing**: KSP (Kotlin Symbol Processing)
 
 ---
 
-## Project Structure
+## 📂 Project Structure
 
 ```
 NotiMind-Lite/
 ├── app/
 │   ├── src/main/java/com/jeffers/notimindlite/
 │   │   ├── data/
-│   │   │   ├── local/
-│   │   │   │   ├── AppDatabase.kt
-│   │   │   │   ├── NotificationDao.kt
-│   │   │   │   ├── NotificationEntity.kt
-│   │   │   │   └── PreferenceManager.kt
-│   │   │   └── export/
-│   │   │       └── DatabaseExporter.kt
-│   │   ├── receiver/
-│   │   │   └── BootReceiver.kt
-│   │   ├── service/
-│   │   │   └── NotificationLoggerService.kt
+│   │   │   ├── auth/           # Firebase Auth & Session Management
+│   │   │   ├── local/          # Room DB, DAOs, FTS & Vector Entities
+│   │   │   ├── sync/           # Firestore Sync & WorkManager
+│   │   │   └── maps/           # Domain-specific entity detection
+│   │   ├── service/            # NotificationListener & Restoration logic
+│   │   ├── receiver/            # Boot, Unlock, and Snooze Receivers
 │   │   ├── ui/
-│   │   │   ├── MainActivity.kt
-│   │   │   ├── Navigation.kt
-│   │   │   ├── screens/
-│   │   │   │   ├── ActiveNotificationsScreen.kt
-│   │   │   │   └── LogHistoryScreen.kt
-│   │   │   └── theme/
-│   │   │       ├── Color.kt
-│   │   │       └── Theme.kt
-│   │   └── util/
-│   │       └── NotificationLauncher.kt
-│   └── src/test/java/
-│       └── com/jeffers/notimindlite/ ... (Unit & Robolectric Tests)
-├── build.gradle.kts
-└── settings.gradle.kts
+│   │   │   ├── components/     # Reusable Compose widgets (Chips, Panels)
+│   │   │   ├── screens/        # Feature screens (Log, Active, Settings)
+│   │   │   └── theme/          # M3 Design System
+│   │   └── util/               # Hybrid Search, Vector Utils, Backup Logic
+│   └── google-services.json     # Firebase Configuration
+├── build.gradle.kts            # Project-level build config
+└── settings.gradle.kts         # Module management
 ```
 
 ---
 
-## Database Schema (`notifications`)
-
-| Column | Type | Description |
-|---|---|---|
-| `id` | `INTEGER` (PK) | Auto-generated primary key |
-| `key` | `TEXT` (Indexed) | Deduplication & system notification key |
-| `packageName` | `TEXT` | Package name of posting application |
-| `appName` | `TEXT` | Formatted user-facing app name |
-| `title` | `TEXT` | Notification title |
-| `content` | `TEXT` | Notification body text |
-| `postTime` | `INTEGER` (Indexed) | Timestamp when posted |
-| `isDismissed` | `INTEGER` (Indexed) | `0` = Active, `1` = Dismissed |
-| `isPersistent` | `INTEGER` | Ongoing status flag |
-| `dismissReason` | `INTEGER` | Reason code for dismissal |
-| `dismissTime` | `INTEGER` | Timestamp when dismissed |
-
----
-
-## Building and Installation
+## ⚙️ Building and Installation
 
 ### Requirements
 - Android SDK (API 33+)
 - JDK 17+
-- ADB (for device deployment)
+- Google Services Account (for Firebase features)
 
-### Build Debug APK
+### Build & Test
 ```bash
+# Build Debug APK
 ./gradlew assembleDebug
-```
 
-### Run Unit Tests
-```bash
+# Run Unit & Robolectric Tests
 ./gradlew testDebugUnitTest
-```
 
-### Install to Device via ADB
-Ensure your Android device is connected with USB Debugging enabled:
-```bash
-adb devices
+# Install to Device
 ./gradlew installDebug
 ```
 
 ---
 
-## License
-
+## 📜 License
 Internal / Open Source (NotiMind Project).
