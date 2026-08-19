@@ -74,14 +74,18 @@ object HybridSearchEngine {
         val db = AppDatabase.getDatabase(context)
         val dao = db.notificationDao()
 
-        // 1. FTS Pass (Keyword Search)
+        // 1. FTS Pass (Keyword Search) - High Precision, Fast
         val ftsResults = dao.searchNotificationsFtsSync(trimmedQuery)
 
         // 2. Vector Pass (Semantic Search)
         val queryVector = VectorEmbeddingHelper.computeEmbedding(trimmedQuery)
-        val allNotifications = dao.getAllNotificationsList()
         
-        val semanticResults = allNotifications.mapNotNull { entity ->
+        // OPTIMIZATION: Limit vector scoring to prevent OOM and latency.
+        // We score the union of FTS results and the most recent notifications.
+        val recentNotifications = dao.getRecentNotificationsList(1000)
+        val candidateSet = (ftsResults + recentNotifications).distinctBy { it.id }
+        
+        val semanticResults = candidateSet.mapNotNull { entity ->
             val entityVector = entity.embedding ?: return@mapNotNull null
             val similarity = VectorEmbeddingHelper.cosineSimilarity(queryVector, entityVector)
             SemanticSearchResult(entity, similarity)

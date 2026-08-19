@@ -80,6 +80,5 @@ object AppIconCache {
 
     fun clearCache() {
         iconCache.evictAll()
-        
     }
 }

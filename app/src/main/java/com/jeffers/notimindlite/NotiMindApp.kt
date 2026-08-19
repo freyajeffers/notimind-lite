@@ -9,6 +9,7 @@ import android.content.res.Configuration
 import android.os.Bundle
 import android.util.Log
 import com.jeffers.notimindlite.util.AppIconCache
+import com.jeffers.notimindlite.util.TelemetryManager
 
 /**
  * NotiMindApp is the main application class.
@@ -22,6 +23,7 @@ class NotiMindApp : Application(), android.content.ComponentCallbacks2 {
 
     override fun onCreate() {
         super.onCreate()
+        TelemetryManager.init(this)
         Log.i(TAG, "NotiMind Lite Application Initialized")
     }
 
@@ -36,16 +38,19 @@ class NotiMindApp : Application(), android.content.ComponentCallbacks2 {
         when (level) {
             android.content.ComponentCallbacks2.TRIM_MEMORY_UI_HIDDEN -> {
                 AppIconCache.clearCache()
-                
             }
             android.content.ComponentCallbacks2.TRIM_MEMORY_RUNNING_LOW,
             android.content.ComponentCallbacks2.TRIM_MEMORY_RUNNING_CRITICAL -> {
                 AppIconCache.clearCache()
-                Log.w(TAG, "Running Low/Critical: Forced cache clear")
+                com.jeffers.notimindlite.util.VectorEmbeddingHelper.clearCache()
+                System.gc()
+                Log.w(TAG, "Running Low/Critical: Forced cache clear and GC")
             }
             android.content.ComponentCallbacks2.TRIM_MEMORY_COMPLETE -> {
                 AppIconCache.clearCache()
-                Log.w(TAG, "Trim Memory Complete: Final cache clear")
+                com.jeffers.notimindlite.util.VectorEmbeddingHelper.clearCache()
+                System.gc()
+                Log.w(TAG, "Trim Memory Complete: Final cache clear and GC")
             }
         }
     }

@@ -12,6 +12,11 @@ object VectorEmbeddingHelper {
     const val EMBEDDING_DIM = 128
     private val embeddingCache = android.util.LruCache<String, FloatArray>(256)
 
+    fun clearCache() {
+        embeddingCache.evictAll()
+    }
+
+
     /**
      * Computes a normalized dense vector embedding for arbitrary text.
      */
