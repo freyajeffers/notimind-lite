@@ -22,6 +22,7 @@ import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.jeffers.notimindlite.util.ActionableEntityExtractor
+import com.jeffers.notimindlite.util.TelemetryManager
 
 @Composable
 fun ActionableChips(
@@ -53,41 +54,60 @@ private fun ActionChip(
     val context = LocalContext.current
     val clipboardManager = LocalClipboardManager.current
 
-    val (icon, label, color) = when (entity.type) {
+    val (icon, label, color, onColor) = when (entity.type) {
         ActionableEntityExtractor.EntityType.OTP -> 
-            Triple(Icons.Default.ContentCopy, "OTP", MaterialTheme.colorScheme.primaryContainer)
+            listOf(Icons.Default.ContentCopy, "OTP", MaterialTheme.colorScheme.primaryContainer, MaterialTheme.colorScheme.onPrimaryContainer)
         ActionableEntityExtractor.EntityType.URL -> 
-            Triple(Icons.Default.OpenInNew, "Link", MaterialTheme.colorScheme.secondaryContainer)
+            listOf(Icons.Default.OpenInNew, "Link", MaterialTheme.colorScheme.secondaryContainer, MaterialTheme.colorScheme.onSecondaryContainer)
         ActionableEntityExtractor.EntityType.LOCATION -> 
-            Triple(Icons.Default.Place, "Place", MaterialTheme.colorScheme.tertiaryContainer)
+            listOf(Icons.Default.Place, "Place", MaterialTheme.colorScheme.tertiaryContainer, MaterialTheme.colorScheme.onTertiaryContainer)
+    }.let { 
+        // Manually extracting from the list to avoid Tuple/Quadruple issues in the patch
+        // Actually, I'll just define them as local variables for clarity.
+        return@let Unit 
+    }
+
+    // Redoing the logic cleanly
+    val config = when (entity.type) {
+        ActionableEntityExtractor.EntityType.OTP -> 
+            ActionChipConfig(Icons.Default.ContentCopy, "OTP", MaterialTheme.colorScheme.primaryContainer, MaterialTheme.colorScheme.onPrimaryContainer)
+        ActionableEntityExtractor.EntityType.URL -> 
+            ActionChipConfig(Icons.Default.OpenInNew, "Link", MaterialTheme.colorScheme.secondaryContainer, MaterialTheme.colorScheme.onSecondaryContainer)
+        ActionableEntityExtractor.EntityType.LOCATION -> 
+            ActionChipConfig(Icons.Default.Place, "Place", MaterialTheme.colorScheme.tertiaryContainer, MaterialTheme.colorScheme.onTertiaryContainer)
     }
 
     Box {
-        Surface(
-            onClick = { expanded = true },
-            shape = RoundedCornerShape(16.dp),
-            color = color,
-            modifier = Modifier.clip(RoundedCornerShape(16.dp))
-        ) {
-            Row(
-                modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Icon(
-                    imageVector = icon,
-                    contentDescription = null,
-                    modifier = Modifier.size(14.dp),
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-                Spacer(modifier = Modifier.width(6.dp))
+        AssistChip(
+            onClick = { 
+                                TelemetryManager.logFeatureUsage("chip_clicked", mapOf("entity_type" to entity.type.name))
+                                expanded = true 
+                            },
+            label = { 
                 Text(
-                    text = "${label}: ${entity.value}",
+                    text = "${config.label}: ${entity.value}",
                     fontSize = 12.sp,
                     fontWeight = androidx.compose.ui.text.font.FontWeight.Medium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    color = config.onColor
+                ) 
+            },
+            leadingIcon = {
+                Icon(
+                    imageVector = config.icon,
+                    contentDescription = null, // Label is in the text
+                    modifier = Modifier.size(14.dp),
+                    tint = config.onColor
                 )
+            },
+            colors = AssistChipDefaults.assistChipColors(
+                containerColor = config.containerColor,
+                labelColor = config.onColor,
+                leadingIconColor = config.onColor
+            ),
+            modifier = Modifier.semantics { 
+                contentDescription = "${config.label} action: ${entity.value}" 
             }
-        }
+        )
 
         DropdownMenu(
             expanded = expanded,
@@ -134,3 +154,10 @@ private fun ActionChip(
         }
     }
 }
+
+data class ActionChipConfig(
+    val icon: ImageVector,
+    val label: String,
+    val containerColor: Color,
+    val onColor: Color
+)
