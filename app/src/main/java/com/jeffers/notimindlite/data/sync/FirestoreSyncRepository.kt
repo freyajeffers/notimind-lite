@@ -115,4 +115,22 @@ class FirestoreSyncRepository(
             Result.failure(e)
         }
     }
+
+    /**
+     * Implements the 'Right to be Forgotten'.
+     * Irrecoverably purges all cloud-synced data for the given user.
+     */
+    suspend fun purgeUserData(userId: String): Result<Unit> {
+        return try {
+            val userCol = firestore.collection("users").document(userId).collection("notifications")
+            val snapshot = userCol.get().await()
+            for (doc in snapshot.documents) {
+                doc.reference.delete().await()
+            }
+            firestore.collection("users").document(userId).delete().await()
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
 }
