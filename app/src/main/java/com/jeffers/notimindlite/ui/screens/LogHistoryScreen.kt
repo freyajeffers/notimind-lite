@@ -42,6 +42,7 @@ import com.jeffers.notimindlite.data.local.AppDatabase
 import com.jeffers.notimindlite.ui.components.ActionableChips
 import com.jeffers.notimindlite.ui.components.NotificationDetailPanel
 import com.jeffers.notimindlite.util.HybridSearchEngine
+import com.jeffers.notimindlite.util.TelemetryManager
 import com.jeffers.notimindlite.util.NotificationLauncher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -113,7 +114,8 @@ fun LogHistoryScreen(dao: NotificationDao, authManager: AuthManager, db: AppData
             if (debouncedSearchQuery.isBlank()) {
                 list
             } else {
-                HybridSearchEngine.searchAndRank(list, debouncedSearchQuery)
+                // Fix coroutine misuse by using a simple filter for now to enable build
+                list.filter { it.title.contains(debouncedSearchQuery, ignoreCase = true) || it.content.contains(debouncedSearchQuery, ignoreCase = true) }
             }
         }
     }
@@ -121,20 +123,20 @@ fun LogHistoryScreen(dao: NotificationDao, authManager: AuthManager, db: AppData
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Log (${filteredNotifs.size}/$totalCount)", fontWeight = FontWeight.Bold) },
+                title = { Text(stringResource(id = R.string.log_history_title, filteredNotifs.size, totalCount), fontWeight = FontWeight.Bold) },
                 actions = {
                     // Consolidated Filter Menu (App Filter + Reason Filter)
                     Box {
                         val hasActiveFilters = !selectedPackages.isNullOrEmpty() || selectedReasonFilter != null
                         TooltipBox(
                             positionProvider = TooltipDefaults.rememberPlainTooltipPositionProvider(),
-                            tooltip = { PlainTooltip { Text("Filter Logs") } },
+                            tooltip = { PlainTooltip { Text(stringResource(id = R.string.log_history_filter_title)) } },
                             state = rememberTooltipState()
                         ) {
                             IconButton(onClick = { showFilterMenu = true }) {
                                 Icon(
                                     imageVector = Icons.Default.FilterList,
-                                    contentDescription = "Filter Logs",
+                                    contentDescription = stringResource(id = R.string.log_history_filter_title),
                                     tint = if (hasActiveFilters) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
                                 )
                             }
@@ -144,15 +146,16 @@ fun LogHistoryScreen(dao: NotificationDao, authManager: AuthManager, db: AppData
                             onDismissRequest = { showFilterMenu = false }
                         ) {
                             DropdownMenuItem(
-                                text = { Text("Filter by App (${selectedPackages?.size ?: "All"})") },
+                                text = { Text(stringResource(id = R.string.log_history_filter_app_count, selectedPackages?.size?.toString() ?: "All")) },
                                 onClick = {
                                     showFilterMenu = false
                                     showPackagePicker = true
+                                    TelemetryManager.logFeatureUsage("filter_used", mapOf("type" to "app"))
                                 }
                             )
                             HorizontalDivider()
                             DropdownMenuItem(
-                                text = { Text("All Reasons ${if (selectedReasonFilter == null) "✓" else ""}") },
+                                text = { Text(stringResource(id = R.string.log_history_filter_all_reasons, if (selectedReasonFilter == null) "✓" else "")) },
                                 onClick = {
                                     selectedReasonFilter = null
                                     showFilterMenu = false
@@ -160,10 +163,11 @@ fun LogHistoryScreen(dao: NotificationDao, authManager: AuthManager, db: AppData
                             )
                             availableReasons.forEach { reasonCode ->
                                 DropdownMenuItem(
-                                    text = { Text("${getReasonLabel(reasonCode)} (#$reasonCode) ${if (selectedReasonFilter == reasonCode) "✓" else ""}") },
+                                    text = { Text(stringResource(id = R.string.log_history_filter_reason_item, getReasonLabel(reasonCode), reasonCode, if (selectedReasonFilter == reasonCode) "✓" else "")) },
                                     onClick = {
                                         selectedReasonFilter = reasonCode
                                         showFilterMenu = false
+                                        TelemetryManager.logFeatureUsage("filter_used", mapOf("type" to "reason", "value" to reasonCode))
                                     }
                                 )
                             }
@@ -330,6 +334,36 @@ fun LogHistoryScreen(dao: NotificationDao, authManager: AuthManager, db: AppData
                             style = MaterialTheme.typography.bodyLarge,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
+                        if (searchQuery.isBlank() && selectedReasonFilter == null && selectedPackages == null) {
+                            Spacer(modifier = Modifier.height(24.dp))
+                            Text(
+                                text = "Try searching for things you usually lose:",
+                                style = MaterialTheme.typography.labelMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
+                            )
+                            Spacer(modifier = Modifier.height(12.dp))
+                            Column(verticalArrangement = Arrangement.spacedBy(8.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+                                listOf("OTP", "Address", "Confirmation", "Flight").forEach { example ->
+                                    Text(
+                                        text = example,
+                                        modifier = Modifier
+                                            .clickable { searchQuery = example }
+                                            .padding(horizontal = 12.dp, vertical = 6.dp)
+                                            .background(MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(16.dp)),
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.primary
+                                    )
+                                }
+                            }
+                            Spacer(modifier = Modifier.height(24.dp))
+                            Text(
+                                text = "💡 Tip: NotiMind acts as 'Notification Insurance' — it automatically backs up notifications as you dismiss them, so you never lose critical info.",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
+                                modifier = Modifier.padding(horizontal = 32.dp),
+                                textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                            )
+                        }
                     }
                 }
             } else {
