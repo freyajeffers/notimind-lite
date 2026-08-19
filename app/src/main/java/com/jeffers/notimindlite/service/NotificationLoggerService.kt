@@ -29,7 +29,8 @@ class NotificationLoggerService : NotificationListenerService() {
     private val TAG = "NotificationLoggerSrv"
 
     private fun getDb(): AppDatabase = AppDatabase.getDatabase(applicationContext)
-    private val scope = CoroutineScope(Dispatchers.IO + SupervisorJob())
+    private val serviceJob = SupervisorJob()
+    private val scope = CoroutineScope(Dispatchers.IO + serviceJob)
 
     companion object {
         private const val DEBOUNCE_MS = 30000L
@@ -122,7 +123,7 @@ class NotificationLoggerService : NotificationListenerService() {
     override fun onDestroy() {
         super.onDestroy()
         if (instance == this) instance = null
-        scope.cancel()
+        serviceJob.cancel()
     }
 
     override fun onNotificationPosted(sbn: StatusBarNotification) {
