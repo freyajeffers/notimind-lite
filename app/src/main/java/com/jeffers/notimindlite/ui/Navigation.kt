@@ -21,16 +21,16 @@ import com.jeffers.notimindlite.ui.screens.ActiveNotificationsScreen
 import com.jeffers.notimindlite.ui.screens.LogHistoryScreen
 import com.jeffers.notimindlite.ui.screens.SplashScreen
 
-sealed class Screen(val route: String, val title: String, val icon: @Composable () -> Unit) {
+sealed class Screen(val route: String, val title: Int, val icon: @Composable () -> Unit) {
     object Active : Screen(
         route = "active",
-        title = "Active",
-        icon = { Icon(Icons.Default.NotificationsActive, contentDescription = "Active") }
+        title = R.string.nav_active_title,
+        icon = { Icon(Icons.Default.NotificationsActive, contentDescription = stringResource(id = R.string.nav_active_title)) }
     )
     object History : Screen(
         route = "history",
-        title = "History",
-        icon = { Icon(Icons.Default.History, contentDescription = "History") }
+        title = R.string.nav_history_title,
+        icon = { Icon(Icons.Default.History, contentDescription = stringResource(id = R.string.nav_history_title)) }
     )
 }
 
@@ -43,6 +43,8 @@ fun MainNavigation(
 ) {
     val navController = rememberNavController()
     val items = listOf(Screen.Active, Screen.History)
+    val context = androidx.compose.ui.platform.LocalContext.current
+    val preferenceManager = remember { com.jeffers.notimindlite.data.local.PreferenceManager(context) }
 
     Scaffold(
         topBar = {
@@ -55,7 +57,7 @@ fun MainNavigation(
                 items.forEach { screen ->
                     NavigationBarItem(
                         icon = screen.icon,
-                        label = { Text(screen.title) },
+                        label = { Text(stringResource(id = screen.title)) },
                         selected = currentRoute == screen.route,
                         onClick = {
                             navController.navigate(screen.route) {
@@ -71,9 +73,19 @@ fun MainNavigation(
     ) { innerPadding ->
         NavHost(
             navController = navController,
-            startDestination = "splash",
+            startDestination = if (preferenceManager.hasCompletedOnboarding()) "splash" else "onboarding",
             modifier = modifier.padding(innerPadding)
         ) {
+            composable("onboarding") {
+                com.jeffers.notimindlite.ui.screens.OnboardingScreen(
+                    preferenceManager = preferenceManager,
+                    onCompleted = {
+                        navController.navigate("splash") {
+                            popUpTo("onboarding") { inclusive = true }
+                        }
+                    }
+                )
+            }
             composable("splash") {
                 SplashScreen(onTimeout = {
                     navController.navigate(Screen.Active.route) {
