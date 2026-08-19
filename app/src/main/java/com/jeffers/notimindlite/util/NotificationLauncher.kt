@@ -45,7 +45,7 @@ object NotificationLauncher {
         val actionIntent = actionIntentCache[notifKey]?.get(actionIndex)
         if (actionIntent != null) {
             try {
-                Log.d(TAG, "Triggering action $actionIndex for notification: $notifKey")
+                
                 actionIntent.send()
                 return true
             } catch (e: PendingIntent.CanceledException) {
@@ -66,7 +66,7 @@ object NotificationLauncher {
         // 1. Try live in-memory PendingIntent
         if (pendingIntent != null) {
             try {
-                Log.d(TAG, "Attempting PendingIntent launch for key: $key")
+                
                 pendingIntent.send()
                 launched = true
             } catch (e: PendingIntent.CanceledException) {
@@ -79,7 +79,7 @@ object NotificationLauncher {
         // 2. Try restored persistent intentUri
         if (!launched && !intentUri.isNullOrBlank()) {
             try {
-                Log.d(TAG, "Attempting persistent Intent URI launch for package: $packageName")
+                
                 val parsedIntent = Intent.parseUri(intentUri, Intent.URI_INTENT_SCHEME)
                 if (packageName.isNotBlank()) {
                     parsedIntent.setPackage(packageName)
@@ -103,7 +103,7 @@ object NotificationLauncher {
         // 3. Fallback to package main launch intent
         if (!launched) {
             try {
-                Log.d(TAG, "Launching application package main intent for: $packageName")
+                
                 val launchIntent = context.packageManager.getLaunchIntentForPackage(packageName)
                 if (launchIntent != null) {
                     launchIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)

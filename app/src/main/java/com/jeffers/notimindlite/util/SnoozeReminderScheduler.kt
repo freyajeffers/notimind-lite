@@ -55,7 +55,7 @@ object SnoozeReminderScheduler {
                 alarmManager.setExact(AlarmManager.RTC_WAKEUP, triggerAt, pendingIntent)
             }
             
-            Log.d(TAG, "Successfully scheduled snooze reminder for $notificationId to trigger at $triggerAt")
+            
             
         } catch (e: Exception) {
             Log.e(TAG, "Failed to schedule snooze reminder", e)
@@ -74,7 +74,7 @@ object SnoozeReminderScheduler {
             if (pendingIntent != null) {
                 val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
                 alarmManager.cancel(pendingIntent)
-                Log.d(TAG, "Cancelled snooze reminder for $notificationId")
+                
             }
         } catch (e: Exception) {
             Log.e(TAG, "Failed to cancel snooze reminder", e)

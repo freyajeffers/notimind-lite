@@ -4,9 +4,45 @@ import android.content.Context
 import android.util.Log
 import androidx.sqlite.db.SupportSQLiteDatabase
 import com.jeffers.notimindlite.data.local.AppDatabase
+import com.jeffers.notimindlite.data.local.NotificationEntity
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 object DatabaseMigrator {
     private const val TAG = "DatabaseMigrator"
+
+    /**
+     * Vectorizes notifications that do not yet have an embedding.
+     * This should be called after the database is initialized and migrated to version 17.
+     */
+    suspend fun vectorizeExistingNotifications(context: Context) = withContext(Dispatchers.IO) {
+        val db = AppDatabase.getDatabase(context)
+        val dao = db.notificationDao()
+        
+        try {
+            val needingVectorization = dao.getNotificationsNeedingVectorization()
+            if (needingVectorization.isEmpty()) return@withContext
+
+            Log.i(TAG, "Vectorizing ${needingVectorization.size} notifications...")
+            
+            needingVectorization.forEach { entity ->
+                val textToEmbed = buildString {
+                    append(entity.appName).append(" ")
+                    append(entity.title).append(" ")
+                    append(entity.content).append(" ")
+                    if (!entity.subText.isNullOrEmpty()) append(entity.subText).append(" ")
+                    if (!entity.bigText.isNullOrEmpty()) append(entity.bigText).append(" ")
+                    if (!entity.category.isNullOrEmpty()) append(entity.category).append(" ")
+                    append(entity.packageName)
+                }
+                val embedding = VectorEmbeddingHelper.computeEmbedding(textToEmbed)
+                dao.updateEmbedding(entity.id, embedding)
+            }
+            Log.i(TAG, "Vectorization complete.")
+        } catch (e: Exception) {
+            Log.e(TAG, "Failed to vectorize existing notifications: ${e.message}", e)
+        }
+    }
 
     /**
      * Executes zero-allocation cross-database merge from notimind_de.db into notimind_ce.db
@@ -16,7 +52,7 @@ object DatabaseMigrator {
         val deContext = context.createDeviceProtectedStorageContext()
         val deDbFile = deContext.getDatabasePath(AppDatabase.DE_DATABASE_NAME)
         if (!deDbFile.exists()) {
-            Log.d(TAG, "No staging DE database found; skipping merge.")
+            
             return
         }
 
@@ -74,7 +110,7 @@ object DatabaseMigrator {
             }
 
             db.setTransactionSuccessful()
-            Log.d(TAG, "Successfully migrated DE staging records to CE database and rebuilt FTS index.")
+            
         } catch (e: Exception) {
             Log.e(TAG, "Error during cross-database merge: ${e.message}", e)
         } finally {
@@ -82,7 +118,7 @@ object DatabaseMigrator {
             try {
                 db.execSQL("DETACH DATABASE de_db;")
             } catch (e: Exception) {
-                Log.d(TAG, "Detach DE database cleanup: ${e.message}")
+                
             }
         }
     }

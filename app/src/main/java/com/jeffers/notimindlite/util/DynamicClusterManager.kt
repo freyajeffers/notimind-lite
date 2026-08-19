@@ -250,7 +250,7 @@ object DynamicClusterManager {
                 }
 
                 isInitialized = true
-                Log.d(TAG, "Initialized ${dynamicClusters.size} dynamic clusters with over ${dynamicClusters.values.sumOf { it.size }} words.")
+                
             } catch (e: Exception) {
                 Log.e(TAG, "Error initializing dynamic clusters from PackageManager", e)
             }

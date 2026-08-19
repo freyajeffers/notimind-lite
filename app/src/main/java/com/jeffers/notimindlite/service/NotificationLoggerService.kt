@@ -15,6 +15,7 @@ import com.jeffers.notimindlite.data.local.NotificationEntity
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.SupervisorJob
 import java.io.File
 import java.io.FileOutputStream
 import java.util.Collections
@@ -28,7 +29,7 @@ class NotificationLoggerService : NotificationListenerService() {
     private val TAG = "NotificationLoggerSrv"
 
     private fun getDb(): AppDatabase = AppDatabase.getDatabase(applicationContext)
-    private val scope = CoroutineScope(Dispatchers.IO)
+    private val scope = CoroutineScope(Dispatchers.IO + SupervisorJob())
 
     companion object {
         private const val DEBOUNCE_MS = 30000L
@@ -50,6 +51,7 @@ class NotificationLoggerService : NotificationListenerService() {
             }
         )
 
+        @Volatile
         private var instance: NotificationLoggerService? = null
 
         fun dismissNotification(key: String) {
@@ -104,7 +106,7 @@ class NotificationLoggerService : NotificationListenerService() {
     override fun onListenerConnected() {
         super.onListenerConnected()
         instance = this
-        Log.d(TAG, "NotificationListener connected.")
+        
         scope.launch {
             try {
                 val activeNotifs = activeNotifications ?: emptyArray()
@@ -120,6 +122,7 @@ class NotificationLoggerService : NotificationListenerService() {
     override fun onDestroy() {
         super.onDestroy()
         if (instance == this) instance = null
+        scope.cancel()
     }
 
     override fun onNotificationPosted(sbn: StatusBarNotification) {
@@ -189,7 +192,7 @@ class NotificationLoggerService : NotificationListenerService() {
             // In this basic version, we can't easily map SBN key to DB ID 
             // without a key-based lookup, so we simulate the call.
             // Real implementation in later commits will use a proper key-based DAO method.
-            Log.d(TAG, "Notification removed: $key. Marking as dismissed at $dismissTime")
+            
         }
     }
 }

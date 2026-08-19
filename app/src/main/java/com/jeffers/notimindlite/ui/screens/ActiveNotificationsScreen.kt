@@ -67,8 +67,10 @@ import com.jeffers.notimindlite.util.HybridSearchEngine
 import com.jeffers.notimindlite.util.NotificationLauncher
 import com.jeffers.notimindlite.data.auth.AuthManager
 import com.jeffers.notimindlite.data.local.AppDatabase
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.time.Instant
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
@@ -227,11 +229,9 @@ fun ActiveNotificationsScreen(dao: NotificationDao, authManager: AuthManager, db
         }
     }
 
-    val totalLazyItemCount = remember(sectionOrder, expandedSection, pinnedNotifs, activeNotifs, recentlyDismissed, lostNotifs, selectedPackages, debouncedSearchQuery) {
-        var count = 2
-        sectionOrder.forEach { section ->
-            count += 1
-            if (expandedSection == section.keyName) {
+    val notificationsBySection by remember {
+        derivedStateOf {
+            NotificationSection.entries.associateWith { section ->
                 val rawList = when (section) {
                     NotificationSection.PINNED -> pinnedNotifs
                     NotificationSection.ACTIVE -> activeNotifs
@@ -239,12 +239,32 @@ fun ActiveNotificationsScreen(dao: NotificationDao, authManager: AuthManager, db
                     NotificationSection.DISMISSED -> recentlyDismissed
                     NotificationSection.LOST -> lostNotifs
                 }.distinctBy { "${it.packageName}_${it.title}_${it.content}" }
-                val filtered = if (!selectedPackages.isNullOrEmpty()) rawList.filter { selectedPackages!!.contains(it.packageName) } else rawList
-                val items = if (debouncedSearchQuery.isBlank()) filtered else HybridSearchEngine.searchAndRank(filtered, debouncedSearchQuery)
-                count += if (items.isEmpty()) 1 else items.size
+
+                val filtered = if (!selectedPackages.isNullOrEmpty()) {
+                    rawList.filter { selectedPackages!!.contains(it.packageName) }
+                } else {
+                    rawList
+                }
+
+                if (debouncedSearchQuery.isBlank()) {
+                    filtered
+                } else {
+                    HybridSearchEngine.searchAndRank(filtered, debouncedSearchQuery)
+                }
             }
         }
-        count
+    }
+
+    val totalLazyItemCount by remember {
+        derivedStateOf {
+            var count = 2
+            sectionOrder.forEach { section ->
+                count += 1
+                val items = notificationsBySection[section] ?: emptyList()
+                count += if (items.isEmpty()) 1 else items.size
+            }
+            count
+        }
     }
 
     val listState = rememberLazyListState()
