@@ -69,7 +69,7 @@ class DatabaseExporterTest {
         val csvString = DatabaseExporter.exportToCsvString(
             listOf(entityEqual, entityPlus, entityMinus, entityAt, entityTab, entityLeadingSpaceFormula)
         )
-        println("DEBUG CSV:\n$csvString")
+        
         assertNotNull(csvString)
 
         assertTrue(csvString.contains("\"'=1+1\""))

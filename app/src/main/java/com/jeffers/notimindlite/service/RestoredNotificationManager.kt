@@ -13,7 +13,7 @@ object RestoredNotificationManager {
 
     fun markAsRestored(notificationKey: String) {
         restoredNotifications.add(notificationKey)
-        Log.d(TAG, "Notification marked as restored: $notificationKey")
+        
     }
 
     fun isRestored(notificationKey: String): Boolean {
@@ -22,6 +22,6 @@ object RestoredNotificationManager {
 
     fun clearRestoredState() {
         restoredNotifications.clear()
-        Log.d(TAG, "Restored notification state cleared.")
+        
     }
 }

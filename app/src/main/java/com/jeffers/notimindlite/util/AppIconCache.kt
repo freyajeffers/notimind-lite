@@ -43,17 +43,21 @@ object AppIconCache {
     private fun decodeSampledBitmapFromUri(context: Context, uriString: String, targetSize: Int): Bitmap? {
         return try {
             val uri = Uri.parse(uriString)
+            val options = BitmapFactory.Options().apply {
+                inJustDecodeBounds = true
+            }
+            
+            // First pass: get dimensions
             context.contentResolver.openInputStream(uri)?.use { inputStream ->
-                val options = BitmapFactory.Options().apply {
-                    inJustDecodeBounds = true
-                }
                 BitmapFactory.decodeStream(inputStream, null, options)
-                val resizedInputStream = context.contentResolver.openInputStream(uri)
-                resizedInputStream?.use { finalStream ->
-                    options.inSampleSize = calculateInSampleSize(options, targetSize, targetSize)
-                    options.inJustDecodeBounds = false
-                    BitmapFactory.decodeStream(finalStream, null, options)
-                }
+            }
+            
+            // Calculate sample size and decode actual bitmap
+            options.inSampleSize = calculateInSampleSize(options, targetSize, targetSize)
+            options.inJustDecodeBounds = false
+            
+            context.contentResolver.openInputStream(uri)?.use { inputStream ->
+                BitmapFactory.decodeStream(inputStream, null, options)
             }
         } catch (e: Exception) {
             null
@@ -76,6 +80,6 @@ object AppIconCache {
 
     fun clearCache() {
         iconCache.evictAll()
-        Log.d(TAG, "AppIconCache cleared")
+        
     }
 }

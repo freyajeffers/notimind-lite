@@ -25,7 +25,7 @@ class SnoozeReminderReceiver : BroadcastReceiver() {
         val title = intent.getStringExtra("ORIGINAL_TITLE") ?: "Snoozed Notification"
         val content = intent.getStringExtra("ORIGINAL_CONTENT") ?: "Time to review this item."
 
-        Log.d(TAG, "Snooze reminder triggered for: $notifId")
+        
 
         createNotificationChannel(context)
 

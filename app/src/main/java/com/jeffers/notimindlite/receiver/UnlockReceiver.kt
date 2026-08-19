@@ -25,7 +25,7 @@ class UnlockReceiver : BroadcastReceiver() {
         val action = intent?.action ?: return
 
         if (action == Intent.ACTION_USER_UNLOCKED) {
-            Log.d("UnlockReceiver", "Device unlocked (ACTION_USER_UNLOCKED). Executing DE to CE merge...")
+            
             val pendingResult = goAsync()
 
             receiverScope.launch {

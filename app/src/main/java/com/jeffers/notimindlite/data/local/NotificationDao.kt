@@ -77,6 +77,12 @@ abstract class NotificationDao {
     @Query("SELECT * FROM notifications WHERE key = :key LIMIT 1")
     abstract suspend fun getNotificationByKey(key: String): NotificationEntity?
 
+    @Query("SELECT * FROM notifications WHERE embedding IS NULL")
+    abstract suspend fun getNotificationsNeedingVectorization(): List<NotificationEntity>
+
+    @Query("UPDATE notifications SET embedding = :embedding WHERE id = :id")
+    abstract suspend fun updateEmbedding(id: Long, embedding: FloatArray)
+
     @Query("SELECT * FROM notifications WHERE isPinned = 1 ORDER BY postTime DESC")
     abstract fun getPinnedNotificationsFlow(): Flow<List<NotificationEntity>>
 
@@ -88,6 +94,14 @@ abstract class NotificationDao {
         ORDER BY postTime DESC
     """)
     abstract fun searchNotificationsFts(searchQuery: String): Flow<List<NotificationEntity>>
+
+    @Query("""
+        SELECT notifications.* FROM notifications
+        JOIN notifications_fts ON notifications.rowid = notifications_fts.docid
+        WHERE notifications_fts MATCH :searchQuery
+        ORDER BY postTime DESC
+    """)
+    abstract suspend fun searchNotificationsFtsSync(searchQuery: String): List<NotificationEntity>
 
     @RawQuery(observedEntities = [NotificationEntity::class])
     abstract fun searchNotificationsRaw(query: SupportSQLiteQuery): Flow<List<NotificationEntity>>

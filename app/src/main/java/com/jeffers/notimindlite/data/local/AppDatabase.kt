@@ -8,7 +8,8 @@ import androidx.room.RoomDatabase
 import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
 
-@Database(entities = [NotificationEntity::class, AppEntity::class, NotificationFtsEntity::class, BackupRecord::class], version = 16, exportSchema = false)
+@Database(entities = [NotificationEntity::class, AppEntity::class, NotificationFtsEntity::class, BackupRecord::class], version = 17, exportSchema = false)
+@TypeConverters(Converters::class)
 abstract class AppDatabase : RoomDatabase() {
     abstract fun notificationDao(): NotificationDao
     abstract fun appDao(): AppDao
@@ -190,15 +191,13 @@ abstract class AppDatabase : RoomDatabase() {
 
         val MIGRATION_15_16 = object : Migration(15, 16) {
             override fun migrate(db: SupportSQLiteDatabase) {
-                db.execSQL("""
-                    CREATE TABLE IF NOT EXISTS `backup_records` (
-                        `id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
-                        `fileHash` TEXT NOT NULL,
-                        `signature` TEXT NOT NULL,
-                        `timestamp` INTEGER NOT NULL,
-                        `fileName` TEXT
-                    )
-                """.trimIndent())
+                db.execSQL("CREATE TABLE IF NOT EXISTS `backup_records` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `fileHash` TEXT NOT NULL, `signature` TEXT NOT NULL, `timestamp` INTEGER NOT NULL, `fileName` TEXT)")
+            }
+        }
+
+        val MIGRATION_16_17 = object : Migration(16, 17) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE `notifications` ADD COLUMN `embedding` BLOB")
             }
         }
 
@@ -245,7 +244,8 @@ abstract class AppDatabase : RoomDatabase() {
                     .addMigrations(
                         MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7,
                         MIGRATION_7_8, MIGRATION_8_9, MIGRATION_9_10,
-                        MIGRATION_10_11, MIGRATION_11_12, MIGRATION_12_13, MIGRATION_13_14, MIGRATION_14_15
+                        MIGRATION_10_11, MIGRATION_11_12, MIGRATION_12_13, MIGRATION_13_14, MIGRATION_14_15,
+                        MIGRATION_15_16, MIGRATION_16_17
                     )
                     .fallbackToDestructiveMigration(dropAllTables = true)
                     .setJournalMode(JournalMode.WRITE_AHEAD_LOGGING)
