@@ -19,7 +19,6 @@ import com.jeffers.notimindlite.data.local.AppDatabase
 import com.jeffers.notimindlite.data.sync.FirestoreSyncRepository
 import com.jeffers.notimindlite.data.sync.SyncWorker
 import com.jeffers.notimindlite.data.local.PreferenceManager
-import com.jeffers.notimindlite.util.TelemetryManager
 import kotlinx.coroutines.launch
 
 @Composable
@@ -201,7 +200,6 @@ fun SettingsScreen(
                         checked = remember { PreferenceManager(context).isStrictPrivacyEnabled() },
                         onCheckedChange = { enabled ->
                             PreferenceManager(context).setStrictPrivacyEnabled(enabled)
-                            TelemetryManager.setPrivacyMode(enabled)
                         }
                     )
                 }

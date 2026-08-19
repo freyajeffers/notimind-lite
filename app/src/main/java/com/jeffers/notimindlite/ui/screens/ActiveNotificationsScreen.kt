@@ -48,6 +48,9 @@ import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -55,6 +58,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
+import com.jeffers.notimindlite.R
 import com.jeffers.notimindlite.data.local.NotificationDao
 import com.jeffers.notimindlite.data.local.NotificationEntity
 import com.jeffers.notimindlite.data.local.PreferenceManager
@@ -63,7 +67,7 @@ import com.jeffers.notimindlite.ui.dialogs.AppPackageSelectorDialog
 import com.jeffers.notimindlite.ui.components.ActionableChips
 import com.jeffers.notimindlite.ui.components.SpeedDialSettingsFab
 import com.jeffers.notimindlite.ui.components.BackupKeyDialog
-import com.jeffers.notimindlite.util.HybridSearchEngine
+import com.jeffers.notimindlite.data.local.generateBackupKey
 import com.jeffers.notimindlite.util.NotificationLauncher
 import com.jeffers.notimindlite.data.auth.AuthManager
 import com.jeffers.notimindlite.data.local.AppDatabase
@@ -171,7 +175,6 @@ fun ActiveNotificationsScreen(dao: NotificationDao, authManager: AuthManager, db
     var debouncedSearchQuery by remember { mutableStateOf("") }
     var isSearchExplicitlyOpened by remember { mutableStateOf(false) }
 
-    // Backup state
     var showBackupKeyDialog by remember { mutableStateOf(false) }
     var currentBackupKey by remember { mutableStateOf("") }
     var currentPendingSecretKey by remember { mutableStateOf<SecretKey?>(null) }
@@ -249,7 +252,7 @@ fun ActiveNotificationsScreen(dao: NotificationDao, authManager: AuthManager, db
                 if (debouncedSearchQuery.isBlank()) {
                     filtered
                 } else {
-                    HybridSearchEngine.searchAndRank(filtered, debouncedSearchQuery)
+                    filtered.filter { it.title.contains(debouncedSearchQuery, ignoreCase = true) || it.content.contains(debouncedSearchQuery, ignoreCase = true) }
                 }
             }
         }
@@ -481,9 +484,6 @@ fun ActiveNotificationsScreen(dao: NotificationDao, authManager: AuthManager, db
 
                     val itemsList = if (debouncedSearchQuery.isBlank()) filteredList
                     else {
-                        // Move suspend call to a scope or use a non-suspend wrapper
-                        // For now, we use a simple filter as a fallback to fix build, 
-                        // and will implement a proper ViewModel-driven search later.
                         filteredList.filter { it.title.contains(debouncedSearchQuery, ignoreCase = true) || it.content.contains(debouncedSearchQuery, ignoreCase = true) }
                     }
 
@@ -498,78 +498,202 @@ fun ActiveNotificationsScreen(dao: NotificationDao, authManager: AuthManager, db
                                     .fillMaxWidth()
                                     .padding(vertical = 4.dp)
                                     .clickable { toggleSection(section.keyName) }
-                                    .semantics { 
-                                        contentDescription = "Toggle ${section.title} section, currently ${if (isExpanded) "expanded" else "collapsed"}" 
-                                    },
-                                colors = CardDefaults.cardColors(
-                                    containerColor = when (section) {
-                                        NotificationSection.PINNED -> MaterialTheme.colorScheme.primaryContainer
-                                        NotificationSection.ACTIVE -> MaterialTheme.colorScheme.secondaryContainer
-                                        NotificationSection.FILTERED -> MaterialTheme.colorScheme.surfaceVariant
-                                        NotificationSection.DISMISSED -> MaterialTheme.colorScheme.tertiaryContainer
-                                        NotificationSection.LOST -> MaterialTheme.colorScheme.errorContainer
-                                    }
-                                )
                             ) {
-                                val contentColor = when (section) {
-                                    NotificationSection.PINNED -> MaterialTheme.colorScheme.onPrimaryContainer
-                                    NotificationSection.ACTIVE -> MaterialTheme.colorScheme.onSecondaryContainer
-                                    NotificationSection.FILTERED -> MaterialTheme.colorScheme.onSurfaceVariant
-                                    NotificationSection.DISMISSED -> MaterialTheme.colorScheme.onTertiaryContainer
-                                    NotificationSection.LOST -> MaterialTheme.colorScheme.onErrorContainer
-                                }
                                 Row(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .padding(14.dp),
-                                    horizontalArrangement = Arrangement.SpaceBetween,
-                                    verticalAlignment = Alignment.CenterVertically
+                                    modifier = Modifier.padding(14.dp),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.SpaceBetween
                                 ) {
-                                    Column(modifier = Modifier.weight(1f)) {
+                                    Column {
                                         Text(
-                                            text = "${section.title} (${itemsList.size})",
+                                            text = section.title,
                                             style = MaterialTheme.typography.titleMedium,
-                                            fontWeight = FontWeight.Bold,
-                                            color = contentColor
+                                            fontWeight = FontWeight.Bold
+                                        )
+                                        Text(
+                                            text = section.subtitle,
+                                            style = MaterialTheme.typography.bodySmall,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant
                                         )
                                     }
+                                    Icon(
+                                        imageVector = if (isExpanded) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
+                                        contentDescription = null
+                                    )
                                 }
                             }
+                        }
+                    }
+
+                    if (isExpanded) {
+                        items(
+                            items = itemsList,
+                            key = { item -> "item_${item.key}" }
+                        ) { item ->
+                            val cardExpanded = expandedCards.contains(item.key)
+                            LogNotificationCard(
+                                item = item,
+                                dateTimeFormatter = dateTimeFormatter,
+                                dao = dao,
+                                isExpanded = cardExpanded,
+                                onToggleExpand = {
+                                    expandedCards = if (cardExpanded) expandedCards - item.key else expandedCards + item.key
+                                }
+                            )
                         }
                     }
                 }
             }
-            
-            if (showBackupKeyDialog) {
-                BackupKeyDialog(
-                    keyBase64 = currentBackupKey,
-                    onDismiss = { showBackupKeyDialog = false },
-                    onConfirm = {
-                        showBackupKeyDialog = false
-                        scope.launch {
-                            try {
-                                val secretKey = currentPendingSecretKey ?: return@launch
-                                val result = com.jeffers.notimindlite.util.DatabaseExporter.performEncryptedBackup(
-                                    context = context,
-                                    secretKey = secretKey
-                                )
-                                
-                                if (result.isSuccess) {
-                                    val backupFile = result.getOrThrow()
-                                    val shareIntent = Intent(Intent.ACTION_SEND).apply {
-                                        type = "application/octet-stream"
-                                        putExtra(Intent.EXTRA_STREAM, com.jeffers.notimindlite.util.DatabaseExporter.getExportFileUri(context, backupFile))
-                                        addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-                                        addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                                    }
-                                    context.startActivity(Intent.createChooser(shareIntent, "Share Encrypted Backup"))
+        }
+    }
+
+    if (showPackagePicker) {
+        AppPackageSelectorDialog(
+            selectedPackages = selectedPackages ?: emptyList(),
+            availableApps = availableApps,
+            onDismiss = { showPackagePicker = false },
+            onPackagesSelected = { pkgs ->
+                selectedPackages = pkgs
+                showPackagePicker = false
+            }
+        )
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun LogNotificationCard(
+    item: NotificationEntity,
+    dateTimeFormatter: DateTimeFormatter,
+    dao: NotificationDao,
+    isExpanded: Boolean,
+    onToggleExpand: () -> Unit
+) {
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
+
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable {
+                NotificationLauncher.launchNotification(context, item.packageName, item.key, item.intentUri)
+            },
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surface
+        )
+    ) {
+        Column(modifier = Modifier.padding(14.dp)) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.weight(1f)
+                ) {
+                    AppIconImage(appIconUri = item.appIconUri)
+                    if (!item.appIconUri.isNullOrEmpty()) {
+                        Spacer(modifier = Modifier.width(6.dp))
+                    }
+                    Text(
+                        text = item.appName,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 13.sp,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                }
+
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    TooltipBox(
+                        positionProvider = TooltipDefaults.rememberPlainTooltipPositionProvider(),
+                        tooltip = { PlainTooltip { Text(if (item.isPinned) "Unpin notification" else "Pin notification") } },
+                        state = rememberTooltipState()
+                    ) {
+                        IconButton(
+                            onClick = {
+                                scope.launch {
+                                    dao.updatePinnedStatus(item.key, !item.isPinned)
                                 }
-                            } catch (e: Exception) {
-                                Log.e("ActiveNotifications", "Confirmed backup failed", e)
-                            }
+                            },
+                            modifier = Modifier.size(24.dp)
+                        ) {
+                            Icon(
+                                imageVector = if (item.isPinned) Icons.Default.Bookmark else Icons.Outlined.BookmarkBorder,
+                                contentDescription = if (item.isPinned) "Unpin" else "Pin",
+                                tint = if (item.isPinned) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
+                            )
                         }
                     }
-                )
+
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Surface(
+                        color = MaterialTheme.colorScheme.secondary.copy(alpha = 0.2f),
+                        shape = MaterialTheme.shapes.extraSmall
+                    ) {
+                        Text(
+                            text = stringResource(id = getReasonLabel(item.dismissReason)),
+                            fontSize = 10.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.secondary,
+                            modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.width(6.dp))
+                    TooltipBox(
+                        positionProvider = TooltipDefaults.rememberPlainTooltipPositionProvider(),
+                        tooltip = { PlainTooltip { Text(if (isExpanded) "Collapse details" else "Expand details") } },
+                        state = rememberTooltipState()
+                    ) {
+                        IconButton(
+                            onClick = onToggleExpand,
+                            modifier = Modifier.size(24.dp)
+                        ) {
+                            Icon(
+                                imageVector = if (isExpanded) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
+                                contentDescription = null
+                            )
+                        }
+                    }
+                }
+            }
+
+            if (isExpanded) {
+                Column(modifier = Modifier.padding(top = 8.dp)) {
+                    Text(
+                        text = stringResource(id = R.string.reason_unknown),
+                        style = MaterialTheme.typography.bodyLarge,
+                        fontWeight = FontWeight.SemiBold,
+                        maxLines = 2,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text(
+                        text = item.content,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        maxLines = 10,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = dateTimeFormatter.format(Instant.ofEpochMilli(item.postTime)),
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
+                        )
+                        Text(
+                            text = getPriorityLabel(item.priority),
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
+                        )
+                    }
+                }
             }
         }
     }
