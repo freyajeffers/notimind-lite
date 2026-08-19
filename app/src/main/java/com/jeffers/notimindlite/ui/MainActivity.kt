@@ -100,24 +100,24 @@ class MainActivity : ComponentActivity() {
                     if (showPermissionDialog && !hasPermission) {
                         AlertDialog(
                             onDismissRequest = { showPermissionDialog = false },
-                            title = { Text("Notification Listener Required") },
-                            text = { Text("NotiMind Lite requires Notification Listener access to intercept, filter, and store notifications locally on your device.") },
+                            title = { Text(stringResource(id = R.string.main_listener_required_title)) },
+                            text = { Text(stringResource(id = R.string.main_listener_required_desc)) },
                             confirmButton = {
-                                Button(
-                                    onClick = {
-                                        showPermissionDialog = false
-                                        val intent = Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS)
-                                        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                                        startActivity(intent)
-                                    }
-                                ) {
-                                    Text("Grant Permission")
+                            Button(
+                                onClick = {
+                                    showPermissionDialog = false
+                                    val intent = Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS)
+                                    intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                                    startActivity(intent)
                                 }
+                            ) {
+                                Text(stringResource(id = R.string.main_grant_permission))
+                            }
                             },
                             dismissButton = {
-                                TextButton(onClick = { showPermissionDialog = false }) {
-                                    Text("Later")
-                                }
+                            TextButton(onClick = { showPermissionDialog = false }) {
+                                Text(stringResource(id = R.string.common_later))
+                            }
                             }
                         )
                     }
