@@ -9,11 +9,13 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import com.jeffers.notimindlite.R
 import com.jeffers.notimindlite.data.auth.AuthManager
 import com.jeffers.notimindlite.data.local.AppDatabase
 import com.jeffers.notimindlite.data.local.NotificationDao
@@ -73,19 +75,9 @@ fun MainNavigation(
     ) { innerPadding ->
         NavHost(
             navController = navController,
-            startDestination = if (preferenceManager.hasCompletedOnboarding()) "splash" else "onboarding",
+            startDestination = "splash",
             modifier = modifier.padding(innerPadding)
         ) {
-            composable("onboarding") {
-                com.jeffers.notimindlite.ui.screens.OnboardingScreen(
-                    preferenceManager = preferenceManager,
-                    onCompleted = {
-                        navController.navigate("splash") {
-                            popUpTo("onboarding") { inclusive = true }
-                        }
-                    }
-                )
-            }
             composable("splash") {
                 SplashScreen(onTimeout = {
                     navController.navigate(Screen.Active.route) {
