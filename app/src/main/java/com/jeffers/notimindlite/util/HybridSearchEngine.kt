@@ -24,20 +24,57 @@ object HybridSearchEngine {
         emit(searchAndRank(context, query))
     }
 
-    private suspend fun searchAndRank(
+    /**
+     * Search a provided list of notifications.
+     * Used when the list is already filtered by other criteria (e.g., app filter).
+     */
+    suspend fun searchAndRank(
+        notifications: List<NotificationEntity>,
+        query: String
+    ): List<NotificationEntity> = withContext(Dispatchers.IO) {
+        val trimmedQuery = query.trim()
+        if (trimmedQuery.isEmpty()) return@withContext notifications
+
+        // 1. Keyword Pass (Manual filter for provided list)
+        val keywordResults = notifications.filter {
+            it.title.contains(trimmedQuery, ignoreCase = true) ||
+            it.content.contains(trimmedQuery, ignoreCase = true) ||
+            it.appName.contains(trimmedQuery, ignoreCase = true) ||
+            it.packageName.contains(trimmedQuery, ignoreCase = true)
+        }
+
+        // 2. Vector Pass (Semantic Search)
+        val queryVector = VectorEmbeddingHelper.computeEmbedding(trimmedQuery)
+        val semanticResults = notifications.mapNotNull { entity ->
+            val entityVector = entity.embedding ?: return@mapNotNull null
+            val similarity = VectorEmbeddingHelper.cosineSimilarity(queryVector, entityVector)
+            SemanticSearchResult(entity, similarity)
+        }.sortedByDescending { it.similarityScore }
+
+        // 3. Fusion (RRF)
+        val fusedResults = ReciprocalRankFusion.merge(
+            ftsResults = keywordResults,
+            semanticResults = semanticResults,
+            k = RRF_K
+        )
+
+        fusedResults.map { it.notification }
+    }
+
+    /**
+     * Search the entire database using FTS and Vector search.
+     */
+    suspend fun searchAndRank(
         context: Context,
         query: String
     ): List<NotificationEntity> = withContext(Dispatchers.IO) {
         val trimmedQuery = query.trim()
-        if (trimmedQuery.isEmpty()) {
-            return@withContext emptyList<NotificationEntity>()
-        }
+        if (trimmedQuery.isEmpty()) return@withContext emptyList<NotificationEntity>()
 
         val db = AppDatabase.getDatabase(context)
         val dao = db.notificationDao()
 
         // 1. FTS Pass (Keyword Search)
-        // Note: Using the synchronous version we added to the DAO
         val ftsResults = dao.searchNotificationsFtsSync(trimmedQuery)
 
         // 2. Vector Pass (Semantic Search)
@@ -57,7 +94,6 @@ object HybridSearchEngine {
             k = RRF_K
         )
 
-        // Return just the entities sorted by RRF score
         fusedResults.map { it.notification }
     }
 }
