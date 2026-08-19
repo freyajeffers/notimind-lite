@@ -9,13 +9,7 @@ import android.content.res.Configuration
 import android.os.Bundle
 import android.util.Log
 import com.jeffers.notimindlite.util.AppIconCache
-import com.jeffers.notimindlite.util.TelemetryManager
 
-/**
- * NotiMindApp is the main application class.
- * It implements ComponentCallbacks2 to manage memory trimming and 
- * ensures the application responds to OS memory pressure events.
- */
 class NotiMindApp : Application(), android.content.ComponentCallbacks2 {
     companion object {
         private const val TAG = "NotiMindApp"
@@ -23,14 +17,9 @@ class NotiMindApp : Application(), android.content.ComponentCallbacks2 {
 
     override fun onCreate() {
         super.onCreate()
-        TelemetryManager.init(this)
         Log.i(TAG, "NotiMind Lite Application Initialized")
     }
 
-    /**
-     * Triggered by the OS when the system is running low on memory.
-     * We use this to clear non-essential caches to prevent OOM crashes.
-     */
     override fun onTrimMemory(level: Int) {
         super.onTrimMemory(level)
         Log.i(TAG, "onTrimMemory triggered with level: $level")
