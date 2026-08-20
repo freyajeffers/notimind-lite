@@ -73,11 +73,11 @@ fun LogHistoryScreen(dao: NotificationDao, authManager: AuthManager, db: AppData
     var showPackagePicker by remember { mutableStateOf(false) }
     var expandedCards by remember { mutableStateOf(setOf<String>()) }
 
-    val dismissedNotifsDismissed by dao.getDismissedNotificationsSortedByDismissed().collectAsState(initial = emptyList())
-    val dismissedNotifsReceived by dao.getDismissedNotificationsSortedByReceived().collectAsState(initial = emptyList())
-    val totalCount by dao.getDismissedNotificationCountFlow().collectAsState(initial = 0)
+    val allNotifsDismissed by dao.getAllNotificationsSortedByDismissed().collectAsState(initial = emptyList())
+    val allNotifsReceived by dao.getAllNotificationsSortedByReceived().collectAsState(initial = emptyList())
+    val totalCount by dao.getTotalNotificationCountFlow().collectAsState(initial = 0)
 
-    val activeList = if (sortMode == SortMode.DISMISSED) dismissedNotifsDismissed else dismissedNotifsReceived
+    val activeList = if (sortMode == SortMode.DISMISSED) allNotifsDismissed else allNotifsReceived
     var searchQuery by remember { mutableStateOf("") }
     var debouncedSearchQuery by remember { mutableStateOf("") }
 

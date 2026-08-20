@@ -62,20 +62,29 @@ abstract class NotificationDao {
     @Query("SELECT * FROM notifications WHERE isDismissed = 1 ORDER BY postTime DESC")
     abstract fun getDismissedNotificationsSortedByReceived(): Flow<List<NotificationEntity>>
 
-    @Query("SELECT * FROM notifications WHERE isDismissed = 0 ORDER BY postTime DESC")
+    @Query("SELECT * FROM notifications WHERE isDismissed = 0 ORDER BY isOngoing DESC, postTime DESC")
     abstract fun getActiveNotifications(): Flow<List<NotificationEntity>>
 
-    @Query("SELECT * FROM notifications WHERE isDismissed = 0 ORDER BY postTime DESC")
+    @Query("SELECT * FROM notifications WHERE isDismissed = 0 ORDER BY isOngoing DESC, postTime DESC")
     abstract fun getActiveNotificationsFlow(): Flow<List<NotificationEntity>>
 
-    @Query("SELECT * FROM notifications WHERE isDismissed = 0 ORDER BY postTime DESC")
+    @Query("SELECT * FROM notifications WHERE isDismissed = 0 ORDER BY isOngoing DESC, postTime DESC")
     abstract suspend fun getActiveNotificationsList(): List<NotificationEntity>
 
-    @Query("SELECT * FROM notifications WHERE isDismissed = 1 AND dismissReason IN (1, 2, 3) ORDER BY COALESCE(dismissTime, postTime) DESC")
+    @Query("SELECT * FROM notifications WHERE isDismissed = 1 AND dismissReason IN (1, 2, 3, 12, 19, 23) ORDER BY COALESCE(dismissTime, postTime) DESC")
     abstract fun getRecentlyDismissedFlow(): Flow<List<NotificationEntity>>
 
-    @Query("SELECT * FROM notifications WHERE isDismissed = 1 AND (dismissReason IN (5, 8) OR dismissReason NOT IN (1, 2, 3) OR dismissReason IS NULL) ORDER BY COALESCE(dismissTime, postTime) DESC")
+    @Query("SELECT * FROM notifications WHERE isDismissed = 1 AND (dismissReason NOT IN (1, 2, 3, 12, 19, 23) OR dismissReason IS NULL) ORDER BY COALESCE(dismissTime, postTime) DESC")
     abstract fun getLostNotificationsFlow(): Flow<List<NotificationEntity>>
+
+    @Query("""
+        SELECT * FROM notifications 
+        WHERE (packageName IN ('android', 'com.android.systemui', 'com.google.android.googlequicksearchbox') 
+           OR category IN ('sys', 'service', 'status', 'progress') 
+           OR priority < 0)
+        ORDER BY postTime DESC
+    """)
+    abstract fun getFilteredNotificationsFlow(): Flow<List<NotificationEntity>>
 
     @Query("SELECT * FROM notifications WHERE key = :key LIMIT 1")
     abstract suspend fun getNotificationByKey(key: String): NotificationEntity?
