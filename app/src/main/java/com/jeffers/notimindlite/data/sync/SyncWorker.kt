@@ -10,6 +10,7 @@ import androidx.work.WorkManager
 import androidx.work.WorkerParameters
 import com.google.firebase.auth.FirebaseAuth
 import com.jeffers.notimindlite.data.local.AppDatabase
+import com.jeffers.notimindlite.data.local.generateBackupKey
 import java.util.concurrent.TimeUnit
 
 class SyncWorker(
@@ -21,8 +22,11 @@ class SyncWorker(
         val user = FirebaseAuth.getInstance().currentUser ?: return Result.success()
         val db = AppDatabase.getDatabase(applicationContext)
         val repository = FirestoreSyncRepository(db)
+        
+        // Use a stable device-bound key for background sync
+        val secretKey = generateBackupKey()
 
-        val result = repository.sync(user.uid)
+        val result = repository.sync(user.uid, secretKey)
         return if (result.isSuccess) {
             Result.success()
         } else {
@@ -35,10 +39,12 @@ class SyncWorker(
 
         fun schedulePeriodicSync(context: Context) {
             val constraints = Constraints.Builder()
-                .setRequiredNetworkType(NetworkType.CONNECTED)
+                .setRequiredNetworkType(NetworkType.UNMETERED)
+                .setRequiresCharging(true)
+                .setRequiresDeviceIdle(true)
                 .build()
 
-            val request = PeriodicWorkRequestBuilder<SyncWorker>(1, TimeUnit.HOURS)
+            val request = PeriodicWorkRequestBuilder<SyncWorker>(6, TimeUnit.HOURS)
                 .setConstraints(constraints)
                 .build()
 
