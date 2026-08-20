@@ -23,14 +23,26 @@ jobs:
     - name: Grant execute permission for gradlew
       run: chmod +x gradlew
 
-    - name: Run Unit Tests
-      run: ./gradlew testDebugUnitTest
+    - name: Run Detekt
+      run: ./gradlew detekt
 
-    - name: Build Debug APK
-      run: ./gradlew assembleDebug
+    - name: Run Android Lint
+      run: ./gradlew lintDebug
 
-    - name: Upload APK
+    - name: Run Unit Tests & Coverage
+      run: ./gradlew testDebugUnitTest testCoverageReport
+
+    - name: Build Release APK
+      run: ./gradlew assembleRelease
+
+    - name: Upload Coverage Report
       uses: actions/upload-artifact@v4
       with:
-        name: app-debug
-        path: app/build/outputs/apk/debug/app-debug.apk
+        name: coverage-report
+        path: app/build/reports/jacoco/testCoverageReport/html/
+
+    - name: Upload Release APK
+      uses: actions/upload-artifact@v4
+      with:
+        name: app-release
+        path: app/build/outputs/apk/release/app-release.apk
