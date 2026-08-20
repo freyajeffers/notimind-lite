@@ -29,11 +29,15 @@ android {
       keyAlias = "androiddebugkey"
       keyPassword = "android"
     }
-    create("releaseConfig") {
-      storeFile = file(System.getenv("SIGNING_STORE_FILE") ?: "${rootDir}/release.keystore")
-      storePassword = System.getenv("SIGNING_STORE_PASSWORD") ?: "placeholder"
-      keyAlias = System.getenv("SIGNING_KEY_ALIAS") ?: "placeholder"
-      keyPassword = System.getenv("SIGNING_KEY_PASSWORD") ?: "placeholder"
+    val releaseKeystorePath = System.getenv("SIGNING_STORE_FILE") ?: "${rootDir}/release.keystore"
+    val releaseKeystoreFile = file(releaseKeystorePath)
+    if (releaseKeystoreFile.exists()) {
+      create("releaseConfig") {
+        storeFile = releaseKeystoreFile
+        storePassword = System.getenv("SIGNING_STORE_PASSWORD") ?: "placeholder"
+        keyAlias = System.getenv("SIGNING_KEY_ALIAS") ?: "placeholder"
+        keyPassword = System.getenv("SIGNING_KEY_PASSWORD") ?: "placeholder"
+      }
     }
   }
 
@@ -42,7 +46,7 @@ android {
       isMinifyEnabled = true
       isShrinkResources = true
       proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
-      signingConfig = signingConfigs.getByName("releaseConfig")
+      signingConfig = signingConfigs.findByName("releaseConfig") ?: signingConfigs.getByName("debugConfig")
     }
     debug { signingConfig = signingConfigs.getByName("debugConfig") }
   }
