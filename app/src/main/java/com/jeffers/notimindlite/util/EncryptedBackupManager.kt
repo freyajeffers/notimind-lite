@@ -53,18 +53,18 @@ object EncryptedBackupManager {
                 // Offload signing to the remote Notary Server
                 val signature = generateSecureSignature(fileHash, secretKey, context)
 
-                // 3. Record the export in DB
+                // 3. Record the export in DB and persistent signed audit log
                 val db = AppDatabase.getDatabase(context)
-                db.backupDao().insertRecord(
-                    BackupRecord(
-                        actionType = "EXPORT",
-                        fileHash = fileHash,
-                        signature = signature,
-                        fileName = destinationFile.name,
-                        logMessage = "Successfully exported encrypted backup",
-                        encryptionKeyBase64 = encryptionKeyBase64
-                    )
+                val record = BackupRecord(
+                    actionType = "EXPORT",
+                    fileHash = fileHash,
+                    signature = signature,
+                    fileName = destinationFile.name,
+                    logMessage = "Successfully exported encrypted backup",
+                    encryptionKeyBase64 = encryptionKeyBase64
                 )
+                db.backupDao().insertRecord(record)
+                com.jeffers.notimindlite.util.AuditLogger.logBackupEvent(context, record)
             }
             success
         } catch (e: Exception) {
@@ -85,12 +85,27 @@ object EncryptedBackupManager {
         if (!sourceBackupFile.exists()) return false
 
         return try {
-            // 1. Verify Hash and Signature against DB
+            // 1. Verify Hash and Signature against DB or persistent signed disk log
             val fileHash = calculateFileHash(sourceBackupFile)
-            val record = AppDatabase.getDatabase(context).backupDao().getRecordByHash(fileHash)
+            var record = AppDatabase.getDatabase(context).backupDao().getRecordByHash(fileHash)
             
             if (record == null) {
-                Log.e(TAG, "Unauthorized backup attempt: Hash $fileHash not found in records")
+                // Check persistent signed on-disk audit log (survives app reinstall / data clear)
+                val persistentEntry = com.jeffers.notimindlite.util.AuditLogger.readAndVerifyPersistentLogs(context)
+                    .find { it.details.contains(fileHash) && it.isValid }
+                if (persistentEntry != null) {
+                    record = BackupRecord(
+                        actionType = "EXPORT",
+                        fileHash = fileHash,
+                        signature = persistentEntry.signature,
+                        fileName = sourceBackupFile.name,
+                        logMessage = "Verified via persistent on-disk signed log"
+                    )
+                }
+            }
+
+            if (record == null) {
+                Log.e(TAG, "Unauthorized backup attempt: Hash $fileHash not found or tampered")
                 return false
             }
 
@@ -99,15 +114,15 @@ object EncryptedBackupManager {
             
             if (success) {
                 // 3. Log the import
-                AppDatabase.getDatabase(context).backupDao().insertRecord(
-                    BackupRecord(
-                        actionType = "IMPORT",
-                        fileHash = fileHash,
-                        signature = record.signature,
-                        fileName = sourceBackupFile.name,
-                        logMessage = "Successfully imported authorized backup"
-                    )
+                val importRecord = BackupRecord(
+                    actionType = "IMPORT",
+                    fileHash = fileHash,
+                    signature = record.signature,
+                    fileName = sourceBackupFile.name,
+                    logMessage = "Successfully imported authorized backup"
                 )
+                AppDatabase.getDatabase(context).backupDao().insertRecord(importRecord)
+                com.jeffers.notimindlite.util.AuditLogger.logBackupEvent(context, importRecord)
             }
             success
         } catch (e: Exception) {
