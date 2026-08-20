@@ -89,8 +89,13 @@ object VectorEmbeddingHelper {
         if (vecA.size != vecB.size || vecA.isEmpty()) return 0f
         var dotProduct = 0f
         for (i in vecA.indices) {
-            dotProduct += vecA[i] * vecB[i]
+            val a = vecA[i]
+            val b = vecB[i]
+            if (!a.isNaN() && !b.isNaN() && !a.isInfinite() && !b.isInfinite()) {
+                dotProduct += a * b
+            }
         }
+        if (dotProduct.isNaN() || dotProduct.isInfinite()) return 0f
         // Clamped to [0.0, 1.0] for scoring
         return dotProduct.coerceIn(0f, 1f)
     }
