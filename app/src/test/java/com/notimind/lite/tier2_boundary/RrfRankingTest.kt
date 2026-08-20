@@ -11,11 +11,13 @@ class RrfRankingTest {
     private fun createEntity(id: Long, text: String = "Test"): NotificationEntity {
         return NotificationEntity(
             id = id,
+            key = "key_$id",
+            packageName = "com.test.app",
+            appName = "TestApp",
             title = "Title $id",
             content = text,
-            timestamp = System.currentTimeMillis(),
-            category = "General",
-            appPackage = "com.test.app"
+            postTime = System.currentTimeMillis(),
+            category = "General"
         )
     }
 
@@ -74,8 +76,6 @@ class RrfRankingTest {
         val results = ReciprocalRankFusion.merge(fts, semantic)
 
         // e1 should be significantly promoted
-        // e1 score: 1/(60+10) + 1/(60+1) = 1/70 + 1/61 ~= 0.014 + 0.016 = 0.030
-        // e2 score: 1/(60+1) + 0 = 1/61 ~= 0.016
         assertEquals(1L, results[0].notification.id)
     }
 
