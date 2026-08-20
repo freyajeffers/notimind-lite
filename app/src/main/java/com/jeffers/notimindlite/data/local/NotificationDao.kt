@@ -47,6 +47,9 @@ abstract class NotificationDao {
     @Query("SELECT * FROM notifications ORDER BY postTime DESC")
     abstract suspend fun getAllNotificationsList(): List<NotificationEntity>
 
+    @Query("SELECT * FROM notifications ORDER BY postTime DESC LIMIT :limit")
+    abstract suspend fun getRecentNotificationsList(limit: Int): List<NotificationEntity>
+
     @Query("SELECT * FROM notifications ORDER BY postTime DESC")
     abstract fun getAllNotificationsSortedByReceived(): Flow<List<NotificationEntity>>
 
