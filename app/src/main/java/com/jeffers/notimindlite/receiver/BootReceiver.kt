@@ -107,6 +107,16 @@ class BootReceiver : BroadcastReceiver() {
                             .setAutoCancel(true)
 
                         notificationManager.notify(notifId, builder.build())
+                        for (origId in item.originalIds) {
+                            val origNotif = activeNotifs.find { it.id == origId }
+                            if (origNotif != null) {
+                                com.jeffers.notimindlite.service.RestoredNotificationManager.markAsRestored(
+                                    origNotif.key,
+                                    origNotif.packageName,
+                                    notifId
+                                )
+                            }
+                        }
                         restoredCount++
                     }
                     
