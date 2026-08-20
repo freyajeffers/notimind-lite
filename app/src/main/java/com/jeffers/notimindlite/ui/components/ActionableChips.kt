@@ -14,15 +14,18 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.jeffers.notimindlite.util.ActionableEntityExtractor
-import com.jeffers.notimindlite.util.TelemetryManager
 
 @Composable
 fun ActionableChips(
@@ -54,20 +57,6 @@ private fun ActionChip(
     val context = LocalContext.current
     val clipboardManager = LocalClipboardManager.current
 
-    val (icon, label, color, onColor) = when (entity.type) {
-        ActionableEntityExtractor.EntityType.OTP -> 
-            listOf(Icons.Default.ContentCopy, "OTP", MaterialTheme.colorScheme.primaryContainer, MaterialTheme.colorScheme.onPrimaryContainer)
-        ActionableEntityExtractor.EntityType.URL -> 
-            listOf(Icons.Default.OpenInNew, "Link", MaterialTheme.colorScheme.secondaryContainer, MaterialTheme.colorScheme.onSecondaryContainer)
-        ActionableEntityExtractor.EntityType.LOCATION -> 
-            listOf(Icons.Default.Place, "Place", MaterialTheme.colorScheme.tertiaryContainer, MaterialTheme.colorScheme.onTertiaryContainer)
-    }.let { 
-        // Manually extracting from the list to avoid Tuple/Quadruple issues in the patch
-        // Actually, I'll just define them as local variables for clarity.
-        return@let Unit 
-    }
-
-    // Redoing the logic cleanly
     val config = when (entity.type) {
         ActionableEntityExtractor.EntityType.OTP -> 
             ActionChipConfig(Icons.Default.ContentCopy, "OTP", MaterialTheme.colorScheme.primaryContainer, MaterialTheme.colorScheme.onPrimaryContainer)
@@ -80,21 +69,20 @@ private fun ActionChip(
     Box {
         AssistChip(
             onClick = { 
-                                TelemetryManager.logFeatureUsage("chip_clicked", mapOf("entity_type" to entity.type.name))
-                                expanded = true 
-                            },
+                expanded = true 
+            },
             label = { 
                 Text(
                     text = "${config.label}: ${entity.value}",
                     fontSize = 12.sp,
-                    fontWeight = androidx.compose.ui.text.font.FontWeight.Medium,
+                    fontWeight = FontWeight.Medium,
                     color = config.onColor
                 ) 
             },
             leadingIcon = {
                 Icon(
                     imageVector = config.icon,
-                    contentDescription = null, // Label is in the text
+                    contentDescription = null,
                     modifier = Modifier.size(14.dp),
                     tint = config.onColor
                 )
@@ -102,7 +90,7 @@ private fun ActionChip(
             colors = AssistChipDefaults.assistChipColors(
                 containerColor = config.containerColor,
                 labelColor = config.onColor,
-                leadingIconColor = config.onColor
+                leadingIconContentColor = config.onColor
             ),
             modifier = Modifier.semantics { 
                 contentDescription = "${config.label} action: ${entity.value}" 
