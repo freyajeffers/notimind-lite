@@ -23,4 +23,14 @@ class Converters {
         }
         return floatArray
     }
+
+    @TypeConverter
+    fun fromSyncStatus(value: SyncStatus?): String? {
+        return value?.name
+    }
+
+    @TypeConverter
+    fun toSyncStatus(value: String?): SyncStatus? {
+        return if (value != null) SyncStatus.valueOf(value) else null
+    }
 }
