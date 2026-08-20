@@ -2,6 +2,8 @@ package com.jeffers.notimindlite.data.local
 
 import android.content.Context
 import android.util.Log
+import com.jeffers.notimindlite.util.AppLogger
+import com.jeffers.notimindlite.util.NetworkUtils
 import java.io.File
 import java.io.FileInputStream
 import java.io.FileOutputStream
@@ -34,6 +36,10 @@ object EncryptedBackupManager {
         secretKey: SecretKey,
         encryptionKeyBase64: String? = null
     ): Boolean {
+        if (!NetworkUtils.isInternetAvailable(context)) {
+            AppLogger.e(TAG, "Active internet connection is required to create an authorized backup")
+            return false
+        }
         if (!sourceDbFile.exists()) return false
 
         return try {
