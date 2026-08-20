@@ -21,7 +21,7 @@ data class BootConsolidationResult(
  * when re-injecting them into the system after a device reboot.
  */
 object BootRestoreManager {
-    private const val TAG = \"BootRestoreMgr\"
+    private const val TAG = "BootRestoreMgr"
     private const val GROUPING_THRESHOLD = 45
 
     /**
@@ -43,7 +43,7 @@ object BootRestoreManager {
             }
         }
 
-        Log.i(TAG, \"Restoring ${notifications.size} notifications on boot. Threshold exceeded. Grouping...\")
+        Log.i(TAG, "Restoring ${notifications.size} notifications on boot. Threshold exceeded. Grouping...")
 
         // Pass 1: Group by Title
         var groups = notifications.groupBy { it.title }
@@ -53,8 +53,8 @@ object BootRestoreManager {
                     BootConsolidationResult(first.title, first.content, first.appName, listOf(first.id))
                 } else {
                     BootConsolidationResult(
-                        summaryTitle = \"[Grouped] $title\",
-                        summaryContent = members.joinToString(\"\\n\") { it.content },
+                        summaryTitle = "[Grouped] $title",
+                        summaryContent = members.joinToString("\n") { it.content },
                         appName = members.first().appName,
                         originalIds = members.map { it.id }
                     )
@@ -63,14 +63,14 @@ object BootRestoreManager {
 
         // Pass 2: Group by App if still over threshold
         if (groups.size > GROUPING_THRESHOLD) {
-            Log.i(TAG, \"Still over threshold (${groups.size}). Grouping by App...\")
+            Log.i(TAG, "Still over threshold (${groups.size}). Grouping by App...")
             
             groups = notifications.groupBy { it.packageName }
                 .map { (pkg, members) ->
                     val first = members.first()
                     BootConsolidationResult(
-                        summaryTitle = \"Notifications from ${first.appName}\",
-                        summaryContent = members.joinToString(\"\\n\") { it.content },
+                        summaryTitle = "Notifications from ${first.appName}",
+                        summaryContent = members.joinToString("\n") { it.content },
                         appName = first.appName,
                         originalIds = members.map { it.id }
                     )

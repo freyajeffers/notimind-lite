@@ -11,6 +11,7 @@ import android.service.notification.NotificationListenerService
 import android.util.Log
 import androidx.core.app.NotificationCompat
 import com.jeffers.notimindlite.data.local.AppDatabase
+import com.jeffers.notimindlite.service.BootRestoreManager
 import com.jeffers.notimindlite.service.NotificationLoggerService
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -37,8 +38,6 @@ class BootReceiver : BroadcastReceiver() {
         val userManager = context.getSystemService(Context.USER_SERVICE) as? UserManager
         val isUserUnlocked = userManager?.isUserUnlocked ?: true
 
-        
-
         if (action == Intent.ACTION_MY_PACKAGE_REPLACED) {
             val prefMgr = com.jeffers.notimindlite.data.local.PreferenceManager(context)
             prefMgr.setLastUpdateTime(System.currentTimeMillis())
@@ -49,7 +48,6 @@ class BootReceiver : BroadcastReceiver() {
             action == "android.intent.action.QUICKBOOT_POWERON"
         ) {
             
-
             val pendingResult = goAsync()
 
             receiverScope.launch {
@@ -86,7 +84,6 @@ class BootReceiver : BroadcastReceiver() {
                     val notificationManager =
                         context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
 
-
                     val channel = NotificationChannel(
                         CHANNEL_ID_RESTORED,
                         CHANNEL_NAME,
@@ -112,7 +109,6 @@ class BootReceiver : BroadcastReceiver() {
                         notificationManager.notify(notifId, builder.build())
                         restoredCount++
                     }
-
                     
                 } catch (e: Exception) {
                     Log.e("BootReceiverLite", "Failed to restore notifications on boot: ${e.message}")
