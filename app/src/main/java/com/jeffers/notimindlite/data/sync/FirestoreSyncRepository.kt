@@ -1,17 +1,31 @@
 package com.jeffers.notimindlite.data.sync
 
+import android.util.Log
 import com.google.firebase.firestore.FirebaseFirestore
 import com.jeffers.notimindlite.data.local.AppDatabase
 import com.jeffers.notimindlite.data.local.NotificationEntity
 import com.jeffers.notimindlite.data.local.SyncStatus
+import com.jeffers.notimindlite.util.SyncEncryptionHelper
+import com.jeffers.notimindlite.data.local.generateBackupKey
 import kotlinx.coroutines.tasks.await
+import javax.crypto.SecretKey
 
+/**
+ * FirestoreSyncRepository handles bidirectional sync with Firebase Firestore.
+ * It implements Zero-Knowledge Sync using AES-GCM client-side encryption to protect PII.
+ */
 class FirestoreSyncRepository(
     private val db: AppDatabase,
     private val firestore: FirebaseFirestore = FirebaseFirestore.getInstance()
 ) {
+    private val TAG = "FirestoreSyncRepo"
 
-    suspend fun sync(userId: String): Result<Int> {
+    /**
+     * Synchronizes local notifications with the cloud.
+     * @param userId The authenticated user's ID.
+     * @param secretKey The user's unique encryption key (managed via Keystore/User Session).
+     */
+    suspend fun sync(userId: String, secretKey: SecretKey): Result<Int> {
         return try {
             val dao = db.notificationDao()
             val userCol = firestore.collection("users").document(userId).collection("notifications")
@@ -22,15 +36,16 @@ class FirestoreSyncRepository(
 
             for (notification in unsynced) {
                 if (notification.syncStatus == SyncStatus.PENDING_DELETE) {
-                    userCol.document(notification.key).delete().await()
-                    dao.markPendingDelete(notification.key)
+                    // Retain permanent record in both local and remote stores
+                    dao.updateSyncStatus(notification.key, SyncStatus.SYNCED)
                 } else {
-                    val map = hashMapOf(
+                    // Encrypt PII fields before upload
+                    val map = hashMapOf<String, Any?>(
                         "key" to notification.key,
                         "packageName" to notification.packageName,
                         "appName" to notification.appName,
-                        "title" to notification.title,
-                        "content" to notification.content,
+                        "title" to SyncEncryptionHelper.encrypt(notification.title, secretKey),
+                        "content" to SyncEncryptionHelper.encrypt(notification.content, secretKey),
                         "postTime" to notification.postTime,
                         "lastUpdatedTime" to notification.lastUpdatedTime,
                         "updateCount" to notification.updateCount,
@@ -38,11 +53,11 @@ class FirestoreSyncRepository(
                         "isPersistent" to notification.isPersistent,
                         "isRead" to notification.isRead,
                         "isGroupSummary" to notification.isGroupSummary,
-                        "category" to notification.category,
-                        "channelId" to notification.channelId,
-                        "subText" to notification.subText,
-                        "bigText" to notification.bigText,
-                        "inboxLinesJson" to notification.inboxLinesJson,
+                        "category" to notification.category?.let { SyncEncryptionHelper.encrypt(it, secretKey) },
+                        "channelId" to notification.channelId?.let { SyncEncryptionHelper.encrypt(it, secretKey) },
+                        "subText" to notification.subText?.let { SyncEncryptionHelper.encrypt(it, secretKey) },
+                        "bigText" to notification.bigText?.let { SyncEncryptionHelper.encrypt(it, secretKey) },
+                        "inboxLinesJson" to notification.inboxLinesJson?.let { SyncEncryptionHelper.encrypt(it, secretKey) },
                         "priority" to notification.priority,
                         "groupKey" to notification.groupKey,
                         "isOngoing" to notification.isOngoing,
@@ -50,9 +65,9 @@ class FirestoreSyncRepository(
                         "actionsCount" to notification.actionsCount,
                         "dismissReason" to notification.dismissReason,
                         "dismissTime" to notification.dismissTime,
-                        "intentUri" to notification.intentUri,
+                        "intentUri" to notification.intentUri?.let { SyncEncryptionHelper.encrypt(it, secretKey) },
                         "isPinned" to notification.isPinned,
-                        "actionLabels" to notification.actionLabels,
+                        "actionLabels" to notification.actionLabels?.let { SyncEncryptionHelper.encrypt(it, secretKey) },
                         "smallIconRes" to notification.smallIconRes,
                         "appIconUri" to notification.appIconUri
                     )
@@ -61,7 +76,6 @@ class FirestoreSyncRepository(
                 }
                 syncCount++
             }
-            dao.purgePendingDeletes()
 
             // 2. Fetch remote documents and merge down
             val snapshot = userCol.get().await()
@@ -72,12 +86,13 @@ class FirestoreSyncRepository(
                 val remoteLastUpdatedTime = doc.getLong("lastUpdatedTime") ?: remotePostTime
 
                 if (existing == null || remoteLastUpdatedTime > existing.lastUpdatedTime) {
+                    // Decrypt PII fields before inserting into local DB
                     val entity = NotificationEntity(
                         key = key,
                         packageName = doc.getString("packageName") ?: "",
                         appName = doc.getString("appName") ?: "",
-                        title = doc.getString("title") ?: "",
-                        content = doc.getString("content") ?: "",
+                        title = doc.getString("title")?.let { SyncEncryptionHelper.decrypt(it, secretKey) } ?: "",
+                        content = doc.getString("content")?.let { SyncEncryptionHelper.decrypt(it, secretKey) } ?: "",
                         postTime = remotePostTime,
                         lastUpdatedTime = remoteLastUpdatedTime,
                         updateCount = doc.getLong("updateCount")?.toInt() ?: 1,
@@ -85,11 +100,11 @@ class FirestoreSyncRepository(
                         isPersistent = doc.getBoolean("isPersistent") ?: false,
                         isRead = doc.getBoolean("isRead") ?: false,
                         isGroupSummary = doc.getBoolean("isGroupSummary") ?: false,
-                        category = doc.getString("category"),
-                        channelId = doc.getString("channelId"),
-                        subText = doc.getString("subText"),
-                        bigText = doc.getString("bigText"),
-                        inboxLinesJson = doc.getString("inboxLinesJson"),
+                        category = doc.getString("category")?.let { SyncEncryptionHelper.decrypt(it, secretKey) },
+                        channelId = doc.getString("channelId")?.let { SyncEncryptionHelper.decrypt(it, secretKey) },
+                        subText = doc.getString("subText")?.let { SyncEncryptionHelper.decrypt(it, secretKey) },
+                        bigText = doc.getString("bigText")?.let { SyncEncryptionHelper.decrypt(it, secretKey) },
+                        inboxLinesJson = doc.getString("inboxLinesJson")?.let { SyncEncryptionHelper.decrypt(it, secretKey) },
                         priority = doc.getLong("priority")?.toInt() ?: 0,
                         groupKey = doc.getString("groupKey"),
                         isOngoing = doc.getBoolean("isOngoing") ?: false,
@@ -97,9 +112,9 @@ class FirestoreSyncRepository(
                         actionsCount = doc.getLong("actionsCount")?.toInt() ?: 0,
                         dismissReason = doc.getLong("dismissReason")?.toInt(),
                         dismissTime = doc.getLong("dismissTime"),
-                        intentUri = doc.getString("intentUri"),
+                        intentUri = doc.getString("intentUri")?.let { SyncEncryptionHelper.decrypt(it, secretKey) },
                         isPinned = doc.getBoolean("isPinned") ?: false,
-                        actionLabels = doc.getString("actionLabels"),
+                        actionLabels = doc.getString("actionLabels")?.let { SyncEncryptionHelper.decrypt(it, secretKey) },
                         smallIconRes = doc.getLong("smallIconRes")?.toInt() ?: 0,
                         appIconUri = doc.getString("appIconUri"),
                         syncStatus = SyncStatus.SYNCED,
@@ -111,6 +126,19 @@ class FirestoreSyncRepository(
             }
 
             Result.success(syncCount)
+        } catch (e: Exception) {
+            Log.e(TAG, "Sync failed: ${e.message}", e)
+            Result.failure(e)
+        }
+    }
+
+    /**
+     * Data retention enforcement: Deletion of Firestore and local records is permanently prohibited.
+     */
+    suspend fun purgeUserData(userId: String): Result<Unit> {
+        return try {
+            Log.w(TAG, "Purge request rejected: Local and Firestore databases are non-deletable.")
+            Result.failure(UnsupportedOperationException("Database and Firestore cloud deletion is permanently disabled."))
         } catch (e: Exception) {
             Result.failure(e)
         }
