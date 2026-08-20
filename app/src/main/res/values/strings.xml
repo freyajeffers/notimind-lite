@@ -1,3 +1,109 @@
 <resources>
     <string name="app_name">NotiMind Lite</string>
+
+    <!-- Common -->
+    <string name="common_later">Later</string>
+    <string name="common_search">Search</string>
+    <string name="common_share">Share</string>
+    <string name="common_scroll_top">Scroll to Top</string>
+    <string name="common_scroll_bottom">Scroll to Bottom</string>
+    <string name="common_clear_search">Clear Search</string>
+
+    <!-- Main -->
+    <string name="main_listener_required_title">Notification Listener Required</string>
+    <string name="main_listener_required_desc">NotiMind Lite requires Notification Listener access to intercept, filter, and store notifications locally on your device.</string>
+    <string name="main_grant_permission">Grant Permission</string>
+
+    <!-- Navigation -->
+    <string name="nav_active_title">Active</string>
+    <string name="nav_history_title">History</string>
+
+    <!-- Log History -->
+    <string name="log_history_title">Log (%1$d/%2$d)</string>
+    <string name="log_history_filter_title">Filter Logs</string>
+    <string name="log_history_filter_app_count">Filter by App (%s)</string>
+    <string name="log_history_filter_all_reasons">All Reasons %s</string>
+    <string name="log_history_filter_reason_item">%1$s (#%2$d) %3$s</string>
+    <string name="log_history_sort_title">Sort Logs</string>
+    <string name="log_history_sort_dismissed">Sort by Time Dismissed %s</string>
+    <string name="log_history_sort_received">Sort by Time Received %s</string>
+    <string name="log_history_empty_initial">No dismissed notifications logged yet</string>
+    <string name="log_history_empty_search">No matching dismissed logs found</string>
+    <string name="log_history_unpin_tooltip">Unpin notification</string>
+    <string name="log_history_pin_tooltip">Pin notification</string>
+    <string name="log_history_unpin_desc">Unpin</string>
+    <string name="log_history_pin_desc">Pin</string>
+    <string name="log_history_collapse_tooltip">Collapse details</string>
+    <string name="log_history_expand_tooltip">Expand details</string>
+    <string name="log_history_toggle_desc">Toggle Details</string>
+
+    <!-- Active Notifications -->
+    <string name="active_notifications_title">NotiMind</string>
+    <string name="active_notifications_filter_apps">Filter Apps</string>
+    <string name="active_notifications_search_placeholder">Search Notifications</string>
+    <string name="active_notifications_service_title">Notification Listener Service</string>
+    <string name="active_notifications_service_status_active">Status: Active &amp; Listening</string>
+    <string name="active_notifications_service_status_required">Status: Permission Required</string>
+    <string name="active_notifications_settings">Settings</string>
+    <string name="active_notifications_grant">Grant</string>
+    <string name="active_notifications_app_icon_desc">App Icon</string>
+    <string name="active_notifications_section_toggle_desc">Toggle %1$s section, currently %2$s</string>
+    <string name="active_notifications_expanded">expanded</string>
+    <string name="active_notifications_collapsed">collapsed</string>
+
+    <!-- Sections -->
+    <string name="section_pinned_title">Pinned Notifications</string>
+    <string name="section_pinned_subtitle">Flagged &amp; saved notifications for later reference</string>
+    <string name="section_active_title">Active Notifications</string>
+    <string name="section_active_subtitle">Currently active status bar notifications (sorted by time received)</string>
+    <string name="section_filtered_title">Filtered Notifications</string>
+    <string name="section_filtered_subtitle">System, clutter, spam, and auto-filtered notifications</string>
+    <string name="section_dismissed_title">Recently Dismissed</string>
+    <string name="section_dismissed_subtitle">User swiped, clicked, or cleared notifications (sorted by time dismissed)</string>
+    <string name="section_lost_title">Lost Notifications</string>
+    <string name="section_lost_subtitle">App cancelled or package changed notifications (sorted by time dismissed)</string>
+
+    <!-- Priority -->
+    <string name="priority_min">Min</string>
+    <string name="priority_low">Low</string>
+    <string name="priority_default">Default</string>
+    <string name="priority_high">High</string>
+    <string name="priority_max">Max</string>
+    <string name="priority_unknown">Unknown (%1$d)</string>
+
+    <!-- Dismiss Reasons -->
+    <string name="reason_1">User Swiped</string>
+    <string name="reason_2">Cleared All</string>
+    <string name="reason_3">User Clicked</string>
+    <string name="reason_4">Listener Cancelled</string>
+    <string name="reason_5">Package Changed</string>
+    <string name="reason_6">Package Banned</string>
+    <string name="reason_7">User Banned</string>
+    <string name="reason_8">App Cancelled</string>
+    <string name="reason_9">App Cancelled All</string>
+    <string name="reason_10">Timeout</string>
+    <string name="reason_11">Channel Banned</string>
+    <string name="reason_12">Snoozed</string>
+    <string name="reason_13">Group Summary Canceled</string>
+    <string name="reason_14">Listener Muted</string>
+    <string name="reason_15">Clearable Group Summary</string>
+    <string name="reason_16">Channel Changed</string>
+    <string name="reason_17">Group Threshold</string>
+    <string name="reason_18">Assistant Cancelled</string>
+    <string name="reason_19">User Cancelled</string>
+    <string name="reason_20">Profile Turned Off</string>
+    <string name="reason_21">Package Uninstalled</string>
+    <string name="reason_22">App Disallowed</string>
+    <string name="reason_23">User Dismissed</string>
+    <string name="reason_24">Review Dismissed</string>
+    <string name="reason_unknown">Reason #%1$d</string>
+    <string name="reason_system">System Dismissed</string>
+
+    <!-- Actionable Chips -->
+    <string name="actionable_chips_copy_label">Copy %s</string>
+
+    <!-- Backup Key -->
+    <string name="backup_key_generated_title">Encryption Key Generated</string>
+    <string name="backup_key_share">Share Key</string>
+    <string name="backup_key_saved_confirm">I\'ve saved it</string>
 </resources>
