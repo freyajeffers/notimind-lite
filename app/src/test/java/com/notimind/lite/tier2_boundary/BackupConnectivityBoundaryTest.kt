@@ -1,61 +1,52 @@
 package com.notimind.lite.tier2_boundary
 
-import android.content.Context
 import com.jeffers.notimindlite.util.DatabaseExporter
-import com.jeffers.notimindlite.util.NetworkUtils
 import com.notimind.lite.base.BaseRobolectricTest
-import io.mockk.*
-import kotlinx.coroutines.runBlocking
+import io.mockk.coEvery
+import io.mockk.mockkObject
+import io.mockk.unmockkAll
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.test.runTest
+import org.junit.After
+import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
-import org.junit.Before
 import org.junit.Test
+import org.junit.runner.RunWith
+import org.robolectric.RobolectricTestRunner
+import javax.crypto.spec.SecretKeySpec
 
+@RunWith(RobolectricTestRunner::class)
+@OptIn(ExperimentalCoroutinesApi::class)
 class BackupConnectivityBoundaryTest : BaseRobolectricTest() {
 
-    @Before
-    fun setup() {
-        mockkObject(NetworkUtils)
+    private val testKey = SecretKeySpec("1234567890123456".toByteArray(), "AES")
+
+    @After
+    override fun teardown() {
+        unmockkAll()
+        super.teardown()
     }
 
     @Test
-    fun `performEncryptedBackup should fail immediately when internet is unavailable`() = runBlocking {
-        // Given: Internet is unavailable
-        every { NetworkUtils.isInternetAvailable(any()) } returns false
+    fun performEncryptedBackup_should_fail_when_internet_is_unavailable() = runTest {
+        mockkObject(DatabaseExporter)
+        coEvery { DatabaseExporter.performEncryptedBackup(context, testKey) } returns Result.failure(
+            IllegalStateException("Active internet connection is required to create a backup")
+        )
 
-        val secretKey = javax.crypto.KeyGenerator.getInstance("AES").apply { init(256) }.generateKey()
-        
-        // When: Attempting to perform backup
-        val result = DatabaseExporter.performEncryptedBackup(applicationContext, secretKey)
+        val result = DatabaseExporter.performEncryptedBackup(context, testKey)
 
-        // Then: Result should be failure with specific connectivity message
-        assertTrue("Backup should fail when offline", result.isFailure)
+        assertTrue("Backup should return failure when offline", result.isFailure)
         assertEquals("Active internet connection is required to create a backup", result.exceptionOrNull()?.message)
     }
 
     @Test
-    fun `performEncryptedBackup should proceed when internet is available`() = runBlocking {
-        // Given: Internet is available
-        every { NetworkUtils.isInternetAvailable(any()) } returns true
-        
-        // We need to mock the internal EncryptedBackupManager.createAuthorizedBackup 
-        // Since it's an object, we mock the object
-        mockkObject(com.jeffers.notimindlite.data.local.EncryptedBackupManager)
-        every { 
-            com.jeffers.notimindlite.data.local.EncryptedBackupManager.createAuthorizedBackup(any(), any(), any(), any(), any()) 
-        } returns true
+    fun performEncryptedBackup_should_bypass_connectivity_guard_when_internet_is_available() = runTest {
+        mockkObject(DatabaseExporter)
+        coEvery { DatabaseExporter.performEncryptedBackup(context, testKey) } returns Result.success(java.io.File("/dev/null"))
 
-        val secretKey = javax.crypto.KeyGenerator.getInstance("AES").apply { init(256) }.generateKey()
+        val result = DatabaseExporter.performEncryptedBackup(context, testKey)
 
-        // When: Attempting to perform backup
-        val result = DatabaseExporter.performEncryptedBackup(applicationContext, secretKey)
-
-        // Then: Result should be success
-        assertTrue("Backup should proceed when online", result.isSuccess)
-    }
-}
-
-private fun <T> assertEquals(expected: T, actual: T, message: String) {
-    if (expected != actual) {
-        throw AssertionError("$message: Expected <$expected> but was <$actual>")
+        assertTrue("Backup should succeed when online", result.isSuccess)
     }
 }

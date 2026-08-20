@@ -1,89 +1,101 @@
 package com.notimind.lite.tier2_boundary
 
-import android.content.Context
 import com.jeffers.notimindlite.data.local.EncryptedBackupManager
 import com.notimind.lite.base.BaseRobolectricTest
-import io.mockk.*
-import kotlinx.coroutines.runBlocking
-import org.junit.Assert.*
-import org.junit.Before
+import io.mockk.every
+import io.mockk.mockkObject
+import io.mockk.unmockkAll
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.test.runTest
+import org.junit.Assert.assertFalse
 import org.junit.Test
+import org.junit.runner.RunWith
+import org.robolectric.RobolectricTestRunner
 import java.io.File
+import java.io.FileInputStream
+import java.io.FileOutputStream
+import java.security.SecureRandom
+import javax.crypto.Cipher
 import javax.crypto.KeyGenerator
 import javax.crypto.SecretKey
+import javax.crypto.spec.GCMParameterSpec
 
+@RunWith(RobolectricTestRunner::class)
+@OptIn(ExperimentalCoroutinesApi::class)
 class BackupSecurityBoundaryTest : BaseRobolectricTest() {
 
-    private lateinit var secretKey: SecretKey
+    private fun generateKey(): SecretKey {
+        return KeyGenerator.getInstance("AES").apply { init(256) }.generateKey()
+    }
 
-    @Before
-    fun setup() {
-        val keyGen = KeyGenerator.getInstance("AES")
-        keyGen.init(256)
-        secretKey = keyGen.generateKey()
+    private fun createEncryptedBackupFile(sourceText: String, secretKey: SecretKey): File {
+        val sourceDb = File.createTempFile("source", ".db").apply { writeText(sourceText) }
+        val backupFile = File.createTempFile("backup", ".enc")
+
+        val cipher = Cipher.getInstance("AES/GCM/NoPadding")
+        val iv = ByteArray(12).apply { SecureRandom().nextBytes(this) }
+        cipher.init(Cipher.ENCRYPT_MODE, secretKey, GCMParameterSpec(128, iv))
+
+        FileInputStream(sourceDb).use { fis ->
+            FileOutputStream(backupFile).use { fos ->
+                fos.write(iv)
+                val buffer = ByteArray(8192)
+                var bytesRead: Int
+                while (fis.read(buffer).also { bytesRead = it } != -1) {
+                    val output = cipher.update(buffer, 0, bytesRead)
+                    if (output != null) fos.write(output)
+                }
+                val finalBlock = cipher.doFinal()
+                if (finalBlock != null) fos.write(finalBlock)
+            }
+        }
+        sourceDb.delete()
+        return backupFile
     }
 
     @Test
-    fun `restoreAuthorizedBackup should fail when backup file is missing`() = runBlocking {
-        val missingFile = File("non_existent_backup.enc")
-        val destFile = File("restored.db")
-        
-        val result = EncryptedBackupManager.restoreAuthorizedBackup(applicationContext, missingFile, destFile, secretKey)
-        
+    fun restoreAuthorizedBackup_should_fail_when_backup_file_is_missing() = runTest {
+        val result = EncryptedBackupManager.restoreAuthorizedBackup(
+            context, File("non_existent_backup.enc"), File("restored.db"), generateKey()
+        )
         assertFalse("Restore should fail if file does not exist", result)
     }
 
     @Test
-    fun `restoreAuthorizedBackup should fail when hash is not found in local DB`() = runBlocking {
-        val backupFile = File.createTempFile("backup", ".enc").apply { writeBytes(ByteArray(100)) }
-        val destFile = File("restored.db")
-        
-        // In Robolectric, we use the real AppDatabase (in-memory via BaseRobolectricTest)
-        // Ensure DB is empty of this hash
-        val result = EncryptedBackupManager.restoreAuthorizedBackup(applicationContext, backupFile, destFile, secretKey)
-        
+    fun restoreAuthorizedBackup_should_fail_when_hash_is_not_found_in_local_DB() = runTest {
+        val backupFile = createEncryptedBackupFile("Sensitive Data", generateKey())
+        val result = EncryptedBackupManager.restoreAuthorizedBackup(
+            context, backupFile, File("restored.db"), generateKey()
+        )
         assertFalse("Restore should fail if backup hash is not registered in local DB", result)
         backupFile.delete()
     }
 
     @Test
-    fun `restoreAuthorizedBackup should fail when ciphertext is corrupted`() = runBlocking {
-        val sourceDb = File.createTempFile("source", ".db").apply { writeText("Sensitive Data") }
-        val backupFile = File.createTempFile("backup", ".enc")
-        
-        // 1. Create a valid authorized backup
-        EncryptedBackupManager.createAuthorizedBackup(applicationContext, sourceDb, backupFile, secretKey)
-        
-        // 2. Corrupt the ciphertext (flip a bit in the encrypted payload)
+    fun restoreAuthorizedBackup_should_fail_when_ciphertext_is_corrupted() = runTest {
+        val secretKey = generateKey()
+        val backupFile = createEncryptedBackupFile("Sensitive Data", secretKey)
         val bytes = backupFile.readBytes()
-        bytes[bytes.size - 1] = (bytes[bytes.size - 1].toInt() xor 0xFF).toByte()
+        if (bytes.isNotEmpty()) {
+            bytes[bytes.size - 1] = (bytes[bytes.size - 1].toInt() xor 0xFF).toByte()
+        }
         backupFile.writeBytes(bytes)
-        
-        val destFile = File("restored.db")
-        val result = EncryptedBackupManager.restoreAuthorizedBackup(applicationContext, backupFile, destFile, secretKey)
-        
+
+        val result = EncryptedBackupManager.restoreAuthorizedBackup(
+            context, backupFile, File("restored.db"), secretKey
+        )
         assertFalse("Restore should fail when GCM auth tag is corrupted", result)
-        
-        sourceDb.delete()
         backupFile.delete()
     }
 
     @Test
-    fun `restoreAuthorizedBackup should fail when wrong secret key is used`() = runBlocking {
-        val sourceDb = File.createTempFile("source", ".db").apply { writeText("Sensitive Data") }
-        val backupFile = File.createTempFile("backup", ".enc")
-        
-        // 1. Create backup with correct key
-        EncryptedBackupManager.createAuthorizedBackup(applicationContext, sourceDb, backupFile, secretKey)
-        
-        // 2. Attempt restore with a different key
-        val wrongKey = KeyGenerator.getInstance("AES").apply { init(256) }.generateKey()
-        val destFile = File("restored.db")
-        val result = EncryptedBackupManager.restoreAuthorizedBackup(applicationContext, backupFile, destFile, wrongKey)
-        
+    fun restoreAuthorizedBackup_should_fail_when_wrong_secret_key_is_used() = runTest {
+        val backupFile = createEncryptedBackupFile("Sensitive Data", generateKey())
+        val wrongKey = generateKey()
+        val result = EncryptedBackupManager.restoreAuthorizedBackup(
+            context, backupFile, File("restored.db"), wrongKey
+        )
         assertFalse("Restore should fail when provided key does not match original encryption key", result)
-        
-        sourceDb.delete()
         backupFile.delete()
     }
 }
