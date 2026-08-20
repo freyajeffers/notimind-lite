@@ -7,7 +7,7 @@ This guide provides the step-by-step configuration required to build and deploy 
 Ensure the following development environment is configured:
 - **Java Development Kit (JDK)**: Version 17 (Amazon Corretto or OpenJDK).
 - **Android Studio**: Hedgehog (2023.1.1) or newer.
-- **Android SDK**: API Level 33 (Tiramisu) and API Level 34 (Upside Down Cake).
+- **Android SDK**: API Level 26 (minSdk) and API Level 36 (Target SDK).
 - **Physical Device**: A device with Google Play Services installed (required for Play Integrity API).
 
 ## 2. Google Cloud Platform (GCP) & Firebase Setup
@@ -16,7 +16,7 @@ NotiMind Lite relies on Firebase and the Play Integrity API for security notariz
 
 ### Firebase Configuration
 1. Create a new project in the [Firebase Console](https://console.firebase.google.com/).
-2. Add an Android App to the project. Use the `applicationId` defined in `app/build.gradle.kts`.
+2. Add an Android App to the project. Use the `applicationId` defined in `app/build.gradle.kts` (`com.jeffers.notimindlite`).
 3. Enable **Firebase Authentication** (Google Sign-In provider).
 4. Download the `google-services.json` configuration file.
 5. Place the file in the `/app/` directory of the project root.

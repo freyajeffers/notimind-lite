@@ -1,64 +1,80 @@
 # Project: NotiMind Lite
 
 ## Architecture
-Standalone light Android app stripped of AI/ML, cloud sync, and Firebase.
-Packages:
-- `com.notimind.lite.data`: Room DB entities, DAOs, Database
-- `com.notimind.lite.service`: NotificationLoggerService, BootReceiver
-- `com.notimind.lite.ui`: Jetpack Compose Screens (Active, History, Settings), Navigation host, Theme
-- `com.notimind.lite.ui.navigation`: Routes and NavGraph
+NotiMind Lite is a high-performance Android application for systemic notification interception, semantic filtering, and secure archival. It employs a hybrid search architecture and a zero-trust remote notarization system.
 
-## Milestones
-| # | Name | Scope | Dependencies | Status |
-|---|------|-------|-------------|--------|
-| 1 | Core Architecture & Setup | Gradle setup, Kotlin, AndroidX, Compose, Room dependencies, Application class, AndroidManifest | None | DONE |
-| 2 | Data Persistence Schema | Room DB (`AppDatabase`, `NotificationDao`, `NotificationEntity`) metadata: id, key, packageName, appName, title, content, postTime, isDismissed, isPersistent | M1 | DONE |
-| 3 | Core Services & Boot Recovery | `NotificationLoggerService` (extending `NotificationListenerService`), `BootReceiver` (`ACTION_BOOT_COMPLETED`, restore active notifications, rebind service) | M2 | DONE |
-| 4 | Multi-Screen Jetpack Compose UI | Navigation routes, Active Notifications Screen, Log History Screen (filter/search), Settings Screen (permission status link, clear log, boot toggle) | M3 | DONE |
-| 5 | Final E2E Test Suite Pass & Coverage Hardening | 100% pass rate on E2E test suite (Tiers 1-4) + Tier 5 adversarial testing | M4, E2E-TESTS | DONE |
+**Package Structure:**
+- `com.jeffers.notimindlite.data`: Persistence layer, including Room DB, DAOs, and Entities.
+- `com.jeffers.notimindlite.data.auth`: Identity management via Firebase Auth and Google Sign-In.
+- `com.jeffers.notimindlite.data.sync`: Cloud synchronization via Google Cloud Firestore.
+- `com.jeffers.notimindlite.service`: Background services for notification capture and boot recovery.
+- `com.jeffers.notimindlite.util`: Intelligence engine (Hybrid Search, RRF, Vectors), Security (AES-GCM, Notary), and System Utilities.
+- `com.jeffers.notimindlite.ui`: Jetpack Compose UI, Material 3 screens, and Navigation.
 
+## Core Implementation Milestones
 
-
-## E2E Testing Track
-| Track | Description | Artifacts | Status |
-|-------|-------------|-----------|--------|
-| E2E-TESTS | Comprehensive opaque-box test suite (Tiers 1-4) based on ORIGINAL_REQUEST.md requirements | `TEST_INFRA.md`, `TEST_READY.md`, unit/integration test suites | DONE |
-
+| # | Name | Scope | Status |
+|---|------|-------|--------|
+| 1 | Project Foundation | Gradle setup, Compose/Room dependencies, AppInitializer | DONE |
+| 2 | Identity & Cloud Sync | Firebase Auth, UserSession, FirestoreSyncRepository, SyncWorker | DONE |
+| 3 | Notification Engine | NotificationLoggerService, Room Schema (v16), FTS4 Integration | DONE |
+| 4 | Intelligence Layer | VectorEmbeddingHelper, DynamicClusterManager, HybridSearchEngine, RRF | DONE |
+| 5 | Security & Notary | EncryptedBackupManager, BackupNotaryClient, Play Integrity API | DONE |
+| 6 | UI/UX Implementation | LogHistoryScreen, ActiveNotificationsScreen, SpeedDial FAB, SplashScreen | DONE |
+| 7 | Stability & Performance | AppIconCache, ComponentCallbacks2 (TrimMemory), Direct Boot Support | DONE |
 
 ## Interface Contracts
-### Data ↔ Services
-- `NotificationDao.insert(entity: NotificationEntity)`
-- `NotificationDao.getActiveNotifications(): Flow<List<NotificationEntity>>`
-- `NotificationDao.getAllNotifications(): Flow<List<NotificationEntity>>`
-- `NotificationDao.markDismissed(key: String)`
-- `NotificationDao.clearAll()`
 
-### Services ↔ OS
-- `NotificationLoggerService` binds with `android.permission.BIND_NOTIFICATION_LISTENER_SERVICE`
-- `BootReceiver` receives `android.intent.action.BOOT_COMPLETED`
+### Intelligence Layer
+- `HybridSearchEngine.search(query: String): Flow<List<HybridSearchResult>>`
+- `ReciprocalRankFusion.merge(ftsList, vectorList): List<Result>`
+- `VectorEmbeddingHelper.embed(text: String): FloatArray`
 
-### Data ↔ UI
-- ViewModels observe DAOs / flow state and update Compose UI.
+### Data & Persistence
+- `NotificationDao.searchNotificationsFts(query: String): List<NotificationEntity>`
+- `AppDatabase.getNotificationDao(): NotificationDao`
+- `EncryptedBackupManager.createBackup(): File`
+
+### Security & Notary
+- `BackupNotaryClient.signHash(hash: String, token: String): String`
+- `Google Play Integrity API` $\rightarrow$ `IntegrityToken` $\rightarrow$ `Notary Server` $\rightarrow$ `HMAC-SHA256 Signature`
 
 ## Code Layout
 ```
-app/src/main/java/com/notimind/lite/
+app/src/main/java/com/jeffers/notimindlite/
 ├── NotiMindApp.kt
 ├── data/
-│   ├── AppDatabase.kt
-│   ├── NotificationDao.kt
-│   └── NotificationEntity.kt
+│   ├── auth/
+│   │   ├── AuthManager.kt
+│   │   └── UserSession.kt
+│   ├── local/
+│   │   ├── AppDatabase.kt
+│   │   ├── NotificationDao.kt
+│   │   ├── NotificationEntity.kt
+│   │   └── NotificationFtsEntity.kt
+│   ├── sync/
+│   │   ├── FirestoreSyncRepository.kt
+│   │   └── SyncWorker.kt
+│   └── maps/
+│       └── GeminiMapsDetector.kt
 ├── service/
 │   ├── NotificationLoggerService.kt
-│   └── BootReceiver.kt
-├── ui/
-│   ├── MainActivity.kt
-│   ├── navigation/
-│   │   └── NavGraph.kt
-│   ├── screens/
-│   │   ├── ActiveNotificationsScreen.kt
-│   │   ├── LogHistoryScreen.kt
-│   │   └── SettingsScreen.kt
-│   └── theme/
-│       └── Theme.kt
+│   └── RestoredNotificationManager.kt
+├── util/
+│   ├── HybridSearchEngine.kt
+│   ├── VectorEmbeddingHelper.kt
+│   ├── ReciprocalRankFusion.kt
+│   ├── EncryptedBackupManager.kt
+│   └── BackupNotaryClient.kt
+├── receiver/
+│   ├── BootReceiver.kt
+│   └── UnlockReceiver.kt
+└── ui/
+    ├── MainActivity.kt
+    ├── Navigation.kt
+    ├── screens/
+    │   ├── LogHistoryScreen.kt
+    │   └── ActiveNotificationsScreen.kt
+    └── components/
+        └── SpeedDialSettingsFab.kt
 ```
