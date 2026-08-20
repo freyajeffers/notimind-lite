@@ -19,7 +19,9 @@ import com.jeffers.notimindlite.data.local.AppDatabase
 import com.jeffers.notimindlite.data.sync.FirestoreSyncRepository
 import com.jeffers.notimindlite.data.sync.SyncWorker
 import com.jeffers.notimindlite.data.local.PreferenceManager
+import com.jeffers.notimindlite.data.local.generateBackupKey
 import kotlinx.coroutines.launch
+import javax.crypto.SecretKey
 
 @Composable
 fun SettingsScreen(
@@ -147,7 +149,10 @@ fun SettingsScreen(
                                 scope.launch {
                                     isSyncing = true
                                     val repo = FirestoreSyncRepository(db)
-                                    val res = repo.sync(uid)
+                                    
+                                    val secretKey: SecretKey = generateBackupKey()
+                                    
+                                    val res = repo.sync(uid, secretKey)
                                     isSyncing = false
                                     syncMessage = if (res.isSuccess) {
                                         "Synced ${res.getOrDefault(0)} items successfully"

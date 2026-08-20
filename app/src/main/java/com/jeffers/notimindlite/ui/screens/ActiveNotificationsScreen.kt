@@ -68,6 +68,8 @@ import com.jeffers.notimindlite.ui.components.ActionableChips
 import com.jeffers.notimindlite.ui.components.SpeedDialSettingsFab
 import com.jeffers.notimindlite.ui.components.BackupKeyDialog
 import com.jeffers.notimindlite.data.local.generateBackupKey
+import com.jeffers.notimindlite.util.DatabaseExporter
+import com.jeffers.notimindlite.util.NetworkUtils
 import com.jeffers.notimindlite.util.NotificationLauncher
 import com.jeffers.notimindlite.data.auth.AuthManager
 import com.jeffers.notimindlite.data.local.AppDatabase
@@ -327,6 +329,14 @@ fun ActiveNotificationsScreen(dao: NotificationDao, authManager: AuthManager, db
             SpeedDialSettingsFab(
                 onSyncClick = { },
                 onBackupClick = {
+                    if (!NetworkUtils.isInternetAvailable(context)) {
+                        android.widget.Toast.makeText(
+                            context,
+                            "Active internet connection is required to create a backup",
+                            android.widget.Toast.LENGTH_LONG
+                        ).show()
+                        return@SpeedDialSettingsFab
+                    }
                     scope.launch {
                         try {
                             val secretKey = generateBackupKey()
@@ -558,6 +568,47 @@ fun ActiveNotificationsScreen(dao: NotificationDao, authManager: AuthManager, db
             }
         )
     }
+
+    if (showBackupKeyDialog && currentPendingSecretKey != null) {
+        BackupKeyDialog(
+            keyBase64 = currentBackupKey,
+            onDismiss = {
+                showBackupKeyDialog = false
+                currentPendingSecretKey = null
+            },
+            onConfirm = {
+                showBackupKeyDialog = false
+                val secretKey = currentPendingSecretKey
+                currentPendingSecretKey = null
+                if (secretKey != null) {
+                    if (!NetworkUtils.isInternetAvailable(context)) {
+                        android.widget.Toast.makeText(
+                            context,
+                            "Active internet connection is required to create a backup",
+                            android.widget.Toast.LENGTH_LONG
+                        ).show()
+                        return@BackupKeyDialog
+                    }
+                    scope.launch {
+                        val result = DatabaseExporter.performEncryptedBackup(context, secretKey)
+                        if (result.isSuccess) {
+                            android.widget.Toast.makeText(
+                                context,
+                                "Backup created successfully",
+                                android.widget.Toast.LENGTH_SHORT
+                            ).show()
+                        } else {
+                            android.widget.Toast.makeText(
+                                context,
+                                result.exceptionOrNull()?.message ?: "Backup failed",
+                                android.widget.Toast.LENGTH_LONG
+                            ).show()
+                        }
+                    }
+                }
+            }
+        )
+    }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -627,20 +678,22 @@ fun LogNotificationCard(
                     }
 
                     Spacer(modifier = Modifier.width(6.dp))
-                    Surface(
-                        color = MaterialTheme.colorScheme.secondary.copy(alpha = 0.2f),
-                        shape = MaterialTheme.shapes.extraSmall
-                    ) {
-                        Text(
-                            text = stringResource(id = getReasonLabel(item.dismissReason)),
-                            fontSize = 10.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.secondary,
-                            modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
-                        )
+                    if (item.isDismissed) {
+                        Surface(
+                            color = MaterialTheme.colorScheme.secondary.copy(alpha = 0.2f),
+                            shape = MaterialTheme.shapes.extraSmall
+                        ) {
+                            Text(
+                                text = stringResource(id = getReasonLabel(item.dismissReason)),
+                                fontSize = 10.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.secondary,
+                                modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                            )
+                        }
+                        Spacer(modifier = Modifier.width(6.dp))
                     }
 
-                    Spacer(modifier = Modifier.width(6.dp))
                     TooltipBox(
                         positionProvider = TooltipDefaults.rememberPlainTooltipPositionProvider(),
                         tooltip = { PlainTooltip { Text(if (isExpanded) "Collapse details" else "Expand details") } },
@@ -659,13 +712,36 @@ fun LogNotificationCard(
                 }
             }
 
+            if (!isExpanded) {
+                if (item.title.isNotEmpty()) {
+                    Text(
+                        text = item.title,
+                        style = MaterialTheme.typography.bodyMedium,
+                        fontWeight = FontWeight.SemiBold,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.padding(top = 4.dp)
+                    )
+                }
+                if (item.content.isNotEmpty()) {
+                    Text(
+                        text = item.content,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        maxLines = 2,
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.padding(top = 2.dp)
+                    )
+                }
+            }
+
             if (isExpanded) {
                 Column(modifier = Modifier.padding(top = 8.dp)) {
                     Text(
-                        text = stringResource(id = R.string.reason_unknown),
+                        text = item.title,
                         style = MaterialTheme.typography.bodyLarge,
                         fontWeight = FontWeight.SemiBold,
-                        maxLines = 2,
+                        maxLines = 3,
                         overflow = TextOverflow.Ellipsis
                     )
                     Spacer(modifier = Modifier.height(4.dp))

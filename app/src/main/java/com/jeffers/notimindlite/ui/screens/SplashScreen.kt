@@ -55,7 +55,7 @@ fun SplashScreen(onTimeout: () -> Unit) {
         ) {
             // Note: Using a system icon as a placeholder until branded assets are added
             Image(
-                painter = painterResource(id = android.R.drawable.sym_def_app_icon),
+                painter = painterResource(id = android.R.drawable.ic_menu_info_details),
                 contentDescription = "NotiMind Logo",
                 modifier = Modifier.fillMaxSize()
             )
