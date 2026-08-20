@@ -26,6 +26,10 @@ object DatabaseExporter {
      */
     suspend fun performEncryptedBackup(context: Context, secretKey: SecretKey): Result<File> {
         return try {
+            if (!NetworkUtils.isInternetAvailable(context)) {
+                return Result.failure(IllegalStateException("Active internet connection is required to create a backup"))
+            }
+
             val dbFile = context.getDatabasePath("notifications.db")
             if (!dbFile.exists()) return Result.failure(Exception("Database file not found"))
 
@@ -39,7 +43,7 @@ object DatabaseExporter {
             )
 
             if (success) Result.success(backupFile)
-            else Result.failure(Exception("Encryption failed"))
+            else Result.failure(Exception("Backup encryption or notary authorization failed"))
         } catch (e: Exception) {
             Log.e(TAG, "Backup process failed", e)
             Result.failure(e)
