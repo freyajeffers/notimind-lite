@@ -1,0 +1,489 @@
+<?xml version="1.0" ?>
+<SmellBaseline>
+  <ManuallySuppressedIssues></ManuallySuppressedIssues>
+  <CurrentIssues>
+    <ID>ComplexCondition:DatabaseExporter.kt$DatabaseExporter$trimmedSpace.startsWith("=") || trimmedSpace.startsWith("+") || trimmedSpace.startsWith("-") || trimmedSpace.startsWith("@") || trimmedSpace.startsWith("\t") || trimmedSpace.startsWith("\r")</ID>
+    <ID>ComplexCondition:NotificationLoggerService.kt$NotificationLoggerService$(packageName == "android" || packageName == "com.android.systemui") &amp;&amp; (category == Notification.CATEGORY_SERVICE || category == Notification.CATEGORY_SYSTEM)</ID>
+    <ID>ComplexCondition:NotificationLoggerService.kt$NotificationLoggerService$(packageName == "android" || packageName == "com.android.systemui") &amp;&amp; (priority &lt;= -2 || category == Notification.CATEGORY_SERVICE || category == Notification.CATEGORY_SYSTEM || category == "sys") &amp;&amp; (title.contains("USB", ignoreCase = true) || title.contains("debugging", ignoreCase = true) || title.contains("charging", ignoreCase = true))</ID>
+    <ID>ComplexCondition:NotificationLoggerService.kt$NotificationLoggerService$summaryRegex.matches(title) || summaryRegex.matches(content) || (subText != null &amp;&amp; summaryRegex.matches(subText))</ID>
+    <ID>ComplexCondition:VectorEmbeddingHelper.kt$VectorEmbeddingHelper$!a.isNaN() &amp;&amp; !b.isNaN() &amp;&amp; !a.isInfinite() &amp;&amp; !b.isInfinite()</ID>
+    <ID>CyclomaticComplexMethod:ActiveNotificationsScreen.kt$@OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class) @Composable fun ActiveNotificationsScreen(dao: NotificationDao, authManager: AuthManager, db: AppDatabase)</ID>
+    <ID>CyclomaticComplexMethod:ActiveNotificationsScreen.kt$fun getReasonLabel(reason: Int?): Int</ID>
+    <ID>CyclomaticComplexMethod:DynamicClusterManager.kt$DynamicClusterManager$fun initialize(context: Context)</ID>
+    <ID>CyclomaticComplexMethod:DynamicClusterManager.kt$DynamicClusterManager$private fun inferDomainFromPackageName(pkgName: String, appLabel: String?): String?</ID>
+    <ID>CyclomaticComplexMethod:FirestoreSyncRepository.kt$FirestoreSyncRepository$suspend fun sync(userId: String, secretKey: SecretKey): Result&lt;Int&gt;</ID>
+    <ID>CyclomaticComplexMethod:LogHistoryScreen.kt$@OptIn(ExperimentalMaterial3Api::class) @Composable fun LogHistoryScreen(dao: NotificationDao, authManager: AuthManager, db: AppDatabase)</ID>
+    <ID>CyclomaticComplexMethod:NotificationLoggerService.kt$NotificationLoggerService$private fun processNotification(sbn: StatusBarNotification)</ID>
+    <ID>EmptyCatchBlock:ActionableChips.kt${ }</ID>
+    <ID>EmptyCatchBlock:BootReceiver.kt$BootReceiver${ }</ID>
+    <ID>EmptyCatchBlock:DatabaseMigrator.kt$DatabaseMigrator${ }</ID>
+    <ID>ExplicitGarbageCollectionCall:NotiMindApp.kt$NotiMindApp$gc()</ID>
+    <ID>FunctionNaming:ActionableChips.kt$@Composable fun ActionableChips( text: String, modifier: Modifier = Modifier )</ID>
+    <ID>FunctionNaming:ActionableChips.kt$@Composable private fun ActionChip( entity: ActionableEntityExtractor.ActionableEntity )</ID>
+    <ID>FunctionNaming:ActiveNotificationsScreen.kt$@Composable fun AppIconImage(appIconUri: String?, modifier: Modifier = Modifier.size(20.dp))</ID>
+    <ID>FunctionNaming:ActiveNotificationsScreen.kt$@OptIn(ExperimentalMaterial3Api::class) @Composable fun LogNotificationCard( item: NotificationEntity, dateTimeFormatter: DateTimeFormatter, dao: NotificationDao, isExpanded: Boolean, onToggleExpand: () -&gt; Unit )</ID>
+    <ID>FunctionNaming:ActiveNotificationsScreen.kt$@OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class) @Composable fun ActiveNotificationsScreen(dao: NotificationDao, authManager: AuthManager, db: AppDatabase)</ID>
+    <ID>FunctionNaming:AppPackageSelectorDialog.kt$@Composable fun AppPackageSelectorDialog( selectedPackages: List&lt;String&gt;, availableApps: List&lt;Pair&lt;String, String&gt;&gt;, // (packageName, appName) onDismiss: () -&gt; Unit, onPackagesSelected: (List&lt;String&gt;?) -&gt; Unit )</ID>
+    <ID>FunctionNaming:BackupKeyDialog.kt$@Composable fun BackupKeyDialog( keyBase64: String, onDismiss: () -&gt; Unit, onConfirm: () -&gt; Unit )</ID>
+    <ID>FunctionNaming:LogHistoryScreen.kt$@OptIn(ExperimentalMaterial3Api::class) @Composable fun LogHistoryCard( item: NotificationEntity, dateTimeFormatter: DateTimeFormatter, dao: NotificationDao, isExpanded: Boolean, onToggleExpand: () -&gt; Unit )</ID>
+    <ID>FunctionNaming:LogHistoryScreen.kt$@OptIn(ExperimentalMaterial3Api::class) @Composable fun LogHistoryScreen(dao: NotificationDao, authManager: AuthManager, db: AppDatabase)</ID>
+    <ID>FunctionNaming:Navigation.kt$@Composable fun MainNavigation( modifier: Modifier = Modifier, notificationDao: NotificationDao, authManager: AuthManager, db: AppDatabase )</ID>
+    <ID>FunctionNaming:NotificationDetailPanel.kt$@Composable fun NotificationDetailPanel( item: NotificationEntity, dateTimeFormatter: DateTimeFormatter )</ID>
+    <ID>FunctionNaming:NotificationDetailPanel.kt$@Composable private fun DetailRow(label: String, value: String)</ID>
+    <ID>FunctionNaming:SettingsScreen.kt$@Composable fun SettingsScreen( authManager: AuthManager, db: AppDatabase, webClientId: String = "" )</ID>
+    <ID>FunctionNaming:SpeedDialSettingsFab.kt$@Composable fun SpeedDialSettingsFab( onSyncClick: () -&gt; Unit, onBackupClick: () -&gt; Unit, onSettingsClick: () -&gt; Unit, modifier: Modifier = Modifier )</ID>
+    <ID>FunctionNaming:SpeedDialSettingsFab.kt$@Composable private fun SpeedDialItem( icon: ImageVector, label: String, scale: Float, onClick: () -&gt; Unit )</ID>
+    <ID>FunctionNaming:SplashScreen.kt$@Composable fun SplashScreen(onTimeout: () -&gt; Unit)</ID>
+    <ID>FunctionNaming:Theme.kt$@Composable fun NotiMindLiteTheme( darkTheme: Boolean = isSystemInDarkTheme(), dynamicColor: Boolean = true, content: @Composable () -&gt; Unit )</ID>
+    <ID>InvalidPackageDeclaration:EncryptedBackupManager.kt$package com.jeffers.notimindlite.data.local</ID>
+    <ID>InvalidPackageDeclaration:GeminiMapsDetectorTest.kt$package com.jeffers.notimindlite</ID>
+    <ID>LongMethod:ActionableChips.kt$@Composable private fun ActionChip( entity: ActionableEntityExtractor.ActionableEntity )</ID>
+    <ID>LongMethod:ActiveNotificationsScreen.kt$@OptIn(ExperimentalMaterial3Api::class) @Composable fun LogNotificationCard( item: NotificationEntity, dateTimeFormatter: DateTimeFormatter, dao: NotificationDao, isExpanded: Boolean, onToggleExpand: () -&gt; Unit )</ID>
+    <ID>LongMethod:ActiveNotificationsScreen.kt$@OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class) @Composable fun ActiveNotificationsScreen(dao: NotificationDao, authManager: AuthManager, db: AppDatabase)</ID>
+    <ID>LongMethod:AppPackageSelectorDialog.kt$@Composable fun AppPackageSelectorDialog( selectedPackages: List&lt;String&gt;, availableApps: List&lt;Pair&lt;String, String&gt;&gt;, // (packageName, appName) onDismiss: () -&gt; Unit, onPackagesSelected: (List&lt;String&gt;?) -&gt; Unit )</ID>
+    <ID>LongMethod:BootReceiver.kt$BootReceiver$override fun onReceive(context: Context?, intent: Intent?)</ID>
+    <ID>LongMethod:DatabaseMigrator.kt$DatabaseMigrator$fun executeRawDbMergeAndRebuildFts(context: Context, ceDatabase: AppDatabase)</ID>
+    <ID>LongMethod:FirestoreSyncRepository.kt$FirestoreSyncRepository$suspend fun sync(userId: String, secretKey: SecretKey): Result&lt;Int&gt;</ID>
+    <ID>LongMethod:HighLoadBurstLifecycleTest.kt$HighLoadBurstLifecycleTest$@Test fun tc_T4_002_stressTenThousandEventsStabilityAndDatabaseSla()</ID>
+    <ID>LongMethod:LogHistoryScreen.kt$@OptIn(ExperimentalMaterial3Api::class) @Composable fun LogHistoryCard( item: NotificationEntity, dateTimeFormatter: DateTimeFormatter, dao: NotificationDao, isExpanded: Boolean, onToggleExpand: () -&gt; Unit )</ID>
+    <ID>LongMethod:LogHistoryScreen.kt$@OptIn(ExperimentalMaterial3Api::class) @Composable fun LogHistoryScreen(dao: NotificationDao, authManager: AuthManager, db: AppDatabase)</ID>
+    <ID>LongMethod:MainActivity.kt$MainActivity$override fun onCreate(savedInstanceState: Bundle?)</ID>
+    <ID>LongMethod:NotificationDaoTest.kt$NotificationDaoTest$@Test fun sub2msQueryPerformanceSLA_50kRecords()</ID>
+    <ID>LongMethod:NotificationLoggerService.kt$NotificationLoggerService$private fun processNotification(sbn: StatusBarNotification)</ID>
+    <ID>LongMethod:PersistenceBoundaryTest.kt$PersistenceBoundaryTest$@Test fun tc_R2_T2_008_fiftyThousandEntityQueryPerformanceBenchmark()</ID>
+    <ID>LongMethod:SettingsScreen.kt$@Composable fun SettingsScreen( authManager: AuthManager, db: AppDatabase, webClientId: String = "" )</ID>
+    <ID>LongParameterList:BaseRobolectricTest.kt$BaseRobolectricTest$( key: String = "com.example.app|101|null|10001", packageName: String = "com.example.app", title: String = "Mock Title", text: String = "Mock Text", postTime: Long = System.currentTimeMillis(), isOngoing: Boolean = false, isClearable: Boolean = true )</ID>
+    <ID>LongParameterList:BaseRobolectricTest.kt$BaseRobolectricTest$( key: String = "test_key_${System.currentTimeMillis()}_${(1..1000).random()}", packageName: String = "com.example.app", appName: String = "Example App", title: String = "Test Title", content: String = "Test Content Body", postTime: Long = System.currentTimeMillis(), isDismissed: Boolean = false, isPersistent: Boolean = false )</ID>
+    <ID>LongParameterList:NotificationDao.kt$NotificationDao$(key: String, packageName: String, title: String, content: String, reason: Int, dismissTime: Long = System.currentTimeMillis())</ID>
+    <ID>MagicNumber:ActiveNotificationsScreen.kt$0.9f</ID>
+    <ID>MagicNumber:ActiveNotificationsScreen.kt$10</ID>
+    <ID>MagicNumber:ActiveNotificationsScreen.kt$100L</ID>
+    <ID>MagicNumber:ActiveNotificationsScreen.kt$11</ID>
+    <ID>MagicNumber:ActiveNotificationsScreen.kt$12</ID>
+    <ID>MagicNumber:ActiveNotificationsScreen.kt$13</ID>
+    <ID>MagicNumber:ActiveNotificationsScreen.kt$14</ID>
+    <ID>MagicNumber:ActiveNotificationsScreen.kt$15</ID>
+    <ID>MagicNumber:ActiveNotificationsScreen.kt$16</ID>
+    <ID>MagicNumber:ActiveNotificationsScreen.kt$17</ID>
+    <ID>MagicNumber:ActiveNotificationsScreen.kt$18</ID>
+    <ID>MagicNumber:ActiveNotificationsScreen.kt$19</ID>
+    <ID>MagicNumber:ActiveNotificationsScreen.kt$2</ID>
+    <ID>MagicNumber:ActiveNotificationsScreen.kt$20</ID>
+    <ID>MagicNumber:ActiveNotificationsScreen.kt$21</ID>
+    <ID>MagicNumber:ActiveNotificationsScreen.kt$22</ID>
+    <ID>MagicNumber:ActiveNotificationsScreen.kt$23</ID>
+    <ID>MagicNumber:ActiveNotificationsScreen.kt$24</ID>
+    <ID>MagicNumber:ActiveNotificationsScreen.kt$3</ID>
+    <ID>MagicNumber:ActiveNotificationsScreen.kt$4</ID>
+    <ID>MagicNumber:ActiveNotificationsScreen.kt$5</ID>
+    <ID>MagicNumber:ActiveNotificationsScreen.kt$6</ID>
+    <ID>MagicNumber:ActiveNotificationsScreen.kt$7</ID>
+    <ID>MagicNumber:ActiveNotificationsScreen.kt$8</ID>
+    <ID>MagicNumber:ActiveNotificationsScreen.kt$9</ID>
+    <ID>MagicNumber:AppDatabase.kt$AppDatabase.Companion.&lt;no name provided&gt;$10</ID>
+    <ID>MagicNumber:AppDatabase.kt$AppDatabase.Companion.&lt;no name provided&gt;$11</ID>
+    <ID>MagicNumber:AppDatabase.kt$AppDatabase.Companion.&lt;no name provided&gt;$12</ID>
+    <ID>MagicNumber:AppDatabase.kt$AppDatabase.Companion.&lt;no name provided&gt;$13</ID>
+    <ID>MagicNumber:AppDatabase.kt$AppDatabase.Companion.&lt;no name provided&gt;$14</ID>
+    <ID>MagicNumber:AppDatabase.kt$AppDatabase.Companion.&lt;no name provided&gt;$15</ID>
+    <ID>MagicNumber:AppDatabase.kt$AppDatabase.Companion.&lt;no name provided&gt;$16</ID>
+    <ID>MagicNumber:AppDatabase.kt$AppDatabase.Companion.&lt;no name provided&gt;$17</ID>
+    <ID>MagicNumber:AppDatabase.kt$AppDatabase.Companion.&lt;no name provided&gt;$3</ID>
+    <ID>MagicNumber:AppDatabase.kt$AppDatabase.Companion.&lt;no name provided&gt;$4</ID>
+    <ID>MagicNumber:AppDatabase.kt$AppDatabase.Companion.&lt;no name provided&gt;$5</ID>
+    <ID>MagicNumber:AppDatabase.kt$AppDatabase.Companion.&lt;no name provided&gt;$6</ID>
+    <ID>MagicNumber:AppDatabase.kt$AppDatabase.Companion.&lt;no name provided&gt;$7</ID>
+    <ID>MagicNumber:AppDatabase.kt$AppDatabase.Companion.&lt;no name provided&gt;$8</ID>
+    <ID>MagicNumber:AppDatabase.kt$AppDatabase.Companion.&lt;no name provided&gt;$9</ID>
+    <ID>MagicNumber:AppIconCache.kt$AppIconCache$1024</ID>
+    <ID>MagicNumber:AppIconCache.kt$AppIconCache$8</ID>
+    <ID>MagicNumber:AppIconCache.kt$AppIconCache.&lt;no name provided&gt;$1024</ID>
+    <ID>MagicNumber:BackupNotaryClient.kt$BackupNotaryClient$16</ID>
+    <ID>MagicNumber:BackupNotaryClient.kt$BackupNotaryClient$200</ID>
+    <ID>MagicNumber:BackupNotaryClient.kt$BackupNotaryClient$5000</ID>
+    <ID>MagicNumber:BootReceiver.kt$BootReceiver$0x7FFFFFFF</ID>
+    <ID>MagicNumber:BootReceiver.kt$BootReceiver$1000</ID>
+    <ID>MagicNumber:Converters.kt$Converters$4</ID>
+    <ID>MagicNumber:EncryptedBackupManager.kt$256</ID>
+    <ID>MagicNumber:EncryptedBackupManager.kt$EncryptedBackupManager$8192</ID>
+    <ID>MagicNumber:HybridSearchEngine.kt$HybridSearchEngine$1000</ID>
+    <ID>MagicNumber:IntelligentSuggestionEngine.kt$IntelligentSuggestionEngine$10</ID>
+    <ID>MagicNumber:LogHistoryScreen.kt$0.9f</ID>
+    <ID>MagicNumber:LogHistoryScreen.kt$100L</ID>
+    <ID>MagicNumber:LogHistoryScreen.kt$4</ID>
+    <ID>MagicNumber:NotificationLoggerService.kt$NotificationLoggerService$100</ID>
+    <ID>MagicNumber:NotificationLoggerService.kt$NotificationLoggerService$1000L</ID>
+    <ID>MagicNumber:NotificationLoggerService.kt$NotificationLoggerService$2</ID>
+    <ID>MagicNumber:NotificationLoggerService.kt$NotificationLoggerService$24</ID>
+    <ID>MagicNumber:NotificationLoggerService.kt$NotificationLoggerService$30L</ID>
+    <ID>MagicNumber:NotificationLoggerService.kt$NotificationLoggerService$60</ID>
+    <ID>MagicNumber:NotificationLoggerService.kt$NotificationLoggerService.Companion.&lt;no name provided&gt;$0.75f</ID>
+    <ID>MagicNumber:NotificationLoggerService.kt$NotificationLoggerService.Companion.&lt;no name provided&gt;$16</ID>
+    <ID>MagicNumber:SplashScreen.kt$0.8f</ID>
+    <ID>MagicNumber:SplashScreen.kt$1500</ID>
+    <ID>MagicNumber:SplashScreen.kt$500</ID>
+    <ID>MagicNumber:SyncWorker.kt$SyncWorker.Companion$6</ID>
+    <ID>MagicNumber:Theme.kt$0x80000000</ID>
+    <ID>MagicNumber:Theme.kt$0xFF1C1B1F</ID>
+    <ID>MagicNumber:Theme.kt$0xFF1D192B</ID>
+    <ID>MagicNumber:Theme.kt$0xFF21005D</ID>
+    <ID>MagicNumber:Theme.kt$0xFF31111D</ID>
+    <ID>MagicNumber:Theme.kt$0xFF332D41</ID>
+    <ID>MagicNumber:Theme.kt$0xFF381E72</ID>
+    <ID>MagicNumber:Theme.kt$0xFF492532</ID>
+    <ID>MagicNumber:Theme.kt$0xFF49454F</ID>
+    <ID>MagicNumber:Theme.kt$0xFF4A4458</ID>
+    <ID>MagicNumber:Theme.kt$0xFF4F378B</ID>
+    <ID>MagicNumber:Theme.kt$0xFF625B71</ID>
+    <ID>MagicNumber:Theme.kt$0xFF633B48</ID>
+    <ID>MagicNumber:Theme.kt$0xFF6750A4</ID>
+    <ID>MagicNumber:Theme.kt$0xFF79747E</ID>
+    <ID>MagicNumber:Theme.kt$0xFF7D5260</ID>
+    <ID>MagicNumber:Theme.kt$0xFF938F99</ID>
+    <ID>MagicNumber:Theme.kt$0xFFCAC4D0</ID>
+    <ID>MagicNumber:Theme.kt$0xFFCCC2DC</ID>
+    <ID>MagicNumber:Theme.kt$0xFFD0BCFF</ID>
+    <ID>MagicNumber:Theme.kt$0xFFE6E1E5</ID>
+    <ID>MagicNumber:Theme.kt$0xFFE7E0EC</ID>
+    <ID>MagicNumber:Theme.kt$0xFFE8DEF8</ID>
+    <ID>MagicNumber:Theme.kt$0xFFEADDFF</ID>
+    <ID>MagicNumber:Theme.kt$0xFFEFB8C8</ID>
+    <ID>MagicNumber:Theme.kt$0xFFFFD8E4</ID>
+    <ID>MagicNumber:Theme.kt$0xFFFFFBFE</ID>
+    <ID>MagicNumber:Theme.kt$0xFFFFFFFF</ID>
+    <ID>MagicNumber:VectorEmbeddingHelper.kt$VectorEmbeddingHelper$0.7f</ID>
+    <ID>MagicNumber:VectorEmbeddingHelper.kt$VectorEmbeddingHelper$0.8f</ID>
+    <ID>MagicNumber:VectorEmbeddingHelper.kt$VectorEmbeddingHelper$0x7FFFFFFF</ID>
+    <ID>MagicNumber:VectorEmbeddingHelper.kt$VectorEmbeddingHelper$1.5f</ID>
+    <ID>MagicNumber:VectorEmbeddingHelper.kt$VectorEmbeddingHelper$1.8f</ID>
+    <ID>MagicNumber:VectorEmbeddingHelper.kt$VectorEmbeddingHelper$256</ID>
+    <ID>MagicNumber:VectorEmbeddingHelper.kt$VectorEmbeddingHelper$3</ID>
+    <ID>MagicNumber:VectorEmbeddingHelper.kt$VectorEmbeddingHelper$32</ID>
+    <ID>MagicNumber:VectorEmbeddingHelper.kt$VectorEmbeddingHelper$4</ID>
+    <ID>MagicNumber:VectorEmbeddingHelper.kt$VectorEmbeddingHelper$64</ID>
+    <ID>MagicNumber:VectorEmbeddingHelper.kt$VectorEmbeddingHelper$96</ID>
+    <ID>MatchingDeclarationName:LogHistoryScreen.kt$SortMode</ID>
+    <ID>MatchingDeclarationName:Navigation.kt$Screen</ID>
+    <ID>MaxLineLength:ActionableChips.kt$ActionChipConfig(Icons.Default.ContentCopy, "OTP", MaterialTheme.colorScheme.primaryContainer, MaterialTheme.colorScheme.onPrimaryContainer)</ID>
+    <ID>MaxLineLength:ActionableChips.kt$ActionChipConfig(Icons.Default.OpenInNew, "Link", MaterialTheme.colorScheme.secondaryContainer, MaterialTheme.colorScheme.onSecondaryContainer)</ID>
+    <ID>MaxLineLength:ActionableChips.kt$ActionChipConfig(Icons.Default.Place, "Place", MaterialTheme.colorScheme.tertiaryContainer, MaterialTheme.colorScheme.onTertiaryContainer)</ID>
+    <ID>MaxLineLength:ActionableChips.kt$if</ID>
+    <ID>MaxLineLength:ActionableChips.kt$leadingIcon = { Icon(Icons.Default.ContentCopy, contentDescription = null, modifier = Modifier.size(18.dp)) }</ID>
+    <ID>MaxLineLength:ActionableChips.kt$leadingIcon = { Icon(Icons.Default.OpenInNew, contentDescription = null, modifier = Modifier.size(18.dp)) }</ID>
+    <ID>MaxLineLength:ActionableChips.kt$text = { Text("Copy ${if (entity.type == ActionableEntityExtractor.EntityType.OTP) "Code" else if (entity.type == ActionableEntityExtractor.EntityType.URL) "Link" else "Address"}") }</ID>
+    <ID>MaxLineLength:ActionableChips.kt$text = { Text(if (entity.type == ActionableEntityExtractor.EntityType.URL) "Open in Browser" else "Open in Maps") }</ID>
+    <ID>MaxLineLength:ActionableChips.kt$val uriString = if (entity.type == ActionableEntityExtractor.EntityType.URL) entity.value else "geo:0,0?q=${Uri.encode(entity.value)}"</ID>
+    <ID>MaxLineLength:ActiveNotificationsScreen.kt$NotificationSection$DISMISSED : NotificationSection</ID>
+    <ID>MaxLineLength:ActiveNotificationsScreen.kt$color = if (isGranted) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.onErrorContainer</ID>
+    <ID>MaxLineLength:ActiveNotificationsScreen.kt$color = if (isGranted) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error</ID>
+    <ID>MaxLineLength:ActiveNotificationsScreen.kt$containerColor = if (isGranted) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.errorContainer</ID>
+    <ID>MaxLineLength:ActiveNotificationsScreen.kt$contentColor = if (isGranted) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onErrorContainer</ID>
+    <ID>MaxLineLength:ActiveNotificationsScreen.kt$expandedCards = if (cardExpanded) expandedCards - item.key else expandedCards + item.key</ID>
+    <ID>MaxLineLength:ActiveNotificationsScreen.kt$filtered.filter { it.title.contains(debouncedSearchQuery, ignoreCase = true) || it.content.contains(debouncedSearchQuery, ignoreCase = true) }</ID>
+    <ID>MaxLineLength:ActiveNotificationsScreen.kt$filteredList.filter { it.title.contains(debouncedSearchQuery, ignoreCase = true) || it.content.contains(debouncedSearchQuery, ignoreCase = true) }</ID>
+    <ID>MaxLineLength:ActiveNotificationsScreen.kt$imageVector = if (isExpanded) Icons.Default.ExpandLess else Icons.Default.ExpandMore</ID>
+    <ID>MaxLineLength:ActiveNotificationsScreen.kt$imageVector = if (item.isPinned) Icons.Default.Bookmark else Icons.Outlined.BookmarkBorder</ID>
+    <ID>MaxLineLength:ActiveNotificationsScreen.kt$listOf(NotificationSection.ACTIVE, NotificationSection.FILTERED, NotificationSection.DISMISSED, NotificationSection.LOST)</ID>
+    <ID>MaxLineLength:ActiveNotificationsScreen.kt$listOf(NotificationSection.PINNED, NotificationSection.ACTIVE, NotificationSection.FILTERED, NotificationSection.DISMISSED, NotificationSection.LOST)</ID>
+    <ID>MaxLineLength:ActiveNotificationsScreen.kt$text = if (isGranted) "Status: Active &amp; Listening" else "Status: Permission Required"</ID>
+    <ID>MaxLineLength:ActiveNotificationsScreen.kt$tint = if (!selectedPackages.isNullOrEmpty()) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface</ID>
+    <ID>MaxLineLength:ActiveNotificationsScreen.kt$tint = if (item.isPinned) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant</ID>
+    <ID>MaxLineLength:ActiveNotificationsScreen.kt$tint = if (searchQuery.isNotEmpty() || isSearchExplicitlyOpened || isSearchFocused) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface</ID>
+    <ID>MaxLineLength:ActiveNotificationsScreen.kt$title = { Text(stringResource(id = R.string.active_notifications_title), fontWeight = FontWeight.Bold) }</ID>
+    <ID>MaxLineLength:ActiveNotificationsScreen.kt$tooltip = { PlainTooltip { Text(if (item.isPinned) "Unpin notification" else "Pin notification") } }</ID>
+    <ID>MaxLineLength:ActiveNotificationsScreen.kt$tooltip = { PlainTooltip { Text(stringResource(id = R.string.active_notifications_filter_apps)) } }</ID>
+    <ID>MaxLineLength:ActiveNotificationsScreen.kt$tooltip = { PlainTooltip { Text(stringResource(id = R.string.active_notifications_search_placeholder)) } }</ID>
+    <ID>MaxLineLength:ActiveNotificationsScreen.kt$val</ID>
+    <ID>MaxLineLength:AppDatabase.kt$AppDatabase$@Database(entities = [NotificationEntity::class, AppEntity::class, NotificationFtsEntity::class, BackupRecord::class], version = 17, exportSchema = false)</ID>
+    <ID>MaxLineLength:AppDatabase.kt$AppDatabase.Companion$val deContext = if (appContext.isDeviceProtectedStorage) appContext else appContext.createDeviceProtectedStorageContext()</ID>
+    <ID>MaxLineLength:AppDatabase.kt$AppDatabase.Companion.&lt;no name provided&gt;$db.execSQL("CREATE INDEX IF NOT EXISTS `index_notifications_isDismissed_dismissTime` ON `notifications` (`isDismissed`, `dismissTime`)")</ID>
+    <ID>MaxLineLength:AppDatabase.kt$AppDatabase.Companion.&lt;no name provided&gt;$db.execSQL("CREATE INDEX IF NOT EXISTS `index_notifications_isDismissed_postTime` ON `notifications` (`isDismissed`, `postTime`)")</ID>
+    <ID>MaxLineLength:AppDatabase.kt$AppDatabase.Companion.&lt;no name provided&gt;$db.execSQL("CREATE INDEX IF NOT EXISTS `index_notifications_isPinned_postTime` ON `notifications` (`isPinned`, `postTime`)")</ID>
+    <ID>MaxLineLength:AppDatabase.kt$AppDatabase.Companion.&lt;no name provided&gt;$db.execSQL("CREATE INDEX IF NOT EXISTS `index_notifications_packageName_isDismissed` ON `notifications` (`packageName`, `isDismissed`)")</ID>
+    <ID>MaxLineLength:AppDatabase.kt$AppDatabase.Companion.&lt;no name provided&gt;$db.execSQL("CREATE INDEX IF NOT EXISTS `index_notifications_packageName` ON `notifications` (`packageName`)")</ID>
+    <ID>MaxLineLength:AppPackageSelectorDialog.kt$Button</ID>
+    <ID>MaxLineLength:AppPackageSelectorDialog.kt$Text(pkg, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)</ID>
+    <ID>MaxLineLength:ArchitectureBoundaryTest.kt$ArchitectureBoundaryTest$assertSame("All concurrent thread calls must return the identical database instance", firstInstance, instance)</ID>
+    <ID>MaxLineLength:ArchitectureSetupTest.kt$ArchitectureSetupTest$PackageManager.GET_PERMISSIONS or PackageManager.GET_SERVICES or PackageManager.GET_RECEIVERS or PackageManager.GET_ACTIVITIES</ID>
+    <ID>MaxLineLength:ArchitectureSetupTest.kt$ArchitectureSetupTest$assertFalse("Forbidden dependency keyword '$keyword' found in app/build.gradle.kts", content.contains(keyword))</ID>
+    <ID>MaxLineLength:ArchitectureSetupTest.kt$ArchitectureSetupTest$assertFalse("Forbidden dependency keyword '$keyword' found in libs.versions.toml", content.contains(keyword))</ID>
+    <ID>MaxLineLength:ArchitectureSetupTest.kt$ArchitectureSetupTest$assertTrue("POST_NOTIFICATIONS permission must be declared", requestedPermissions.contains("android.permission.POST_NOTIFICATIONS"))</ID>
+    <ID>MaxLineLength:ArchitectureSetupTest.kt$ArchitectureSetupTest$assertTrue("RECEIVE_BOOT_COMPLETED permission must be declared", requestedPermissions.contains("android.permission.RECEIVE_BOOT_COMPLETED"))</ID>
+    <ID>MaxLineLength:AuthManager.kt$AuthManager$val session = _session.value.copy(isAuthenticating = false, error = e.localizedMessage ?: "Google Sign-In canceled")</ID>
+    <ID>MaxLineLength:BackupConnectivityBoundaryTest.kt$BackupConnectivityBoundaryTest$coEvery { DatabaseExporter.performEncryptedBackup(context, testKey) } returns Result.success(java.io.File("/dev/null"))</ID>
+    <ID>MaxLineLength:BackupKeyDialog.kt$"This key is required to decrypt your backup. Store it safely in a password manager or secure note. If you lose this key, the backup cannot be recovered."</ID>
+    <ID>MaxLineLength:BackupKeyDialog.kt$Icon(Icons.Default.ContentCopy, contentDescription = "Copy Key", modifier = Modifier.size(18.dp))</ID>
+    <ID>MaxLineLength:BackupNotaryClient.kt$BackupNotaryClient$private suspend</ID>
+    <ID>MaxLineLength:BootRestoreManager.kt$BootRestoreManager$suspend</ID>
+    <ID>MaxLineLength:CloudChaosStabilityTest.kt$CloudChaosStabilityTest$FirebaseFirestoreException("Network connection lost mid-upload", FirebaseFirestoreException.Code.UNAVAILABLE)</ID>
+    <ID>MaxLineLength:CloudChaosStabilityTest.kt$CloudChaosStabilityTest$assertTrue("Sync should complete successfully for large batches. Failure: ${result.exceptionOrNull()?.message}", result.isSuccess)</ID>
+    <ID>MaxLineLength:DatabaseExporter.kt$DatabaseExporter$put("postTimeFormatted", SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).format(Date(notif.postTime)))</ID>
+    <ID>MaxLineLength:DatabaseExporter.kt$DatabaseExporter$return Result.failure(IllegalStateException("Active internet connection is required to create a backup"))</ID>
+    <ID>MaxLineLength:DatabaseExporter.kt$DatabaseExporter$sb.append("${n.id},${n.packageName},$escapedAppName,$escapedTitle,$escapedContent,$postTimeStr,${n.isDismissed},${n.dismissReason ?: ""},${n.isPinned}\n")</ID>
+    <ID>MaxLineLength:DatabaseExporterTest.kt$DatabaseExporterTest$val entityAt = NotificationEntity(key = "k4", packageName = "p", appName = "App", title = "@SUM(1,2)", content = "@appName")</ID>
+    <ID>MaxLineLength:DatabaseExporterTest.kt$DatabaseExporterTest$val entityEqual = NotificationEntity(key = "k1", packageName = "p", appName = "App", title = "=1+1", content = "=SUM(A1:A10)")</ID>
+    <ID>MaxLineLength:DatabaseExporterTest.kt$DatabaseExporterTest$val entityLeadingSpaceFormula = NotificationEntity(key = "k6", packageName = "p", appName = "App", title = " =1+1", content = " +2")</ID>
+    <ID>MaxLineLength:DatabaseExporterTest.kt$DatabaseExporterTest$val entityMinus = NotificationEntity(key = "k3", packageName = "p", appName = "App", title = "-1+2", content = "-cmd|' /C calc'!A0")</ID>
+    <ID>MaxLineLength:DatabaseExporterTest.kt$DatabaseExporterTest$val entityPlus = NotificationEntity(key = "k2", packageName = "p", appName = "App", title = "+1-2", content = "+1+1")</ID>
+    <ID>MaxLineLength:DatabaseExporterTest.kt$DatabaseExporterTest$val entityTab = NotificationEntity(key = "k5", packageName = "p", appName = "App", title = "\tTabbed", content = "\rCarriage")</ID>
+    <ID>MaxLineLength:DynamicClusterManager.kt$DynamicClusterManager$"accommodation" to listOf("hotel", "booking", "reservation", "itinerary", "airbnb", "expedia", "hostel", "destination", "layover", "seat", "route", "mileage", "frequent flyer", "kayak", "priceline", "hopper", "cruise")</ID>
+    <ID>MaxLineLength:DynamicClusterManager.kt$DynamicClusterManager$"audio" to listOf("media", "audio", "music", "song", "track", "podcast", "radio", "sound", "stream", "spotify", "soundcloud", "pandora", "deezer", "tidal", "audible", "playlist", "album", "artist", "playing", "now playing", "headphones", "bluetooth audio", "equalizer")</ID>
+    <ID>MaxLineLength:DynamicClusterManager.kt$DynamicClusterManager$"authentication" to listOf("code", "otp", "password", "2fa", "mfa", "verify", "verification", "login", "auth", "authentication", "pin", "token", "passcode", "biometric", "fingerprint", "key", "confirm", "session", "credential", "identity", "reset", "duo", "authenticator", "yubikey", "temporary code", "verification code", "one-time", "passkey", "authenticating")</ID>
+    <ID>MaxLineLength:DynamicClusterManager.kt$DynamicClusterManager$"aviation" to listOf("travel", "flight", "airline", "gate", "boarding", "terminal", "airport", "checkin", "delay", "departure", "arrival", "luggage", "delta", "united", "american airlines", "southwest", "boarding pass", "tsa", "baggage claim")</ID>
+    <ID>MaxLineLength:DynamicClusterManager.kt$DynamicClusterManager$"banking" to listOf("banking", "money", "payment", "receipt", "transfer", "balance", "credit", "debit", "card", "wallet", "cash", "bill", "invoice", "charge", "chase", "revolut", "cashapp", "transaction", "deposit", "withdrawal", "refund", "budget", "atm", "statement", "wire", "autopay", "overdraft", "savings", "checking", "monzo", "sofi", "mint", "quickbooks")</ID>
+    <ID>MaxLineLength:DynamicClusterManager.kt$DynamicClusterManager$"care" to listOf("pet", "dog", "cat", "puppy", "kitten", "vet", "veterinary", "clinic", "vaccine", "chewy", "rover", "barkbox", "grooming", "walk", "walker", "foster", "adoption", "shelter", "rescue", "collar", "microchip", "leash", "paws", "litter", "pet food", "kennel", "boarding", "flea", "tick", "rabies", "petco", "petsmart", "aquarium", "bird", "reptile")</ID>
+    <ID>MaxLineLength:DynamicClusterManager.kt$DynamicClusterManager$"collaboration" to listOf("zoom", "teams", "meet", "conference", "due", "sync", "notion", "trello", "asana", "jira", "docs", "excel", "powerpoint", "word", "workspace", "evernote", "obsidian", "github", "gitlab", "bitbucket", "linear", "basecamp", "monday", "presentation", "spreadsheet", "confluence")</ID>
+    <ID>MaxLineLength:DynamicClusterManager.kt$DynamicClusterManager$"control" to listOf("home", "smart", "thermostat", "light", "lock", "doorbell", "camera", "motion", "sensor", "nest", "ring", "alexa", "google home", "hue", "alarm", "garage", "temperature", "plug", "device", "security cam", "smart life", "tuya", "matter", "zigbee", "z-wave", "automation", "scene", "bulb", "switch", "vacuum", "roborock", "roomba", "appliance", "ecobee", "simplisafe", "arlo", "nanoleaf", "smartthings", "lutron", "refrigerator")</ID>
+    <ID>MaxLineLength:DynamicClusterManager.kt$DynamicClusterManager$"crypto" to listOf("crypto", "bitcoin", "ethereum", "coinbase", "binance", "ledger", "forex", "web3", "wallet", "token", "nft", "blockchain")</ID>
+    <ID>MaxLineLength:DynamicClusterManager.kt$DynamicClusterManager$"culinary" to listOf("recipe", "cooking", "kitchen", "chef", "baking", "ingredients", "dinner", "lunch", "breakfast", "snack", "restaurant", "reservation", "opentable", "yelp", "menu", "dining", "coffee", "barista", "cocktail", "wine", "beer", "brewery", "tasting", "dish", "grocery", "supermarket", "produce", "bakery", "deli", "culinary", "flavor", "cookbook", "tasty", "allrecipes", "nytcars", "bon appetit", "roast", "grill", "dessert", "appetizer")</ID>
+    <ID>MaxLineLength:DynamicClusterManager.kt$DynamicClusterManager$"employment" to listOf("job", "career", "recruiter", "interview", "hiring", "resume", "cv", "application", "applied", "position", "salary", "offer", "linkedin", "indeed", "glassdoor", "monster", "ziprecruiter", "employment", "employer", "candidate", "promotion", "workplace", "hr", "onboarding", "headhunter", "job alert", "requisition", "cover letter", "internship", "benefits")</ID>
+    <ID>MaxLineLength:DynamicClusterManager.kt$DynamicClusterManager$"entertainment" to listOf("tickets", "concert", "festival", "event", "show", "theater", "broadway", "ticketmaster", "stubhub", "seatgeek", "livenation", "venue", "stadium", "arena", "vip", "pass", "wristband", "lineup", "performer", "stage", "curtain", "seating", "box office", "tour", "showtime", "general admission", "doors open", "headliner", "merch", "amphitheater")</ID>
+    <ID>MaxLineLength:DynamicClusterManager.kt$DynamicClusterManager$"fitness" to listOf("health", "fitness", "workout", "gym", "run", "steps", "heart", "pulse", "sleep", "calories", "water", "exercise", "walk", "activity", "fitbit", "garmin", "strava", "myfitnesspal", "peloton", "nike run", "whoop", "cardio", "nutrition")</ID>
+    <ID>MaxLineLength:DynamicClusterManager.kt$DynamicClusterManager$"food" to listOf("food", "restaurant", "takeout", "groceries", "meal", "pizza", "burger", "coffee", "starbucks", "seamless", "deliveroo", "caviar", "doordash", "uber eats", "grubhub", "postmates")</ID>
+    <ID>MaxLineLength:DynamicClusterManager.kt$DynamicClusterManager$"investing" to listOf("invest", "stock", "dividend", "interest", "capital", "fidelity", "vanguard", "schwab", "robinhood", "wealth", "apr", "bonus", "cashback", "payout", "settlement", "remittance", "tax", "irs", "yield")</ID>
+    <ID>MaxLineLength:DynamicClusterManager.kt$DynamicClusterManager$"learning" to listOf("education", "learning", "course", "class", "school", "student", "university", "college", "lesson", "study", "homework", "assignment", "exam", "grade", "duolingo", "canvas", "blackboard", "coursera", "udemy", "khan", "quizlet", "tutor", "lecture", "textbook", "academic", "degree", "syllabus", "flashcards", "practice", "vocabulary", "math", "science", "language", "edx", "skillshare", "classroom", "semester", "diploma", "gpa", "quiz")</ID>
+    <ID>MaxLineLength:DynamicClusterManager.kt$DynamicClusterManager$"logistics" to listOf("delivery", "package", "track", "courier", "amazon", "fedex", "ups", "dhl", "usps", "shipment", "shipped", "arriving", "driver", "dispatch", "parcel", "carrier", "mailbox", "dropoff", "transit", "out for delivery", "delivered", "logistics", "tracking", "freight", "cargo", "order status", "ontrac", "lasership", "prime", "fresh", "shipt", "gopuff", "cart", "fulfilled", "estimated arrival", "in transit", "locker")</ID>
+    <ID>MaxLineLength:DynamicClusterManager.kt$DynamicClusterManager$"medical" to listOf("doctor", "medicine", "prescription", "pharmacy", "appointment", "hospital", "clinic", "diet", "weight", "headspace", "calm", "meditation", "blood pressure", "glucose", "hydration", "cycle", "wellness", "vitamins", "dosage", "apple health", "telehealth", "refill", "dentist")</ID>
+    <ID>MaxLineLength:DynamicClusterManager.kt$DynamicClusterManager$"messaging" to listOf("chat", "message", "dm", "text", "conversation", "talk", "sms", "mms", "whatsapp", "telegram", "signal", "messenger", "discord", "slack", "direct message", "ping", "huddle", "voice note", "inbox message", "sent a photo")</ID>
+    <ID>MaxLineLength:DynamicClusterManager.kt$DynamicClusterManager$"networking" to listOf("social", "post", "friend", "reply", "typing", "instagram", "facebook", "twitter", "threads", "tiktok", "snapchat", "reddit", "linkedin", "group", "call", "voice", "channel", "mention", "reaction", "comment", "like", "share", "retweet", "follower", "story", "feed", "wechat", "viber", "line", "skype", "teams", "status", "streamer", "subscriber", "unread")</ID>
+    <ID>MaxLineLength:DynamicClusterManager.kt$DynamicClusterManager$"organization" to listOf("productivity", "work", "office", "task", "todo", "calendar", "document", "sheet", "note", "meeting", "reminder", "agenda", "schedule", "alarm", "appointment", "deadline", "planner", "organizer", "memo", "kanban", "sprint", "milestone", "project")</ID>
+    <ID>MaxLineLength:DynamicClusterManager.kt$DynamicClusterManager$"os" to listOf("system", "battery", "update", "charging", "charger", "wifi", "bluetooth", "network", "storage", "download", "install", "memory", "cpu", "reboot", "os", "signal", "hotspot", "usb", "connected", "disconnected", "performance", "cleaner", "backup", "restore", "firmware", "patch", "data usage", "airplane mode", "low battery", "fully charged", "android", "hardware", "diagnostic", "permission", "security patch", "developer", "thermal")</ID>
+    <ID>MaxLineLength:DynamicClusterManager.kt$DynamicClusterManager$"platform" to listOf("game", "gaming", "play", "player", "score", "level", "quest", "steam", "xbox", "playstation", "nintendo", "achievement", "trophy", "multiplayer", "match", "tournament", "guild", "clan", "raid", "respawn", "battle pass", "season", "arcade", "rpg", "fps", "mmo", "gamer", "esports", "epic games", "roblox", "minecraft", "fortnite", "genshin", "valorant", "league of legends", "discord gaming", "controller", "leaderboard", "inventory")</ID>
+    <ID>MaxLineLength:DynamicClusterManager.kt$DynamicClusterManager$"press" to listOf("news", "article", "headline", "breaking", "journal", "magazine", "newspaper", "press", "editor", "broadcast", "report", "edition", "nytimes", "wsj", "bbc", "cnn", "reuters", "bloomberg", "apnews", "feed", "newsletter", "politics", "world", "local", "weather", "forecast", "radar", "temperature", "storm", "rain", "snow", "climate", "huffpost", "washington post", "economist", "guardian", "daily", "breaking news", "front page")</ID>
+    <ID>MaxLineLength:DynamicClusterManager.kt$DynamicClusterManager$"property" to listOf("real estate", "housing", "apartment", "house", "home", "rent", "lease", "mortgage", "tenant", "landlord", "zillow", "redfin", "realtor", "trulia", "property", "listing", "inspection", "closing", "broker", "condo", "townhouse", "sublet", "escrow", "hoa", "realty", "move", "moving", "neighborhood", "open house", "square feet", "land", "appraisal")</ID>
+    <ID>MaxLineLength:DynamicClusterManager.kt$DynamicClusterManager$"protection" to listOf("security", "alert", "suspicious", "unauthorized", "breach", "secure", "shield", "protect", "antivirus", "malware", "firewall", "vpn", "sign in", "compromised", "detected", "unrecognized device", "security key", "vault", "encryption", "trusted device")</ID>
+    <ID>MaxLineLength:DynamicClusterManager.kt$DynamicClusterManager$"retail" to listOf("shopping", "deal", "discount", "sale", "coupon", "promo", "cart", "checkout", "store", "purchase", "bought", "item", "price", "offer", "clearance", "bogo", "ebay", "walmart", "target", "etsy", "shop", "retail", "receipt", "wishlist", "buy", "merchant", "savings", "reward", "points", "cashback", "mall", "black friday", "cyber monday", "voucher", "haul", "outlet", "bestbuy", "costco", "aliexpress", "shein", "temu", "order placed", "promo code", "rebate", "gift card", "price drop", "flash sale", "back in stock")</ID>
+    <ID>MaxLineLength:DynamicClusterManager.kt$DynamicClusterManager$"romance" to listOf("dating", "match", "tinder", "bumble", "hinge", "okcupid", "coffee meets bagel", "relationship", "single", "date", "crush", "swipe", "profile", "meetup", "flirt", "romance", "anniversary", "partner", "couple", "marriage", "wedding", "engaged", "matchmaking", "sparks", "speed date")</ID>
+    <ID>MaxLineLength:DynamicClusterManager.kt$DynamicClusterManager$"services" to listOf("utility", "electric", "power", "water", "gas", "internet", "wifi", "broadband", "cable", "mobile", "cellular", "sim", "verizon", "att", "tmobile", "sprint", "vodafone", "billing", "meter", "outage", "telecom", "provider", "hotspot", "roaming", "data plan", "carrier", "spectrum", "xfinity", "comcast", "conedison", "pge", "energy", "kilowatt", "fiber")</ID>
+    <ID>MaxLineLength:DynamicClusterManager.kt$DynamicClusterManager$"transport" to listOf("ride", "trip", "uber", "lyft", "train", "bus", "ticket", "cab", "driver", "amtrak", "subway", "metro", "rental", "hertz", "enterprise")</ID>
+    <ID>MaxLineLength:DynamicClusterManager.kt$DynamicClusterManager$"vehicle" to listOf("auto", "car", "vehicle", "truck", "motorcycle", "drive", "driving", "gas", "fuel", "ev", "charging", "tesla", "supercharger", "service", "maintenance", "oil", "tire", "mechanic", "dealer", "mileage", "odometer", "engine", "battery", "brake", "parking", "toll", "speed", "traffic", "accident", "insurance", "geico", "progressive", "statefarm", "waze", "gas station", "carplay", "android auto", "transmission", "recall", "registration")</ID>
+    <ID>MaxLineLength:DynamicClusterManager.kt$DynamicClusterManager$"video" to listOf("video", "movie", "film", "tv", "clip", "watch", "show", "play", "pause", "youtube", "netflix", "hulu", "disney", "prime video", "hbo", "max", "twitch", "apple music", "vimeo", "episode", "trailer", "season", "premiere", "broadcast", "channel", "curated", "soundtrack")</ID>
+    <ID>MaxLineLength:DynamicClusterManager.kt$DynamicClusterManager$combined.contains("auth") || combined.contains("otp") || combined.contains("pass") || combined.contains("secure") || combined.contains("vpn") -&gt; "security"</ID>
+    <ID>MaxLineLength:DynamicClusterManager.kt$DynamicClusterManager$combined.contains("bank") || combined.contains("pay") || combined.contains("wallet") || combined.contains("money") || combined.contains("finance") || combined.contains("crypto") -&gt; "finance"</ID>
+    <ID>MaxLineLength:DynamicClusterManager.kt$DynamicClusterManager$combined.contains("car") || combined.contains("auto") || combined.contains("drive") || combined.contains("gas") -&gt; "automotive"</ID>
+    <ID>MaxLineLength:DynamicClusterManager.kt$DynamicClusterManager$combined.contains("chat") || combined.contains("message") || combined.contains("social") || combined.contains("talk") || combined.contains("mail") -&gt; "social"</ID>
+    <ID>MaxLineLength:DynamicClusterManager.kt$DynamicClusterManager$combined.contains("fit") || combined.contains("health") || combined.contains("gym") || combined.contains("run") || combined.contains("doctor") || combined.contains("med") -&gt; "health"</ID>
+    <ID>MaxLineLength:DynamicClusterManager.kt$DynamicClusterManager$combined.contains("flight") || combined.contains("hotel") || combined.contains("ride") || combined.contains("airline") || combined.contains("trip") || combined.contains("travel") -&gt; "travel"</ID>
+    <ID>MaxLineLength:DynamicClusterManager.kt$DynamicClusterManager$combined.contains("food") || combined.contains("eat") || combined.contains("delivery") || combined.contains("order") || combined.contains("courier") || combined.contains("transit") -&gt; "delivery"</ID>
+    <ID>MaxLineLength:DynamicClusterManager.kt$DynamicClusterManager$combined.contains("game") || combined.contains("play") || combined.contains("arcade") || combined.contains("rpg") -&gt; "game"</ID>
+    <ID>MaxLineLength:DynamicClusterManager.kt$DynamicClusterManager$combined.contains("home") || combined.contains("smart") || combined.contains("camera") || combined.contains("iot") || combined.contains("nest") || combined.contains("ring") -&gt; "smarthome"</ID>
+    <ID>MaxLineLength:DynamicClusterManager.kt$DynamicClusterManager$combined.contains("job") || combined.contains("career") || combined.contains("hire") || combined.contains("workplace") -&gt; "career"</ID>
+    <ID>MaxLineLength:DynamicClusterManager.kt$DynamicClusterManager$combined.contains("learn") || combined.contains("edu") || combined.contains("course") || combined.contains("school") || combined.contains("study") -&gt; "education"</ID>
+    <ID>MaxLineLength:DynamicClusterManager.kt$DynamicClusterManager$combined.contains("music") || combined.contains("video") || combined.contains("audio") || combined.contains("stream") || combined.contains("tube") || combined.contains("tv") -&gt; "media"</ID>
+    <ID>MaxLineLength:DynamicClusterManager.kt$DynamicClusterManager$combined.contains("pet") || combined.contains("vet") || combined.contains("dog") || combined.contains("cat") -&gt; "pets"</ID>
+    <ID>MaxLineLength:DynamicClusterManager.kt$DynamicClusterManager$combined.contains("shop") || combined.contains("store") || combined.contains("deal") || combined.contains("cart") || combined.contains("mall") -&gt; "shopping"</ID>
+    <ID>MaxLineLength:DynamicClusterManager.kt$DynamicClusterManager$combined.contains("task") || combined.contains("note") || combined.contains("cal") || combined.contains("office") || combined.contains("doc") || combined.contains("meet") -&gt; "productivity"</ID>
+    <ID>MaxLineLength:DynamicClusterManager.kt$DynamicClusterManager$it != "com" &amp;&amp; it != "android" &amp;&amp; it != "app" &amp;&amp; it != "mobile" &amp;&amp; it != "apps" &amp;&amp; it.length &gt; 2</ID>
+    <ID>MaxLineLength:EncryptedBackupManager.kt$EncryptedBackupManager$private suspend</ID>
+    <ID>MaxLineLength:EndToEndAppLifecycleTest.kt$EndToEndAppLifecycleTest$private fun String.capitalize(): String</ID>
+    <ID>MaxLineLength:EndToEndAppLifecycleTest.kt$EndToEndAppLifecycleTest$val slackMatch = allHistory.filter { it.appName == "Slack" || it.title.contains("Slack") || it.content.contains("v1.2") }</ID>
+    <ID>MaxLineLength:ExportSanitizationBoundaryTest.kt$ExportSanitizationBoundaryTest$val csvStr = DatabaseExporter.exportToCsvString(listOf(formulaEqual, formulaPlus, formulaMinus, formulaAt, formulaTab))</ID>
+    <ID>MaxLineLength:FirestoreSyncBoundaryTest.kt$FirestoreSyncBoundaryTest$assertTrue("Sync should complete successfully even if some remote docs are corrupted. Failure: ${result.exceptionOrNull()?.message}", result.isSuccess)</ID>
+    <ID>MaxLineLength:FirestoreSyncRepository.kt$FirestoreSyncRepository$"actionLabels" to notification.actionLabels?.let { SyncEncryptionHelper.encrypt(it, secretKey) }</ID>
+    <ID>MaxLineLength:FirestoreSyncRepository.kt$FirestoreSyncRepository$"inboxLinesJson" to notification.inboxLinesJson?.let { SyncEncryptionHelper.encrypt(it, secretKey) }</ID>
+    <ID>MaxLineLength:FirestoreSyncRepository.kt$FirestoreSyncRepository$Result.failure(UnsupportedOperationException("Database and Firestore cloud deletion is permanently disabled."))</ID>
+    <ID>MaxLineLength:FirestoreSyncRepository.kt$FirestoreSyncRepository$actionLabels = doc.getString("actionLabels")?.let { SyncEncryptionHelper.decrypt(it, secretKey) }</ID>
+    <ID>MaxLineLength:FirestoreSyncRepository.kt$FirestoreSyncRepository$inboxLinesJson = doc.getString("inboxLinesJson")?.let { SyncEncryptionHelper.decrypt(it, secretKey) }</ID>
+    <ID>MaxLineLength:HighLoadBurstLifecycleTest.kt$HighLoadBurstLifecycleTest$"INSERT INTO notifications (key, packageName, appName, title, content, postTime, lastUpdatedTime, updateCount, isDismissed, isPinned, isPersistent, isRead, isGroupSummary, priority, isOngoing, isClearable, actionsCount, smallIconRes, syncStatus, lastSyncedAt) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"</ID>
+    <ID>MaxLineLength:HighLoadBurstLifecycleTest.kt$HighLoadBurstLifecycleTest$"INSERT OR IGNORE INTO apps (packageName, appName, firstSeenTime, lastSeenTime, syncStatus, lastSyncedAt) VALUES (?, ?, ?, ?, ?, ?)"</ID>
+    <ID>MaxLineLength:HighLoadBurstLifecycleTest.kt$HighLoadBurstLifecycleTest$assertTrue("Query execution for 5,000 active records should be fast (&lt; 200ms in Robolectric JVM)", activeQueryDurationMs &lt; 200)</ID>
+    <ID>MaxLineLength:IntelligentSuggestionEngine.kt$IntelligentSuggestionEngine$if</ID>
+    <ID>MaxLineLength:IntelligentSuggestionEngine.kt$IntelligentSuggestionEngine$suspend</ID>
+    <ID>MaxLineLength:LogHistoryScreen.kt$.</ID>
+    <ID>MaxLineLength:LogHistoryScreen.kt$Column</ID>
+    <ID>MaxLineLength:LogHistoryScreen.kt$imageVector = if (item.isPinned) Icons.Default.Bookmark else Icons.Outlined.BookmarkBorder</ID>
+    <ID>MaxLineLength:LogHistoryScreen.kt$list.filter { it.title.contains(debouncedSearchQuery, ignoreCase = true) || it.content.contains(debouncedSearchQuery, ignoreCase = true) }</ID>
+    <ID>MaxLineLength:LogHistoryScreen.kt$text</ID>
+    <ID>MaxLineLength:LogHistoryScreen.kt$text = "💡 Tip: NotiMind acts as 'Notification Insurance' — it automatically backs up notifications as you dismiss them, so you never lose critical info."</ID>
+    <ID>MaxLineLength:LogHistoryScreen.kt$text = { Text("Sort by Time Dismissed ${if (sortMode == SortMode.DISMISSED) "✓" else ""}") }</ID>
+    <ID>MaxLineLength:LogHistoryScreen.kt$text = { Text("Sort by Time Received ${if (sortMode == SortMode.RECEIVED) "✓" else ""}") }</ID>
+    <ID>MaxLineLength:LogHistoryScreen.kt$text = { Text(stringResource(id = R.string.log_history_filter_all_reasons, if (selectedReasonFilter == null) "✓" else "")) }</ID>
+    <ID>MaxLineLength:LogHistoryScreen.kt$text = { Text(stringResource(id = R.string.log_history_filter_app_count, selectedPackages?.size?.toString() ?: "All")) }</ID>
+    <ID>MaxLineLength:LogHistoryScreen.kt$text = { Text(stringResource(id = R.string.log_history_filter_reason_item, getReasonLabel(reasonCode), reasonCode, if (selectedReasonFilter == reasonCode) "✓" else "")) }</ID>
+    <ID>MaxLineLength:LogHistoryScreen.kt$tint = if (hasActiveFilters) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface</ID>
+    <ID>MaxLineLength:LogHistoryScreen.kt$tint = if (item.isPinned) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant</ID>
+    <ID>MaxLineLength:LogHistoryScreen.kt$title = { Text(stringResource(id = R.string.log_history_title, filteredNotifs.size, totalCount), fontWeight = FontWeight.Bold) }</ID>
+    <ID>MaxLineLength:LogHistoryScreen.kt$tooltip = { PlainTooltip { Text(if (item.isPinned) "Unpin notification" else "Pin notification") } }</ID>
+    <ID>MaxLineLength:LogHistoryScreen.kt$val dismissedNotifsDismissed by dao.getDismissedNotificationsSortedByDismissed().collectAsState(initial = emptyList())</ID>
+    <ID>MaxLineLength:Navigation.kt$Screen.Active$icon = { Icon(Icons.Default.NotificationsActive, contentDescription = stringResource(id = R.string.nav_active_title)) }</ID>
+    <ID>MaxLineLength:NavigationAndSettingsUiTest.kt$NavigationAndSettingsUiTest$val appMatch = list.filter { it.appName.contains("Mail", ignoreCase = true) || it.title.contains("Mail", ignoreCase = true) || it.content.contains("Mail", ignoreCase = true) || it.packageName.contains("Mail", ignoreCase = true) }</ID>
+    <ID>MaxLineLength:NavigationAndSettingsUiTest.kt$NavigationAndSettingsUiTest$val contentMatch = list.filter { it.appName.contains("Password", ignoreCase = true) || it.title.contains("Password", ignoreCase = true) || it.content.contains("Password", ignoreCase = true) || it.packageName.contains("Password", ignoreCase = true) }</ID>
+    <ID>MaxLineLength:NavigationAndSettingsUiTest.kt$NavigationAndSettingsUiTest$val n1 = NotificationEntity(id = 1L, key = "k1", packageName = "com.chat.messenger", appName = "ChatApp", title = "Meeting reminder", content = "Project Sync at 3pm", postTime = 1000L, isDismissed = true)</ID>
+    <ID>MaxLineLength:NavigationAndSettingsUiTest.kt$NavigationAndSettingsUiTest$val n2 = NotificationEntity(id = 2L, key = "k2", packageName = "com.email.client", appName = "MailClient", title = "Urgent: Security Alert", content = "Password update required", postTime = 2000L, isDismissed = true)</ID>
+    <ID>MaxLineLength:NavigationAndSettingsUiTest.kt$NavigationAndSettingsUiTest$val n3 = NotificationEntity(id = 3L, key = "k3", packageName = "com.social.media", appName = "SocialFeed", title = "New Like", content = "Alice liked your post", postTime = 3000L, isDismissed = true)</ID>
+    <ID>MaxLineLength:NavigationAndSettingsUiTest.kt$NavigationAndSettingsUiTest$val pkgMatch = list.filter { it.appName.contains("social", ignoreCase = true) || it.title.contains("social", ignoreCase = true) || it.content.contains("social", ignoreCase = true) || it.packageName.contains("social", ignoreCase = true) }</ID>
+    <ID>MaxLineLength:NavigationAndSettingsUiTest.kt$NavigationAndSettingsUiTest$val titleMatch = list.filter { it.appName.contains("Meeting", ignoreCase = true) || it.title.contains("Meeting", ignoreCase = true) || it.content.contains("Meeting", ignoreCase = true) || it.packageName.contains("Meeting", ignoreCase = true) }</ID>
+    <ID>MaxLineLength:NotificationDao.kt$NotificationDao$@Query("SELECT * FROM notifications WHERE isDismissed = 1 AND (dismissReason IN (5, 8) OR dismissReason NOT IN (1, 2, 3) OR dismissReason IS NULL) ORDER BY COALESCE(dismissTime, postTime) DESC")</ID>
+    <ID>MaxLineLength:NotificationDao.kt$NotificationDao$@Query("SELECT * FROM notifications WHERE isDismissed = 1 AND dismissReason IN (1, 2, 3) ORDER BY COALESCE(dismissTime, postTime) DESC")</ID>
+    <ID>MaxLineLength:NotificationDao.kt$NotificationDao$@Query("UPDATE notifications SET isDismissed = 1, dismissReason = :reason, dismissTime = :dismissTime WHERE key = :key")</ID>
+    <ID>MaxLineLength:NotificationDao.kt$NotificationDao$abstract</ID>
+    <ID>MaxLineLength:NotificationDaoTest.kt$NotificationDaoTest$"INSERT INTO notifications (key, packageName, appName, title, content, postTime, lastUpdatedTime, updateCount, isDismissed, isPinned, isPersistent, isRead, isGroupSummary, priority, isOngoing, isClearable, actionsCount, smallIconRes, syncStatus, lastSyncedAt) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"</ID>
+    <ID>MaxLineLength:NotificationDaoTest.kt$NotificationDaoTest$"INSERT OR IGNORE INTO apps (packageName, appName, firstSeenTime, lastSeenTime, syncStatus, lastSyncedAt) VALUES (?, ?, ?, ?, ?, ?)"</ID>
+    <ID>MaxLineLength:NotificationDaoTest.kt$NotificationDaoTest$val appCancelled = NotificationEntity(key = "k2", packageName = "p2", appName = "A2", title = "App Cancel", content = "C2", isDismissed = false)</ID>
+    <ID>MaxLineLength:NotificationDaoTest.kt$NotificationDaoTest$val notif = NotificationEntity(key = "pin_1", packageName = "p", appName = "A", title = "Pin Me", content = "C", isDismissed = false, isPinned = false)</ID>
+    <ID>MaxLineLength:NotificationDaoTest.kt$NotificationDaoTest$val userSwiped = NotificationEntity(key = "k1", packageName = "p1", appName = "A1", title = "Swiped", content = "C1", isDismissed = false)</ID>
+    <ID>MaxLineLength:NotificationLauncherTest.kt$NotificationLauncherTest$org.junit.Assert.assertEquals("ActionIntent cache must be 0 after 10,000 burst cycle removals", 0, NotificationLauncher.getActionIntentCacheSize())</ID>
+    <ID>MaxLineLength:NotificationLauncherTest.kt$NotificationLauncherTest$org.junit.Assert.assertEquals("ActionIntent cache must be empty after unregistration", 0, NotificationLauncher.getActionIntentCacheSize())</ID>
+    <ID>MaxLineLength:NotificationLauncherTest.kt$NotificationLauncherTest$org.junit.Assert.assertEquals("PendingIntent cache must be 0 after 10,000 burst cycle removals", 0, NotificationLauncher.getPendingIntentCacheSize())</ID>
+    <ID>MaxLineLength:NotificationLauncherTest.kt$NotificationLauncherTest$org.junit.Assert.assertEquals("PendingIntent cache must be empty after unregistration", 0, NotificationLauncher.getPendingIntentCacheSize())</ID>
+    <ID>MaxLineLength:NotificationLoggerService.kt$NotificationLoggerService$(priority &lt;= -2 || category == Notification.CATEGORY_SERVICE || category == Notification.CATEGORY_SYSTEM || category == "sys")</ID>
+    <ID>MaxLineLength:NotificationLoggerService.kt$NotificationLoggerService$(title.contains("USB", ignoreCase = true) || title.contains("debugging", ignoreCase = true) || title.contains("charging", ignoreCase = true))</ID>
+    <ID>MaxLineLength:NotificationLoggerService.kt$NotificationLoggerService$if</ID>
+    <ID>MaxLineLength:NotificationLoggerService.kt$NotificationLoggerService$val originalPostTime = if (existing != null &amp;&amp; existing.postTime &gt; 0) existing.postTime else postTime</ID>
+    <ID>MaxLineLength:NotificationLoggerServiceTest.kt$NotificationLoggerServiceTest$assertEquals("Blank title and content notification clutter must be suppressed", 0, dao.getAllNotificationsList().size)</ID>
+    <ID>MaxLineLength:NotificationLoggerServiceTest.kt$NotificationLoggerServiceTest$assertEquals("Summary clutter ('x more notifications') must be suppressed", 0, dao.getAllNotificationsList().size)</ID>
+    <ID>MaxLineLength:NotificationLoggerServiceTest.kt$NotificationLoggerServiceTest$assertEquals("System USB debugging notification clutter must be suppressed", 0, dao.getAllNotificationsList().size)</ID>
+    <ID>MaxLineLength:NotificationLoggerServiceTest.kt$NotificationLoggerServiceTest$assertEquals("System charging notification clutter must be suppressed", 0, dao.getAllNotificationsList().size)</ID>
+    <ID>MaxLineLength:PermissionRevocationLifecycleTest.kt$PermissionRevocationLifecycleTest$android.provider.Settings.Secure.putString(context.contentResolver, "enabled_notification_listeners", componentNameStr)</ID>
+    <ID>MaxLineLength:PersistenceBoundaryTest.kt$PersistenceBoundaryTest$"50,000 entity query response time ($queryDurationMs ms) must be within SLA limit (&lt; 2000.0 ms in Robolectric JVM)"</ID>
+    <ID>MaxLineLength:PersistenceBoundaryTest.kt$PersistenceBoundaryTest$"INSERT INTO notifications (id, key, packageName, appName, title, content, postTime, lastUpdatedTime, updateCount, isDismissed, isPinned, isPersistent, isRead, isGroupSummary, priority, isOngoing, isClearable, actionsCount, smallIconRes, syncStatus, lastSyncedAt) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"</ID>
+    <ID>MaxLineLength:PersistenceBoundaryTest.kt$PersistenceBoundaryTest$"INSERT OR IGNORE INTO apps (packageName, appName, firstSeenTime, lastSeenTime, syncStatus, lastSyncedAt) VALUES (?, ?, ?, ?, ?, ?)"</ID>
+    <ID>MaxLineLength:SettingsScreen.kt$Text(text = err, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)</ID>
+    <ID>MaxLineLength:SpeedDialSettingsFab.kt$val rotation by animateFloatAsState(targetValue = if (expanded) 45f else 0f, animationSpec = animationSpec, label = "fabRotation")</ID>
+    <ID>MaxLineLength:SpeedDialSettingsFab.kt$val scale by animateFloatAsState(targetValue = if (expanded) 1f else 0f, animationSpec = animationSpec, label = "fabScale")</ID>
+    <ID>NestedBlockDepth:BackupSecurityBoundaryTest.kt$BackupSecurityBoundaryTest$private fun createEncryptedBackupFile(sourceText: String, secretKey: SecretKey): File</ID>
+    <ID>NestedBlockDepth:DatabaseExporter.kt$DatabaseExporter$fun cleanupExportFiles(context: Context, maxAgeMillis: Long = 3600_000L)</ID>
+    <ID>NestedBlockDepth:DynamicClusterManager.kt$DynamicClusterManager$fun findMatchingClusters(queryTokens: List&lt;String&gt;): Map&lt;String, Set&lt;ClusterNode&gt;&gt;</ID>
+    <ID>NestedBlockDepth:EncryptedBackupManager.kt$EncryptedBackupManager$private fun performDecryption(source: File, dest: File, key: SecretKey): Boolean</ID>
+    <ID>NestedBlockDepth:EncryptedBackupManager.kt$EncryptedBackupManager$private fun performEncryption(source: File, dest: File, key: SecretKey): Boolean</ID>
+    <ID>PackageNaming:ArchitectureBoundaryTest.kt$package com.notimind.lite.tier2_boundary</ID>
+    <ID>PackageNaming:ArchitectureSetupTest.kt$package com.notimind.lite.tier1_feature</ID>
+    <ID>PackageNaming:BackupConnectivityBoundaryTest.kt$package com.notimind.lite.tier2_boundary</ID>
+    <ID>PackageNaming:BackupSecurityBoundaryTest.kt$package com.notimind.lite.tier2_boundary</ID>
+    <ID>PackageNaming:BackupSecurityTest.kt$package com.notimind.lite.tier2_boundary</ID>
+    <ID>PackageNaming:BootReceiverDbPairwiseTest.kt$package com.notimind.lite.tier3_pairwise</ID>
+    <ID>PackageNaming:ChaosStabilityTest.kt$package com.notimind.lite.tier4_realworld</ID>
+    <ID>PackageNaming:CloudChaosStabilityTest.kt$package com.notimind.lite.tier4_realworld</ID>
+    <ID>PackageNaming:DynamicDebounceBoundaryTest.kt$package com.notimind.lite.tier2_boundary</ID>
+    <ID>PackageNaming:EndToEndAppLifecycleTest.kt$package com.notimind.lite.tier4_realworld</ID>
+    <ID>PackageNaming:ExportSanitizationBoundaryTest.kt$package com.notimind.lite.tier2_boundary</ID>
+    <ID>PackageNaming:FirestoreSyncBoundaryTest.kt$package com.notimind.lite.tier2_boundary</ID>
+    <ID>PackageNaming:GcmIntegrityBoundaryTest.kt$package com.notimind.lite.tier2_boundary</ID>
+    <ID>PackageNaming:HighLoadBurstLifecycleTest.kt$package com.notimind.lite.tier4_realworld</ID>
+    <ID>PackageNaming:MigrationTest.kt$package com.notimind.lite.tier1_feature</ID>
+    <ID>PackageNaming:NotificationBurstServiceTest.kt$package com.notimind.lite.tier4_realworld</ID>
+    <ID>PackageNaming:NotificationServiceDbPairwiseTest.kt$package com.notimind.lite.tier3_pairwise</ID>
+    <ID>PackageNaming:PermissionRevocationLifecycleTest.kt$package com.notimind.lite.tier4_realworld</ID>
+    <ID>PackageNaming:PersistenceBoundaryTest.kt$package com.notimind.lite.tier2_boundary</ID>
+    <ID>PackageNaming:PersistenceSchemaTest.kt$package com.notimind.lite.tier1_feature</ID>
+    <ID>PackageNaming:RrfRankingTest.kt$package com.notimind.lite.tier2_boundary</ID>
+    <ID>PackageNaming:SettingsClearLogPairwiseTest.kt$package com.notimind.lite.tier3_pairwise</ID>
+    <ID>PackageNaming:SnoozeLoopBoundaryTest.kt$package com.notimind.lite.tier2_boundary</ID>
+    <ID>PackageNaming:SyncIntegrationPairwiseTest.kt$package com.notimind.lite.tier3_pairwise</ID>
+    <ID>PackageNaming:VectorEmbeddingBoundaryTest.kt$package com.notimind.lite.tier2_boundary</ID>
+    <ID>PackageNaming:ViewModelUiStatePairwiseTest.kt$package com.notimind.lite.tier3_pairwise</ID>
+    <ID>ReturnCount:AppIconCache.kt$AppIconCache$fun getIcon(context: Context, uri: String?, targetSize: Int = 64): Bitmap?</ID>
+    <ID>ReturnCount:BootReceiver.kt$BootReceiver$override fun onReceive(context: Context?, intent: Intent?)</ID>
+    <ID>ReturnCount:DatabaseExporter.kt$DatabaseExporter$suspend fun performEncryptedBackup(context: Context, secretKey: SecretKey): Result&lt;File&gt;</ID>
+    <ID>ReturnCount:EncryptedBackupManager.kt$EncryptedBackupManager$suspend fun createAuthorizedBackup( context: Context, sourceDbFile: File, destinationFile: File, secretKey: SecretKey, encryptionKeyBase64: String? = null ): Boolean</ID>
+    <ID>ReturnCount:EncryptedBackupManager.kt$EncryptedBackupManager$suspend fun restoreAuthorizedBackup( context: Context, sourceBackupFile: File, destinationDbFile: File, secretKey: SecretKey ): Boolean</ID>
+    <ID>ReturnCount:NetworkUtils.kt$NetworkUtils$fun isInternetAvailable(context: Context): Boolean</ID>
+    <ID>ReturnCount:NotificationLoggerService.kt$NotificationLoggerService$private fun processNotification(sbn: StatusBarNotification)</ID>
+    <ID>ReturnCount:VectorEmbeddingHelper.kt$VectorEmbeddingHelper$fun computeEmbedding(text: String): FloatArray</ID>
+    <ID>ReturnCount:VectorEmbeddingHelper.kt$VectorEmbeddingHelper$fun cosineSimilarity(vecA: FloatArray, vecB: FloatArray): Float</ID>
+    <ID>SwallowedException:ActionableChips.kt$e: Exception</ID>
+    <ID>SwallowedException:ActiveNotificationsScreen.kt$e: Exception</ID>
+    <ID>SwallowedException:AppIconCache.kt$AppIconCache$e: Exception</ID>
+    <ID>SwallowedException:BackupNotaryClient.kt$BackupNotaryClient$e: Exception</ID>
+    <ID>SwallowedException:BackupSecurityTest.kt$BackupSecurityTest$e: Exception</ID>
+    <ID>SwallowedException:BootReceiver.kt$BootReceiver$e: Exception</ID>
+    <ID>SwallowedException:DatabaseMigrator.kt$DatabaseMigrator$e: Exception</ID>
+    <ID>SwallowedException:DynamicClusterManager.kt$DynamicClusterManager$e: Exception</ID>
+    <ID>SwallowedException:EncryptedBackupManager.kt$EncryptedBackupManager$e: Exception</ID>
+    <ID>SwallowedException:NotificationLoggerService.kt$NotificationLoggerService$e: Exception</ID>
+    <ID>TooGenericExceptionCaught:ActionableChips.kt$e: Exception</ID>
+    <ID>TooGenericExceptionCaught:ActiveNotificationsScreen.kt$e: Exception</ID>
+    <ID>TooGenericExceptionCaught:AppIconCache.kt$AppIconCache$e: Exception</ID>
+    <ID>TooGenericExceptionCaught:AppInitializer.kt$AppInitializer$e: Exception</ID>
+    <ID>TooGenericExceptionCaught:AuthManager.kt$AuthManager$e: Exception</ID>
+    <ID>TooGenericExceptionCaught:BackupNotaryClient.kt$BackupNotaryClient$e: Exception</ID>
+    <ID>TooGenericExceptionCaught:BootReceiver.kt$BootReceiver$e: Exception</ID>
+    <ID>TooGenericExceptionCaught:DatabaseExporter.kt$DatabaseExporter$e: Exception</ID>
+    <ID>TooGenericExceptionCaught:DatabaseMigrator.kt$DatabaseMigrator$e: Exception</ID>
+    <ID>TooGenericExceptionCaught:DynamicClusterManager.kt$DynamicClusterManager$e: Exception</ID>
+    <ID>TooGenericExceptionCaught:EncryptedBackupManager.kt$EncryptedBackupManager$e: Exception</ID>
+    <ID>TooGenericExceptionCaught:FirestoreSyncRepository.kt$FirestoreSyncRepository$e: Exception</ID>
+    <ID>TooGenericExceptionCaught:NetworkUtils.kt$NetworkUtils$e: Exception</ID>
+    <ID>TooGenericExceptionCaught:NotificationLauncher.kt$NotificationLauncher$e: Exception</ID>
+    <ID>TooGenericExceptionCaught:NotificationLoggerService.kt$NotificationLoggerService$e: Exception</ID>
+    <ID>TooGenericExceptionCaught:NotificationLoggerService.kt$NotificationLoggerService.Companion$e: Exception</ID>
+    <ID>TooGenericExceptionCaught:SnoozeReminderScheduler.kt$SnoozeReminderScheduler$e: Exception</ID>
+    <ID>TooGenericExceptionCaught:UnlockReceiver.kt$UnlockReceiver$e: Exception</ID>
+    <ID>TooGenericExceptionThrown:BackupNotaryClient.kt$BackupNotaryClient$throw Exception("Notary server returned ${connection.responseCode}")</ID>
+    <ID>TooManyFunctions:NotificationDao.kt$NotificationDao</ID>
+    <ID>UnusedParameter:ActiveNotificationsScreen.kt$authManager: AuthManager</ID>
+    <ID>UnusedParameter:ActiveNotificationsScreen.kt$db: AppDatabase</ID>
+    <ID>UnusedParameter:EncryptedBackupManager.kt$EncryptedBackupManager$secretKey: SecretKey</ID>
+    <ID>UnusedParameter:FirestoreSyncRepository.kt$FirestoreSyncRepository$userId: String</ID>
+    <ID>UnusedParameter:LogHistoryScreen.kt$authManager: AuthManager</ID>
+    <ID>UnusedParameter:LogHistoryScreen.kt$db: AppDatabase</ID>
+    <ID>UnusedParameter:NotificationLauncher.kt$NotificationLauncher$context: Context</ID>
+    <ID>UnusedPrivateProperty:ActiveNotificationsScreen.kt$val totalLazyItemCount by remember { derivedStateOf { var count = 2 sectionOrder.forEach { section -&gt; count += 1 val items = notificationsBySection[section] ?: emptyList() count += if (items.isEmpty()) 1 else items.size } count } }</ID>
+    <ID>UnusedPrivateProperty:ActiveNotificationsScreen.kt$var dismissingKeys by remember { mutableStateOf(setOf&lt;String&gt;()) }</ID>
+    <ID>UnusedPrivateProperty:BackupSecurityTest.kt$BackupSecurityTest$val encryptedFile = File.createTempFile("backup", ".enc")</ID>
+    <ID>UnusedPrivateProperty:EncryptedBackupManager.kt$EncryptedBackupManager$private const val KEY_SIZE = 256</ID>
+    <ID>UnusedPrivateProperty:HighLoadBurstLifecycleTest.kt$HighLoadBurstLifecycleTest$val durationMs = measureTimeMillis { val entities = (1..count).map { i -&gt; NotificationEntity( key = "stress_key_$i", packageName = "com.stress.app_${i % 10}", appName = "Stress App ${i % 10}", title = "Burst Notification $i", content = "High-load stress test payload body $i", postTime = System.currentTimeMillis() + i, isDismissed = i % 2 == 0, isPinned = i % 100 == 0 ) } database.runInTransaction { val db = database.openHelper.writableDatabase val appStmt = db.compileStatement( "INSERT OR IGNORE INTO apps (packageName, appName, firstSeenTime, lastSeenTime, syncStatus, lastSyncedAt) VALUES (?, ?, ?, ?, ?, ?)" ) for (p in 0..10) { appStmt.clearBindings() appStmt.bindString(1, "com.stress.app_$p") appStmt.bindString(2, "Stress App $p") appStmt.bindLong(3, System.currentTimeMillis()) appStmt.bindLong(4, System.currentTimeMillis()) appStmt.bindString(5, "PENDING_UPLOAD") appStmt.bindLong(6, 0L) appStmt.executeInsert() } val stmt = db.compileStatement( "INSERT INTO notifications (key, packageName, appName, title, content, postTime, lastUpdatedTime, updateCount, isDismissed, isPinned, isPersistent, isRead, isGroupSummary, priority, isOngoing, isClearable, actionsCount, smallIconRes, syncStatus, lastSyncedAt) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)" ) for (i in 1..count) { stmt.clearBindings() stmt.bindString(1, "stress_key_$i") stmt.bindString(2, "com.stress.app_${i % 10}") stmt.bindString(3, "Stress App ${i % 10}") stmt.bindString(4, "Burst Notification $i") stmt.bindString(5, "High-load stress test payload body $i") stmt.bindLong(6, System.currentTimeMillis() + i) stmt.bindLong(7, System.currentTimeMillis() + i) stmt.bindLong(8, 1L) stmt.bindLong(9, if (i % 2 == 0) 1L else 0L) stmt.bindLong(10, if (i % 100 == 0) 1L else 0L) stmt.bindLong(11, 0L) stmt.bindLong(12, 0L) stmt.bindLong(13, 0L) stmt.bindLong(14, 0L) stmt.bindLong(15, 0L) stmt.bindLong(16, 1L) stmt.bindLong(17, 0L) stmt.bindLong(18, 0L) stmt.bindString(19, "PENDING_UPLOAD") stmt.bindLong(20, 0L) stmt.executeInsert() } } }</ID>
+    <ID>UnusedPrivateProperty:HighLoadBurstLifecycleTest.kt$HighLoadBurstLifecycleTest$val entities = (1..count).map { i -&gt; NotificationEntity( key = "stress_key_$i", packageName = "com.stress.app_${i % 10}", appName = "Stress App ${i % 10}", title = "Burst Notification $i", content = "High-load stress test payload body $i", postTime = System.currentTimeMillis() + i, isDismissed = i % 2 == 0, isPinned = i % 100 == 0 ) }</ID>
+    <ID>UnusedPrivateProperty:LogHistoryScreen.kt$var showExportMenu by remember { mutableStateOf(false) }</ID>
+    <ID>UnusedPrivateProperty:Navigation.kt$val preferenceManager = remember { com.jeffers.notimindlite.data.local.PreferenceManager(context) }</ID>
+    <ID>UnusedPrivateProperty:PersistenceBoundaryTest.kt$PersistenceBoundaryTest$val entities = (1..count).map { i -&gt; NotificationEntity( id = i.toLong(), key = "perf_key_$i", packageName = "com.perf.app_${i % 20}", appName = "Perf App ${i % 20}", title = "Benchmark Notification $i", content = "High-load dataset benchmark payload $i", postTime = 1000000L + i, isDismissed = i % 2 == 0, isPinned = i % 500 == 0 ) }</ID>
+    <ID>UnusedPrivateProperty:RestoredNotificationManager.kt$RestoredNotificationManager$private const val TAG = "RestoredNotifMgr"</ID>
+    <ID>UnusedPrivateProperty:SnoozeReminderReceiver.kt$SnoozeReminderReceiver.Companion$private const val TAG = "SnoozeReceiver"</ID>
+    <ID>UnusedPrivateProperty:SnoozeReminderScheduler.kt$SnoozeReminderScheduler$private const val CHANNEL_ID = "snooze_reminders"</ID>
+    <ID>UseCheckOrError:BackupNotaryClient.kt$BackupNotaryClient$throw IllegalStateException("Active internet connection is required to notarize and create backup")</ID>
+    <ID>UseRequire:SyncEncryptionHelper.kt$SyncEncryptionHelper$throw IllegalArgumentException("Invalid encrypted data: too short")</ID>
+    <ID>VariableNaming:FirestoreSyncRepository.kt$FirestoreSyncRepository$private val TAG = "FirestoreSyncRepo"</ID>
+    <ID>VariableNaming:NotificationLoggerService.kt$NotificationLoggerService$private val TAG = "NotificationLoggerSrv"</ID>
+    <ID>VariableNaming:PreferenceManager.kt$PreferenceManager$private val PREF_LAST_UPDATE_TIME = "pref_last_update_time"</ID>
+    <ID>WildcardImport:ActionableChips.kt$import androidx.compose.foundation.layout.*</ID>
+    <ID>WildcardImport:ActionableChips.kt$import androidx.compose.material3.*</ID>
+    <ID>WildcardImport:ActionableChips.kt$import androidx.compose.runtime.*</ID>
+    <ID>WildcardImport:ActiveNotificationsScreen.kt$import androidx.compose.foundation.layout.*</ID>
+    <ID>WildcardImport:ActiveNotificationsScreen.kt$import androidx.compose.material3.*</ID>
+    <ID>WildcardImport:ActiveNotificationsScreen.kt$import androidx.compose.runtime.*</ID>
+    <ID>WildcardImport:AppPackageSelectorDialog.kt$import androidx.compose.foundation.layout.*</ID>
+    <ID>WildcardImport:AppPackageSelectorDialog.kt$import androidx.compose.material3.*</ID>
+    <ID>WildcardImport:AppPackageSelectorDialog.kt$import androidx.compose.runtime.*</ID>
+    <ID>WildcardImport:ArchitectureBoundaryTest.kt$import org.junit.Assert.*</ID>
+    <ID>WildcardImport:ArchitectureSetupTest.kt$import org.junit.Assert.*</ID>
+    <ID>WildcardImport:BackupDao.kt$import androidx.room.*</ID>
+    <ID>WildcardImport:BackupKeyDialog.kt$import androidx.compose.foundation.layout.*</ID>
+    <ID>WildcardImport:BackupKeyDialog.kt$import androidx.compose.material3.*</ID>
+    <ID>WildcardImport:BackupKeyDialog.kt$import androidx.compose.runtime.*</ID>
+    <ID>WildcardImport:BackupSecurityTest.kt$import org.junit.Assert.*</ID>
+    <ID>WildcardImport:BootReceiverDbPairwiseTest.kt$import org.junit.Assert.*</ID>
+    <ID>WildcardImport:ChaosStabilityTest.kt$import io.mockk.*</ID>
+    <ID>WildcardImport:ChaosStabilityTest.kt$import org.junit.Assert.*</ID>
+    <ID>WildcardImport:DatabaseExporterTest.kt$import org.junit.Assert.*</ID>
+    <ID>WildcardImport:DynamicDebounceBoundaryTest.kt$import org.junit.Assert.*</ID>
+    <ID>WildcardImport:EndToEndAppLifecycleTest.kt$import org.junit.Assert.*</ID>
+    <ID>WildcardImport:ExportSanitizationBoundaryTest.kt$import org.junit.Assert.*</ID>
+    <ID>WildcardImport:FirestoreSyncRepositoryTest.kt$import io.mockk.*</ID>
+    <ID>WildcardImport:HighLoadBurstLifecycleTest.kt$import org.junit.Assert.*</ID>
+    <ID>WildcardImport:LogHistoryScreen.kt$import androidx.compose.foundation.layout.*</ID>
+    <ID>WildcardImport:LogHistoryScreen.kt$import androidx.compose.material3.*</ID>
+    <ID>WildcardImport:LogHistoryScreen.kt$import androidx.compose.runtime.*</ID>
+    <ID>WildcardImport:MainActivity.kt$import androidx.compose.runtime.*</ID>
+    <ID>WildcardImport:Navigation.kt$import androidx.compose.material3.*</ID>
+    <ID>WildcardImport:NavigationAndSettingsUiTest.kt$import org.junit.Assert.*</ID>
+    <ID>WildcardImport:NotificationBurstServiceTest.kt$import io.mockk.*</ID>
+    <ID>WildcardImport:NotificationDaoTest.kt$import org.junit.Assert.*</ID>
+    <ID>WildcardImport:NotificationDetailPanel.kt$import androidx.compose.foundation.layout.*</ID>
+    <ID>WildcardImport:NotificationDetailPanel.kt$import androidx.compose.material3.*</ID>
+    <ID>WildcardImport:NotificationDetailPanel.kt$import androidx.compose.runtime.*</ID>
+    <ID>WildcardImport:NotificationServiceDbPairwiseTest.kt$import org.junit.Assert.*</ID>
+    <ID>WildcardImport:PermissionRevocationLifecycleTest.kt$import org.junit.Assert.*</ID>
+    <ID>WildcardImport:PersistenceBoundaryTest.kt$import org.junit.Assert.*</ID>
+    <ID>WildcardImport:PersistenceSchemaTest.kt$import org.junit.Assert.*</ID>
+    <ID>WildcardImport:SettingsClearLogPairwiseTest.kt$import org.junit.Assert.*</ID>
+    <ID>WildcardImport:SettingsScreen.kt$import androidx.compose.foundation.layout.*</ID>
+    <ID>WildcardImport:SettingsScreen.kt$import androidx.compose.material3.*</ID>
+    <ID>WildcardImport:SettingsScreen.kt$import androidx.compose.runtime.*</ID>
+    <ID>WildcardImport:SpeedDialSettingsFab.kt$import androidx.compose.animation.core.*</ID>
+    <ID>WildcardImport:SpeedDialSettingsFab.kt$import androidx.compose.foundation.layout.*</ID>
+    <ID>WildcardImport:SpeedDialSettingsFab.kt$import androidx.compose.material3.*</ID>
+    <ID>WildcardImport:SpeedDialSettingsFab.kt$import androidx.compose.runtime.*</ID>
+    <ID>WildcardImport:SplashScreen.kt$import androidx.compose.runtime.*</ID>
+    <ID>WildcardImport:ViewModelUiStatePairwiseTest.kt$import org.junit.Assert.*</ID>
+  </CurrentIssues>
+</SmellBaseline>

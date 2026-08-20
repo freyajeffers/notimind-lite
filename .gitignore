@@ -16,7 +16,7 @@
 local.properties
 .env
 debug.keystore
-/gradle
+/gradle/gradle-*
 /gradle-8.5
 /app/build
 .agents
