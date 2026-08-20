@@ -9,11 +9,13 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import com.jeffers.notimindlite.R
 import com.jeffers.notimindlite.data.auth.AuthManager
 import com.jeffers.notimindlite.data.local.AppDatabase
 import com.jeffers.notimindlite.data.local.NotificationDao
@@ -21,16 +23,16 @@ import com.jeffers.notimindlite.ui.screens.ActiveNotificationsScreen
 import com.jeffers.notimindlite.ui.screens.LogHistoryScreen
 import com.jeffers.notimindlite.ui.screens.SplashScreen
 
-sealed class Screen(val route: String, val title: String, val icon: @Composable () -> Unit) {
+sealed class Screen(val route: String, val title: Int, val icon: @Composable () -> Unit) {
     object Active : Screen(
         route = "active",
-        title = "Active",
-        icon = { Icon(Icons.Default.NotificationsActive, contentDescription = "Active") }
+        title = R.string.nav_active_title,
+        icon = { Icon(Icons.Default.NotificationsActive, contentDescription = stringResource(id = R.string.nav_active_title)) }
     )
     object History : Screen(
         route = "history",
-        title = "History",
-        icon = { Icon(Icons.Default.History, contentDescription = "History") }
+        title = R.string.nav_history_title,
+        icon = { Icon(Icons.Default.History, contentDescription = stringResource(id = R.string.nav_history_title)) }
     )
 }
 
@@ -43,6 +45,8 @@ fun MainNavigation(
 ) {
     val navController = rememberNavController()
     val items = listOf(Screen.Active, Screen.History)
+    val context = androidx.compose.ui.platform.LocalContext.current
+    val preferenceManager = remember { com.jeffers.notimindlite.data.local.PreferenceManager(context) }
 
     Scaffold(
         topBar = {
@@ -55,7 +59,7 @@ fun MainNavigation(
                 items.forEach { screen ->
                     NavigationBarItem(
                         icon = screen.icon,
-                        label = { Text(screen.title) },
+                        label = { Text(stringResource(id = screen.title)) },
                         selected = currentRoute == screen.route,
                         onClick = {
                             navController.navigate(screen.route) {

@@ -19,11 +19,13 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.lifecycleScope
+import com.jeffers.notimindlite.R
 import com.jeffers.notimindlite.data.local.AppDatabase
 import com.jeffers.notimindlite.service.NotificationLoggerService
 import com.jeffers.notimindlite.ui.screens.checkNotificationPermission
@@ -51,7 +53,6 @@ class MainActivity : ComponentActivity() {
 
         checkPostNotificationsPermission()
 
-        // Asynchronously initialize dynamic semantic clusters from PackageManager
         lifecycleScope.launch(Dispatchers.IO) {
             DynamicClusterManager.initialize(applicationContext)
         }
@@ -100,8 +101,8 @@ class MainActivity : ComponentActivity() {
                     if (showPermissionDialog && !hasPermission) {
                         AlertDialog(
                             onDismissRequest = { showPermissionDialog = false },
-                            title = { Text("Notification Listener Required") },
-                            text = { Text("NotiMind Lite requires Notification Listener access to intercept, filter, and store notifications locally on your device.") },
+                            title = { Text(stringResource(id = R.string.main_listener_required_title)) },
+                            text = { Text(stringResource(id = R.string.main_listener_required_desc)) },
                             confirmButton = {
                                 Button(
                                     onClick = {
@@ -111,12 +112,12 @@ class MainActivity : ComponentActivity() {
                                         startActivity(intent)
                                     }
                                 ) {
-                                    Text("Grant Permission")
+                                    Text(stringResource(id = R.string.main_grant_permission))
                                 }
                             },
                             dismissButton = {
                                 TextButton(onClick = { showPermissionDialog = false }) {
-                                    Text("Later")
+                                    Text(stringResource(id = R.string.common_later))
                                 }
                             }
                         )
