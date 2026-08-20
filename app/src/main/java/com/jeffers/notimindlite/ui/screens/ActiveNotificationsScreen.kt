@@ -203,14 +203,15 @@ fun ActiveNotificationsScreen(dao: NotificationDao, authManager: AuthManager, db
 
     val pinnedNotifs by dao.getPinnedNotificationsFlow().collectAsState(initial = emptyList())
     val activeNotifs by dao.getActiveNotificationsFlow().collectAsState(initial = emptyList())
+    val filteredNotifs by dao.getFilteredNotificationsFlow().collectAsState(initial = emptyList())
     val recentlyDismissed by dao.getRecentlyDismissedFlow().collectAsState(initial = emptyList())
     val lostNotifs by dao.getLostNotificationsFlow().collectAsState(initial = emptyList())
     val dateTimeFormatter = remember {
         DateTimeFormatter.ofPattern("MMM dd, HH:mm:ss", Locale.getDefault()).withZone(ZoneId.systemDefault())
     }
 
-    val allActiveList = remember(pinnedNotifs, activeNotifs, recentlyDismissed, lostNotifs) {
-        (pinnedNotifs + activeNotifs + recentlyDismissed + lostNotifs).distinctBy { it.packageName }
+    val allActiveList = remember(pinnedNotifs, activeNotifs, filteredNotifs, recentlyDismissed, lostNotifs) {
+        (pinnedNotifs + activeNotifs + filteredNotifs + recentlyDismissed + lostNotifs).distinctBy { it.packageName }
     }
 
     val availableApps = remember(allActiveList) {
@@ -240,7 +241,7 @@ fun ActiveNotificationsScreen(dao: NotificationDao, authManager: AuthManager, db
                 val rawList = when (section) {
                     NotificationSection.PINNED -> pinnedNotifs
                     NotificationSection.ACTIVE -> activeNotifs
-                    NotificationSection.FILTERED -> emptyList()
+                    NotificationSection.FILTERED -> filteredNotifs
                     NotificationSection.DISMISSED -> recentlyDismissed
                     NotificationSection.LOST -> lostNotifs
                 }.distinctBy { "${it.packageName}_${it.title}_${it.content}" }
@@ -307,8 +308,12 @@ fun ActiveNotificationsScreen(dao: NotificationDao, authManager: AuthManager, db
                         state = rememberTooltipState()
                     ) {
                         IconButton(onClick = {
-                            isSearchExplicitlyOpened = !isSearchExplicitlyOpened
-                            if (isSearchExplicitlyOpened) {
+                            if (isSearchExplicitlyOpened || searchQuery.isNotEmpty() || isSearchFocused) {
+                                isSearchExplicitlyOpened = false
+                                isSearchFocused = false
+                                searchQuery = ""
+                            } else {
+                                isSearchExplicitlyOpened = true
                                 scope.launch {
                                     listState.animateScrollToItem(0)
                                     searchFocusRequester.requestFocus()
@@ -318,7 +323,7 @@ fun ActiveNotificationsScreen(dao: NotificationDao, authManager: AuthManager, db
                             Icon(
                                 imageVector = Icons.Default.Search,
                                 contentDescription = stringResource(id = R.string.common_search),
-                                tint = if (searchQuery.isNotEmpty() || isSearchExplicitlyOpened || isSearchFocused) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
+                                tint = if (isSearchExplicitlyOpened || searchQuery.isNotEmpty() || isSearchFocused) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
                             )
                         }
                     }
@@ -536,20 +541,76 @@ fun ActiveNotificationsScreen(dao: NotificationDao, authManager: AuthManager, db
                     }
 
                     if (isExpanded) {
-                        items(
-                            items = itemsList,
-                            key = { item -> "item_${item.key}" }
-                        ) { item ->
-                            val cardExpanded = expandedCards.contains(item.key)
-                            LogNotificationCard(
-                                item = item,
-                                dateTimeFormatter = dateTimeFormatter,
-                                dao = dao,
-                                isExpanded = cardExpanded,
-                                onToggleExpand = {
-                                    expandedCards = if (cardExpanded) expandedCards - item.key else expandedCards + item.key
+                        if (section == NotificationSection.ACTIVE) {
+                            val groupedByApp = itemsList.groupBy { it.packageName }
+                                .entries.sortedByDescending { (_, list) ->
+                                    val hasOngoing = list.any { it.isOngoing }
+                                    val maxPostTime = list.maxOfOrNull { it.postTime } ?: 0L
+                                    if (hasOngoing) Long.MAX_VALUE / 2 + maxPostTime else maxPostTime
                                 }
-                            )
+                            for ((pkg, appItems) in groupedByApp) {
+                                val sortedAppItems = appItems.sortedWith(
+                                    compareByDescending<NotificationEntity> { it.isOngoing }
+                                        .thenByDescending { it.postTime }
+                                )
+                                item(key = "app_group_$pkg") {
+                                    val appName = sortedAppItems.firstOrNull()?.appName ?: pkg
+                                    val iconUri = sortedAppItems.firstOrNull()?.appIconUri
+                                    Surface(
+                                        shape = RoundedCornerShape(8.dp),
+                                        color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.45f),
+                                        modifier = Modifier.fillMaxWidth().padding(top = 8.dp, bottom = 4.dp)
+                                    ) {
+                                        Row(
+                                            modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+                                            verticalAlignment = Alignment.CenterVertically
+                                        ) {
+                                            AppIconImage(appIconUri = iconUri, modifier = Modifier.size(18.dp))
+                                            Spacer(modifier = Modifier.width(8.dp))
+                                            Text(
+                                                text = appName,
+                                                style = MaterialTheme.typography.labelLarge,
+                                                fontWeight = FontWeight.SemiBold
+                                            )
+                                            Spacer(modifier = Modifier.weight(1f))
+                                            Badge {
+                                                Text("${sortedAppItems.size}")
+                                            }
+                                        }
+                                    }
+                                }
+                                items(
+                                    items = sortedAppItems,
+                                    key = { item -> "item_${item.key}" }
+                                ) { item ->
+                                    val cardExpanded = expandedCards.contains(item.key)
+                                    LogNotificationCard(
+                                        item = item,
+                                        dateTimeFormatter = dateTimeFormatter,
+                                        dao = dao,
+                                        isExpanded = cardExpanded,
+                                        onToggleExpand = {
+                                            expandedCards = if (cardExpanded) expandedCards - item.key else expandedCards + item.key
+                                        }
+                                    )
+                                }
+                            }
+                        } else {
+                            items(
+                                items = itemsList,
+                                key = { item -> "item_${item.key}" }
+                            ) { item ->
+                                val cardExpanded = expandedCards.contains(item.key)
+                                LogNotificationCard(
+                                    item = item,
+                                    dateTimeFormatter = dateTimeFormatter,
+                                    dao = dao,
+                                    isExpanded = cardExpanded,
+                                    onToggleExpand = {
+                                        expandedCards = if (cardExpanded) expandedCards - item.key else expandedCards + item.key
+                                    }
+                                )
+                            }
                         }
                     }
                 }
