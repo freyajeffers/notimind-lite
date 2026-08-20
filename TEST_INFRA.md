@@ -55,10 +55,10 @@ app/src/test/java/com/notimind/lite/
 ./gradlew testDebugUnitTest
 
 # Execute specific tier
-./gradlew testDebugUnitTest --tests "com.notimind.lite.tier1_feature.*"
-./gradlew testDebugUnitTest --tests "com.notimind.lite.tier2_boundary.*"
-./gradlew testDebugUnitTest --tests "com.notimind.lite.tier3_pairwise.*"
-./gradlew testDebugUnitTest --tests "com.notimind.lite.tier4_realworld.*"
+./gradlew testDebugUnitTest --tests "com.jeffers.notimindlite.tier1_feature.*"
+./gradlew testDebugUnitTest --tests "com.jeffers.notimindlite.tier2_boundary.*"
+./gradlew testDebugUnitTest --tests "com.jeffers.notimindlite.tier3_pairwise.*"
+./gradlew testDebugUnitTest --tests "com.jeffers.notimindlite.tier4_realworld.*"
 ```
 
 ## 5. Summary of Test Case Index

@@ -10,7 +10,7 @@ To contribute to NotiMind Lite, ensure your development environment meets the fo
 
 - **JDK**: Java Development Kit (JDK) 17 (Temurin recommended).
 - **IDE**: Android Studio (Latest stable version).
-- **SDK**: Android API Level 26 (minSdk) to API Level 34+.
+- **SDK**: Android API Level 26 (minSdk) to API Level 36.
 - **Build Tool**: Gradle (with KSP/Kapt for Room).
 
 ---
@@ -37,17 +37,17 @@ All commands should be run from the project root:
 
 ---
 
-## 🗄️ Extending the Data Layer
+## 📦 Extending the Data Layer
 
 NotiMind Lite uses Room for persistence. Because the app supports **Direct Boot**, the database is split between Device Protected (DE) and Credential Encrypted (CE) storage.
 
 ### Adding New Data Entities
-1. **Define Entity**: Create a new class extending `RoomEntity` in `com.jeffers.notimindlite.data.local`.
+1. **Define Entity**: Create a new class extending `RoomEntity` (if applicable) or a standard `@Entity` in `com.jeffers.notimindlite.data.local`.
 2. **Update DAO**: Add the necessary `@Query` or `@Insert` methods to the corresponding DAO interface.
 3. **Register Entity**: Add the class to the `@Database(entities = [...])` array in `AppDatabase.kt`.
 4. **Migration Flow**:
    - Increment the version number in `AppDatabase.kt`.
-   - Create a `Migration` object in `DatabaseMigrator.kt` (e.g., `MIGRATION_14_15`).
+   - Create a `Migration` object in `com.jeffers.notimindlite.util.DatabaseMigrator.kt` (e.g., `MIGRATION_16_17`).
    - Define the SQL `ALTER TABLE` or `CREATE TABLE` statements required.
    - Register the migration in the `AppDatabase` builder.
 
@@ -62,7 +62,7 @@ Search domains are managed by the `DynamicClusterManager`. To add a new semantic
 
 1. **Update Vocabulary**: Add relevant keywords and package names to the `DynamicClusterManager` vocabulary map.
 2. **Refine Domain Inference**: Update the logic that maps `ApplicationInfo.CATEGORY_*` to the new domain.
-3. **Verify Weights**: If the new domain is not appearing in results, adjust the $k$ constant in `ReciprocalRankFusion.kt` to balance semantic vs. exact matches.
+3. **Verify Weights**: If the new domain is not appearing in results, adjust the $k$ constant in `com.jeffers.notimindlite.util.ReciprocalRankFusion.kt` to balance semantic vs. exact matches.
 
 ---
 
