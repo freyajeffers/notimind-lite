@@ -18,7 +18,10 @@ import com.jeffers.notimindlite.data.auth.UserSession
 import com.jeffers.notimindlite.data.local.AppDatabase
 import com.jeffers.notimindlite.data.sync.FirestoreSyncRepository
 import com.jeffers.notimindlite.data.sync.SyncWorker
+import com.jeffers.notimindlite.data.local.PreferenceManager
+import com.jeffers.notimindlite.data.local.generateBackupKey
 import kotlinx.coroutines.launch
+import javax.crypto.SecretKey
 
 @Composable
 fun SettingsScreen(
@@ -146,7 +149,10 @@ fun SettingsScreen(
                                 scope.launch {
                                     isSyncing = true
                                     val repo = FirestoreSyncRepository(db)
-                                    val res = repo.sync(uid)
+                                    
+                                    val secretKey: SecretKey = generateBackupKey()
+                                    
+                                    val res = repo.sync(uid, secretKey)
                                     isSyncing = false
                                     syncMessage = if (res.isSuccess) {
                                         "Synced ${res.getOrDefault(0)} items successfully"
@@ -166,6 +172,41 @@ fun SettingsScreen(
                     syncMessage?.let { msg ->
                         Text(text = msg, style = MaterialTheme.typography.bodySmall)
                     }
+                }
+            }
+        }
+
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
+        ) {
+            Column(
+                modifier = Modifier.padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                Text(
+                    text = "Privacy & Telemetry",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.SemiBold
+                )
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text("Strict Privacy Mode", style = MaterialTheme.typography.bodyLarge)
+                        Text(
+                            "Disable all crash reporting and anonymous usage telemetry.",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                    Switch(
+                        checked = remember { PreferenceManager(context).isStrictPrivacyEnabled() },
+                        onCheckedChange = { enabled ->
+                            PreferenceManager(context).setStrictPrivacyEnabled(enabled)
+                        }
+                    )
                 }
             }
         }
