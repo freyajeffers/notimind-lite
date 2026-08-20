@@ -44,9 +44,9 @@ class NavigationAndSettingsUiTest {
     @Test
     fun testScreenRoutes_definedCorrectly() {
         assertEquals("active", Screen.Active.route)
-        assertEquals("Active", Screen.Active.title)
+        assertEquals(com.jeffers.notimindlite.R.string.nav_active_title, Screen.Active.title)
         assertEquals("history", Screen.History.route)
-        assertEquals("History", Screen.History.title)
+        assertEquals(com.jeffers.notimindlite.R.string.nav_history_title, Screen.History.title)
     }
 
     @Test
