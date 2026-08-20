@@ -135,6 +135,7 @@ class NotificationLoggerService : NotificationListenerService() {
     override fun onNotificationPosted(sbn: StatusBarNotification) {
         super.onNotificationPosted(sbn)
         Log.d(TAG, "onNotificationPosted: ${sbn.packageName} - ${sbn.id}")
+        RestoredNotificationManager.onOriginalAppNotificationPosted(applicationContext, sbn.packageName)
         processNotification(sbn)
     }
 
@@ -326,20 +327,20 @@ class NotificationLoggerService : NotificationListenerService() {
     private fun handleNotificationRemoved(sbn: StatusBarNotification, reason: Int?) {
         if (sbn.packageName == applicationContext.packageName) return
         val key = sbn.key ?: "${sbn.id}|${sbn.packageName}|${sbn.postTime}"
+        val extras = sbn.notification?.extras
+        val title = extras?.getCharSequence(Notification.EXTRA_TITLE)?.toString() ?: ""
+        val content = extras?.getCharSequence(Notification.EXTRA_TEXT)?.toString() ?: ""
         Log.d(TAG, "Notification removed: $key, reason: $reason")
         NotificationLauncher.unregisterPendingIntent(key)
         recentLogs.remove(key)
         recentContents.remove(key)
         val dismissTime = System.currentTimeMillis()
+        val effectiveReason = reason ?: 1
 
         scope.launch {
             try {
                 val dao = getDb().notificationDao()
-                if (reason != null) {
-                    dao.markDismissedWithReason(key, reason, dismissTime)
-                } else {
-                    dao.markDismissed(key, dismissTime)
-                }
+                dao.markDismissedWithReasonByMatching(key, sbn.packageName, title, content, effectiveReason, dismissTime)
             } catch (e: Exception) {
                 Log.e(TAG, "Failed to mark notification dismissed for $key", e)
             }
