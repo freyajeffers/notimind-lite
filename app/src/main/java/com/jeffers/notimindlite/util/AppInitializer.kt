@@ -3,6 +3,9 @@ package com.jeffers.notimindlite.util
 import android.content.Context
 import android.util.Log
 import com.google.firebase.FirebaseApp
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import java.util.concurrent.atomic.AtomicBoolean
 
 /**
@@ -31,9 +34,16 @@ object AppInitializer {
             }
 
             // 2. Database & Logger Initialization
-            // In a real implementation, we would initialize the AppDatabase 
-            // and any internal logging frameworks here.
             setupInternalLogging()
+
+            // 3. Security & App Data Clearance Audit Detection
+            kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.Dispatchers.IO).launch {
+                try {
+                    AuditLogger.checkAndLogAppDataCleared(context)
+                } catch (e: Exception) {
+                    Log.w(TAG, "AuditLogger check failed on startup", e)
+                }
+            }
 
             Log.i(TAG, "AppInitializer: System initialization complete.")
         } catch (e: Exception) {
