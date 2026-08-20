@@ -25,6 +25,11 @@ object BackupNotaryClient {
      * Flow: Play Integrity Token -> Server Verification -> Signature Delivery.
      */
     suspend fun getSignature(context: Context, fileHash: String): String = withContext(Dispatchers.IO) {
+        if (!NetworkUtils.isInternetAvailable(context)) {
+            AppLogger.e(TAG, "Active internet connection required for backup notarization")
+            throw IllegalStateException("Active internet connection is required to notarize and create backup")
+        }
+
         try {
             // 1. Request an Integrity Token from Google Play
             val integrityManager = IntegrityManagerFactory.create(context)
@@ -36,7 +41,7 @@ object BackupNotaryClient {
             
             signature
         } catch (e: Exception) {
-            Log.e(TAG, "Notary signature retrieval failed: ${e.message}", e)
+            AppLogger.e(TAG, "Notary signature retrieval failed: ${e.message}", e)
             throw SecurityException("Could not verify app identity. Backup authorization failed.")
         }
     }
