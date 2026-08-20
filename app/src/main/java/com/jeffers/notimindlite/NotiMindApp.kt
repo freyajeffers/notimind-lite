@@ -17,6 +17,7 @@ class NotiMindApp : Application(), android.content.ComponentCallbacks2 {
 
     override fun onCreate() {
         super.onCreate()
+        com.jeffers.notimindlite.util.AppInitializer.initialize(this)
         Log.i(TAG, "NotiMind Lite Application Initialized")
     }
 

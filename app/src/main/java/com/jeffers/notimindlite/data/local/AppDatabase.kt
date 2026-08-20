@@ -192,7 +192,9 @@ abstract class AppDatabase : RoomDatabase() {
 
         val MIGRATION_15_16 = object : Migration(15, 16) {
             override fun migrate(db: SupportSQLiteDatabase) {
-                db.execSQL("CREATE TABLE IF NOT EXISTS `backup_records` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `fileHash` TEXT NOT NULL, `signature` TEXT NOT NULL, `timestamp` INTEGER NOT NULL, `fileName` TEXT)")
+                db.execSQL("ALTER TABLE `backup_records` ADD COLUMN `actionType` TEXT NOT NULL DEFAULT 'UNKNOWN'")
+                db.execSQL("ALTER TABLE `backup_records` ADD COLUMN `logMessage` TEXT")
+                db.execSQL("ALTER TABLE `backup_records` ADD COLUMN `encryptionKeyBase64` TEXT")
             }
         }
 
@@ -223,7 +225,6 @@ abstract class AppDatabase : RoomDatabase() {
                     val appContext = context.applicationContext
                     val deContext = if (appContext.isDeviceProtectedStorage) appContext else appContext.createDeviceProtectedStorageContext()
                     Room.databaseBuilder(deContext, AppDatabase::class.java, DE_DATABASE_NAME)
-                        .fallbackToDestructiveMigration(dropAllTables = true)
                         .setJournalMode(JournalMode.WRITE_AHEAD_LOGGING)
                         .build().also { deInstance = it }
                 }
@@ -248,7 +249,6 @@ abstract class AppDatabase : RoomDatabase() {
                         MIGRATION_10_11, MIGRATION_11_12, MIGRATION_12_13, MIGRATION_13_14, MIGRATION_14_15,
                         MIGRATION_15_16, MIGRATION_16_17
                     )
-                    .fallbackToDestructiveMigration(dropAllTables = true)
                     .setJournalMode(JournalMode.WRITE_AHEAD_LOGGING)
                     .build()
                     ceInstance = instance
