@@ -26,24 +26,23 @@ import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.outlined.BookmarkBorder
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import android.util.Log
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.text.style.TextOverflow
+import com.jeffers.notimindlite.R
+import androidx.compose.foundation.background
 import com.jeffers.notimindlite.data.local.NotificationDao
 import com.jeffers.notimindlite.data.local.NotificationEntity
 import com.jeffers.notimindlite.ui.dialogs.AppPackageSelectorDialog
-import com.jeffers.notimindlite.util.DatabaseExporter
+import com.jeffers.notimindlite.ui.components.NotificationDetailPanel
+import com.jeffers.notimindlite.util.NotificationLauncher
 import com.jeffers.notimindlite.data.auth.AuthManager
 import com.jeffers.notimindlite.data.local.AppDatabase
-import com.jeffers.notimindlite.ui.components.ActionableChips
-import com.jeffers.notimindlite.ui.components.NotificationDetailPanel
-import com.jeffers.notimindlite.util.HybridSearchEngine
-import com.jeffers.notimindlite.util.TelemetryManager
-import com.jeffers.notimindlite.util.NotificationLauncher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -114,7 +113,6 @@ fun LogHistoryScreen(dao: NotificationDao, authManager: AuthManager, db: AppData
             if (debouncedSearchQuery.isBlank()) {
                 list
             } else {
-                // Fix coroutine misuse by using a simple filter for now to enable build
                 list.filter { it.title.contains(debouncedSearchQuery, ignoreCase = true) || it.content.contains(debouncedSearchQuery, ignoreCase = true) }
             }
         }
@@ -125,7 +123,6 @@ fun LogHistoryScreen(dao: NotificationDao, authManager: AuthManager, db: AppData
             TopAppBar(
                 title = { Text(stringResource(id = R.string.log_history_title, filteredNotifs.size, totalCount), fontWeight = FontWeight.Bold) },
                 actions = {
-                    // Consolidated Filter Menu (App Filter + Reason Filter)
                     Box {
                         val hasActiveFilters = !selectedPackages.isNullOrEmpty() || selectedReasonFilter != null
                         TooltipBox(
@@ -150,7 +147,6 @@ fun LogHistoryScreen(dao: NotificationDao, authManager: AuthManager, db: AppData
                                 onClick = {
                                     showFilterMenu = false
                                     showPackagePicker = true
-                                    TelemetryManager.logFeatureUsage("filter_used", mapOf("type" to "app"))
                                 }
                             )
                             HorizontalDivider()
@@ -167,14 +163,12 @@ fun LogHistoryScreen(dao: NotificationDao, authManager: AuthManager, db: AppData
                                     onClick = {
                                         selectedReasonFilter = reasonCode
                                         showFilterMenu = false
-                                        TelemetryManager.logFeatureUsage("filter_used", mapOf("type" to "reason", "value" to reasonCode))
                                     }
                                 )
                             }
                         }
                     }
 
-                    // Sort Order Button
                     Box {
                         TooltipBox(
                             positionProvider = TooltipDefaults.rememberPlainTooltipPositionProvider(),
@@ -478,7 +472,7 @@ fun LogHistoryCard(
                         shape = MaterialTheme.shapes.extraSmall
                     ) {
                         Text(
-                            text = getReasonLabel(item.dismissReason),
+                            text = stringResource(id = getReasonLabel(item.dismissReason)),
                             fontSize = 10.sp,
                             fontWeight = FontWeight.Bold,
                             color = MaterialTheme.colorScheme.secondary,
@@ -498,64 +492,48 @@ fun LogHistoryCard(
                         ) {
                             Icon(
                                 imageVector = if (isExpanded) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
-                                contentDescription = "Toggle Details",
-                                tint = MaterialTheme.colorScheme.onSurfaceVariant
+                                contentDescription = null
                             )
                         }
                     }
                 }
             }
 
-            Spacer(modifier = Modifier.height(4.dp))
-            Text(
-                text = item.title,
-                fontWeight = FontWeight.SemiBold,
-                fontSize = 15.sp
-            )
-
-            if (!item.subText.isNullOrEmpty()) {
-                Text(
-                    text = item.subText,
-                    fontSize = 12.sp,
-                    color = MaterialTheme.colorScheme.tertiary,
-                    fontWeight = FontWeight.Medium
-                )
-            }
-
-            Text(
-                text = item.bigText ?: item.content,
-                fontSize = 13.sp,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-
-            AnimatedVisibility(
-                visible = isExpanded,
-                enter = fadeIn() + androidx.compose.animation.expandVertically(animationSpec = spring(stiffness = 300f)),
-                exit = fadeOut() + shrinkVertically(animationSpec = spring(stiffness = 300f))
-            ) {
-                Column {
-                    ActionableChips(text = item.content)
-                    NotificationDetailPanel(item = item, dateTimeFormatter = dateTimeFormatter)
+            if (isExpanded) {
+                Column(modifier = Modifier.padding(top = 8.dp)) {
+                    Text(
+                        text = item.title,
+                        style = MaterialTheme.typography.bodyLarge,
+                        fontWeight = FontWeight.SemiBold,
+                        maxLines = 2,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text(
+                        text = item.content,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        maxLines = 10,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = dateTimeFormatter.format(Instant.ofEpochMilli(item.postTime)),
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
+                        )
+                        Text(
+                            text = getPriorityLabel(item.priority),
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
+                        )
+                    }
                 }
-            }
-
-            Spacer(modifier = Modifier.height(6.dp))
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                Text(
-                    text = "Received: ${dateTimeFormatter.format(Instant.ofEpochMilli(item.postTime))}",
-                    fontSize = 11.sp,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
-                )
-                val dismissTimestamp = item.dismissTime ?: item.postTime
-                Text(
-                    text = "Dismissed: ${dateTimeFormatter.format(Instant.ofEpochMilli(dismissTimestamp))}",
-                    fontSize = 11.sp,
-                    color = MaterialTheme.colorScheme.secondary,
-                    fontWeight = FontWeight.Medium
-                )
             }
         }
     }
