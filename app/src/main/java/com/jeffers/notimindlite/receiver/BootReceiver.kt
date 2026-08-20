@@ -80,8 +80,12 @@ class BootReceiver : BroadcastReceiver() {
                     val db = AppDatabase.getDatabase(context.applicationContext)
                     val activeNotifs = db.notificationDao().getActiveNotificationsList()
 
+                    // apply intelligent grouping if count > 45
+                    val consolidatedNotifs = BootRestoreManager.consolidateForBoot(activeNotifs)
+
                     val notificationManager =
                         context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+
 
                     val channel = NotificationChannel(
                         CHANNEL_ID_RESTORED,
@@ -93,17 +97,14 @@ class BootReceiver : BroadcastReceiver() {
                     notificationManager.createNotificationChannel(channel)
 
                     var restoredCount = 0
-                    for (notif in activeNotifs) {
-                        if (notif.isOngoing || notif.isPersistent) {
-                            continue
-                        }
-
-                        val notifId = (notif.id.hashCode() and 0x7FFFFFFF) + 1000
+                    for (item in consolidatedNotifs) {
+                        val firstId = item.originalIds.first()
+                        val notifId = (firstId.hashCode() and 0x7FFFFFFF) + 1000
 
                         val builder = NotificationCompat.Builder(context, CHANNEL_ID_RESTORED)
                             .setSmallIcon(android.R.drawable.stat_notify_chat)
-                            .setContentTitle("${notif.appName}: ${notif.title}")
-                            .setContentText(notif.content)
+                            .setContentTitle("${item.appName}: ${item.summaryTitle}")
+                            .setContentText(item.summaryContent)
                             .setSubText("Restored after Reboot")
                             .setPriority(NotificationCompat.PRIORITY_DEFAULT)
                             .setAutoCancel(true)
