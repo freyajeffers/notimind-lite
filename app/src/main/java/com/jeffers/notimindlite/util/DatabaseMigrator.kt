@@ -25,7 +25,7 @@ object DatabaseMigrator {
 
             Log.i(TAG, "Vectorizing ${needingVectorization.size} notifications...")
             
-            needingVectorization.forEach { entity ->
+            val embeddingPairs = needingVectorization.map { entity ->
                 val textToEmbed = buildString {
                     append(entity.appName).append(" ")
                     append(entity.title).append(" ")
@@ -36,8 +36,9 @@ object DatabaseMigrator {
                     append(entity.packageName)
                 }
                 val embedding = VectorEmbeddingHelper.computeEmbedding(textToEmbed)
-                dao.updateEmbedding(entity.id, embedding)
+                Pair(entity.id, embedding)
             }
+            dao.updateEmbeddingsBatch(embeddingPairs)
             Log.i(TAG, "Vectorization complete.")
         } catch (e: Exception) {
             Log.e(TAG, "Failed to vectorize existing notifications: ${e.message}", e)

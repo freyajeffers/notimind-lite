@@ -30,55 +30,70 @@ class FirestoreSyncRepository(
             val dao = db.notificationDao()
             val userCol = firestore.collection("users").document(userId).collection("notifications")
 
-            // 1. Upload unsynced local changes
+            // 1. Upload unsynced local changes in batches
             val unsynced = dao.getUnsyncedNotifications()
             var syncCount = 0
 
-            for (notification in unsynced) {
-                if (notification.syncStatus == SyncStatus.PENDING_DELETE) {
-                    // Retain permanent record in both local and remote stores
-                    dao.updateSyncStatus(notification.key, SyncStatus.SYNCED)
-                } else {
-                    // Encrypt PII fields before upload
-                    val map = hashMapOf<String, Any?>(
-                        "key" to notification.key,
-                        "packageName" to notification.packageName,
-                        "appName" to notification.appName,
-                        "title" to SyncEncryptionHelper.encrypt(notification.title, secretKey),
-                        "content" to SyncEncryptionHelper.encrypt(notification.content, secretKey),
-                        "postTime" to notification.postTime,
-                        "lastUpdatedTime" to notification.lastUpdatedTime,
-                        "updateCount" to notification.updateCount,
-                        "isDismissed" to notification.isDismissed,
-                        "isPersistent" to notification.isPersistent,
-                        "isRead" to notification.isRead,
-                        "isGroupSummary" to notification.isGroupSummary,
-                        "category" to notification.category?.let { SyncEncryptionHelper.encrypt(it, secretKey) },
-                        "channelId" to notification.channelId?.let { SyncEncryptionHelper.encrypt(it, secretKey) },
-                        "subText" to notification.subText?.let { SyncEncryptionHelper.encrypt(it, secretKey) },
-                        "bigText" to notification.bigText?.let { SyncEncryptionHelper.encrypt(it, secretKey) },
-                        "inboxLinesJson" to notification.inboxLinesJson?.let { SyncEncryptionHelper.encrypt(it, secretKey) },
-                        "priority" to notification.priority,
-                        "groupKey" to notification.groupKey,
-                        "isOngoing" to notification.isOngoing,
-                        "isClearable" to notification.isClearable,
-                        "actionsCount" to notification.actionsCount,
-                        "dismissReason" to notification.dismissReason,
-                        "dismissTime" to notification.dismissTime,
-                        "intentUri" to notification.intentUri?.let { SyncEncryptionHelper.encrypt(it, secretKey) },
-                        "isPinned" to notification.isPinned,
-                        "actionLabels" to notification.actionLabels?.let { SyncEncryptionHelper.encrypt(it, secretKey) },
-                        "smallIconRes" to notification.smallIconRes,
-                        "appIconUri" to notification.appIconUri
-                    )
-                    userCol.document(notification.key).set(map).await()
-                    dao.updateSyncStatus(notification.key, SyncStatus.SYNCED)
+            if (unsynced.isNotEmpty()) {
+                val now = System.currentTimeMillis()
+                for (chunk in unsynced.chunked(500)) {
+                    val batch = firestore.batch()
+                    var hasWrites = false
+                    val syncedKeys = mutableListOf<String>()
+
+                    for (notification in chunk) {
+                        syncedKeys.add(notification.key)
+                        if (notification.syncStatus != SyncStatus.PENDING_DELETE) {
+                            // Encrypt PII fields before upload
+                            val map = hashMapOf<String, Any?>(
+                                "key" to notification.key,
+                                "packageName" to notification.packageName,
+                                "appName" to notification.appName,
+                                "title" to SyncEncryptionHelper.encrypt(notification.title, secretKey),
+                                "content" to SyncEncryptionHelper.encrypt(notification.content, secretKey),
+                                "postTime" to notification.postTime,
+                                "lastUpdatedTime" to notification.lastUpdatedTime,
+                                "updateCount" to notification.updateCount,
+                                "isDismissed" to notification.isDismissed,
+                                "isPersistent" to notification.isPersistent,
+                                "isRead" to notification.isRead,
+                                "isGroupSummary" to notification.isGroupSummary,
+                                "category" to notification.category?.let { SyncEncryptionHelper.encrypt(it, secretKey) },
+                                "channelId" to notification.channelId?.let { SyncEncryptionHelper.encrypt(it, secretKey) },
+                                "subText" to notification.subText?.let { SyncEncryptionHelper.encrypt(it, secretKey) },
+                                "bigText" to notification.bigText?.let { SyncEncryptionHelper.encrypt(it, secretKey) },
+                                "inboxLinesJson" to notification.inboxLinesJson?.let { SyncEncryptionHelper.encrypt(it, secretKey) },
+                                "priority" to notification.priority,
+                                "groupKey" to notification.groupKey,
+                                "isOngoing" to notification.isOngoing,
+                                "isClearable" to notification.isClearable,
+                                "actionsCount" to notification.actionsCount,
+                                "dismissReason" to notification.dismissReason,
+                                "dismissTime" to notification.dismissTime,
+                                "intentUri" to notification.intentUri?.let { SyncEncryptionHelper.encrypt(it, secretKey) },
+                                "isPinned" to notification.isPinned,
+                                "actionLabels" to notification.actionLabels?.let { SyncEncryptionHelper.encrypt(it, secretKey) },
+                                "smallIconRes" to notification.smallIconRes,
+                                "appIconUri" to notification.appIconUri
+                            )
+                            val docRef = userCol.document(notification.key)
+                            batch.set(docRef, map)
+                            hasWrites = true
+                        }
+                    }
+
+                    if (hasWrites) {
+                        batch.commit().await()
+                    }
+
+                    dao.updateSyncStatusBatch(syncedKeys, SyncStatus.SYNCED, now)
+                    syncCount += chunk.size
                 }
-                syncCount++
             }
 
             // 2. Fetch remote documents and merge down
             val snapshot = userCol.get().await()
+            val entitiesToInsert = mutableListOf<NotificationEntity>()
             for (doc in snapshot.documents) {
                 val key = doc.getString("key") ?: doc.id
                 val existing = dao.getNotificationByKey(key)
@@ -121,9 +136,13 @@ class FirestoreSyncRepository(
                         syncStatus = SyncStatus.SYNCED,
                         lastSyncedAt = System.currentTimeMillis()
                     )
-                    dao.insertNotification(entity)
-                    syncCount++
+                    entitiesToInsert.add(entity)
                 }
+            }
+
+            if (entitiesToInsert.isNotEmpty()) {
+                dao.insertNotifications(entitiesToInsert)
+                syncCount += entitiesToInsert.size
             }
 
             Result.success(syncCount)
