@@ -7,6 +7,7 @@ import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.FirebaseFirestoreException
 import com.google.firebase.firestore.QueryDocumentSnapshot
 import com.google.firebase.firestore.QuerySnapshot
+import com.google.firebase.firestore.WriteBatch
 import com.jeffers.notimindlite.data.local.AppDatabase
 import com.jeffers.notimindlite.data.local.NotificationDao
 import com.jeffers.notimindlite.data.local.NotificationEntity
@@ -45,8 +46,11 @@ class FirestoreSyncBoundaryTest {
         mockDb = mockk()
         mockDao = mockk(relaxed = true)
         mockFirestore = mockk()
+        val mockBatch = mockk<WriteBatch>(relaxed = true)
 
         every { mockDb.notificationDao() } returns mockDao
+        every { mockFirestore.batch() } returns mockBatch
+        every { mockBatch.commit() } returns Tasks.forResult(null)
         repository = FirestoreSyncRepository(mockDb, mockFirestore)
     }
 
@@ -73,9 +77,11 @@ class FirestoreSyncBoundaryTest {
 
         val mockCol = mockCollection(userId)
         val mockDoc = mockk<DocumentReference>()
+        val mockBatch = mockk<WriteBatch>(relaxed = true)
 
+        every { mockFirestore.batch() } returns mockBatch
         every { mockCol.document(notification.key) } returns mockDoc
-        every { mockDoc.set(any()) } returns Tasks.forException(
+        every { mockBatch.commit() } returns Tasks.forException(
             FirebaseFirestoreException("Service unavailable", FirebaseFirestoreException.Code.UNAVAILABLE)
         )
 
@@ -83,6 +89,7 @@ class FirestoreSyncBoundaryTest {
 
         assertTrue("Sync should return failure when Firestore is unavailable", result.isFailure)
         coVerify(exactly = 0) { mockDao.updateSyncStatus(any(), SyncStatus.SYNCED, any()) }
+        coVerify(exactly = 0) { mockDao.updateSyncStatusBatch(any(), SyncStatus.SYNCED, any()) }
     }
 
     @Test
@@ -130,7 +137,7 @@ class FirestoreSyncBoundaryTest {
         val result = repository.sync(userId, testKey)
 
         assertTrue("Sync should complete successfully even if some remote docs are corrupted. Failure: ${result.exceptionOrNull()?.message}", result.isSuccess)
-        coVerify { mockDao.insertNotification(any()) }
+        coVerify { mockDao.insertNotifications(any()) }
     }
 
     @Test

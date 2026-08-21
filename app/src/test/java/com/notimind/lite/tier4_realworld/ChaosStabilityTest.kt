@@ -7,6 +7,7 @@ import com.google.firebase.firestore.DocumentSnapshot
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.FirebaseFirestoreException
 import com.google.firebase.firestore.QuerySnapshot
+import com.google.firebase.firestore.WriteBatch
 import com.jeffers.notimindlite.data.local.AppDatabase
 import com.jeffers.notimindlite.data.local.NotificationDao
 import com.jeffers.notimindlite.data.local.NotificationEntity
@@ -69,12 +70,15 @@ class ChaosStabilityTest {
 
         coEvery { mockDao.getUnsyncedNotifications() } returns listOf(notification)
         val mockDoc = mockk<DocumentReference>()
+        val mockBatch = mockk<WriteBatch>(relaxed = true)
+
+        every { mockFirestore.batch() } returns mockBatch
         every { mockNotifCol.document(notification.key) } returns mockDoc
 
         val failedTask = Tasks.forException<Void>(
             FirebaseFirestoreException("Network unstable", FirebaseFirestoreException.Code.UNAVAILABLE)
         )
-        every { mockDoc.set(any()) } returns failedTask
+        every { mockBatch.commit() } returns failedTask
 
         val result = repository.sync(userId, testSecretKey)
 

@@ -6,6 +6,7 @@ import com.google.firebase.firestore.DocumentReference
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.QueryDocumentSnapshot
 import com.google.firebase.firestore.QuerySnapshot
+import com.google.firebase.firestore.WriteBatch
 import com.jeffers.notimindlite.data.local.AppDatabase
 import com.jeffers.notimindlite.data.local.NotificationDao
 import com.jeffers.notimindlite.data.local.NotificationEntity
@@ -46,8 +47,11 @@ class SyncIntegrationPairwiseTest : BaseRobolectricTest() {
         mockDb = mockk()
         mockDao = mockk(relaxed = true)
         mockFirestore = mockk()
+        val mockBatch = mockk<WriteBatch>(relaxed = true)
 
         every { mockDb.notificationDao() } returns mockDao
+        every { mockFirestore.batch() } returns mockBatch
+        every { mockBatch.commit() } returns Tasks.forResult(null)
         repository = FirestoreSyncRepository(mockDb, mockFirestore)
     }
 
@@ -90,7 +94,7 @@ class SyncIntegrationPairwiseTest : BaseRobolectricTest() {
 
         repository.sync(userId, testKey)
 
-        coVerify(exactly = 0) { mockDao.insertNotification(any()) }
+        coVerify(exactly = 0) { mockDao.insertNotifications(any()) }
     }
 
     @Test
@@ -150,9 +154,10 @@ class SyncIntegrationPairwiseTest : BaseRobolectricTest() {
 
         assertTrue("Sync should succeed. Result: $result", result.isSuccess)
         coVerify {
-            mockDao.insertNotification(withArg {
-                assertEquals("Remote Title", it.title)
-                assertEquals("Remote Content", it.content)
+            mockDao.insertNotifications(withArg {
+                assertEquals(1, it.size)
+                assertEquals("Remote Title", it[0].title)
+                assertEquals("Remote Content", it[0].content)
             })
         }
     }
@@ -182,6 +187,6 @@ class SyncIntegrationPairwiseTest : BaseRobolectricTest() {
         repository.sync(userId, testKey)
 
         coVerify(exactly = 0) { mockDoc.delete() }
-        coVerify { mockDao.updateSyncStatus(key, SyncStatus.SYNCED, any()) }
+        coVerify { mockDao.updateSyncStatusBatch(listOf(key), SyncStatus.SYNCED, any()) }
     }
 }

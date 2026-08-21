@@ -7,6 +7,7 @@ import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.FirebaseFirestoreException
 import com.google.firebase.firestore.QueryDocumentSnapshot
 import com.google.firebase.firestore.QuerySnapshot
+import com.google.firebase.firestore.WriteBatch
 import com.jeffers.notimindlite.data.local.AppDatabase
 import com.jeffers.notimindlite.data.local.NotificationDao
 import com.jeffers.notimindlite.data.local.NotificationEntity
@@ -46,8 +47,11 @@ class CloudChaosStabilityTest : BaseRobolectricTest() {
         mockDb = mockk()
         mockDao = mockk(relaxed = true)
         mockFirestore = mockk()
+        val mockBatch = mockk<WriteBatch>(relaxed = true)
 
         every { mockDb.notificationDao() } returns mockDao
+        every { mockFirestore.batch() } returns mockBatch
+        every { mockBatch.commit() } returns Tasks.forResult(null)
         repository = FirestoreSyncRepository(mockDb, mockFirestore)
     }
 
@@ -78,9 +82,11 @@ class CloudChaosStabilityTest : BaseRobolectricTest() {
 
         val mockCol = mockCollection()
         val mockDoc = mockk<DocumentReference>()
+        val mockBatch = mockk<WriteBatch>(relaxed = true)
 
+        every { mockFirestore.batch() } returns mockBatch
         every { mockCol.document(notification.key) } returns mockDoc
-        every { mockDoc.set(any()) } returns Tasks.forException(
+        every { mockBatch.commit() } returns Tasks.forException(
             FirebaseFirestoreException("Network connection lost mid-upload", FirebaseFirestoreException.Code.UNAVAILABLE)
         )
 
@@ -88,6 +94,7 @@ class CloudChaosStabilityTest : BaseRobolectricTest() {
 
         assertTrue("Sync should report failure when network drops", result.isFailure)
         coVerify(exactly = 0) { mockDao.updateSyncStatus(any(), SyncStatus.SYNCED, any()) }
+        coVerify(exactly = 0) { mockDao.updateSyncStatusBatch(any(), SyncStatus.SYNCED, any()) }
     }
 
     @Test
@@ -105,9 +112,11 @@ class CloudChaosStabilityTest : BaseRobolectricTest() {
 
         val mockCol = mockCollection()
         val mockDoc = mockk<DocumentReference>()
+        val mockBatch = mockk<WriteBatch>(relaxed = true)
 
+        every { mockFirestore.batch() } returns mockBatch
         every { mockCol.document(notification.key) } returns mockDoc
-        every { mockDoc.set(any()) } returns Tasks.forException(
+        every { mockBatch.commit() } returns Tasks.forException(
             FirebaseFirestoreException("Quota exceeded", FirebaseFirestoreException.Code.RESOURCE_EXHAUSTED)
         )
 
@@ -115,6 +124,7 @@ class CloudChaosStabilityTest : BaseRobolectricTest() {
 
         assertTrue("Sync should report failure when rate limited", result.isFailure)
         coVerify(exactly = 0) { mockDao.updateSyncStatus(any(), SyncStatus.SYNCED, any()) }
+        coVerify(exactly = 0) { mockDao.updateSyncStatusBatch(any(), SyncStatus.SYNCED, any()) }
     }
 
     @Test
@@ -163,6 +173,6 @@ class CloudChaosStabilityTest : BaseRobolectricTest() {
         val result = repository.sync(userId, testKey)
 
         assertTrue("Sync should complete successfully for large batches. Failure: ${result.exceptionOrNull()?.message}", result.isSuccess)
-        coVerify(exactly = 100) { mockDao.insertNotification(any()) }
+        coVerify(exactly = 1) { mockDao.insertNotifications(any()) }
     }
 }

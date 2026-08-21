@@ -138,15 +138,39 @@ class NotificationLoggerService : NotificationListenerService() {
         super.onNotificationPosted(sbn)
         Log.d(TAG, "onNotificationPosted: ${sbn.packageName} - ${sbn.id}")
         RestoredNotificationManager.onOriginalAppNotificationPosted(applicationContext, sbn.packageName)
-        processNotification(sbn)
+        
+        // Use the new extraction helper and individual insert for single posted notifications
+        // (Single inserts are already optimized via Room, but we maintain compatibility)
+        val entity = extractNotificationEntity(sbn)
+        if (entity != null) {
+            scope.launch {
+                try {
+                    val dao = getDb().notificationDao()
+                    val existing = dao.getNotificationByKey(entity.key)
+                    val updateCount = (existing?.updateCount ?: 0) + 1
+                    val originalPostTime = if (existing != null && existing.postTime > 0) existing.postTime else entity.postTime
+                    
+                    val finalEntity = entity.copy(
+                        id = existing?.id ?: 0L,
+                        updateCount = updateCount,
+                        postTime = originalPostTime,
+                        isRead = existing?.isRead ?: false,
+                        isPinned = existing?.isPinned ?: false
+                    )
+                    dao.insert(finalEntity)
+                    Log.d(TAG, "Inserted: ${finalEntity.title} (${finalEntity.appName})")
+                } catch (e: Exception) {
+                    Log.e(TAG, "DB insert failed for ${entity.title}", e)
+                }
+            }
+        }
     }
 
-    private fun processNotification(sbn: StatusBarNotification) {
-        if (sbn.packageName == applicationContext.packageName) return
+    private fun extractNotificationEntity(sbn: StatusBarNotification): NotificationEntity? {
         try {
-            val notification = sbn.notification ?: return
+            if (sbn.packageName == applicationContext.packageName) return null
+            val notification = sbn.notification ?: return null
             val packageName = sbn.packageName
-
             val extras = notification.extras
             val title = extras?.getCharSequence(Notification.EXTRA_TITLE)?.toString() ?: ""
             val content = extras?.getCharSequence(Notification.EXTRA_TEXT)?.toString() ?: ""
@@ -167,71 +191,31 @@ class NotificationLoggerService : NotificationListenerService() {
             val postTime = sbn.postTime
             val now = System.currentTimeMillis()
 
-            // ════════════════════════════════════════════════════════════
             // ── Ingestion Filters ──
-            // ════════════════════════════════════════════════════════════
-
-            // 1. Package Blacklist
             val blacklistedPackages = setOf(
                 "com.android.shell",
                 "com.google.android.googlequicksearchbox"
             )
-            if (packageName in blacklistedPackages) {
-                Log.d(TAG, "IngestionFilter: Blacklisted package $packageName skipped")
-                return
-            }
+            if (packageName in blacklistedPackages) return null
 
-            // 2. System Status & Debugging Clutter Filter
             if ((packageName == "android" || packageName == "com.android.systemui") &&
                 (priority <= -2 || category == Notification.CATEGORY_SERVICE || category == Notification.CATEGORY_SYSTEM || category == "sys") &&
                 (title.contains("USB", ignoreCase = true) || title.contains("debugging", ignoreCase = true) || title.contains("charging", ignoreCase = true))
-            ) {
-                Log.d(TAG, "IngestionFilter: System USB/debugging/charging clutter filtered: $packageName - $title")
-                return
-            }
+            ) return null
 
-            // 3. Low-Value Category Filter (only for system packages)
             if ((packageName == "android" || packageName == "com.android.systemui") &&
                 (category == Notification.CATEGORY_SERVICE || category == Notification.CATEGORY_SYSTEM)
-            ) {
-                Log.d(TAG, "IngestionFilter: System service/system category clutter filtered: $packageName - $category")
-                return
-            }
+            ) return null
 
-            // 4. Blank Title and Content Filter
-            if (title.isBlank() && content.isBlank()) {
-                Log.d(TAG, "IngestionFilter: Blank title and content notification clutter skipped from $packageName")
-                return
-            }
+            if (title.isBlank() && content.isBlank()) return null
 
-            // 5. Summary Noise Filter ("3 more notifications")
             val summaryRegex = Regex("""\d+\s+more\s+notifications?""", RegexOption.IGNORE_CASE)
-            if (summaryRegex.matches(title) || summaryRegex.matches(content) || (subText != null && summaryRegex.matches(subText))) {
-                Log.d(TAG, "IngestionFilter: Summary clutter filtered from $packageName: $title")
-                return
-            }
+            if (summaryRegex.matches(title) || summaryRegex.matches(content) || (subText != null && summaryRegex.matches(subText))) return null
 
-            // 6. Age Retention Filter (skip notifications older than 30 days)
             val maxAgeMs = 30L * 24 * 60 * 60 * 1000L
-            if (postTime > 0 && (now - postTime) > maxAgeMs) {
-                Log.d(TAG, "IngestionFilter: Notification older than 30 days skipped ($packageName)")
-                return
-            }
+            if (postTime > 0 && (now - postTime) > maxAgeMs) return null
 
             val key = sbn.key ?: "${sbn.id}|${sbn.packageName}|${sbn.postTime}"
-            NotificationLauncher.registerPendingIntent(key, notification.contentIntent)
-
-            // ── Dynamic 30s Debounce ──
-            val contentSignature = "$title|$content"
-            val lastLogTime = recentLogs[key] ?: 0L
-            val lastContent = recentContents[key]
-            if (lastContent == contentSignature && (now - lastLogTime < DEBOUNCE_MS)) {
-                Log.d(TAG, "Smart Debounce: Duplicate update within 30s window for $key")
-                return
-            }
-            recentLogs[key] = now
-            recentContents[key] = contentSignature
-
             val rawAppName = try {
                 val appInfo = packageManager.getApplicationInfo(packageName, PackageManager.MATCH_UNINSTALLED_PACKAGES)
                 packageManager.getApplicationLabel(appInfo).toString()
@@ -242,7 +226,6 @@ class NotificationLoggerService : NotificationListenerService() {
             val isGroupSummary = (notification.flags and Notification.FLAG_GROUP_SUMMARY) != 0
             val smallIconRes = notification.smallIcon?.resId ?: 0
             val appIconUri = getOrSaveAppIconUri(packageName)
-
             val channelId = notification.channelId
             val groupKey = sbn.groupKey
             val isOngoing = sbn.isOngoing
@@ -255,7 +238,6 @@ class NotificationLoggerService : NotificationListenerService() {
                 actions.forEachIndexed { index, action ->
                     val label = action.title?.toString() ?: "Action $index"
                     labels.add(label)
-                    NotificationLauncher.registerActionIntent(key, index, action.actionIntent)
                 }
                 JSONArray(labels).toString()
             } else {
@@ -268,51 +250,38 @@ class NotificationLoggerService : NotificationListenerService() {
                 null
             }
 
-            scope.launch {
-                try {
-                    val dao = getDb().notificationDao()
-                    val existing = dao.getNotificationByKey(key)
-                    val updateCount = (existing?.updateCount ?: 0) + 1
-                    val originalPostTime = if (existing != null && existing.postTime > 0) existing.postTime else postTime
-
-                    val entity = NotificationEntity(
-                        id = existing?.id ?: 0L,
-                        key = key,
-                        packageName = packageName,
-                        appName = appName,
-                        appIconUri = appIconUri ?: existing?.appIconUri,
-                        title = title,
-                        content = content,
-                        postTime = originalPostTime,
-                        lastUpdatedTime = now,
-                        updateCount = updateCount,
-                        isDismissed = false,
-                        isPersistent = isOngoing,
-                        isRead = existing?.isRead ?: false,
-                        isGroupSummary = isGroupSummary,
-                        category = category,
-                        channelId = channelId,
-                        subText = subText,
-                        bigText = bigText,
-                        inboxLinesJson = inboxLinesJson,
-                        priority = priority,
-                        groupKey = groupKey,
-                        isOngoing = isOngoing,
-                        isClearable = isClearable,
-                        actionsCount = actionsCount,
-                        intentUri = intentUri,
-                        isPinned = existing?.isPinned ?: false,
-                        actionLabels = actionLabelsJson,
-                        smallIconRes = smallIconRes
-                    )
-                    dao.insert(entity)
-                    Log.d(TAG, "Inserted: $title ($appName)")
-                } catch (e: Exception) {
-                    Log.e(TAG, "DB insert failed for $title", e)
-                }
-            }
+            return NotificationEntity(
+                key = key,
+                packageName = packageName,
+                appName = appName,
+                appIconUri = appIconUri,
+                title = title,
+                content = content,
+                postTime = postTime,
+                lastUpdatedTime = now,
+                updateCount = 1,
+                isDismissed = false,
+                isPersistent = isOngoing,
+                isRead = false,
+                isGroupSummary = isGroupSummary,
+                category = category,
+                channelId = channelId,
+                subText = subText,
+                bigText = bigText,
+                inboxLinesJson = inboxLinesJson,
+                priority = priority,
+                groupKey = groupKey,
+                isOngoing = isOngoing,
+                isClearable = isClearable,
+                actionsCount = actionsCount,
+                intentUri = intentUri,
+                isPinned = false,
+                actionLabels = actionLabelsJson,
+                smallIconRes = smallIconRes
+            )
         } catch (e: Exception) {
-            Log.e(TAG, "Failed to log notification", e)
+            Log.e(TAG, "Failed to extract notification entity", e)
+            return null
         }
     }
 
