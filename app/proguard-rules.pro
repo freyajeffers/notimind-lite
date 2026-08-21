@@ -18,3 +18,11 @@
 
 # General reflection safety
 -keepattributes Signature, *Annotation*, EnclosingMethod, InnerClasses
+
+# R8 optimization passes and access modification
+-optimizationpasses 5
+-allowaccessmodification
+
+# Suppress harmless warnings from coroutines and compose tooling in release builds
+-dontwarn kotlinx.coroutines.**
+-dontwarn androidx.compose.**
