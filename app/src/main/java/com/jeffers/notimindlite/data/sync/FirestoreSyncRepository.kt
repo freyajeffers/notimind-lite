@@ -88,6 +88,7 @@ class FirestoreSyncRepository(
                 if (existing == null || remoteLastUpdatedTime > existing.lastUpdatedTime) {
                     // Decrypt PII fields before inserting into local DB
                     val entity = NotificationEntity(
+                        id = existing?.id ?: 0L,
                         key = key,
                         packageName = doc.getString("packageName") ?: "",
                         appName = doc.getString("appName") ?: "",
