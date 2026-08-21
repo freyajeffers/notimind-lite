@@ -64,12 +64,29 @@ android {
   buildFeatures {
     compose = true
   }
+  packaging {
+    resources {
+      excludes += listOf(
+        "/META-INF/{AL2.0,LGPL2.1}",
+        "/META-INF/INDEX.LIST",
+        "/META-INF/DEPENDENCIES",
+        "/META-INF/LICENSE.md",
+        "/META-INF/LICENSE-notice.md"
+      )
+    }
+  }
   testOptions { unitTests { isIncludeAndroidResources = true } }
   lint {
     abortOnError = true
     checkDependencies = true
     baseline = file("lint-baseline.xml")
   }
+}
+
+ksp {
+    arg("room.schemaLocation", "$projectDir/schemas")
+    arg("room.incremental", "true")
+    arg("room.expandProjection", "true")
 }
 
 jacoco {
