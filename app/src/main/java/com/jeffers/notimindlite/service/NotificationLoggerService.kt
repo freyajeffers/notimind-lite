@@ -215,7 +215,8 @@ class NotificationLoggerService : NotificationListenerService() {
             val maxAgeMs = 30L * 24 * 60 * 60 * 1000L
             if (postTime > 0 && (now - postTime) > maxAgeMs) return null
 
-            val key = sbn.key ?: "${sbn.id}|${sbn.packageName}|${sbn.postTime}"
+            // Use a robust composite key to avoid collisions on some Android versions
+            val key = sbn.key ?: "${sbn.packageName}|${sbn.id}|${sbn.postTime}"
             val rawAppName = try {
                 val appInfo = packageManager.getApplicationInfo(packageName, PackageManager.MATCH_UNINSTALLED_PACKAGES)
                 packageManager.getApplicationLabel(appInfo).toString()
@@ -297,7 +298,8 @@ class NotificationLoggerService : NotificationListenerService() {
 
     private fun handleNotificationRemoved(sbn: StatusBarNotification, reason: Int?) {
         if (sbn.packageName == applicationContext.packageName) return
-        val key = sbn.key ?: "${sbn.id}|${sbn.packageName}|${sbn.postTime}"
+        // Use a robust composite key to avoid collisions on some Android versions
+        val key = sbn.key ?: "${sbn.packageName}|${sbn.id}|${sbn.postTime}"
         val extras = sbn.notification?.extras
         val title = extras?.getCharSequence(Notification.EXTRA_TITLE)?.toString() ?: ""
         val content = extras?.getCharSequence(Notification.EXTRA_TEXT)?.toString() ?: ""
