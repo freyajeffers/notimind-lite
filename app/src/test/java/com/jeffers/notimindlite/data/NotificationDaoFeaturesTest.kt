@@ -170,4 +170,39 @@ class NotificationDaoFeaturesTest {
         assertEquals(1, dismissed.size)
         assertEquals("msg_key", dismissed[0].key)
     }
+
+    @Test
+    fun testRecentlyDismissed_sortedByTimeDismissed() = runBlocking {
+        val notif1 = NotificationEntity(
+            key = "notif1",
+            packageName = "com.test.app1",
+            appName = "App 1",
+            title = "First Received",
+            content = "Old post, recently dismissed",
+            postTime = 1000L,
+            isDismissed = true,
+            dismissReason = 1,
+            dismissTime = 5000L
+        )
+        val notif2 = NotificationEntity(
+            key = "notif2",
+            packageName = "com.test.app2",
+            appName = "App 2",
+            title = "Later Received",
+            content = "Newer post, earlier dismissed",
+            postTime = 3000L,
+            isDismissed = true,
+            dismissReason = 1,
+            dismissTime = 4000L
+        )
+
+        dao.insertNotification(notif1)
+        dao.insertNotification(notif2)
+
+        val recentlyDismissed = dao.getRecentlyDismissedFlow().first()
+        assertEquals(2, recentlyDismissed.size)
+        // notif1 was dismissed at 5000L, so it must appear before notif2 (dismissed at 4000L)
+        assertEquals("notif1", recentlyDismissed[0].key)
+        assertEquals("notif2", recentlyDismissed[1].key)
+    }
 }
