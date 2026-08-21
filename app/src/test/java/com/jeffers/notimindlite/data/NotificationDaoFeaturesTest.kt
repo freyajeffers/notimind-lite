@@ -205,4 +205,27 @@ class NotificationDaoFeaturesTest {
         assertEquals("notif1", recentlyDismissed[0].key)
         assertEquals("notif2", recentlyDismissed[1].key)
     }
+
+    @Test
+    fun testBatchInsertNotifications_populatesNotificationsAndApps() = runBlocking {
+        val list = (1..10).map { i ->
+            NotificationEntity(
+                key = "batch_k_$i",
+                packageName = "com.batch.app_${i % 3}",
+                appName = "Batch App ${i % 3}",
+                title = "Batch Title $i",
+                content = "Batch Content $i",
+                postTime = 1000L + i,
+                isDismissed = false
+            )
+        }
+
+        val rowIds = dao.insertNotifications(list)
+        assertEquals(10, rowIds.size)
+        assertEquals(10, dao.getNotificationCount())
+
+        val appDao = db.appDao()
+        val apps = appDao.getAllAppsFlow().first()
+        assertEquals(3, apps.size)
+    }
 }
