@@ -57,9 +57,8 @@ android {
   kotlinOptions {
       jvmTarget = "17"
       freeCompilerArgs += listOf(
-          "-Xjvm-default=all",
-          "-Xopt-in=kotlin.RequiresOptIn",
-          "-Xjvm-experimental-extensions"
+          "-opt-in=kotlin.RequiresOptIn",
+          "-opt-in=androidx.compose.material3.ExperimentalMaterial3Api"
       )
   }
   buildFeatures {
@@ -92,14 +91,14 @@ tasks.register<JacocoReport>("testCoverageReport") {
     }
     classDirectories.setFrom(
         files(
-            "${buildDir}/tmp/kotlin-classes/debug"
+            layout.buildDirectory.dir("tmp/kotlin-classes/debug")
         )
     )
     sourceDirectories.setFrom(
         files("${projectDir}/src/main/java")
     )
     executionData.setFrom(
-        fileTree(buildDir) {
+        fileTree(layout.buildDirectory) {
             include("jacoco/test-debug-UnitTest.exec")
         }
     )
