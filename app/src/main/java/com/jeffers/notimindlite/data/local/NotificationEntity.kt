@@ -11,9 +11,12 @@ import androidx.room.PrimaryKey
         Index(value = ["key"], unique = true),
         Index(value = ["isDismissed", "postTime"]),
         Index(value = ["isDismissed", "dismissTime"]),
-        Index(value = ["packageName", "isDismissed"]),
+        Index(value = ["isDismissed", "isOngoing", "postTime"]),
+        Index(value = ["isDismissed", "dismissReason", "dismissTime"]),
+        Index(value = ["packageName", "isDismissed", "postTime"]),
         Index(value = ["isPinned", "postTime"]),
-        Index(value = ["isRead"])
+        Index(value = ["isRead", "isDismissed"]),
+        Index(value = ["syncStatus"])
     ]
 )
 data class NotificationEntity(
