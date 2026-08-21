@@ -7,6 +7,7 @@ import com.google.firebase.firestore.DocumentSnapshot
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.QueryDocumentSnapshot
 import com.google.firebase.firestore.QuerySnapshot
+import com.google.firebase.firestore.WriteBatch
 import com.jeffers.notimindlite.data.local.AppDatabase
 import com.jeffers.notimindlite.data.local.NotificationDao
 import com.jeffers.notimindlite.data.local.NotificationEntity
@@ -35,6 +36,7 @@ class FirestoreSyncRepositoryTest {
     private lateinit var mockUserCol: CollectionReference
     private lateinit var mockUserDoc: DocumentReference
     private lateinit var mockNotifCol: CollectionReference
+    private lateinit var mockBatch: WriteBatch
     private lateinit var repository: FirestoreSyncRepository
     private lateinit var testSecretKey: SecretKey
 
@@ -46,18 +48,21 @@ class FirestoreSyncRepositoryTest {
         mockUserCol = mockk()
         mockUserDoc = mockk()
         mockNotifCol = mockk()
+        mockBatch = mockk(relaxed = true)
         testSecretKey = generateBackupKey()
 
         every { mockDb.notificationDao() } returns mockDao
         every { mockFirestore.collection("users") } returns mockUserCol
         every { mockUserCol.document(any()) } returns mockUserDoc
         every { mockUserDoc.collection("notifications") } returns mockNotifCol
+        every { mockFirestore.batch() } returns mockBatch
+        every { mockBatch.commit() } returns Tasks.forResult(null)
 
         repository = FirestoreSyncRepository(mockDb, mockFirestore)
     }
 
     @Test
-    fun `sync should upload pending notifications and update status`() = runBlocking {
+    fun `sync should upload pending notifications and update status in batch`() = runBlocking {
         val userId = "test_user"
         val notification = NotificationEntity(
             key = "notif_1",
@@ -71,7 +76,6 @@ class FirestoreSyncRepositoryTest {
         coEvery { mockDao.getUnsyncedNotifications() } returns listOf(notification)
         val mockDoc = mockk<DocumentReference>()
         every { mockNotifCol.document(notification.key) } returns mockDoc
-        every { mockDoc.set(any()) } returns Tasks.forResult(null)
 
         val mockSnapshot = mockk<QuerySnapshot>()
         every { mockSnapshot.documents } returns emptyList()
@@ -80,7 +84,9 @@ class FirestoreSyncRepositoryTest {
         val result = repository.sync(userId, testSecretKey)
 
         assertTrue(result.isSuccess)
-        coVerify { mockDao.updateSyncStatus("notif_1", SyncStatus.SYNCED, any()) }
+        verify { mockBatch.set(mockDoc, any()) }
+        verify { mockBatch.commit() }
+        coVerify { mockDao.updateSyncStatusBatch(listOf("notif_1"), SyncStatus.SYNCED, any()) }
     }
 
     @Test
@@ -103,7 +109,8 @@ class FirestoreSyncRepositoryTest {
         val result = repository.sync(userId, testSecretKey)
 
         assertTrue(result.isSuccess)
-        coVerify { mockDao.updateSyncStatus("notif_del", SyncStatus.SYNCED, any()) }
+        verify(exactly = 0) { mockBatch.set(any(), any()) }
+        coVerify { mockDao.updateSyncStatusBatch(listOf("notif_del"), SyncStatus.SYNCED, any()) }
     }
 
     @Test
@@ -165,9 +172,10 @@ class FirestoreSyncRepositoryTest {
 
         assertTrue(result.isSuccess)
         coVerify {
-            mockDao.insertNotification(withArg {
-                assertEquals("Remote Title", it.title)
-                assertEquals("Remote Content", it.content)
+            mockDao.insertNotifications(withArg {
+                assertEquals(1, it.size)
+                assertEquals("Remote Title", it[0].title)
+                assertEquals("Remote Content", it[0].content)
             })
         }
     }
