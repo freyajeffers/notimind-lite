@@ -825,25 +825,105 @@ fun LogNotificationCard(
                         maxLines = 10,
                         overflow = TextOverflow.Ellipsis
                     )
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
+                    if (!item.subText.isNullOrEmpty()) {
+                        Spacer(modifier = Modifier.height(2.dp))
                         Text(
-                            text = dateTimeFormatter.format(Instant.ofEpochMilli(item.postTime)),
-                            style = MaterialTheme.typography.labelSmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
-                        )
-                        Text(
-                            text = getPriorityLabel(item.priority),
-                            style = MaterialTheme.typography.labelSmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
+                            text = item.subText,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.75f)
                         )
                     }
+                    if (!item.bigText.isNullOrEmpty() && item.bigText != item.content) {
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(
+                            text = item.bigText,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.85f)
+                        )
+                    }
+                    Spacer(modifier = Modifier.height(8.dp))
+                    NotificationExpandedAttributes(
+                        item = item,
+                        dateTimeFormatter = dateTimeFormatter
+                    )
                 }
             }
         }
+    }
+}
+
+@Composable
+fun NotificationExpandedAttributes(
+    item: NotificationEntity,
+    dateTimeFormatter: DateTimeFormatter,
+    modifier: Modifier = Modifier
+) {
+    Surface(
+        shape = RoundedCornerShape(8.dp),
+        color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.45f),
+        modifier = modifier.fillMaxWidth()
+    ) {
+        Column(
+            modifier = Modifier.padding(10.dp),
+            verticalArrangement = Arrangement.spacedBy(4.dp)
+        ) {
+            Text(
+                text = "Notification Attributes",
+                style = MaterialTheme.typography.labelMedium,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.primary
+            )
+            AttributeRow(label = "Package", value = item.packageName)
+            if (!item.channelId.isNullOrEmpty()) {
+                AttributeRow(label = "Channel ID", value = item.channelId)
+            }
+            if (!item.category.isNullOrEmpty()) {
+                AttributeRow(label = "Category", value = item.category)
+            }
+            AttributeRow(label = "Priority", value = getPriorityLabel(item.priority))
+            AttributeRow(label = "Time Received", value = dateTimeFormatter.format(Instant.ofEpochMilli(item.postTime)))
+            if (item.dismissTime != null) {
+                AttributeRow(label = "Time Dismissed", value = dateTimeFormatter.format(Instant.ofEpochMilli(item.dismissTime)))
+            }
+            if (item.dismissReason != null) {
+                AttributeRow(label = "Dismiss Reason", value = stringResource(id = getReasonLabel(item.dismissReason)))
+            }
+            AttributeRow(label = "Ongoing", value = if (item.isOngoing) "Yes" else "No")
+            AttributeRow(label = "Clearable", value = if (item.isClearable) "Yes" else "No")
+            if (item.isGroupSummary) {
+                AttributeRow(label = "Group Summary", value = "Yes")
+            }
+            if (!item.groupKey.isNullOrEmpty()) {
+                AttributeRow(label = "Group Key", value = item.groupKey)
+            }
+            if (item.actionsCount > 0) {
+                AttributeRow(label = "Actions", value = "${item.actionsCount}${if (!item.actionLabels.isNullOrEmpty()) " (${item.actionLabels})" else ""}")
+            }
+            AttributeRow(label = "Sync Status", value = item.syncStatus.name)
+            AttributeRow(label = "Key", value = item.key)
+        }
+    }
+}
+
+@Composable
+fun AttributeRow(label: String, value: String) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.Top
+    ) {
+        Text(
+            text = label,
+            style = MaterialTheme.typography.labelSmall,
+            fontWeight = FontWeight.SemiBold,
+            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f),
+            modifier = Modifier.weight(0.35f)
+        )
+        Text(
+            text = value,
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurface,
+            modifier = Modifier.weight(0.65f)
+        )
     }
 }

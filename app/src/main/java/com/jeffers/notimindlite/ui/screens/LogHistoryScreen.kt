@@ -505,7 +505,7 @@ fun LogHistoryCard(
                         text = item.title,
                         style = MaterialTheme.typography.bodyLarge,
                         fontWeight = FontWeight.SemiBold,
-                        maxLines = 2,
+                        maxLines = 3,
                         overflow = TextOverflow.Ellipsis
                     )
                     Spacer(modifier = Modifier.height(4.dp))
@@ -516,23 +516,27 @@ fun LogHistoryCard(
                         maxLines = 10,
                         overflow = TextOverflow.Ellipsis
                     )
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
+                    if (!item.subText.isNullOrEmpty()) {
+                        Spacer(modifier = Modifier.height(2.dp))
                         Text(
-                            text = dateTimeFormatter.format(Instant.ofEpochMilli(item.postTime)),
-                            style = MaterialTheme.typography.labelSmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
-                        )
-                        Text(
-                            text = getPriorityLabel(item.priority),
-                            style = MaterialTheme.typography.labelSmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
+                            text = item.subText,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.75f)
                         )
                     }
+                    if (!item.bigText.isNullOrEmpty() && item.bigText != item.content) {
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(
+                            text = item.bigText,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.85f)
+                        )
+                    }
+                    Spacer(modifier = Modifier.height(8.dp))
+                    NotificationExpandedAttributes(
+                        item = item,
+                        dateTimeFormatter = dateTimeFormatter
+                    )
                 }
             }
         }
