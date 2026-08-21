@@ -486,8 +486,8 @@ fun ActiveNotificationsScreen(dao: NotificationDao, authManager: AuthManager, db
                     val rawItemsList = when (section) {
                         NotificationSection.PINNED -> pinnedNotifs
                         NotificationSection.ACTIVE -> activeNotifs
-                        NotificationSection.FILTERED -> emptyList()
-                        NotificationSection.DISMISSED -> recentlyDismissed
+                        NotificationSection.FILTERED -> filteredNotifs
+                        NotificationSection.DISMISSED -> recentlyDismissed.sortedByDescending { it.dismissTime ?: it.postTime }
                         NotificationSection.LOST -> lostNotifs
                     }.distinctBy { "${it.packageName}_${it.title}_${it.content}" }
 
