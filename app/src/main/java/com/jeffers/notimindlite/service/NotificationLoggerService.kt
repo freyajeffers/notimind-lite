@@ -116,9 +116,11 @@ class NotificationLoggerService : NotificationListenerService() {
         scope.launch {
             try {
                 val activeNotifs = activeNotifications ?: emptyArray()
-                Log.d(TAG, "onListenerConnected: processing ${activeNotifs.size} active notifications")
-                for (sbn in activeNotifs) {
-                    processNotification(sbn)
+                Log.d(TAG, "onListenerConnected: processing ${activeNotifs.size} active notifications in batch")
+                val entities = activeNotifs.mapNotNull { extractNotificationEntity(it) }
+                if (entities.isNotEmpty()) {
+                    getDb().notificationDao().insertNotifications(entities)
+                    Log.d(TAG, "onListenerConnected: successfully batch inserted ${entities.size} active notifications")
                 }
             } catch (e: Exception) {
                 Log.e(TAG, "Error syncing active notifications on listener connected", e)

@@ -146,8 +146,14 @@ abstract class NotificationDao {
     @Query("UPDATE notifications SET isPinned = :isPinned WHERE key = :key")
     abstract suspend fun updatePinnedStatus(key: String, isPinned: Boolean)
 
+    @Query("UPDATE notifications SET isPinned = :isPinned WHERE key IN (:keys)")
+    abstract suspend fun updatePinnedStatusBatch(keys: List<String>, isPinned: Boolean)
+
     @Query("UPDATE notifications SET isRead = 1 WHERE key = :key")
     abstract suspend fun markAsRead(key: String)
+
+    @Query("UPDATE notifications SET isRead = 1 WHERE key IN (:keys)")
+    abstract suspend fun markAsReadBatch(keys: List<String>)
 
     @Query("UPDATE notifications SET isRead = 1 WHERE isRead = 0")
     abstract suspend fun markAllAsRead()
@@ -186,8 +192,14 @@ abstract class NotificationDao {
     @Query("UPDATE notifications SET isDismissed = 1, dismissTime = :dismissTime WHERE key = :key")
     abstract suspend fun markDismissed(key: String, dismissTime: Long = System.currentTimeMillis())
 
+    @Query("UPDATE notifications SET isDismissed = 1, dismissTime = :dismissTime WHERE key IN (:keys)")
+    abstract suspend fun markDismissedBatch(keys: List<String>, dismissTime: Long = System.currentTimeMillis())
+
     @Query("UPDATE notifications SET isDismissed = 1, dismissReason = :reason, dismissTime = :dismissTime WHERE key = :key")
     abstract suspend fun markDismissedWithReason(key: String, reason: Int, dismissTime: Long = System.currentTimeMillis())
+
+    @Query("UPDATE notifications SET isDismissed = 1, dismissReason = :reason, dismissTime = :dismissTime WHERE key IN (:keys)")
+    abstract suspend fun markDismissedWithReasonBatch(keys: List<String>, reason: Int, dismissTime: Long = System.currentTimeMillis())
 
     @Query("SELECT COUNT(*) FROM notifications")
     abstract suspend fun getNotificationCount(): Int
@@ -206,6 +218,16 @@ abstract class NotificationDao {
 
     @Query("UPDATE notifications SET syncStatus = :status, lastSyncedAt = :syncedAt WHERE key = :key")
     abstract suspend fun updateSyncStatus(key: String, status: SyncStatus, syncedAt: Long = System.currentTimeMillis())
+
+    @Query("UPDATE notifications SET syncStatus = :status, lastSyncedAt = :syncedAt WHERE key IN (:keys)")
+    abstract suspend fun updateSyncStatusBatch(keys: List<String>, status: SyncStatus, syncedAt: Long = System.currentTimeMillis())
+
+    @Transaction
+    open suspend fun updateEmbeddingsBatch(items: List<Pair<Long, FloatArray>>) {
+        for ((id, embedding) in items) {
+            updateEmbedding(id, embedding)
+        }
+    }
 
     @Query("UPDATE notifications SET syncStatus = 'PENDING_DELETE' WHERE key = :key")
     abstract suspend fun markPendingDelete(key: String)
