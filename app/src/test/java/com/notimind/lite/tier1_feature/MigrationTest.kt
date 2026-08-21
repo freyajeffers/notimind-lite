@@ -10,7 +10,7 @@ import org.junit.Test
 class MigrationTest : BaseRobolectricTest() {
 
     @Test
-    fun `testFullMigrationPath_v1_to_v17`() = runBlocking {
+    fun `testFullMigrationPath_v1_to_v18`() = runBlocking {
         val entity = NotificationEntity(
             key = "mig_test_key",
             packageName = "com.mig.test",
@@ -22,7 +22,7 @@ class MigrationTest : BaseRobolectricTest() {
         dao.insertNotification(entity)
         val retrieved = dao.getNotificationByKey("mig_test_key")
         
-        assertNotNull("Notification should be retrievable after migration to v17", retrieved)
+        assertNotNull("Notification should be retrievable after migration to v18", retrieved)
         assertEquals("Migration Title", retrieved?.title)
     }
 }

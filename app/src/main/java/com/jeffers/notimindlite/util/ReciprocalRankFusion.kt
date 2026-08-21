@@ -24,7 +24,8 @@ object ReciprocalRankFusion {
         ftsWeight: Double = 1.0,
         semanticWeight: Double = 1.0
     ): List<HybridSearchResult> {
-        val accumulatorMap = mutableMapOf<Long, RankAccumulator>()
+        val expectedSize = (ftsResults.size + semanticResults.size).coerceAtLeast(16)
+        val accumulatorMap = HashMap<Long, RankAccumulator>(expectedSize)
 
         // 1. Accumulate FTS Rank Contributions
         ftsResults.forEachIndexed { index, entity ->

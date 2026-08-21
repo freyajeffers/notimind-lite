@@ -9,7 +9,7 @@ import androidx.room.TypeConverters
 import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
 
-@Database(entities = [NotificationEntity::class, AppEntity::class, NotificationFtsEntity::class, BackupRecord::class], version = 17, exportSchema = false)
+@Database(entities = [NotificationEntity::class, AppEntity::class, NotificationFtsEntity::class, BackupRecord::class], version = 18, exportSchema = false)
 @TypeConverters(Converters::class)
 abstract class AppDatabase : RoomDatabase() {
     abstract fun notificationDao(): NotificationDao
@@ -204,6 +204,33 @@ abstract class AppDatabase : RoomDatabase() {
             }
         }
 
+        val MIGRATION_17_18 = object : Migration(17, 18) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("DROP INDEX IF EXISTS `index_notifications_packageName_isDismissed`")
+                db.execSQL("DROP INDEX IF EXISTS `index_notifications_isRead`")
+                db.execSQL("CREATE INDEX IF NOT EXISTS `index_notifications_isDismissed_isOngoing_postTime` ON `notifications` (`isDismissed`, `isOngoing`, `postTime`)")
+                db.execSQL("CREATE INDEX IF NOT EXISTS `index_notifications_isDismissed_dismissReason_dismissTime` ON `notifications` (`isDismissed`, `dismissReason`, `dismissTime`)")
+                db.execSQL("CREATE INDEX IF NOT EXISTS `index_notifications_packageName_isDismissed_postTime` ON `notifications` (`packageName`, `isDismissed`, `postTime`)")
+                db.execSQL("CREATE INDEX IF NOT EXISTS `index_notifications_isRead_isDismissed` ON `notifications` (`isRead`, `isDismissed`)")
+                db.execSQL("CREATE INDEX IF NOT EXISTS `index_notifications_syncStatus` ON `notifications` (`syncStatus`)")
+            }
+        }
+
+        private val DB_CALLBACK = object : RoomDatabase.Callback() {
+            override fun onOpen(db: SupportSQLiteDatabase) {
+                super.onOpen(db)
+                try {
+                    db.execSQL("PRAGMA synchronous = NORMAL")
+                    db.execSQL("PRAGMA temp_store = MEMORY")
+                    db.execSQL("PRAGMA mmap_size = 268435456")
+                    db.execSQL("PRAGMA cache_size = -8000")
+                    db.execSQL("PRAGMA busy_timeout = 5000")
+                } catch (e: Exception) {
+                    // Safe fallback if pragma is restricted on certain engine variants
+                }
+            }
+        }
+
         fun setTestInstance(db: AppDatabase) {
             synchronized(this) {
                 INSTANCE = db
@@ -225,6 +252,7 @@ abstract class AppDatabase : RoomDatabase() {
                     val appContext = context.applicationContext
                     val deContext = if (appContext.isDeviceProtectedStorage) appContext else appContext.createDeviceProtectedStorageContext()
                     Room.databaseBuilder(deContext, AppDatabase::class.java, DE_DATABASE_NAME)
+                        .addCallback(DB_CALLBACK)
                         .setJournalMode(JournalMode.WRITE_AHEAD_LOGGING)
                         .build().also { deInstance = it }
                 }
@@ -247,8 +275,9 @@ abstract class AppDatabase : RoomDatabase() {
                         MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7,
                         MIGRATION_7_8, MIGRATION_8_9, MIGRATION_9_10,
                         MIGRATION_10_11, MIGRATION_11_12, MIGRATION_12_13, MIGRATION_13_14, MIGRATION_14_15,
-                        MIGRATION_15_16, MIGRATION_16_17
+                        MIGRATION_15_16, MIGRATION_16_17, MIGRATION_17_18
                     )
+                    .addCallback(DB_CALLBACK)
                     .setJournalMode(JournalMode.WRITE_AHEAD_LOGGING)
                     .build()
                     ceInstance = instance

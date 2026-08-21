@@ -16,8 +16,14 @@ abstract class NotificationDao {
     @Insert(onConflict = OnConflictStrategy.IGNORE)
     abstract suspend fun insertAppInternal(app: AppEntity): Long
 
+    @Insert(onConflict = OnConflictStrategy.IGNORE)
+    abstract suspend fun insertAppsInternal(apps: List<AppEntity>): List<Long>
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     abstract suspend fun insertNotificationDirect(entity: NotificationEntity): Long
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    abstract suspend fun insertNotificationsDirect(entities: List<NotificationEntity>): List<Long>
 
     @Transaction
     open suspend fun insert(entity: NotificationEntity): Long {
@@ -36,6 +42,22 @@ abstract class NotificationDao {
     @Transaction
     open suspend fun insertNotification(notification: NotificationEntity): Long {
         return insert(notification)
+    }
+
+    @Transaction
+    open suspend fun insertNotifications(notifications: List<NotificationEntity>): List<Long> {
+        if (notifications.isEmpty()) return emptyList()
+        val apps = notifications.map { entity ->
+            AppEntity(
+                packageName = entity.packageName,
+                appName = entity.appName.ifBlank { entity.packageName.ifBlank { "Unknown App" } },
+                firstSeenTime = entity.postTime,
+                lastSeenTime = entity.postTime,
+                appIconUri = entity.appIconUri
+            )
+        }
+        insertAppsInternal(apps)
+        return insertNotificationsDirect(notifications)
     }
 
     @Query("SELECT * FROM notifications ORDER BY postTime DESC")
