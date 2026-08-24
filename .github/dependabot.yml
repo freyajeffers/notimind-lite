@@ -1,0 +1,45 @@
+version: 2
+
+updates:
+  # 1. Gradle dependencies, plugins, and version catalog
+  - package-ecosystem: "gradle"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "04:00"
+      timezone: "America/Los_Angeles"
+    open-pull-requests-limit: 10
+    rebase-strategy: "auto"
+    groups:
+      # Group AndroidX and Compose updates together
+      androidx-compose:
+        patterns:
+          - "androidx.*"
+      # Group Kotlin and Coroutines updates together
+      kotlin:
+        patterns:
+          - "org.jetbrains.kotlin*"
+          - "org.jetbrains.kotlinx*"
+      # Group Google and Firebase dependencies
+      google-services:
+        patterns:
+          - "com.google.*"
+      # Group static analysis and tooling plugins
+      lint-and-analysis:
+        patterns:
+          - "io.gitlab.arturbosch.detekt*"
+
+  # 2. GitHub Actions CI/CD workflows
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "04:00"
+      timezone: "America/Los_Angeles"
+    open-pull-requests-limit: 5
+    groups:
+      github-actions:
+        patterns:
+          - "*"
