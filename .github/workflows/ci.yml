@@ -11,7 +11,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v7
 
     - name: set up JDK 17
       uses: actions/setup-java@v5
@@ -36,13 +36,13 @@ jobs:
       run: ./gradlew assembleRelease
 
     - name: Upload Coverage Report
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v7
       with:
         name: coverage-report
         path: app/build/reports/jacoco/testCoverageReport/html/
 
     - name: Upload Release APK
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v7
       with:
         name: app-release
         path: app/build/outputs/apk/release/app-release.apk
