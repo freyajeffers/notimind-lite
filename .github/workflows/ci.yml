@@ -3,46 +3,138 @@ name: Android CI
 on:
   push:
     branches: [ "master", "main" ]
+    paths-ignore:
+      - '**.md'
+      - 'docs/**'
+      - '.gitignore'
   pull_request:
     branches: [ "master", "main" ]
+    paths-ignore:
+      - '**.md'
+      - 'docs/**'
+      - '.gitignore'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' && github.ref != 'refs/heads/master' }}
+
+permissions:
+  contents: read
+
+env:
+  GRADLE_OPTS: "-Dorg.gradle.daemon=false -Dorg.gradle.parallel=true -Dorg.gradle.jvmargs='-Xmx4g -XX:+UseParallelGC'"
 
 jobs:
-  build:
+  # --------------------------------------------------------------------------
+  # 1. Static Analysis & Linting
+  # --------------------------------------------------------------------------
+  static-analysis:
+    name: Lint & Detekt
     runs-on: ubuntu-latest
+    timeout-minutes: 20
 
     steps:
-    - uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-    - name: set up JDK 17
-      uses: actions/setup-java@v5
-      with:
-        java-version: '17'
-        distribution: 'temurin'
-        cache: gradle
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
 
-    - name: Grant execute permission for gradlew
-      run: chmod +x gradlew
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v6
+        with:
+          cache-provider: enhanced
+          add-job-summary-as-pr-comment: on-failure
 
-    - name: Run Detekt
-      run: ./gradlew detekt
+      - name: Run Detekt & Android Lint
+        run: ./gradlew detekt lintDebug
 
-    - name: Run Android Lint
-      run: ./gradlew lintDebug
+      - name: Upload Lint & Detekt Reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: lint-and-detekt-reports
+          path: |
+            app/build/reports/detekt/
+            app/build/reports/lint-results-debug.html
+          retention-days: 7
 
-    - name: Run Unit Tests & Coverage
-      run: ./gradlew testDebugUnitTest testCoverageReport
+  # --------------------------------------------------------------------------
+  # 2. Unit Tests & Code Coverage
+  # --------------------------------------------------------------------------
+  unit-tests:
+    name: Unit Tests & Coverage
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
 
-    - name: Build Release APK
-      run: ./gradlew assembleRelease
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-    - name: Upload Coverage Report
-      uses: actions/upload-artifact@v4
-      with:
-        name: coverage-report
-        path: app/build/reports/jacoco/testCoverageReport/html/
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
 
-    - name: Upload Release APK
-      uses: actions/upload-artifact@v4
-      with:
-        name: app-release
-        path: app/build/outputs/apk/release/app-release.apk
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v6
+        with:
+          cache-provider: enhanced
+          add-job-summary-as-pr-comment: on-failure
+
+      - name: Run Unit Tests & Generate Coverage
+        run: ./gradlew testDebugUnitTest testCoverageReport
+
+      - name: Upload Unit Test Results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: unit-test-results
+          path: app/build/reports/tests/testDebugUnitTest/
+          retention-days: 7
+
+      - name: Upload Coverage Report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: app/build/reports/jacoco/testCoverageReport/html/
+          retention-days: 14
+
+  # --------------------------------------------------------------------------
+  # 3. Release APK Build
+  # --------------------------------------------------------------------------
+  build-release:
+    name: Assemble Release APK
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v6
+        with:
+          cache-provider: enhanced
+
+      - name: Build Release APK
+        run: ./gradlew assembleRelease
+
+      - name: Upload Release APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-release
+          path: app/build/outputs/apk/release/*.apk
+          retention-days: 14
+          
