@@ -31,7 +31,8 @@ class NotificationServiceDbPairwiseTest : BaseRobolectricTest() {
 
         val activeList = dao.getActiveNotificationsList()
         assertEquals(1, activeList.size)
-        assertEquals(sbn.key, activeList[0].key)
+        val expectedKey = "${sbn.packageName}|${sbn.id}|${sbn.tag}"
+        assertEquals(expectedKey, activeList[0].key)
         assertFalse(activeList[0].isDismissed)
 
         // 2. Remove notification
