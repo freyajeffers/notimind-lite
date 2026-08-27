@@ -65,7 +65,8 @@ class PermissionRevocationLifecycleTest : BaseRobolectricTest() {
         Thread.sleep(100)
 
         val allLogs = dao.getAllNotifications().first()
-        assertTrue("Service should recover logging after permission re-grant", allLogs.any { it.key == sbn3.key })
+        val expectedKey = "${sbn3.packageName}|${sbn3.id}|${sbn3.tag}"
+        assertTrue("Service should recover logging after permission re-grant", allLogs.any { it.key == expectedKey })
 
         serviceController.destroy()
     }
