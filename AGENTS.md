@@ -207,13 +207,14 @@ Do NOT claim "done" without the gate command exiting 0 in the same turn.
 - `kotlin.compiler.execution.strategy=daemon`
 - `org.gradle.workers.max=8`
 
-### Room Schemas — Known Discrepancy
-`ksp.arg("room.schemaLocation", "$projectDir/schemas")` is set, but
-`@Database(... exportSchema = false)` overrides it. **No `app/schemas/` directory
-exists in source control.** This is intentional for now (per current code) but if
-migration tests are added that need schema diffs, either flip `exportSchema = true`
-and commit the generated JSON, or rely on `MigrationTestHelper` with hand-written
-expected schemas. Flag this to the user before changing.
+### Room Schemas (exportSchema enabled)
+`@Database(... exportSchema = true)` and `ksp.arg("room.schemaLocation",
+"$projectDir/schemas")` together emit `app/schemas/<fully-qualified-class-name>/<version>.json`
+on every Room compile. Currently only `18.json` is committed. Adding historical
+schemas (1.json .. 17.json) is a deliberate one-time effort — each requires checking
+out the historical commit, running `./gradlew :app:assembleDebug`, copying the
+emitted JSON, and returning to master. See `tier1_feature/MigrationTest` for the
+scaffolded migration test that consumes these files via `MigrationTestHelper`.
 
 ### Detekt / Lint / ProGuard
 - `app/detekt-baseline.xml`, `app/lint-baseline.xml` exist — treat them as
