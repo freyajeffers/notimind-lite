@@ -41,6 +41,7 @@ import com.jeffers.notimindlite.data.local.NotificationDao
 import com.jeffers.notimindlite.data.local.NotificationEntity
 import com.jeffers.notimindlite.ui.dialogs.AppPackageSelectorDialog
 import com.jeffers.notimindlite.ui.components.NotificationDetailPanel
+import com.jeffers.notimindlite.util.HybridSearchEngine
 import com.jeffers.notimindlite.util.NotificationLauncher
 import com.jeffers.notimindlite.data.auth.AuthManager
 import com.jeffers.notimindlite.data.local.AppDatabase
@@ -119,7 +120,14 @@ fun LogHistoryScreen(dao: NotificationDao, authManager: AuthManager, db: AppData
             if (debouncedSearchQuery.isBlank()) {
                 list
             } else {
-                list.filter { it.title.contains(debouncedSearchQuery, ignoreCase = true) || it.content.contains(debouncedSearchQuery, ignoreCase = true) }
+                // F-G read-side [2026-09-02 audit, resolved via H-wire commit]:
+                // Was: naive substring filter on title/content only. Now:
+                // HybridSearchEngine composes FTS4 keyword scoring with
+                // semantic-vector cosine scoring via Reciprocal Rank Fusion.
+                // Run synchronously here because the in-memory overload is
+                // already bounded to `list` (the post-package-filter list),
+                // so even 10k rows score in tens of ms.
+                HybridSearchEngine.searchAndRankBlocking(list, debouncedSearchQuery)
             }
         }
     }
