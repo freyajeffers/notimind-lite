@@ -121,6 +121,14 @@ abstract class NotificationDao {
     abstract fun getPinnedNotificationsFlow(): Flow<List<NotificationEntity>>
 
     // SQLite Full-Text Search (FTS4)
+    //
+    // NOTE [F-B, 2026-09-02 audit]: These queries join on `notifications.rowid`, but
+    // `NotificationEntity` declares `@PrimaryKey(autoGenerate = true) val id: Long`,
+    // which makes SQLite treat `id` AS the implicit rowid (INTEGER PRIMARY KEY alias).
+    // The join works today only because of that alias. If the PK is ever renamed or
+    // changed to a non-INTEGER type, these joins will silently return empty result
+    // sets. Prefer `notifications.id = notifications_fts.docid` for clarity; the
+    // `docid` column in a contentless FTS4 table is the source rowid regardless.
     @Query("""
         SELECT notifications.* FROM notifications
         JOIN notifications_fts ON notifications.rowid = notifications_fts.docid
