@@ -1,8 +1,8 @@
 package com.notimind.lite.tier2_boundary
 
 import com.jeffers.notimindlite.data.local.BackupRecord
-import com.jeffers.notimindlite.data.local.EncryptedBackupManager
-import com.jeffers.notimindlite.data.local.generateBackupKey
+import com.jeffers.notimindlite.util.EncryptedBackupManager
+import com.jeffers.notimindlite.util.generateBackupKey
 import com.notimind.lite.base.BaseRobolectricTest
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertFalse

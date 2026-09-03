@@ -10,7 +10,7 @@ import androidx.work.WorkManager
 import androidx.work.WorkerParameters
 import com.google.firebase.auth.FirebaseAuth
 import com.jeffers.notimindlite.data.local.AppDatabase
-import com.jeffers.notimindlite.data.local.generateBackupKey
+import com.jeffers.notimindlite.util.generateBackupKey
 import java.util.concurrent.TimeUnit
 
 class SyncWorker(
