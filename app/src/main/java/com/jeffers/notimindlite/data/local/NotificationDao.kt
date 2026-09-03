@@ -115,7 +115,7 @@ abstract class NotificationDao {
     abstract suspend fun getNotificationsNeedingVectorization(): List<NotificationEntity>
 
     @Query("UPDATE notifications SET embedding = :embedding WHERE id = :id")
-    abstract suspend fun updateEmbedding(id: Long, embedding: FloatArray)
+    abstract suspend fun updateEmbedding(id: Long, embedding: ByteArray)
 
     @Query("SELECT * FROM notifications WHERE isPinned = 1 ORDER BY postTime DESC")
     abstract fun getPinnedNotificationsFlow(): Flow<List<NotificationEntity>>
@@ -231,7 +231,7 @@ abstract class NotificationDao {
     abstract suspend fun updateSyncStatusBatch(keys: List<String>, status: SyncStatus, syncedAt: Long = System.currentTimeMillis())
 
     @Transaction
-    open suspend fun updateEmbeddingsBatch(items: List<Pair<Long, FloatArray>>) {
+    open suspend fun updateEmbeddingsBatch(items: List<Pair<Long, ByteArray>>) {
         for ((id, embedding) in items) {
             updateEmbedding(id, embedding)
         }

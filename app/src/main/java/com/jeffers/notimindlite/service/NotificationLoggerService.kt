@@ -12,6 +12,7 @@ import android.service.notification.NotificationListenerService
 import android.service.notification.StatusBarNotification
 import android.util.Log
 import com.jeffers.notimindlite.data.local.AppDatabase
+import com.jeffers.notimindlite.data.local.Converters
 import com.jeffers.notimindlite.data.local.NotificationDao
 import com.jeffers.notimindlite.data.local.NotificationEntity
 import com.jeffers.notimindlite.util.NotificationLauncher
@@ -347,7 +348,11 @@ class NotificationLoggerService : NotificationListenerService() {
         try {
             val text = buildEmbeddingText(entity)
             val embedding = VectorEmbeddingHelper.computeEmbedding(text)
-            dao.updateEmbedding(entity.id, embedding)
+            // Room can't bind a FloatArray directly as a query parameter; it
+            // expands each float into its own ? placeholder. Convert via the
+            // same TypeConverter that the entity's `embedding` column uses,
+            // so writes and reads round-trip through the same byte order.
+            dao.updateEmbedding(entity.id, Converters().fromFloatArray(embedding) ?: return)
         } catch (e: Exception) {
             Log.w(TAG, "Embedding compute skipped for ${entity.key}: ${e.message}")
         }
