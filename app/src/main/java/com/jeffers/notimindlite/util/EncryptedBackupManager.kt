@@ -1,7 +1,9 @@
-package com.jeffers.notimindlite.data.local
+package com.jeffers.notimindlite.util
 
 import android.content.Context
 import android.util.Log
+import com.jeffers.notimindlite.data.local.AppDatabase
+import com.jeffers.notimindlite.data.local.BackupRecord
 import com.jeffers.notimindlite.util.AppLogger
 import com.jeffers.notimindlite.util.NetworkUtils
 import java.io.File

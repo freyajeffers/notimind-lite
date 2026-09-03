@@ -6,7 +6,7 @@ import android.net.Uri
 import android.util.Log
 import androidx.core.content.FileProvider
 import com.jeffers.notimindlite.data.local.AppDatabase
-import com.jeffers.notimindlite.data.local.EncryptedBackupManager
+import com.jeffers.notimindlite.util.EncryptedBackupManager
 import com.jeffers.notimindlite.data.local.NotificationEntity
 import org.json.JSONArray
 import org.json.JSONObject
