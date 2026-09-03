@@ -26,6 +26,7 @@ import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.outlined.BookmarkBorder
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -63,9 +64,12 @@ fun LogHistoryScreen(dao: NotificationDao, authManager: AuthManager, db: AppData
     val scope = rememberCoroutineScope()
     val listState = rememberLazyListState()
 
-    var sortMode by remember { mutableStateOf(SortMode.DISMISSED) }
-    var selectedReasonFilter by remember { mutableStateOf<Int?>(null) }
-    var selectedPackages by remember { mutableStateOf<List<String>?>(null) }
+    // F-K fix: persist user-meaningful state across process death / rotation.
+    // Transient UI state (showSortMenu etc.) stays on `remember` — only durable
+    // user input (sort/filter/search) survives.
+    var sortMode by rememberSaveable { mutableStateOf(SortMode.DISMISSED) }
+    var selectedReasonFilter by rememberSaveable { mutableStateOf<Int?>(null) }
+    var selectedPackages by rememberSaveable { mutableStateOf<List<String>?>(null) }
 
     var showSortMenu by remember { mutableStateOf(false) }
     var showFilterMenu by remember { mutableStateOf(false) }
@@ -78,7 +82,9 @@ fun LogHistoryScreen(dao: NotificationDao, authManager: AuthManager, db: AppData
     val totalCount by dao.getTotalNotificationCountFlow().collectAsState(initial = 0)
 
     val activeList = if (sortMode == SortMode.DISMISSED) allNotifsDismissed else allNotifsReceived
-    var searchQuery by remember { mutableStateOf("") }
+    // F-K fix: persist search text across process death.
+    var searchQuery by rememberSaveable { mutableStateOf("") }
+    // debouncedSearchQuery is a derived value, not user input; do not save.
     var debouncedSearchQuery by remember { mutableStateOf("") }
 
     LaunchedEffect(searchQuery) {
