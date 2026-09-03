@@ -71,6 +71,7 @@ import com.jeffers.notimindlite.ui.components.BackupKeyDialog
 import com.jeffers.notimindlite.util.generateBackupKey
 import com.jeffers.notimindlite.util.DatabaseExporter
 import com.jeffers.notimindlite.util.NetworkUtils
+import com.jeffers.notimindlite.util.HybridSearchEngine
 import com.jeffers.notimindlite.util.NotificationLauncher
 import com.jeffers.notimindlite.data.auth.AuthManager
 import com.jeffers.notimindlite.data.local.AppDatabase
@@ -264,7 +265,10 @@ fun ActiveNotificationsScreen(dao: NotificationDao, authManager: AuthManager, db
                 if (debouncedSearchQuery.isBlank()) {
                     filtered
                 } else {
-                    filtered.filter { it.title.contains(debouncedSearchQuery, ignoreCase = true) || it.content.contains(debouncedSearchQuery, ignoreCase = true) }
+                    // F-G read-side [2026-09-02 audit, resolved via H-wire commit]:
+                    // Replaced naive title/content substring filter with
+                    // HybridSearchEngine (FTS4 + semantic vector, RRF-fused).
+                    HybridSearchEngine.searchAndRankBlocking(filtered, debouncedSearchQuery)
                 }
             }
         }
@@ -508,7 +512,10 @@ fun ActiveNotificationsScreen(dao: NotificationDao, authManager: AuthManager, db
 
                     val itemsList = if (debouncedSearchQuery.isBlank()) filteredList
                     else {
-                        filteredList.filter { it.title.contains(debouncedSearchQuery, ignoreCase = true) || it.content.contains(debouncedSearchQuery, ignoreCase = true) }
+                        // F-G read-side [2026-09-02 audit]: HybridSearchEngine
+                        // composes FTS4 keyword scoring with semantic-vector
+                        // cosine scoring via Reciprocal Rank Fusion.
+                        HybridSearchEngine.searchAndRankBlocking(filteredList, debouncedSearchQuery)
                     }
 
                     stickyHeader(key = "sticky_header_${section.keyName}") {
