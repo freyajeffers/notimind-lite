@@ -17,6 +17,8 @@
     <!-- Navigation -->
     <string name="nav_active_title">Active</string>
     <string name="nav_history_title">History</string>
+    <string name="nav_settings_title">Settings</string>
+    <string name="nav_settings_action_cd">Open settings</string>
 
     <!-- Log History -->
     <string name="log_history_title">Log (%1$d/%2$d)</string>
