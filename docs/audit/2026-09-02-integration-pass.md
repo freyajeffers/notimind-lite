@@ -95,24 +95,56 @@ in the wrong directory.
   `.BackupKeyCodec`, `.generateBackupKey` (8 files; verified via grep).
 
 ### F-G. Service pipeline does NOT call ActionableEntityExtractor, VectorEmbeddingHelper, DynamicClusterManager
-**[CRITICAL]** The audit prompt specifies the pipeline order:
+**[CRITICAL — partially resolved in commits 4b1b43c-adjacent and f279324; read-side
+remaining requires UX direction]**
+
+The audit prompt specifies the pipeline order:
 `NotificationLoggerService` → `ActionableEntityExtractor` →
-`VectorEmbeddingHelper` → `DynamicClusterManager` → `NotificationDao`. Verified
-via grep: `NotificationLoggerService.kt` has **zero** references to any of
-those three classes (or `HybridSearchEngine`, `ReciprocalRankFusion`,
-`SemanticSearchResult`). The notification capture path writes directly to the
-DAO without actionable extraction, embedding, or clustering. The orphan modules
-exist and have tests (`RrfRankingTest`, `VectorEmbeddingBoundaryTest`,
-`DynamicDebounceBoundaryTest`) but they don't participate in the real flow.
+`VectorEmbeddingHelper` → `DynamicClusterManager` → `NotificationDao`.
 
-**Fix cost:** Integrate the three utilities into `onNotificationPosted`. Each
-is independently tested, so wiring is mostly plumbing. Requires design
-decisions about where embeddings are computed (sync in the listener vs async
-via WorkManager) and how cluster IDs are stored on `NotificationEntity`
-(currently no column for it; would require Migration 18→19).
+Verified via grep: `NotificationLoggerService.kt` originally had **zero**
+references to any of those three classes (or `HybridSearchEngine`,
+`ReciprocalRankFusion`, `SemanticSearchResult`).
 
-**Files:** `data/sync/NotificationLoggerService.kt` (entire file), `util/ActionableEntityExtractor.kt`,
-`util/VectorEmbeddingHelper.kt`, `util/DynamicClusterManager.kt`.
+**Capture-side (resolved in commit f279324):**
+
+`VectorEmbeddingHelper.computeEmbedding()` is now called inline on the same
+IO coroutine scope that does the DAO write, for both `onNotificationPosted`
+(single) and `onListenerConnected` (batch). Text shape matches the v18
+backfill in `DatabaseMigrator` so live and backfilled embeddings share the
+same vector space.
+
+`DynamicClusterManager` was never actually an orphan — it is called from
+`VectorEmbeddingHelper.computeEmbedding()` (per-dimension cluster anchor
+projection) and initialized in `MainActivity.kt`. Fix was unnecessary.
+
+`ActionableEntityExtractor` was never actually a capture-path orphan — it
+is a stateless pure-function extractor called from
+`ui/components/ActionableChips.kt` on render. Wiring it into
+`onNotificationPosted` would duplicate work without storing the result
+(no `ActionableEntity` column exists, and AGENTS.md principle 8 forbids
+placeholder data). The audit's recommendation here was structurally wrong.
+
+**Read-side (UNRESOLVED — needs UX direction):**
+
+`HybridSearchEngine` is still an orphan module. Wiring it into the UI
+search box requires:
+- A new `NotificationSearchRepository` that composes FTS + semantic legs
+  and returns `ReciprocalRankFusion.merge()` results
+- Debounced search effects in `LogHistoryScreen` and
+  `ActiveNotificationsScreen`
+- Empty-result fallback to plain FTS-only
+- Compose UI tests asserting ranking order
+
+This is feature work, not a bug fix. It needs explicit UX direction on
+search behavior (debounce timing, fallback, ranking weights) before it can
+be safely implemented.
+
+**Files:** `data/sync/NotificationLoggerService.kt` (capture wired in
+f279324), `util/ActionableEntityExtractor.kt` (unchanged — audit
+recommendation reconsidered), `util/VectorEmbeddingHelper.kt` (unchanged,
+just now called from capture path), `util/DynamicClusterManager.kt`
+(unchanged, always in path via VectorEmbeddingHelper).
 
 ### F-H. No ViewModels exist (confirmed in AGENTS.md)
 **[MINOR — already documented]** Audit pillar 1 says "audit ViewModels."
@@ -249,6 +281,17 @@ Each phase should ship with:
 - [x] Severity is assigned per finding
 - [x] Files NOT audited are listed for follow-up
 - [x] Phased plan maps each finding to a fix phase with risk grade
-- [ ] Each fix is implemented in a separate atomic commit (next session)
-- [ ] Each fix is verified by `./gradlew :app:testDebugUnitTest` (next session)
-- [ ] Master remains green at every commit boundary (next session)
+- [x] Each fix is implemented in a separate atomic commit
+- [x] Each fix is verified by `./gradlew :app:testDebugUnitTest`
+- [x] Master remains green at every commit boundary
+
+**Resolution map (commits in chronological order):**
+- F-F → `4b1b43c` fix(util): correct package declaration on EncryptedBackupManager
+- F-J → `e6c3a58` feat(ui): wire SettingsScreen into navigation graph
+- F-A, F-B → `098ceed` docs(data): add KDoc notes for FTS4 schema conflicts and rowid fragility
+- F-D → `f44c531` docs+chore(data): harden purgeUserData gatekeeper and document retention policy
+- F-K → `23c6249` fix(ui): persist screen state across process death via rememberSaveable
+- F-L → `0033521` docs(receiver): clarify F-L pre-unlock skip is security policy, not tech limit
+- F-G capture-side → `f279324` fix(service): populate embedding BLOB on capture for semantic search
+- F-C, F-E, F-H, F-I → false positives or subsumed; F-I verified passing in commit history
+- F-G read-side → DEFERRED (needs UX direction, see F-G section above)
