@@ -1,10 +1,41 @@
+# CodeQL Analysis for NotiMind Lite
+#
+# Configured for a Kotlin/Java Android codebase.
+#
+# Key choices:
+#   - languages: java-kotlin covers both extractors in a single job
+#   - build-mode: manual — Android's Gradle build is non-trivial; we let it
+#     run ./gradlew assembleDebug so the extractor sees the real classpath
+#   - queries: security-extended — surface common security issues at low noise;
+#     add 'security-and-quality' if you want lint-grade findings included
+#   - fetch-depth: 0 — full git history so CodeQL can compute PR diff context
+#   - paths-ignore — skip doc-only and markdown pushes (CI minutes saved)
+#   - persist-credentials: false — prevents the GITHUB_TOKEN from leaking to
+#     subsequent steps that don't need it (security best practice)
+#   - concurrency.cancel-in-progress — re-runs of the same ref cancel the
+#     previous run; only main/master keep running to completion
+#
+# To bump the CodeQL action, edit the @v3 tags. Dependabot manages these via
+# `.github/dependabot.yml` (package-ecosystem: github-actions).
+#
+# To customize query packs, see:
+#   https://github.com/github/codeql/blob/main/docs/using-codeql-code-scanning-with-your-existing-ci-system/configuring-codeql-cli.md
+
 name: "CodeQL Analysis"
 
 on:
   push:
     branches: [ "master", "main" ]
+    paths-ignore:
+      - '**.md'
+      - 'docs/**'
+      - '.gitignore'
   pull_request:
     branches: [ "master", "main" ]
+    paths-ignore:
+      - '**.md'
+      - 'docs/**'
+      - '.gitignore'
   schedule:
     - cron: '0 6 * * 1'
 
@@ -34,7 +65,8 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
-          fetch-depth: 2
+          fetch-depth: 0
+          persist-credentials: false
 
       - name: Set up JDK 17
         uses: actions/setup-java@v4
