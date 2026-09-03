@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.NotificationsActive
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -21,6 +22,7 @@ import com.jeffers.notimindlite.data.local.AppDatabase
 import com.jeffers.notimindlite.data.local.NotificationDao
 import com.jeffers.notimindlite.ui.screens.ActiveNotificationsScreen
 import com.jeffers.notimindlite.ui.screens.LogHistoryScreen
+import com.jeffers.notimindlite.ui.screens.SettingsScreen
 import com.jeffers.notimindlite.ui.screens.SplashScreen
 
 sealed class Screen(val route: String, val title: Int, val icon: @Composable () -> Unit) {
@@ -33,6 +35,11 @@ sealed class Screen(val route: String, val title: Int, val icon: @Composable () 
         route = "history",
         title = R.string.nav_history_title,
         icon = { Icon(Icons.Default.History, contentDescription = stringResource(id = R.string.nav_history_title)) }
+    )
+    object Settings : Screen(
+        route = "settings",
+        title = R.string.nav_settings_title,
+        icon = { Icon(Icons.Default.Settings, contentDescription = stringResource(id = R.string.nav_settings_title)) }
     )
 }
 
@@ -50,7 +57,36 @@ fun MainNavigation(
 
     Scaffold(
         topBar = {
-            // Placeholder for future top bar actions (e.g., Settings)
+            TopAppBar(
+                title = {
+                    val navBackStackEntry by navController.currentBackStackEntryAsState()
+                    val currentRoute = navBackStackEntry?.destination?.route
+                    val titleRes = when (currentRoute) {
+                        Screen.History.route -> Screen.History.title
+                        Screen.Settings.route -> Screen.Settings.title
+                        else -> Screen.Active.title
+                    }
+                    Text(stringResource(id = titleRes))
+                },
+                actions = {
+                    val navBackStackEntry by navController.currentBackStackEntryAsState()
+                    val currentRoute = navBackStackEntry?.destination?.route
+                    if (currentRoute != Screen.Settings.route) {
+                        IconButton(onClick = {
+                            navController.navigate(Screen.Settings.route) {
+                                popUpTo(navController.graph.findStartDestination().id) { saveState = true }
+                                launchSingleTop = true
+                                restoreState = true
+                            }
+                        }) {
+                            Icon(
+                                imageVector = Icons.Default.Settings,
+                                contentDescription = stringResource(id = R.string.nav_settings_action_cd)
+                            )
+                        }
+                    }
+                }
+            )
         },
         bottomBar = {
             NavigationBar {
@@ -90,6 +126,9 @@ fun MainNavigation(
             }
             composable(Screen.History.route) {
                 LogHistoryScreen(notificationDao, authManager, db)
+            }
+            composable(Screen.Settings.route) {
+                SettingsScreen(authManager = authManager, db = db)
             }
         }
     }
