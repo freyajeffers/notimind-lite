@@ -37,6 +37,7 @@ import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.outlined.BookmarkBorder
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import android.util.Log
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -170,12 +171,19 @@ fun ActiveNotificationsScreen(dao: NotificationDao, authManager: AuthManager, db
     val lifecycleOwner = LocalLifecycleOwner.current
     val prefManager = remember { PreferenceManager(context) }
 
-    var expandedSection by remember { mutableStateOf(prefManager.getExpandedSection()) }
+    // F-K fix: persist user-meaningful state across process death / rotation.
+    // - expandedSection: user's last-toggled section (was lost; PrefManager was only
+    //   read on initial composition, never written back on toggle).
+    // - searchQuery, isSearchExplicitlyOpened, selectedPackages: user input state.
+    // - isGranted, expandedCards, dismissingKeys, showBackupKeyDialog, currentBackupKey,
+    //   currentPendingSecretKey, showPackagePicker, debouncedSearchQuery, isSearchFocused:
+    //   transient UI / derived / security-sensitive; do not save.
+    var expandedSection by rememberSaveable { mutableStateOf(prefManager.getExpandedSection()) }
     var expandedCards by remember { mutableStateOf(setOf<String>()) }
     var isGranted by remember { mutableStateOf(checkNotificationPermission(context)) }
-    var searchQuery by remember { mutableStateOf("") }
+    var searchQuery by rememberSaveable { mutableStateOf("") }
     var debouncedSearchQuery by remember { mutableStateOf("") }
-    var isSearchExplicitlyOpened by remember { mutableStateOf(false) }
+    var isSearchExplicitlyOpened by rememberSaveable { mutableStateOf(false) }
 
     var showBackupKeyDialog by remember { mutableStateOf(false) }
     var currentBackupKey by remember { mutableStateOf("") }
@@ -186,7 +194,8 @@ fun ActiveNotificationsScreen(dao: NotificationDao, authManager: AuthManager, db
         debouncedSearchQuery = searchQuery
     }
 
-    var selectedPackages by remember { mutableStateOf<List<String>?>(null) }
+    // F-K fix: selectedPackages is user filter state — persist across process death.
+    var selectedPackages by rememberSaveable { mutableStateOf<List<String>?>(null) }
     var showPackagePicker by remember { mutableStateOf(false) }
 
     DisposableEffect(lifecycleOwner) {
