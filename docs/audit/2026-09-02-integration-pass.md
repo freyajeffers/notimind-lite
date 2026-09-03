@@ -125,26 +125,31 @@ is a stateless pure-function extractor called from
 (no `ActionableEntity` column exists, and AGENTS.md principle 8 forbids
 placeholder data). The audit's recommendation here was structurally wrong.
 
-**Read-side (UNRESOLVED — needs UX direction):**
+**Read-side (RESOLVED in commit 9c23cb5):**
 
-`HybridSearchEngine` is still an orphan module. Wiring it into the UI
-search box requires:
-- A new `NotificationSearchRepository` that composes FTS + semantic legs
-  and returns `ReciprocalRankFusion.merge()` results
-- Debounced search effects in `LogHistoryScreen` and
-  `ActiveNotificationsScreen`
-- Empty-result fallback to plain FTS-only
-- Compose UI tests asserting ranking order
+`HybridSearchEngine.searchAndRankBlocking()` is now called from both
+`LogHistoryScreen` and `ActiveNotificationsScreen`, replacing the naive
+`title.contains(...) || content.contains(...)` substring filter that was
+there before. Result: search now composes FTS4 keyword scoring with
+semantic-vector cosine scoring via Reciprocal Rank Fusion, ranking the
+most semantically-relevant result first when there is no token overlap.
 
-This is feature work, not a bug fix. It needs explicit UX direction on
-search behavior (debounce timing, fallback, ranking weights) before it can
-be safely implemented.
+**Companion fix (resolved in commit e84b8fb, discovered while writing
+tests for the wire-up):**
 
-**Files:** `data/sync/NotificationLoggerService.kt` (capture wired in
-f279324), `util/ActionableEntityExtractor.kt` (unchanged — audit
-recommendation reconsidered), `util/VectorEmbeddingHelper.kt` (unchanged,
-just now called from capture path), `util/DynamicClusterManager.kt`
-(unchanged, always in path via VectorEmbeddingHelper).
+The latent `dao.updateEmbedding(id: Long, embedding: FloatArray)` binding
+bug — Room can't bind FloatArray as a query parameter, expands it into
+one `?` per element, generates malformed SQL. Both production call sites
+(`DatabaseMigrator.embedAll` v18 backfill, `NotificationLoggerService`
+capture-side) had been silently failing since the embedding column was
+added. Changed DAO signature to `ByteArray`; both call sites now convert
+via `Converters.fromFloatArray` at the boundary so writes and reads
+round-trip through the same byte order as the entity TypeConverter.
+
+**Read-side fix-up files:** `util/HybridSearchEngine.kt` (new
+`searchAndRankBlocking` synchronous overload), `ui/screens/LogHistoryScreen.kt`
+(one filter block replaced), `ui/screens/ActiveNotificationsScreen.kt`
+(two filter blocks replaced).
 
 ### F-H. No ViewModels exist (confirmed in AGENTS.md)
 **[MINOR — already documented]** Audit pillar 1 says "audit ViewModels."
@@ -293,5 +298,6 @@ Each phase should ship with:
 - F-K → `23c6249` fix(ui): persist screen state across process death via rememberSaveable
 - F-L → `0033521` docs(receiver): clarify F-L pre-unlock skip is security policy, not tech limit
 - F-G capture-side → `f279324` fix(service): populate embedding BLOB on capture for semantic search
+- F-G embedding-bind fix → `e84b8fb` fix(data): bind embedding BLOB via ByteArray; FloatArray param never worked
+- F-G read-side → `9c23cb5` feat(ui): wire HybridSearchEngine into both screens
 - F-C, F-E, F-H, F-I → false positives or subsumed; F-I verified passing in commit history
-- F-G read-side → DEFERRED (needs UX direction, see F-G section above)
