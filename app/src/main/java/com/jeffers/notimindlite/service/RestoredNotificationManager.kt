@@ -39,6 +39,8 @@ object RestoredNotificationManager {
         return restoredAppNotifIds[packageName]?.firstOrNull()
     }
 
+    private const val AUTO_DISMISS_LOG_MAX_LEN = 80
+
     /**
      * Auto-dismisses NotiMind's restored notification when the original app restores its own.
      */
@@ -53,9 +55,17 @@ object RestoredNotificationManager {
             for (id in notifIds) {
                 try {
                     notificationManager?.cancel(id)
-                    Log.i(TAG, "Auto-dismissed restored notification #$id because original app ($packageName) posted a notification")
-                } catch (e: Exception) {
-                    Log.e(TAG, "Failed to auto-dismiss restored notification #$id", e)
+                    Log.i(
+                        TAG,
+                        "Auto-dismissed restored notification #$id because original app " +
+                            "($packageName) posted a notification".take(AUTO_DISMISS_LOG_MAX_LEN)
+                    )
+                } catch (e: SecurityException) {
+                    // POST_NOTIFICATIONS not granted or notification channel removed.
+                    Log.w(TAG, "Cannot auto-dismiss restored notification #$id: ${e.message}")
+                } catch (e: IllegalStateException) {
+                    // NotificationManager backing service unavailable.
+                    Log.w(TAG, "NotificationManager unavailable for #$id: ${e.message}")
                 }
             }
         }

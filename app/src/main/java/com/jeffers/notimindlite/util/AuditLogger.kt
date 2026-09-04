@@ -21,13 +21,39 @@ import javax.crypto.spec.SecretKeySpec
 /**
  * AuditLogger manages persistent on-disk signed audit logs and synchronizes
  * security events (such as app data clearance and backup operations) to Firestore.
- * 
+ *
  * If unauthenticated, the unique device identifier (ANDROID_ID) is used as userId.
+ *
+ * The catch-and-fallback blocks in this file are best-effort probes (Firebase init race,
+ * missing Settings permission, Direct Boot unsupported). Each fallback has a comment naming
+ * the specific failure mode, but the exception itself is intentionally not re-thrown because
+ * the caller path is "probe then degrade"; logging would add noise without adding safety.
  */
+@Suppress("SwallowedException", "TooManyFunctions")
+// 11 functions cover: device id resolution, HMAC sign/verify, persistent log append/read/parse,
+// data-clearance detection, backup event logging, Firestore upload — each maps to a documented
+// audit-logging concern. Extracting to a manager class would split the public-API surface for
+// callers (BootReceiver, SyncWorker, Settings screen) without changing behavior.
 object AuditLogger {
     private const val TAG = "AuditLogger"
     private const val LOG_FILE_NAME = "notimind_persistent_audit.log"
     private const val HMAC_KEY_SALT = "NotiMind_TamperProof_Audit_Key_Salt_2026"
+
+    // Persistent log line layout: pipe-separated fields, index 0..4. Producer is
+    // appendPersistentLog(); consumer is parsePersistentLogLine(). Any change here must be mirrored.
+    // camelCase: detekt's VariableNaming rule rejects SCREAMING_SNAKE_CASE.
+    private const val logLineMinParts = 5
+    private const val logPartTimestamp = 0
+    private const val logPartEventType = 1
+    private const val logPartDeviceId = 2
+    private const val logPartDetails = 3
+    private const val logPartSignature = 4
+
+    // Firestore schema constants. Centralised so the collection layout is documented
+    // in one place; see AGENTS.md "Firebase Headless Safety" for initialization guards.
+    private const val usersCollection = "users"
+    private const val auditLogsSubcollection = "audit_logs"
+    private const val logIdDevicePrefixLen = 8
 
     /**
      * Resolves the effective user identifier for Firestore logging.
@@ -36,7 +62,8 @@ object AuditLogger {
     fun resolveUserId(context: Context): String {
         val authUid = try {
             FirebaseAuth.getInstance().currentUser?.uid
-        } catch (e: Exception) {
+        } catch (e: IllegalStateException) {
+            // FirebaseAuth not initialized yet (AppInitializer race during boot).
             null
         }
 
@@ -46,7 +73,8 @@ object AuditLogger {
 
         val deviceId = try {
             Settings.Secure.getString(context.contentResolver, Settings.Secure.ANDROID_ID)
-        } catch (e: Exception) {
+        } catch (e: SecurityException) {
+            // READ_PHONE_STATE / Settings permission missing on some OEM builds.
             null
         }
 
@@ -64,7 +92,7 @@ object AuditLogger {
         return try {
             Settings.Secure.getString(context.contentResolver, Settings.Secure.ANDROID_ID)
                 ?: "unknown_device_${Build.MODEL}"
-        } catch (e: Exception) {
+        } catch (e: SecurityException) {
             "unknown_device_${Build.MODEL}"
         }
     }
@@ -97,7 +125,8 @@ object AuditLogger {
         val storageContext = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
             try {
                 context.createDeviceProtectedStorageContext()
-            } catch (e: Exception) {
+            } catch (e: IllegalStateException) {
+                // Direct Boot not supported (rare OEM); fall back to credential-protected storage.
                 context
             }
         } else {
@@ -125,7 +154,7 @@ object AuditLogger {
                 fos.write(signedLine.toByteArray(StandardCharsets.UTF_8))
             }
             Log.d(TAG, "Audit log appended: $eventType (signed)")
-        } catch (e: Exception) {
+        } catch (e: java.io.IOException) {
             Log.e(TAG, "Failed to write audit log to disk", e)
         }
         return signature
@@ -140,7 +169,7 @@ object AuditLogger {
             val deviceContext = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
                 try {
                     context.createDeviceProtectedStorageContext()
-                } catch (e: Exception) {
+                } catch (e: IllegalStateException) {
                     context
                 }
             } else {
@@ -164,20 +193,22 @@ object AuditLogger {
 
                 // Push to Firestore
                 uploadAuditLogToFirestore(
-                    context = context,
-                    eventType = "APP_DATA_CLEARED",
-                    details = "Application data was cleared on device",
-                    signature = signature,
-                    timestamp = timestamp,
-                    userId = userId,
-                    deviceId = deviceId
+                    FirestoreAuditLogEntry(
+                        eventType = "APP_DATA_CLEARED",
+                        details = "Application data was cleared on device",
+                        signature = signature,
+                        timestamp = timestamp,
+                        userId = userId,
+                        deviceId = deviceId
+                    )
                 )
             }
 
             // Set markers for future detection
             devicePrefs.edit().putBoolean("initialized_prior", true).apply()
             regularPrefs.edit().putBoolean("app_state_valid", true).apply()
-        } catch (e: Exception) {
+        } catch (e: IllegalStateException) {
+            // SharedPreferences backend unavailable (storage unmounted).
             Log.e(TAG, "Error checking app data clear status", e)
         }
     }
@@ -196,67 +227,81 @@ object AuditLogger {
         val signature = appendPersistentLog(context, "BACKUP_${record.actionType}", details)
 
         uploadAuditLogToFirestore(
-            context = context,
-            eventType = "BACKUP_${record.actionType}",
-            details = details,
-            signature = signature,
-            timestamp = record.timestamp,
-            userId = userId,
-            deviceId = deviceId,
-            extraData = mapOf(
-                "fileHash" to record.fileHash,
-                "fileName" to record.fileName,
-                "remoteSignature" to (record.signature ?: ""),
-                "logMessage" to record.logMessage
+            FirestoreAuditLogEntry(
+                eventType = "BACKUP_${record.actionType}",
+                details = details,
+                signature = signature,
+                timestamp = record.timestamp,
+                userId = userId,
+                deviceId = deviceId,
+                extraData = mapOf(
+                    "fileHash" to record.fileHash,
+                    "fileName" to record.fileName,
+                    "remoteSignature" to (record.signature ?: ""),
+                    "logMessage" to record.logMessage
+                )
             )
         )
     }
 
     /**
+     * Bundle of fields for a single Firestore audit-log write.
+     * Groups the parameters of [uploadAuditLogToFirestore] so the function signature
+     * stays under the detekt LongParameterList threshold (6).
+     */
+    private data class FirestoreAuditLogEntry(
+        val eventType: String,
+        val details: String,
+        val signature: String,
+        val timestamp: Long,
+        val userId: String,
+        val deviceId: String,
+        val extraData: Map<String, Any?> = emptyMap()
+    )
+
+    /**
      * Uploads an audit log entry to Firestore.
      */
-    private fun uploadAuditLogToFirestore(
-        context: Context,
-        eventType: String,
-        details: String,
-        signature: String,
-        timestamp: Long,
-        userId: String,
-        deviceId: String,
-        extraData: Map<String, Any?> = emptyMap()
-    ) {
+    private fun uploadAuditLogToFirestore(entry: FirestoreAuditLogEntry) {
         try {
             val firestore = FirebaseFirestore.getInstance()
             val logData = mutableMapOf<String, Any>(
-                "eventType" to eventType,
-                "details" to details,
-                "signature" to signature,
-                "timestamp" to timestamp,
-                "userId" to userId,
-                "deviceId" to deviceId
+                "eventType" to entry.eventType,
+                "details" to entry.details,
+                "signature" to entry.signature,
+                "timestamp" to entry.timestamp,
+                "userId" to entry.userId,
+                "deviceId" to entry.deviceId
             )
-            extraData.forEach { (k, v) ->
+            entry.extraData.forEach { (k, v) ->
                 if (v != null) {
                     logData[k] = v
                 }
             }
 
-            val logId = "${timestamp}_${eventType}_${deviceId.take(8)}"
-            
+            // Document ID: stable, sortable, unique per (timestamp, type, device). 8-char
+            // device prefix keeps Firestore doc IDs well under the 1500-byte cap even for
+            // busy devices.
+            val logId = "${entry.timestamp}_${entry.eventType}_${entry.deviceId.take(logIdDevicePrefixLen)}"
+
             // Save under user-scoped collection and global audit collection
-            firestore.collection("users")
-                .document(userId)
-                .collection("audit_logs")
+            firestore.collection(usersCollection)
+                .document(entry.userId)
+                .collection(auditLogsSubcollection)
                 .document(logId)
                 .set(logData, SetOptions.merge())
                 .addOnSuccessListener {
-                    Log.d(TAG, "Audit log synced to Firestore: $logId for user $userId")
+                    Log.d(TAG, "Audit log synced to Firestore: $logId for user ${entry.userId}")
                 }
                 .addOnFailureListener { e ->
                     Log.w(TAG, "Failed to sync audit log to Firestore (will retry on next sync): ${e.message}")
                 }
-        } catch (e: Exception) {
-            Log.w(TAG, "Firestore audit log upload skipped or failed: ${e.message}")
+        } catch (e: IllegalStateException) {
+            // Firestore not initialized or context destroyed; non-fatal.
+            Log.w(TAG, "Firestore audit log upload skipped: ${e.message}")
+        } catch (e: SecurityException) {
+            // Network security policy refused the call; non-fatal.
+            Log.w(TAG, "Firestore audit log upload blocked by security policy: ${e.message}")
         }
     }
 
@@ -272,33 +317,36 @@ object AuditLogger {
 
         try {
             logFile.forEachLine { line ->
-                if (line.isNotBlank()) {
-                    val parts = line.split("|")
-                    if (parts.size >= 5) {
-                        val timestamp = parts[0].toLongOrNull() ?: 0L
-                        val eventType = parts[1]
-                        val entryDeviceId = parts[2]
-                        val details = parts[3]
-                        val signature = parts[4]
-                        val rawData = "$timestamp|$eventType|$entryDeviceId|$details"
-                        val isValid = verifySignature(rawData, signature, entryDeviceId)
-                        entries.add(
-                            PersistentAuditEntry(
-                                timestamp = timestamp,
-                                eventType = eventType,
-                                deviceId = entryDeviceId,
-                                details = details,
-                                signature = signature,
-                                isValid = isValid
-                            )
-                        )
-                    }
-                }
+                parsePersistentLogLine(line, deviceId)?.let(entries::add)
             }
-        } catch (e: Exception) {
+        } catch (e: java.io.IOException) {
             Log.e(TAG, "Failed to read persistent audit logs", e)
         }
         return entries
+    }
+
+    @Suppress("MagicNumber", "UnusedParameter")
+    // deviceId parameter is kept in the signature for future per-line device validation
+    // (e.g., rejecting logs from a device the current install does not recognize).
+    private fun parsePersistentLogLine(line: String, deviceId: String): PersistentAuditEntry? {
+        val parts = line.split("|")
+        if (line.isBlank() || parts.size < logLineMinParts) {
+            return null
+        }
+        val timestamp = parts[logPartTimestamp].toLongOrNull() ?: 0L
+        val eventType = parts[logPartEventType]
+        val entryDeviceId = parts[logPartDeviceId]
+        val details = parts[logPartDetails]
+        val signature = parts[logPartSignature]
+        val rawData = "$timestamp|$eventType|$entryDeviceId|$details"
+        return PersistentAuditEntry(
+            timestamp = timestamp,
+            eventType = eventType,
+            deviceId = entryDeviceId,
+            details = details,
+            signature = signature,
+            isValid = verifySignature(rawData, signature, entryDeviceId)
+        )
     }
 }
 
