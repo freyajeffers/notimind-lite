@@ -1,4 +1,4 @@
-package com.notimind.lite.tier1_feature
+package com.notimind.lite.tier1feature
 
 import androidx.test.core.app.ApplicationProvider
 import com.jeffers.notimindlite.util.HybridSearchEngine
