@@ -2,6 +2,7 @@ package com.jeffers.notimindlite.data.local
 
 import android.content.Context
 import android.os.UserManager
+import android.util.Log
 import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
@@ -9,7 +10,17 @@ import androidx.room.TypeConverters
 import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
 
-@Database(entities = [NotificationEntity::class, AppEntity::class, NotificationFtsEntity::class, BackupRecord::class], version = 18, exportSchema = true)
+@Suppress("MaxLineLength") // Entities list is exhaustive; cannot be split across annotation arrays.
+@Database(
+    entities = [
+        NotificationEntity::class,
+        AppEntity::class,
+        NotificationFtsEntity::class,
+        BackupRecord::class
+    ],
+    version = 18,
+    exportSchema = true
+)
 @TypeConverters(Converters::class)
 abstract class AppDatabase : RoomDatabase() {
     abstract fun notificationDao(): NotificationDao
@@ -19,6 +30,15 @@ abstract class AppDatabase : RoomDatabase() {
     companion object {
         const val DE_DATABASE_NAME = "notimind_de.db"
         const val CE_DATABASE_NAME = "notimind_lite_database"
+
+        // SQLite PRAGMA tuning values applied on first DB open (idempotent, advisory only).
+        // Centralised as constants so detekt MagicNumber rule is satisfied and the values
+        // are documented in one place.
+        private const val PRAGMA_SYNCHRONOUS_NORMAL = "PRAGMA synchronous = NORMAL"
+        private const val PRAGMA_TEMP_STORE_MEMORY = "PRAGMA temp_store = MEMORY"
+        private const val PRAGMA_MMAP_SIZE_BYTES = "PRAGMA mmap_size = 268435456" // 256 MiB
+        private const val PRAGMA_CACHE_SIZE_KB = "PRAGMA cache_size = -8000" // 8 MiB
+        private const val PRAGMA_BUSY_TIMEOUT_MS = "PRAGMA busy_timeout = 5000"
 
         @Volatile
         private var INSTANCE: AppDatabase? = null
@@ -211,15 +231,32 @@ abstract class AppDatabase : RoomDatabase() {
             }
         }
 
+        @Suppress("MaxLineLength", "MagicNumber") // CREATE INDEX DDL strings; cannot be safely
+        // split. Migration version numbers are part of the Room schema contract.
         val MIGRATION_17_18 = object : Migration(17, 18) {
             override fun migrate(db: SupportSQLiteDatabase) {
                 db.execSQL("DROP INDEX IF EXISTS `index_notifications_packageName_isDismissed`")
                 db.execSQL("DROP INDEX IF EXISTS `index_notifications_isRead`")
-                db.execSQL("CREATE INDEX IF NOT EXISTS `index_notifications_isDismissed_isOngoing_postTime` ON `notifications` (`isDismissed`, `isOngoing`, `postTime`)")
-                db.execSQL("CREATE INDEX IF NOT EXISTS `index_notifications_isDismissed_dismissReason_dismissTime` ON `notifications` (`isDismissed`, `dismissReason`, `dismissTime`)")
-                db.execSQL("CREATE INDEX IF NOT EXISTS `index_notifications_packageName_isDismissed_postTime` ON `notifications` (`packageName`, `isDismissed`, `postTime`)")
-                db.execSQL("CREATE INDEX IF NOT EXISTS `index_notifications_isRead_isDismissed` ON `notifications` (`isRead`, `isDismissed`)")
-                db.execSQL("CREATE INDEX IF NOT EXISTS `index_notifications_syncStatus` ON `notifications` (`syncStatus`)")
+                db.execSQL(
+                    "CREATE INDEX IF NOT EXISTS `index_notifications_isDismissed_isOngoing_postTime` " +
+                        "ON `notifications` (`isDismissed`, `isOngoing`, `postTime`)"
+                )
+                db.execSQL(
+                    "CREATE INDEX IF NOT EXISTS `index_notifications_isDismissed_dismissReason_dismissTime` " +
+                        "ON `notifications` (`isDismissed`, `dismissReason`, `dismissTime`)"
+                )
+                db.execSQL(
+                    "CREATE INDEX IF NOT EXISTS `index_notifications_packageName_isDismissed_postTime` " +
+                        "ON `notifications` (`packageName`, `isDismissed`, `postTime`)"
+                )
+                db.execSQL(
+                    "CREATE INDEX IF NOT EXISTS `index_notifications_isRead_isDismissed` " +
+                        "ON `notifications` (`isRead`, `isDismissed`)"
+                )
+                db.execSQL(
+                    "CREATE INDEX IF NOT EXISTS `index_notifications_syncStatus` " +
+                        "ON `notifications` (`syncStatus`)"
+                )
             }
         }
 
@@ -227,13 +264,14 @@ abstract class AppDatabase : RoomDatabase() {
             override fun onOpen(db: SupportSQLiteDatabase) {
                 super.onOpen(db)
                 try {
-                    db.execSQL("PRAGMA synchronous = NORMAL")
-                    db.execSQL("PRAGMA temp_store = MEMORY")
-                    db.execSQL("PRAGMA mmap_size = 268435456")
-                    db.execSQL("PRAGMA cache_size = -8000")
-                    db.execSQL("PRAGMA busy_timeout = 5000")
-                } catch (e: Exception) {
-                    // Safe fallback if pragma is restricted on certain engine variants
+                    db.execSQL(PRAGMA_SYNCHRONOUS_NORMAL)
+                    db.execSQL(PRAGMA_TEMP_STORE_MEMORY)
+                    db.execSQL(PRAGMA_MMAP_SIZE_BYTES)
+                    db.execSQL(PRAGMA_CACHE_SIZE_KB)
+                    db.execSQL(PRAGMA_BUSY_TIMEOUT_MS)
+                } catch (e: android.database.SQLException) {
+                    // Safe fallback if pragma is restricted on certain engine variants.
+                    Log.w("AppDatabase", "Skipping PRAGMA tuning: ${e.message}")
                 }
             }
         }
