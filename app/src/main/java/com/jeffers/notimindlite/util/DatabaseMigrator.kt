@@ -36,7 +36,12 @@ object DatabaseMigrator {
                     append(entity.packageName)
                 }
                 val embedding = VectorEmbeddingHelper.computeEmbedding(textToEmbed)
-                Pair(entity.id, embedding)
+                // Room can't bind a FloatArray directly as a query parameter;
+                // convert via the same TypeConverter the entity column uses
+                // so writes and reads round-trip through the same byte order.
+                val bytes = com.jeffers.notimindlite.data.local.Converters().fromFloatArray(embedding)
+                    ?: error("FloatArray->ByteArray conversion returned null for non-null input")
+                Pair(entity.id, bytes)
             }
             dao.updateEmbeddingsBatch(embeddingPairs)
             Log.i(TAG, "Vectorization complete.")

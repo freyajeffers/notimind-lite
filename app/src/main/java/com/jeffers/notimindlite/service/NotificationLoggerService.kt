@@ -12,8 +12,11 @@ import android.service.notification.NotificationListenerService
 import android.service.notification.StatusBarNotification
 import android.util.Log
 import com.jeffers.notimindlite.data.local.AppDatabase
+import com.jeffers.notimindlite.data.local.Converters
+import com.jeffers.notimindlite.data.local.NotificationDao
 import com.jeffers.notimindlite.data.local.NotificationEntity
 import com.jeffers.notimindlite.util.NotificationLauncher
+import com.jeffers.notimindlite.util.VectorEmbeddingHelper
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -119,7 +122,15 @@ class NotificationLoggerService : NotificationListenerService() {
                 Log.d(TAG, "onListenerConnected: processing ${activeNotifs.size} active notifications in batch")
                 val entities = activeNotifs.mapNotNull { extractNotificationEntity(it) }
                 if (entities.isNotEmpty()) {
-                    getDb().notificationDao().insertNotifications(entities)
+                    val dao = getDb().notificationDao()
+                    val ids = dao.insertNotifications(entities)
+                    // F-G fix [2026-09-02 audit]: populate embeddings inline so the
+                    // HybridSearchEngine (read-path) can rank new notifications
+                    // semantically. Previously only DatabaseMigrator (one-shot v18
+                    // backfill) wrote embeddings, leaving every post-migration
+                    // notification unrankable. Pure-Kotlin compute, sub-ms per
+                    // embedding, LRU-cached (256 entries), safe on the IO scope.
+                    indexEmbeddingsForBatch(dao, ids, entities)
                     Log.d(TAG, "onListenerConnected: successfully batch inserted ${entities.size} active notifications")
                 }
             } catch (e: Exception) {
@@ -158,6 +169,9 @@ class NotificationLoggerService : NotificationListenerService() {
                         isPinned = existing?.isPinned ?: false
                     )
                     dao.insert(finalEntity)
+                    // F-G fix [2026-09-02 audit]: populate embedding for the single
+                    // posted notification so semantic search can rank it.
+                    indexEmbeddingForSingle(dao, finalEntity)
                     Log.d(TAG, "Inserted: ${finalEntity.title} (${finalEntity.appName})")
                 } catch (e: Exception) {
                     Log.e(TAG, "DB insert failed for ${entity.title}", e)
@@ -215,7 +229,10 @@ class NotificationLoggerService : NotificationListenerService() {
             val maxAgeMs = 30L * 24 * 60 * 60 * 1000L
             if (postTime > 0 && (now - postTime) > maxAgeMs) return null
 
-            val key = sbn.key ?: "${sbn.id}|${sbn.packageName}|${sbn.postTime}"
+            // Always use a deterministic app-derived key. The system-provided sbn.key is
+            // inconsistent between post/remove events on some devices, causing dismissal
+            // lookups to miss the originally logged row.
+            val key = "${sbn.packageName}|${sbn.id}|${sbn.tag ?: ""}"
             val rawAppName = try {
                 val appInfo = packageManager.getApplicationInfo(packageName, PackageManager.MATCH_UNINSTALLED_PACKAGES)
                 packageManager.getApplicationLabel(appInfo).toString()
@@ -297,7 +314,10 @@ class NotificationLoggerService : NotificationListenerService() {
 
     private fun handleNotificationRemoved(sbn: StatusBarNotification, reason: Int?) {
         if (sbn.packageName == applicationContext.packageName) return
-        val key = sbn.key ?: "${sbn.id}|${sbn.packageName}|${sbn.postTime}"
+        // Always use a deterministic app-derived key. The system-provided sbn.key is
+        // inconsistent between post/remove events on some devices, causing dismissal
+        // lookups to miss the originally logged row.
+        val key = "${sbn.packageName}|${sbn.id}|${sbn.tag ?: ""}"
         val extras = sbn.notification?.extras
         val title = extras?.getCharSequence(Notification.EXTRA_TITLE)?.toString() ?: ""
         val content = extras?.getCharSequence(Notification.EXTRA_TEXT)?.toString() ?: ""
@@ -317,4 +337,60 @@ class NotificationLoggerService : NotificationListenerService() {
             }
         }
     }
+
+    /**
+     * F-G fix [2026-09-02 audit]: helper to populate the `embedding` BLOB column on a
+     * single inserted row. Background context — pre-F-G only DatabaseMigrator wrote
+     * embeddings (one-shot v18 backfill), so every post-migration notification had a
+     * NULL embedding and was invisible to the semantic leg of HybridSearchEngine.
+     */
+    private suspend fun indexEmbeddingForSingle(dao: NotificationDao, entity: NotificationEntity) {
+        try {
+            val text = buildEmbeddingText(entity)
+            val embedding = VectorEmbeddingHelper.computeEmbedding(text)
+            // Room can't bind a FloatArray directly as a query parameter; it
+            // expands each float into its own ? placeholder. Convert via the
+            // same TypeConverter that the entity's `embedding` column uses,
+            // so writes and reads round-trip through the same byte order.
+            dao.updateEmbedding(entity.id, Converters().fromFloatArray(embedding) ?: return)
+        } catch (e: Exception) {
+            Log.w(TAG, "Embedding compute skipped for ${entity.key}: ${e.message}")
+        }
+    }
+
+    /**
+     * F-G fix [2026-09-02 audit]: batch variant for the onListenerConnected rehydrate.
+     * Calls dao.updateEmbedding sequentially; could be replaced with
+     * updateEmbeddingsBatch for large batches, but per the AGENTS.md "Additive
+     * Preference" principle the safer choice is to reuse the existing sequential path
+     * that DatabaseMigrator proves out at v18.
+     */
+    private suspend fun indexEmbeddingsForBatch(
+        dao: NotificationDao,
+        ids: List<Long>,
+        entities: List<NotificationEntity>
+    ) {
+        if (ids.size != entities.size) {
+            Log.w(TAG, "Batch embedding skipped: id/entity size mismatch (${ids.size} vs ${entities.size})")
+            return
+        }
+        for (i in entities.indices) {
+            indexEmbeddingForSingle(dao, entities[i].copy(id = ids[i]))
+        }
+    }
+
+    /**
+     * F-G fix [2026-09-02 audit]: match the text-shape DatabaseMigrator uses so the
+     * on-capture embeddings live in the same feature space as the backfilled ones.
+     */
+    private fun buildEmbeddingText(entity: NotificationEntity): String =
+        buildString {
+            append(entity.appName).append(' ')
+            append(entity.title).append(' ')
+            append(entity.content).append(' ')
+            if (!entity.subText.isNullOrEmpty()) append(entity.subText).append(' ')
+            if (!entity.bigText.isNullOrEmpty()) append(entity.bigText).append(' ')
+            if (!entity.category.isNullOrEmpty()) append(entity.category).append(' ')
+            append(entity.packageName)
+        }
 }

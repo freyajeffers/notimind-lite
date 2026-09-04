@@ -26,6 +26,7 @@ import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.outlined.BookmarkBorder
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -40,6 +41,7 @@ import com.jeffers.notimindlite.data.local.NotificationDao
 import com.jeffers.notimindlite.data.local.NotificationEntity
 import com.jeffers.notimindlite.ui.dialogs.AppPackageSelectorDialog
 import com.jeffers.notimindlite.ui.components.NotificationDetailPanel
+import com.jeffers.notimindlite.util.HybridSearchEngine
 import com.jeffers.notimindlite.util.NotificationLauncher
 import com.jeffers.notimindlite.data.auth.AuthManager
 import com.jeffers.notimindlite.data.local.AppDatabase
@@ -63,9 +65,12 @@ fun LogHistoryScreen(dao: NotificationDao, authManager: AuthManager, db: AppData
     val scope = rememberCoroutineScope()
     val listState = rememberLazyListState()
 
-    var sortMode by remember { mutableStateOf(SortMode.DISMISSED) }
-    var selectedReasonFilter by remember { mutableStateOf<Int?>(null) }
-    var selectedPackages by remember { mutableStateOf<List<String>?>(null) }
+    // F-K fix: persist user-meaningful state across process death / rotation.
+    // Transient UI state (showSortMenu etc.) stays on `remember` — only durable
+    // user input (sort/filter/search) survives.
+    var sortMode by rememberSaveable { mutableStateOf(SortMode.DISMISSED) }
+    var selectedReasonFilter by rememberSaveable { mutableStateOf<Int?>(null) }
+    var selectedPackages by rememberSaveable { mutableStateOf<List<String>?>(null) }
 
     var showSortMenu by remember { mutableStateOf(false) }
     var showFilterMenu by remember { mutableStateOf(false) }
@@ -73,12 +78,14 @@ fun LogHistoryScreen(dao: NotificationDao, authManager: AuthManager, db: AppData
     var showPackagePicker by remember { mutableStateOf(false) }
     var expandedCards by remember { mutableStateOf(setOf<String>()) }
 
-    val allNotifsDismissed by dao.getAllNotificationsSortedByDismissed().collectAsState(initial = emptyList())
-    val allNotifsReceived by dao.getAllNotificationsSortedByReceived().collectAsState(initial = emptyList())
+    val allNotifsDismissed by dao.getDismissedNotificationsSortedByDismissed().collectAsState(initial = emptyList())
+    val allNotifsReceived by dao.getDismissedNotificationsSortedByReceived().collectAsState(initial = emptyList())
     val totalCount by dao.getTotalNotificationCountFlow().collectAsState(initial = 0)
 
     val activeList = if (sortMode == SortMode.DISMISSED) allNotifsDismissed else allNotifsReceived
-    var searchQuery by remember { mutableStateOf("") }
+    // F-K fix: persist search text across process death.
+    var searchQuery by rememberSaveable { mutableStateOf("") }
+    // debouncedSearchQuery is a derived value, not user input; do not save.
     var debouncedSearchQuery by remember { mutableStateOf("") }
 
     LaunchedEffect(searchQuery) {
@@ -113,7 +120,14 @@ fun LogHistoryScreen(dao: NotificationDao, authManager: AuthManager, db: AppData
             if (debouncedSearchQuery.isBlank()) {
                 list
             } else {
-                list.filter { it.title.contains(debouncedSearchQuery, ignoreCase = true) || it.content.contains(debouncedSearchQuery, ignoreCase = true) }
+                // F-G read-side [2026-09-02 audit, resolved via H-wire commit]:
+                // Was: naive substring filter on title/content only. Now:
+                // HybridSearchEngine composes FTS4 keyword scoring with
+                // semantic-vector cosine scoring via Reciprocal Rank Fusion.
+                // Run synchronously here because the in-memory overload is
+                // already bounded to `list` (the post-package-filter list),
+                // so even 10k rows score in tens of ms.
+                HybridSearchEngine.searchAndRankBlocking(list, debouncedSearchQuery)
             }
         }
     }

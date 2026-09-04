@@ -12,7 +12,7 @@ import com.jeffers.notimindlite.data.local.AppDatabase
 import com.jeffers.notimindlite.data.local.NotificationDao
 import com.jeffers.notimindlite.data.local.NotificationEntity
 import com.jeffers.notimindlite.data.local.SyncStatus
-import com.jeffers.notimindlite.data.local.generateBackupKey
+import com.jeffers.notimindlite.util.generateBackupKey
 import com.jeffers.notimindlite.data.sync.FirestoreSyncRepository
 import android.database.sqlite.SQLiteFullException
 import io.mockk.*
