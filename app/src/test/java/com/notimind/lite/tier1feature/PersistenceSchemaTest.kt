@@ -1,4 +1,4 @@
-package com.notimind.lite.tier1_feature
+package com.notimind.lite.tier1feature
 
 import com.jeffers.notimindlite.data.local.NotificationEntity
 import com.notimind.lite.base.BaseRobolectricTest
