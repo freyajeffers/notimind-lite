@@ -5,8 +5,8 @@ import android.net.Uri
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.OpenInNew
 import androidx.compose.material.icons.filled.ContentCopy
-import androidx.compose.material.icons.filled.OpenInNew
 import androidx.compose.material.icons.filled.Place
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.*
@@ -61,7 +61,7 @@ private fun ActionChip(
         ActionableEntityExtractor.EntityType.OTP -> 
             ActionChipConfig(Icons.Default.ContentCopy, "OTP", MaterialTheme.colorScheme.primaryContainer, MaterialTheme.colorScheme.onPrimaryContainer)
         ActionableEntityExtractor.EntityType.URL -> 
-            ActionChipConfig(Icons.Default.OpenInNew, "Link", MaterialTheme.colorScheme.secondaryContainer, MaterialTheme.colorScheme.onSecondaryContainer)
+            ActionChipConfig(Icons.AutoMirrored.Filled.OpenInNew, "Link", MaterialTheme.colorScheme.secondaryContainer, MaterialTheme.colorScheme.onSecondaryContainer)
         ActionableEntityExtractor.EntityType.LOCATION -> 
             ActionChipConfig(Icons.Default.Place, "Place", MaterialTheme.colorScheme.tertiaryContainer, MaterialTheme.colorScheme.onTertiaryContainer)
     }
@@ -123,7 +123,7 @@ private fun ActionChip(
                         } catch (e: Exception) { }
                         expanded = false
                     },
-                    leadingIcon = { Icon(Icons.Default.OpenInNew, contentDescription = null, modifier = Modifier.size(18.dp)) }
+                    leadingIcon = { Icon(Icons.AutoMirrored.Filled.OpenInNew, contentDescription = null, modifier = Modifier.size(18.dp)) }
                 )
             }
 
