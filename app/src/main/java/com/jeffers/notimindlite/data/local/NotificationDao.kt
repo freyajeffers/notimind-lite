@@ -115,12 +115,20 @@ abstract class NotificationDao {
     abstract suspend fun getNotificationsNeedingVectorization(): List<NotificationEntity>
 
     @Query("UPDATE notifications SET embedding = :embedding WHERE id = :id")
-    abstract suspend fun updateEmbedding(id: Long, embedding: FloatArray)
+    abstract suspend fun updateEmbedding(id: Long, embedding: ByteArray)
 
     @Query("SELECT * FROM notifications WHERE isPinned = 1 ORDER BY postTime DESC")
     abstract fun getPinnedNotificationsFlow(): Flow<List<NotificationEntity>>
 
     // SQLite Full-Text Search (FTS4)
+    //
+    // NOTE [F-B, 2026-09-02 audit]: These queries join on `notifications.rowid`, but
+    // `NotificationEntity` declares `@PrimaryKey(autoGenerate = true) val id: Long`,
+    // which makes SQLite treat `id` AS the implicit rowid (INTEGER PRIMARY KEY alias).
+    // The join works today only because of that alias. If the PK is ever renamed or
+    // changed to a non-INTEGER type, these joins will silently return empty result
+    // sets. Prefer `notifications.id = notifications_fts.docid` for clarity; the
+    // `docid` column in a contentless FTS4 table is the source rowid regardless.
     @Query("""
         SELECT notifications.* FROM notifications
         JOIN notifications_fts ON notifications.rowid = notifications_fts.docid
@@ -223,7 +231,7 @@ abstract class NotificationDao {
     abstract suspend fun updateSyncStatusBatch(keys: List<String>, status: SyncStatus, syncedAt: Long = System.currentTimeMillis())
 
     @Transaction
-    open suspend fun updateEmbeddingsBatch(items: List<Pair<Long, FloatArray>>) {
+    open suspend fun updateEmbeddingsBatch(items: List<Pair<Long, ByteArray>>) {
         for ((id, embedding) in items) {
             updateEmbedding(id, embedding)
         }

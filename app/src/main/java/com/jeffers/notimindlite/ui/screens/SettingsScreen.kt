@@ -19,7 +19,7 @@ import com.jeffers.notimindlite.data.local.AppDatabase
 import com.jeffers.notimindlite.data.sync.FirestoreSyncRepository
 import com.jeffers.notimindlite.data.sync.SyncWorker
 import com.jeffers.notimindlite.data.local.PreferenceManager
-import com.jeffers.notimindlite.data.local.generateBackupKey
+import com.jeffers.notimindlite.util.generateBackupKey
 import kotlinx.coroutines.launch
 import javax.crypto.SecretKey
 

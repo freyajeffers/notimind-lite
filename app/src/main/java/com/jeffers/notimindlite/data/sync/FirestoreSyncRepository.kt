@@ -6,7 +6,7 @@ import com.jeffers.notimindlite.data.local.AppDatabase
 import com.jeffers.notimindlite.data.local.NotificationEntity
 import com.jeffers.notimindlite.data.local.SyncStatus
 import com.jeffers.notimindlite.util.SyncEncryptionHelper
-import com.jeffers.notimindlite.data.local.generateBackupKey
+import com.jeffers.notimindlite.util.generateBackupKey
 import kotlinx.coroutines.tasks.await
 import javax.crypto.SecretKey
 
@@ -153,14 +153,33 @@ class FirestoreSyncRepository(
     }
 
     /**
-     * Data retention enforcement: Deletion of Firestore and local records is permanently prohibited.
+     * Data retention enforcement: Deletion of Firestore and local records is permanently
+     * prohibited by product policy. This method is the single client-side gatekeeper for
+     * any caller that wants to remove user data.
+     *
+     * The policy is enforced by:
+     *   1. Rejecting every call here with `Result.failure(UnsupportedOperationException)` —
+     *      this catches all in-app callers that route through the repository.
+     *   2. Firestore Security Rules on the `users/{uid}` and `users/{uid}/...` subcollections
+     *      MUST deny `delete` operations. Client code alone cannot enforce this; the
+     *      rules live in the Firebase project, not in this codebase.
+     *   3. Room schema does not define any `DELETE` triggers. The only `DELETE` statements
+     *      in the codebase are user-initiated "clear log" actions on the `notifications`
+     *      table, which are scoped to a single user's local log and never remove the
+     *      persistence store itself.
+     *
+     * If a future feature legitimately needs to remove data (e.g., GDPR right-to-erasure),
+     * the policy here MUST be reviewed and the Firestore rules MUST be updated. Do not
+     * silently relax this method.
      */
     suspend fun purgeUserData(userId: String): Result<Unit> {
-        return try {
-            Log.w(TAG, "Purge request rejected: Local and Firestore databases are non-deletable.")
-            Result.failure(UnsupportedOperationException("Database and Firestore cloud deletion is permanently disabled."))
-        } catch (e: Exception) {
-            Result.failure(e)
-        }
+        check(userId.isNotBlank()) { "purgeUserData called with blank userId" }
+        Log.w(TAG, "Purge request for uid=$userId rejected: Local and Firestore databases are non-deletable by policy.")
+        return Result.failure(
+            UnsupportedOperationException(
+                "Data retention policy: deletion is permanently disabled. " +
+                    "See Firestore Security Rules and ROOM_DELETE_POLICY.md."
+            )
+        )
     }
 }

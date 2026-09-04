@@ -9,7 +9,7 @@ import androidx.room.TypeConverters
 import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
 
-@Database(entities = [NotificationEntity::class, AppEntity::class, NotificationFtsEntity::class, BackupRecord::class], version = 18, exportSchema = false)
+@Database(entities = [NotificationEntity::class, AppEntity::class, NotificationFtsEntity::class, BackupRecord::class], version = 18, exportSchema = true)
 @TypeConverters(Converters::class)
 abstract class AppDatabase : RoomDatabase() {
     abstract fun notificationDao(): NotificationDao
@@ -145,6 +145,13 @@ abstract class AppDatabase : RoomDatabase() {
         }
 
         val MIGRATION_13_14 = object : Migration(13, 14) {
+            // NOTE [F-A, 2026-09-02 audit]: This migration manually creates the
+            // `notifications_fts` contentless FTS4 table with `content=`notifications`'.
+            // NotificationFtsEntity is also annotated `@Fts4(contentEntity = NotificationEntity::class)`
+            // which causes Room's KSP processor to generate sync triggers. The two sets of
+            // triggers coexist; SQLite allows it because the manual table is `IF NOT EXISTS`
+            // and Room's generated triggers have the standard `room_fts_content_sync_*` names.
+            // Do NOT change this migration's DDL without reviewing the FTS trigger interaction.
             override fun migrate(db: SupportSQLiteDatabase) {
                 db.execSQL("""
                     CREATE VIRTUAL TABLE IF NOT EXISTS `notifications_fts` USING fts4(

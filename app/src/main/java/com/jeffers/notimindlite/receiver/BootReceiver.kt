@@ -69,9 +69,27 @@ class BootReceiver : BroadcastReceiver() {
                         return@launch
                     }
 
-                    // Only query credential-encrypted Room database if user is unlocked
+                    // F-L fix [2026-09-02 audit]: The previous comment said
+                    // "Only query credential-encrypted Room database if user is unlocked."
+                    // That was misleading — `AppDatabase.getDatabase()` already routes to
+                    // the correct DE/CE database via `isUserUnlocked`. The skip here is
+                    // NOT a technical limitation; it is an intentional security policy:
+                    // pre-unlock restoration would surface captured notification content
+                    // on the lockscreen before the user authenticates, defeating the
+                    // device-encrypted privacy boundary.
+                    //
+                    // To change this behavior, also:
+                    //   1. Verify the DE Room database has rows to restore at
+                    //      LOCKED_BOOT_COMPLETED (listener service must be directBootAware).
+                    //   2. Audit NotificationCompat.Builder for FLAG_SECURE if sensitive.
+                    //   3. Update user-facing docs (RESTORE_ON_BOOT pref description).
+                    // Reference: docs/audit/2026-09-02-notimind-lite-integration.md F-L.
                     if (!isUserUnlocked) {
-                        
+                        Log.i(
+                            "BootReceiverLite",
+                            "Pre-unlock boot restoration skipped (security policy, F-L). " +
+                                "Notification listener rebind already requested above."
+                        )
                         return@launch
                     }
 
