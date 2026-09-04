@@ -4,6 +4,7 @@ import com.jeffers.notimindlite.data.local.NotificationEntity
 
 object ReciprocalRankFusion {
     private const val DEFAULT_K = 60.0
+    private const val MIN_RRF_ACCUMULATOR_CAPACITY = 16
 
     private data class RankAccumulator(
         val notification: NotificationEntity,
@@ -24,7 +25,8 @@ object ReciprocalRankFusion {
         ftsWeight: Double = 1.0,
         semanticWeight: Double = 1.0
     ): List<HybridSearchResult> {
-        val expectedSize = (ftsResults.size + semanticResults.size).coerceAtLeast(16)
+        val expectedSize = (ftsResults.size + semanticResults.size)
+            .coerceAtLeast(MIN_RRF_ACCUMULATOR_CAPACITY)
         val accumulatorMap = HashMap<Long, RankAccumulator>(expectedSize)
 
         // 1. Accumulate FTS Rank Contributions
