@@ -9,7 +9,10 @@ import com.jeffers.notimindlite.data.local.NotificationEntity
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import org.junit.After
-import org.junit.Assert.*
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -102,9 +105,18 @@ class NotificationDaoFeaturesTest {
         val recentlyDismissed = dao.getRecentlyDismissedFlow().first()
         val lostList = dao.getLostNotificationsFlow().first()
 
-        assertTrue("Snoozed notification must be present in recently dismissed", recentlyDismissed.any { it.key == "snoozed1" })
-        assertFalse("Snoozed notification must NOT be present in lost", lostList.any { it.key == "snoozed1" })
-        assertTrue("Lost notification must be present in lost list", lostList.any { it.key == "lost1" })
+        assertTrue(
+            "Snoozed notification must be present in recently dismissed",
+            recentlyDismissed.any { it.key == "snoozed1" }
+        )
+        assertFalse(
+            "Snoozed notification must NOT be present in lost",
+            lostList.any { it.key == "snoozed1" }
+        )
+        assertTrue(
+            "Lost notification must be present in lost list",
+            lostList.any { it.key == "lost1" }
+        )
     }
 
     @Test
