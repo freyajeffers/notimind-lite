@@ -60,8 +60,13 @@ private fun ActionChip(
     val config = when (entity.type) {
         ActionableEntityExtractor.EntityType.OTP -> 
             ActionChipConfig(Icons.Default.ContentCopy, "OTP", MaterialTheme.colorScheme.primaryContainer, MaterialTheme.colorScheme.onPrimaryContainer)
-        ActionableEntityExtractor.EntityType.URL -> 
-            ActionChipConfig(Icons.AutoMirrored.Filled.OpenInNew, "Link", MaterialTheme.colorScheme.secondaryContainer, MaterialTheme.colorScheme.onSecondaryContainer)
+        ActionableEntityExtractor.EntityType.URL ->
+            ActionChipConfig(
+                icon = Icons.AutoMirrored.Filled.OpenInNew,
+                label = "Link",
+                containerColor = MaterialTheme.colorScheme.secondaryContainer,
+                onColor = MaterialTheme.colorScheme.onSecondaryContainer
+            )
         ActionableEntityExtractor.EntityType.LOCATION -> 
             ActionChipConfig(Icons.Default.Place, "Place", MaterialTheme.colorScheme.tertiaryContainer, MaterialTheme.colorScheme.onTertiaryContainer)
     }
@@ -123,7 +128,13 @@ private fun ActionChip(
                         } catch (e: Exception) { }
                         expanded = false
                     },
-                    leadingIcon = { Icon(Icons.AutoMirrored.Filled.OpenInNew, contentDescription = null, modifier = Modifier.size(18.dp)) }
+                    leadingIcon = {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.OpenInNew,
+                            contentDescription = null,
+                            modifier = Modifier.size(18.dp)
+                        )
+                    }
                 )
             }
 

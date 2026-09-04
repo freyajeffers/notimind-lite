@@ -336,7 +336,14 @@ fun ActiveNotificationsScreen(dao: NotificationDao, authManager: AuthManager, db
                             Icon(
                                 imageVector = Icons.Default.Search,
                                 contentDescription = stringResource(id = R.string.common_search),
-                                tint = if (isSearchExplicitlyOpened || searchQuery.isNotEmpty() || isSearchFocused) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
+                                tint = if (isSearchExplicitlyOpened ||
+                                    searchQuery.isNotEmpty() ||
+                                    isSearchFocused
+                                ) {
+                                    MaterialTheme.colorScheme.primary
+                                } else {
+                                    MaterialTheme.colorScheme.onSurface
+                                }
                             )
                         }
                     }
@@ -500,7 +507,8 @@ fun ActiveNotificationsScreen(dao: NotificationDao, authManager: AuthManager, db
                         NotificationSection.PINNED -> pinnedNotifs
                         NotificationSection.ACTIVE -> activeNotifs
                         NotificationSection.FILTERED -> filteredNotifs
-                        NotificationSection.DISMISSED -> recentlyDismissed.sortedByDescending { it.dismissTime ?: it.postTime }
+                        NotificationSection.DISMISSED ->
+                            recentlyDismissed.sortedByDescending { it.dismissTime ?: it.postTime }
                         NotificationSection.LOST -> lostNotifs
                     }.distinctBy { "${it.packageName}_${it.title}_${it.content}" }
 
@@ -702,6 +710,14 @@ fun ActiveNotificationsScreen(dao: NotificationDao, authManager: AuthManager, db
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
+@Suppress(
+    "CyclomaticComplexMethod",
+    "LongMethod",
+    "FunctionNaming"
+) // LogNotificationCard renders the full History row (header + chips + action menu + dismiss +
+// actions count + expanded panel) in one Composable; splitting it into sub-Composables would
+// require lifting expanded state out of the row, breaking local `remember` reuse. Composable
+// PascalCase is required by the Compose API and detekt's FunctionNaming rule does not exempt it.
 fun LogNotificationCard(
     item: NotificationEntity,
     dateTimeFormatter: DateTimeFormatter,
@@ -869,6 +885,7 @@ fun LogNotificationCard(
 }
 
 @Composable
+@Suppress("FunctionNaming") // Composable PascalCase required by Compose API; detekt rule does not exempt.
 fun NotificationExpandedAttributes(
     item: NotificationEntity,
     dateTimeFormatter: DateTimeFormatter,
@@ -899,7 +916,10 @@ fun NotificationExpandedAttributes(
             AttributeRow(label = "Priority", value = getPriorityLabel(item.priority))
             AttributeRow(label = "Time Received", value = dateTimeFormatter.format(Instant.ofEpochMilli(item.postTime)))
             if (item.dismissTime != null) {
-                AttributeRow(label = "Time Dismissed", value = dateTimeFormatter.format(Instant.ofEpochMilli(item.dismissTime)))
+                AttributeRow(
+                    label = "Time Dismissed",
+                    value = dateTimeFormatter.format(Instant.ofEpochMilli(item.dismissTime))
+                )
             }
             if (item.dismissReason != null) {
                 AttributeRow(label = "Dismiss Reason", value = stringResource(id = getReasonLabel(item.dismissReason)))
@@ -913,7 +933,11 @@ fun NotificationExpandedAttributes(
                 AttributeRow(label = "Group Key", value = item.groupKey)
             }
             if (item.actionsCount > 0) {
-                AttributeRow(label = "Actions", value = "${item.actionsCount}${if (!item.actionLabels.isNullOrEmpty()) " (${item.actionLabels})" else ""}")
+                val actionLabelsSuffix = if (!item.actionLabels.isNullOrEmpty()) " (${item.actionLabels})" else ""
+                AttributeRow(
+                    label = "Actions",
+                    value = "${item.actionsCount}$actionLabelsSuffix"
+                )
             }
             AttributeRow(label = "Sync Status", value = item.syncStatus.name)
             AttributeRow(label = "Key", value = item.key)
@@ -922,7 +946,10 @@ fun NotificationExpandedAttributes(
 }
 
 @Composable
+@Suppress("FunctionNaming") // Composable PascalCase required by Compose API; detekt rule does not exempt.
 fun AttributeRow(label: String, value: String) {
+    // Column weights: label column gets 35%, value column gets 65% of the row width.
+    val (labelWeight, valueWeight) = labelValueWeights
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.SpaceBetween,
@@ -932,14 +959,25 @@ fun AttributeRow(label: String, value: String) {
             text = label,
             style = MaterialTheme.typography.labelSmall,
             fontWeight = FontWeight.SemiBold,
-            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f),
-            modifier = Modifier.weight(0.35f)
+            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = LABEL_ALPHA),
+            modifier = Modifier.weight(labelWeight)
         )
         Text(
             text = value,
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurface,
-            modifier = Modifier.weight(0.65f)
+            modifier = Modifier.weight(valueWeight)
         )
     }
 }
+
+// Pair of (label column weight, value column weight) used by AttributeRow.
+// Defined at file scope so detekt's MagicNumber rule does not fire inside the Composable.
+// Weights are required by Compose's Modifier.weight(...) signature and cannot be hidden behind a
+// factory without changing the call shape.
+// Note: top-level const vals must be SCREAMING_SNAKE_CASE per detekt's TopLevelPropertyNaming
+// rule (the inverse of VariableNaming for class members).
+private const val LABEL_WEIGHT = 0.35f
+private const val VALUE_WEIGHT = 0.65f
+private const val LABEL_ALPHA = 0.8f
+private val labelValueWeights: Pair<Float, Float> = LABEL_WEIGHT to VALUE_WEIGHT
