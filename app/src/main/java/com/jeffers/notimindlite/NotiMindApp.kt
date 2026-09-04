@@ -21,10 +21,11 @@ class NotiMindApp : Application(), android.content.ComponentCallbacks2 {
         Log.i(TAG, "NotiMind Lite Application Initialized")
     }
 
+    @Suppress("DEPRECATION") // ComponentCallbacks2 trim constants: see AGENTS.md §10
     override fun onTrimMemory(level: Int) {
         super.onTrimMemory(level)
         Log.i(TAG, "onTrimMemory triggered with level: $level")
-        
+
         when (level) {
             android.content.ComponentCallbacks2.TRIM_MEMORY_UI_HIDDEN -> {
                 AppIconCache.clearCache()
