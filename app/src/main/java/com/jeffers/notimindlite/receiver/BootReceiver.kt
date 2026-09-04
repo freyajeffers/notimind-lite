@@ -22,6 +22,10 @@ import kotlinx.coroutines.launch
  * BroadcastReceiver responsible for Direct Boot (LOCKED_BOOT_COMPLETED),
  * standard boot completion (BOOT_COMPLETED), and package update events.
  */
+@Suppress(
+    "CyclomaticComplexMethod"
+) // Three action branches (REPLACED / BOOT / QUICKBOOT) share a restoration pipeline; merging
+// them into helpers would lose the early-return ordering required by goAsync()/pendingResult.
 class BootReceiver : BroadcastReceiver() {
 
     private val receiverScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)

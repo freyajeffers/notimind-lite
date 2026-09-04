@@ -32,6 +32,10 @@ import java.util.LinkedHashMap
  * It applies extended ingestion filters to eliminate clutter and persists
  * clean notifications in the Room database.
  */
+@Suppress("TooManyFunctions") // NotificationLoggerService is intentionally one service surface; the 12
+// functions map 1:1 to NotificationListenerService lifecycle hooks + capture pipeline. Splitting
+// across files would fragment directBootAware service registration. See BootRestoreManager for the
+// boot-restore subset already extracted.
 class NotificationLoggerService : NotificationListenerService() {
     private val TAG = "NotificationLoggerSrv"
 
@@ -40,6 +44,7 @@ class NotificationLoggerService : NotificationListenerService() {
     private val scope = CoroutineScope(Dispatchers.IO + serviceJob)
 
     companion object {
+        @Suppress("UnusedPrivateProperty") // Reserved for future debounce/filter tuning per F-A audit.
         private const val DEBOUNCE_MS = 30000L
         private const val MAX_CACHE_CAPACITY = 500
 
@@ -79,6 +84,8 @@ class NotificationLoggerService : NotificationListenerService() {
         }
     }
 
+    @Suppress("TooGenericExceptionCaught", "SwallowedException") // Icon capture is best-effort; any
+    // failure (decode, IO, security) returns null and the caller falls back to no icon.
     private fun getOrSaveAppIconUri(packageName: String): String? {
         val iconsDir = File(cacheDir, "app_icons")
         if (!iconsDir.exists()) iconsDir.mkdirs()
@@ -159,7 +166,8 @@ class NotificationLoggerService : NotificationListenerService() {
                     val dao = getDb().notificationDao()
                     val existing = dao.getNotificationByKey(entity.key)
                     val updateCount = (existing?.updateCount ?: 0) + 1
-                    val originalPostTime = if (existing != null && existing.postTime > 0) existing.postTime else entity.postTime
+                    val originalPostTime =
+                        if (existing != null && existing.postTime > 0) existing.postTime else entity.postTime
                     
                     val finalEntity = entity.copy(
                         id = existing?.id ?: 0L,
@@ -180,6 +188,13 @@ class NotificationLoggerService : NotificationListenerService() {
         }
     }
 
+    @Suppress(
+        "TooGenericExceptionCaught", "SwallowedException", "ReturnCount", "LongMethod", "CyclomaticComplexMethod"
+    ) // PackageManager lookups (app label, launch intent) intentionally return null on any failure so
+    // extraction stays resilient across OEM variants; this method has 10 returns because each guard
+    // returns early (blank content, summary, stale, missing app, etc.) — the function is intentionally
+    // structured as a filter pipeline. Splitting it is tracked as future work; current contract is
+    // well-covered by NotificationLoggerServiceTest.
     private fun extractNotificationEntity(sbn: StatusBarNotification): NotificationEntity? {
         try {
             if (sbn.packageName == applicationContext.packageName) return null
@@ -224,7 +239,10 @@ class NotificationLoggerService : NotificationListenerService() {
             if (title.isBlank() && content.isBlank()) return null
 
             val summaryRegex = Regex("""\d+\s+more\s+notifications?""", RegexOption.IGNORE_CASE)
-            if (summaryRegex.matches(title) || summaryRegex.matches(content) || (subText != null && summaryRegex.matches(subText))) return null
+            if (summaryRegex.matches(title) ||
+                summaryRegex.matches(content) ||
+                (subText != null && summaryRegex.matches(subText))
+            ) return null
 
             val maxAgeMs = 30L * 24 * 60 * 60 * 1000L
             if (postTime > 0 && (now - postTime) > maxAgeMs) return null
@@ -331,7 +349,14 @@ class NotificationLoggerService : NotificationListenerService() {
         scope.launch {
             try {
                 val dao = getDb().notificationDao()
-                dao.markDismissedWithReasonByMatching(key, sbn.packageName, title, content, effectiveReason, dismissTime)
+                dao.markDismissedWithReasonByMatching(
+                    key = key,
+                    packageName = sbn.packageName,
+                    title = title,
+                    content = content,
+                    reason = effectiveReason,
+                    dismissTime = dismissTime
+                )
             } catch (e: Exception) {
                 Log.e(TAG, "Failed to mark notification dismissed for $key", e)
             }

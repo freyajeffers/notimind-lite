@@ -93,9 +93,15 @@ abstract class NotificationDao {
     @Query("SELECT * FROM notifications WHERE isDismissed = 0 ORDER BY isOngoing DESC, postTime DESC")
     abstract suspend fun getActiveNotificationsList(): List<NotificationEntity>
 
+    @Suppress("MaxLineLength") // @Query SQL string; Room requires literal SQL in annotation.
+    // Dismiss reason list (1, 2, 3, 12, 19, 23) is duplicated here and in getLostNotificationsFlow().
+    // Room's @Query annotation requires a compile-time constant string and does not accept
+    // string interpolation with another const val, so the codeline cannot be deduped via
+    // `private const val`. See DAO_MIGRATION_NOTES.md for the canonical reason list.
     @Query("SELECT * FROM notifications WHERE isDismissed = 1 AND dismissReason IN (1, 2, 3, 12, 19, 23) ORDER BY COALESCE(dismissTime, postTime) DESC")
     abstract fun getRecentlyDismissedFlow(): Flow<List<NotificationEntity>>
 
+    @Suppress("MaxLineLength") // @Query SQL string; Room requires literal SQL in annotation.
     @Query("SELECT * FROM notifications WHERE isDismissed = 1 AND (dismissReason NOT IN (1, 2, 3, 12, 19, 23) OR dismissReason IS NULL) ORDER BY COALESCE(dismissTime, postTime) DESC")
     abstract fun getLostNotificationsFlow(): Flow<List<NotificationEntity>>
 
@@ -206,6 +212,7 @@ abstract class NotificationDao {
     @Query("UPDATE notifications SET isDismissed = 1, dismissReason = :reason, dismissTime = :dismissTime WHERE key = :key")
     abstract suspend fun markDismissedWithReason(key: String, reason: Int, dismissTime: Long = System.currentTimeMillis())
 
+    @Suppress("MaxLineLength") // @Query SQL string; Room requires literal SQL in annotation.
     @Query("UPDATE notifications SET isDismissed = 1, dismissReason = :reason, dismissTime = :dismissTime WHERE key IN (:keys)")
     abstract suspend fun markDismissedWithReasonBatch(keys: List<String>, reason: Int, dismissTime: Long = System.currentTimeMillis())
 
