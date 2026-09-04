@@ -44,6 +44,12 @@ sealed class Screen(val route: String, val title: Int, val icon: @Composable () 
 }
 
 @Composable
+@Suppress(
+    "LongMethod",
+    "FunctionNaming"
+) // MainNavigation composes top bar + bottom bar + nav host in one pass; extracting them
+// into sub-Composables would fragment navigation state ownership. Composable PascalCase is
+// required by the Compose API and detekt's FunctionNaming rule does not exempt it.
 fun MainNavigation(
     modifier: Modifier = Modifier,
     notificationDao: NotificationDao,
