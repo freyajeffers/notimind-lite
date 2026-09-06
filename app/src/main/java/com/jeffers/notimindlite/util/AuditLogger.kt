@@ -114,7 +114,10 @@ object AuditLogger {
      */
     fun verifySignature(data: String, signature: String, deviceId: String): Boolean {
         val expected = signLogEntry(data, deviceId)
-        return expected == signature
+        return java.security.MessageDigest.isEqual(
+            expected.toByteArray(Charsets.UTF_8),
+            signature.toByteArray(Charsets.UTF_8)
+        )
     }
 
     /**
