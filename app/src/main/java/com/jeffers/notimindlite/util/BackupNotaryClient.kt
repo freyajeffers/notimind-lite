@@ -73,8 +73,8 @@ object BackupNotaryClient {
                 throw Exception("Notary server returned ${connection.responseCode}")
             }
         } catch (e: Exception) {
-            Log.w(TAG, "Notary server unavailable, using local deterministic fallback")
-            "SIG_LOCAL_DEV_FALLBACK_" + hash.take(16)
+            Log.e(TAG, "Notary server unavailable. Backup authorization failed.")
+            throw SecurityException("Notary server unavailable. Cannot authorize backup.")
         }
     }
 }
