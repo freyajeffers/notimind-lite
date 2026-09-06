@@ -65,6 +65,11 @@ import com.jeffers.notimindlite.data.local.NotificationEntity
 import com.jeffers.notimindlite.data.local.PreferenceManager
 import com.jeffers.notimindlite.service.NotificationLoggerService
 import com.jeffers.notimindlite.ui.dialogs.AppPackageSelectorDialog
+import com.jeffers.notimindlite.ui.components.ActiveFilterChip
+import com.jeffers.notimindlite.ui.components.ActiveFilterChipsRow
+import com.jeffers.notimindlite.ui.components.ActiveFirstRunEmptyState
+import com.jeffers.notimindlite.ui.components.ActivePermissionEmptyState
+import com.jeffers.notimindlite.ui.components.ActiveSearchEmptyState
 import com.jeffers.notimindlite.ui.components.ActionableChips
 import com.jeffers.notimindlite.ui.components.SpeedDialSettingsFab
 import com.jeffers.notimindlite.ui.components.BackupKeyDialog
@@ -498,6 +503,86 @@ fun ActiveNotificationsScreen(dao: NotificationDao, authManager: AuthManager, db
                                 Text(if (isGranted) "Settings" else "Grant")
                             }
                         }
+                    }
+                }
+
+                // F-N usability [2026-09-06]: surface empty-state Composables when the
+                // entire DB is empty or a query returned no matches. Distinguishes three
+                // scenarios: (1) permission missing → guidance + CTA, (2) permission OK
+                // but no notifications captured yet → first-run guidance, (3) permission
+                // OK + DB has rows but a query/filter returned nothing → search-empty
+                // guidance with a clear-search escape hatch.
+                val hasAnyData = activeNotifs.isNotEmpty() ||
+                    filteredNotifs.isNotEmpty() ||
+                    pinnedNotifs.isNotEmpty() ||
+                    recentlyDismissed.isNotEmpty() ||
+                    lostNotifs.isNotEmpty()
+                val isSearching = debouncedSearchQuery.isNotBlank() ||
+                    !selectedPackages.isNullOrEmpty()
+                if (!hasAnyData) {
+                    item(key = "active_empty_state") {
+                        if (!isGranted) {
+                            ActivePermissionEmptyState(
+                                title = stringResource(id = R.string.active_empty_permission_title),
+                                description = stringResource(id = R.string.active_empty_permission_desc),
+                                step1 = stringResource(id = R.string.active_empty_permission_step1),
+                                step2 = stringResource(id = R.string.active_empty_permission_step2),
+                                step3 = stringResource(id = R.string.active_empty_permission_step3),
+                                grantButtonText = stringResource(id = R.string.active_empty_permission_grant),
+                                onGrantClick = {
+                                    val intent = Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS)
+                                    intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                                    context.startActivity(intent)
+                                }
+                            )
+                        } else if (isSearching) {
+                            ActiveSearchEmptyState(
+                                title = stringResource(id = R.string.active_empty_search_title),
+                                description = stringResource(
+                                    id = R.string.active_empty_search_desc,
+                                    debouncedSearchQuery
+                                ),
+                                clearButtonText = stringResource(id = R.string.active_empty_search_clear),
+                                onClearClick = {
+                                    searchQuery = ""
+                                    selectedPackages = null
+                                }
+                            )
+                        } else {
+                            ActiveFirstRunEmptyState(
+                                title = stringResource(id = R.string.active_empty_first_run_title),
+                                description = stringResource(id = R.string.active_empty_first_run_desc),
+                                hint = stringResource(id = R.string.active_empty_first_run_hint)
+                            )
+                        }
+                    }
+                }
+
+                // F-N usability [2026-09-06]: active-filter chip row, only shown when
+                // at least one filter is set, so users always know *why* their list is
+                // shorter than expected and can clear the filter with one tap.
+                val activeChips = mutableListOf<ActiveFilterChip>()
+                if (debouncedSearchQuery.isNotBlank()) {
+                    activeChips += ActiveFilterChip(text = "\"${debouncedSearchQuery}\"") {
+                        searchQuery = ""
+                    }
+                }
+                selectedPackages?.takeIf { it.isNotEmpty() }?.let { pkgs ->
+                    activeChips += ActiveFilterChip(
+                        text = "${pkgs.size} app${if (pkgs.size == 1) "" else "s"}"
+                    ) { selectedPackages = null }
+                }
+                if (activeChips.isNotEmpty()) {
+                    item(key = "active_filter_chips") {
+                        ActiveFilterChipsRow(
+                            label = stringResource(id = R.string.active_filter_chips_label),
+                            chips = activeChips,
+                            clearAllLabel = stringResource(id = R.string.active_filter_chips_clear_all),
+                            onClearAll = {
+                                searchQuery = ""
+                                selectedPackages = null
+                            }
+                        )
                     }
                 }
 
