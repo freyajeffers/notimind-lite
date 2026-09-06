@@ -1,8 +1,14 @@
 package com.jeffers.notimindlite.ui.screens
 
+import android.content.Context
+import android.content.Intent
+import android.provider.Settings
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CloudSync
+import androidx.compose.material.icons.filled.Notifications
+import androidx.compose.material.icons.filled.NotificationsOff
+import androidx.compose.material.icons.filled.Restore
 import androidx.compose.material.icons.automirrored.filled.Login
 import androidx.compose.material.icons.automirrored.filled.Logout
 import androidx.compose.material.icons.filled.Person
@@ -11,8 +17,11 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.LocalLifecycleOwner
+import com.jeffers.notimindlite.R
 import com.jeffers.notimindlite.data.auth.AuthManager
 import com.jeffers.notimindlite.data.auth.UserSession
 import com.jeffers.notimindlite.data.local.AppDatabase
@@ -24,6 +33,15 @@ import kotlinx.coroutines.launch
 import javax.crypto.SecretKey
 
 @Composable
+@Suppress(
+    "CyclomaticComplexMethod",
+    "LongMethod",
+    "MaxLineLength",
+    "FunctionNaming"
+) // SettingsScreen composes the five sections (Account, Sync, Privacy, Listener, Restore)
+   // and the version footer in one screen Composable; splitting would fragment
+   // PreferenceManager + auth state lifetimes. Composable PascalCase is required by
+   // the Compose API and detekt's FunctionNaming rule does not exempt it.
 fun SettingsScreen(
     authManager: AuthManager,
     db: AppDatabase,
@@ -210,5 +228,151 @@ fun SettingsScreen(
                 }
             }
         }
+
+        // F-N usability [2026-09-06]: Notification Access card — gives users a way to
+        // jump straight to the system permission screen without leaving Settings. This
+        // is the single highest-impact onboarding surface: without listener access the
+        // app captures nothing, so making the path to granting it obvious is critical.
+        val prefMgr = remember { PreferenceManager(context) }
+        val lifecycleOwner = LocalLifecycleOwner.current
+        var listenerGranted by remember {
+            mutableStateOf(checkNotificationPermission(context))
+        }
+        // Refresh when the user returns to this screen (e.g., after toggling the
+        // system permission switch and pressing Back).
+        androidx.compose.runtime.DisposableEffect(lifecycleOwner) {
+            val observer = androidx.lifecycle.LifecycleEventObserver { _, event ->
+                if (event == androidx.lifecycle.Lifecycle.Event.ON_RESUME) {
+                    listenerGranted = checkNotificationPermission(context)
+                }
+            }
+            lifecycleOwner.lifecycle.addObserver(observer)
+            onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
+        }
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            colors = CardDefaults.cardColors(
+                containerColor = if (listenerGranted)
+                    MaterialTheme.colorScheme.surfaceVariant
+                else
+                    MaterialTheme.colorScheme.errorContainer
+            )
+        ) {
+            Column(
+                modifier = Modifier.padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                Text(
+                    text = stringResource(id = R.string.settings_section_listener),
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.SemiBold
+                )
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    Icon(
+                        imageVector = if (listenerGranted) Icons.Default.Notifications else Icons.Default.NotificationsOff,
+                        contentDescription = null,
+                        tint = if (listenerGranted) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error
+                    )
+                    Text(
+                        text = stringResource(
+                            id = if (listenerGranted) R.string.settings_listener_granted_desc
+                            else R.string.settings_listener_missing_desc
+                        ),
+                        style = MaterialTheme.typography.bodyMedium,
+                        modifier = Modifier.weight(1f)
+                    )
+                }
+                Button(
+                    onClick = {
+                        val intent = Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS)
+                        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                        context.startActivity(intent)
+                    },
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = if (listenerGranted) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.error,
+                        contentColor = if (listenerGranted) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onError
+                    )
+                ) {
+                    Text(
+                        stringResource(
+                            id = if (listenerGranted) R.string.settings_listener_open
+                            else R.string.settings_listener_grant
+                        )
+                    )
+                }
+            }
+        }
+
+        // F-N usability [2026-09-06]: Boot & Restore card — exposes the existing
+        // restore-on-boot preference so users can opt in/out without digging through
+        // hidden debug menus. Audit F-L documents why this defaults off; the toggle
+        // is intentionally disabled until the listener permission is granted.
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
+        ) {
+            Column(
+                modifier = Modifier.padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                Text(
+                    text = stringResource(id = R.string.settings_section_restore),
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.SemiBold
+                )
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(Icons.Default.Restore, contentDescription = null)
+                    Spacer(Modifier.width(8.dp))
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = stringResource(id = R.string.settings_restore_on_boot_title),
+                            style = MaterialTheme.typography.bodyLarge
+                        )
+                        Text(
+                            text = stringResource(id = R.string.settings_restore_on_boot_desc),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                    Switch(
+                        checked = prefMgr.isRestoreOnBootEnabled() && listenerGranted,
+                        enabled = listenerGranted,
+                        onCheckedChange = { prefMgr.setRestoreOnBootEnabled(it) }
+                    )
+                }
+            }
+        }
+
+        // F-N usability [2026-09-06]: version footer — gives users a build identifier
+        // they can quote in support tickets. Looked up via PackageManager at composable
+        // scope (not inside try/catch around a composable) so the build info is cached
+        // for recomposition.
+        val versionName = remember {
+            runCatching {
+                context.packageManager.getPackageInfo(context.packageName, 0).versionName ?: "?"
+            }.getOrDefault("?")
+        }
+        val versionCode = remember {
+            runCatching {
+                val info = context.packageManager.getPackageInfo(context.packageName, 0)
+                if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.P) {
+                    info.longVersionCode.toInt()
+                } else {
+                    @Suppress("DEPRECATION") info.versionCode
+                }
+            }.getOrDefault(0)
+        }
+        Spacer(modifier = Modifier.height(8.dp))
+        Text(
+            text = stringResource(id = R.string.settings_version_footer, versionName, versionCode),
+            style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = 8.dp),
+        )
     }
 }
