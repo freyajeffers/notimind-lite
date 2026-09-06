@@ -167,9 +167,9 @@ fun SettingsScreen(
                                 scope.launch {
                                     isSyncing = true
                                     val repo = FirestoreSyncRepository(db)
-                                    
-                                    val secretKey: SecretKey = generateBackupKey()
-                                    
+
+                                    val secretKey: SecretKey = generateBackupKey(context)
+
                                     val res = repo.sync(uid, secretKey)
                                     isSyncing = false
                                     syncMessage = if (res.isSuccess) {

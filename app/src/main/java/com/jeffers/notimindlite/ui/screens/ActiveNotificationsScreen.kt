@@ -369,7 +369,7 @@ fun ActiveNotificationsScreen(dao: NotificationDao, authManager: AuthManager, db
                     }
                     scope.launch {
                         try {
-                            val secretKey = generateBackupKey()
+                            val secretKey = generateBackupKey(context)
                             val keyBase64 = com.jeffers.notimindlite.data.local.BackupKeyCodec.encode(secretKey)
                             
                             showBackupKeyDialog = true
