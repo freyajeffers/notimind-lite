@@ -104,6 +104,51 @@
     <!-- Actionable Chips -->
     <string name="actionable_chips_copy_label">Copy %s</string>
 
+    <!-- Empty states (Active screen) -->
+    <string name="active_empty_permission_title">Notification access required</string>
+    <string name="active_empty_permission_desc">NotiMind needs to read your status-bar notifications so it can store, search, and recover them. Nothing is sent off-device without your action.</string>
+    <string name="active_empty_permission_step1">Tap **Grant** below</string>
+    <string name="active_empty_permission_step2">Find **NotiMind Lite** in the list</string>
+    <string name="active_empty_permission_step3">Toggle the switch on, then return to this app</string>
+    <string name="active_empty_permission_grant">Grant</string>
+    <string name="active_empty_first_run_title">No notifications yet</string>
+    <string name="active_empty_first_run_desc">Once you grant notification access, anything that appears in your status bar will be captured here automatically — even if you swipe it away.</string>
+    <string name="active_empty_first_run_hint">Pull down to refresh, or wait for the next notification.</string>
+    <string name="active_empty_search_title">No matches</string>
+    <string name="active_empty_search_desc">Nothing in your log matches \"%1$s\". Try a shorter keyword, a different app filter, or check spelling.</string>
+    <string name="active_empty_search_clear">Clear search</string>
+    <string name="active_filter_chips_label">Filtered by:</string>
+    <string name="active_filter_chips_clear_all">Clear</string>
+
+    <!-- Settings -->
+    <string name="settings_title">Settings &amp; Cloud Backup</string>
+    <string name="settings_section_account">Account</string>
+    <string name="settings_profile_cd">Profile</string>
+    <string name="settings_default_display_name">Google User</string>
+    <string name="settings_sign_in_prompt">Sign in with Google to enable cloud backup &amp; multi-device sync.</string>
+    <string name="settings_sign_in_idle">Sign in with Google</string>
+    <string name="settings_sign_in_loading">Signing In…</string>
+    <string name="settings_sign_out">Sign Out</string>
+    <string name="settings_section_sync">Cloud Sync &amp; Backup</string>
+    <string name="settings_sync_idle">Automatic sync is active. You can also trigger an instant sync manually.</string>
+    <string name="settings_sync_offline">Cloud sync is paused until you sign in.</string>
+    <string name="settings_sync_now_idle">Sync Now</string>
+    <string name="settings_sync_now_loading">Syncing…</string>
+    <string name="settings_sync_success">Synced %1$d items successfully</string>
+    <string name="settings_sync_failure">Sync failed: %1$s</string>
+    <string name="settings_section_listener">Notification Access</string>
+    <string name="settings_listener_granted_desc">NotiMind is currently listening for status-bar notifications.</string>
+    <string name="settings_listener_missing_desc">NotiMind cannot capture notifications until you grant access.</string>
+    <string name="settings_listener_open">Open Settings</string>
+    <string name="settings_listener_grant">Grant Access</string>
+    <string name="settings_section_restore">Boot &amp; Restore</string>
+    <string name="settings_restore_on_boot_title">Restore on boot</string>
+    <string name="settings_restore_on_boot_desc">Re-surface recently active notifications after a device reboot. Requires notification access.</string>
+    <string name="settings_section_privacy">Privacy &amp; Telemetry</string>
+    <string name="settings_strict_privacy_title">Strict Privacy Mode</string>
+    <string name="settings_strict_privacy_desc">Disable all crash reporting and anonymous usage telemetry.</string>
+    <string name="settings_version_footer">NotiMind Lite · v%1$s (%2$d)</string>
+
     <!-- Backup Key -->
     <string name="backup_key_generated_title">Encryption Key Generated</string>
     <string name="backup_key_share">Share Key</string>
