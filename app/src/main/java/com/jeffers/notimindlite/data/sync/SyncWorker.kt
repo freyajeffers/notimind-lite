@@ -23,8 +23,8 @@ class SyncWorker(
         val db = AppDatabase.getDatabase(applicationContext)
         val repository = FirestoreSyncRepository(db)
         
-        // Use a stable device-bound key for background sync
-        val secretKey = generateBackupKey()
+        // Use a stable device-bound key for background sync (Android KeyStore-backed).
+        val secretKey = generateBackupKey(applicationContext)
 
         val result = repository.sync(user.uid, secretKey)
         return if (result.isSuccess) {
