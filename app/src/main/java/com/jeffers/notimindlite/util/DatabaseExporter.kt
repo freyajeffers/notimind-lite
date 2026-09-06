@@ -23,8 +23,15 @@ object DatabaseExporter {
 
     /**
      * Orchestrates a full encrypted backup of the local database.
+     * When [passphrase] is supplied, the backup is wrapped so it can be restored on
+     * other devices or after app reinstall.
      */
-    suspend fun performEncryptedBackup(context: Context, secretKey: SecretKey): Result<File> {
+    @Suppress("ReturnCount")
+    suspend fun performEncryptedBackup(
+        context: Context,
+        secretKey: SecretKey,
+        passphrase: CharArray? = null,
+    ): Result<File> {
         return try {
             if (!NetworkUtils.isInternetAvailable(context)) {
                 return Result.failure(IllegalStateException("Active internet connection is required to create a backup"))
@@ -34,18 +41,49 @@ object DatabaseExporter {
             if (!dbFile.exists()) return Result.failure(Exception("Database file not found"))
 
             val backupFile = File(context.cacheDir, "notimind_backup_${System.currentTimeMillis()}.enc")
-            
+
             val success = EncryptedBackupManager.createAuthorizedBackup(
                 context = context,
                 sourceDbFile = dbFile,
                 destinationFile = backupFile,
-                secretKey = secretKey
+                secretKey = secretKey,
+                passphrase = passphrase,
             )
 
             if (success) Result.success(backupFile)
             else Result.failure(Exception("Backup encryption or notary authorization failed"))
         } catch (e: Exception) {
             Log.e(TAG, "Backup process failed", e)
+            Result.failure(e)
+        }
+    }
+
+    /**
+     * Restores an encrypted backup file into the local database.
+     * When [passphrase] is provided, attempts cross-device / post-uninstall unwrap.
+     */
+    suspend fun performRestore(
+        context: Context,
+        backupFile: File,
+        secretKey: SecretKey = generateBackupKey(context),
+        passphrase: CharArray? = null,
+    ): Result<Unit> {
+        return try {
+            if (!backupFile.exists()) {
+                return Result.failure(IllegalArgumentException("Backup file does not exist"))
+            }
+            val destDbFile = context.getDatabasePath("notifications.db")
+            val success = EncryptedBackupManager.restoreAuthorizedBackup(
+                context = context,
+                sourceBackupFile = backupFile,
+                destinationDbFile = destDbFile,
+                secretKey = secretKey,
+                passphrase = passphrase,
+            )
+            if (success) Result.success(Unit)
+            else Result.failure(IllegalStateException("Backup restoration or authorization failed"))
+        } catch (e: Exception) {
+            Log.e(TAG, "Restore process failed", e)
             Result.failure(e)
         }
     }
