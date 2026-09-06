@@ -16,5 +16,9 @@ data class BackupRecord(
     val timestamp: Long = System.currentTimeMillis(),
     val fileName: String? = null,
     val logMessage: String? = null,
+    @Deprecated(
+        message = "Plaintext keys must not be persisted in Room DB. Retained strictly for schema compatibility.",
+        level = DeprecationLevel.WARNING
+    )
     val encryptionKeyBase64: String? = null
 )
