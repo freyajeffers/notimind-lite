@@ -215,6 +215,8 @@ object DatabaseExporter {
             if (!cacheDir.exists()) cacheDir.mkdirs()
 
             val file = File(cacheDir, fileName)
+            file.setReadable(true, true)
+            file.setWritable(true, true)
             if (isJson) {
                 exportToJsonFile(file, notifications)
             } else {
