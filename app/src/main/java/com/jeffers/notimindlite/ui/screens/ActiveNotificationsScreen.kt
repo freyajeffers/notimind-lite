@@ -758,7 +758,7 @@ fun ActiveNotificationsScreen(dao: NotificationDao, authManager: AuthManager, db
                 showBackupKeyDialog = false
                 currentPendingSecretKey = null
             },
-            onConfirm = {
+            onConfirm = { passphrase ->
                 showBackupKeyDialog = false
                 val secretKey = currentPendingSecretKey
                 currentPendingSecretKey = null
@@ -772,7 +772,7 @@ fun ActiveNotificationsScreen(dao: NotificationDao, authManager: AuthManager, db
                         return@BackupKeyDialog
                     }
                     scope.launch {
-                        val result = DatabaseExporter.performEncryptedBackup(context, secretKey)
+                        val result = DatabaseExporter.performEncryptedBackup(context, secretKey, passphrase)
                         if (result.isSuccess) {
                             android.widget.Toast.makeText(
                                 context,
