@@ -4,6 +4,7 @@ import android.content.Context
 import android.util.Log
 import com.jeffers.notimindlite.data.local.AppDatabase
 import com.jeffers.notimindlite.data.local.BackupRecord
+import com.jeffers.notimindlite.data.local.BackupKeyCodec
 import com.jeffers.notimindlite.util.AppLogger
 import com.jeffers.notimindlite.util.NetworkUtils
 import java.io.File
@@ -70,7 +71,7 @@ object EncryptedBackupManager {
             }
             success
         } catch (e: Exception) {
-            Log.e(TAG, "Authorized backup failed: ${e.message}", e)
+            Log.e(TAG, "Authorized backup failed: Security operation error", e)
             false
         }
     }
@@ -206,8 +207,23 @@ object EncryptedBackupManager {
     }
 }
 
-fun generateBackupKey(): SecretKey {
-    val keyGen = KeyGenerator.getInstance("AES")
-    keyGen.init(256)
-    return keyGen.generateKey()
-}
+/**
+ * Production key source. Returns the device-bound AES key from the Android KeyStore.
+ *
+ * The [context] parameter is intentionally unused today but is part of the public API:
+ * a future enhancement may route through [androidx.security.crypto.EncryptedSharedPreferences]
+ * or a Context-bound key-wrapping helper, at which point production callers do not need
+ * to migrate. Tests must use the no-arg overload below, which uses plain JCE.
+ */
+@Suppress("UnusedParameter")
+fun generateBackupKey(context: Context): SecretKey =
+    BackupKeyCodec.getOrCreateKey()
+
+/**
+ * Test-only convenience: returns a freshly generated AES-256 SecretKey via JCE.
+ * Avoids the Android KeyStore (not available in unit tests on the host JVM).
+ * Production code MUST use the [Context]-receiving overload above so keys are
+ * hardware-bound and never stored on disk.
+ */
+fun generateBackupKey(): SecretKey =
+    KeyGenerator.getInstance("AES").apply { init(256) }.generateKey()
