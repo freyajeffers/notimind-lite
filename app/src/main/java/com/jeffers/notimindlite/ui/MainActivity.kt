@@ -29,7 +29,7 @@ import com.jeffers.notimindlite.R
 import com.jeffers.notimindlite.data.local.AppDatabase
 import com.jeffers.notimindlite.service.NotificationLoggerService
 import com.jeffers.notimindlite.ui.screens.checkNotificationPermission
-import com.jeffers.notimindlite.util.DynamicClusterManager
+import com.jeffers.notimindlite.domain.clustering.DynamicClusterManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -61,6 +61,11 @@ class MainActivity : ComponentActivity() {
                 android.util.Log.e("MainActivity", "Failed merging staging DB", e)
             }
             DynamicClusterManager.initialize(applicationContext)
+            // H2: purge stale cache backups >1h so the cacheDir doesn't fill up
+            // between launches. Cleanup runs at startup because the encryption
+            // path only invokes it post-export; users who skip export entirely
+            // would otherwise accumulate files forever.
+            com.jeffers.notimindlite.util.DatabaseExporter.cleanupExportFiles(applicationContext)
         }
 
         setContent {

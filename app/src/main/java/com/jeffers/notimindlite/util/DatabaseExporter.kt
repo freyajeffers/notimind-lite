@@ -6,7 +6,7 @@ import android.net.Uri
 import android.util.Log
 import androidx.core.content.FileProvider
 import com.jeffers.notimindlite.data.local.AppDatabase
-import com.jeffers.notimindlite.util.EncryptedBackupManager
+import com.jeffers.notimindlite.domain.backup.EncryptedBackupManager
 import com.jeffers.notimindlite.data.local.NotificationEntity
 import org.json.JSONArray
 import org.json.JSONObject
@@ -61,11 +61,23 @@ object DatabaseExporter {
     /**
      * Restores an encrypted backup file into the local database.
      * When [passphrase] is provided, attempts cross-device / post-uninstall unwrap.
+     *
+     * [secretKey] is REQUIRED (no default) because the previous default
+     * (`generateBackupKey(context)`) silently overrode any caller-provided key with a
+     * device-local AndroidKeyStore key. For a passphrase-wrapped backup from another
+     * device, the KeyStore key can NEVER decrypt the payload — `resolveDekForRestore`
+     * uses `passphrase` to unwrap the DEK only when the file header is passphrase-wrapped;
+     * if the caller failed to pass an explicit key alongside the passphrase, restore
+     * failed with a confusing GCM error instead of a clear "missing key" diagnostic.
+     * Callers that restore on the originating device must pass `generateBackupKey(context)`
+     * explicitly; callers restoring cross-device must pass any throwaway key alongside
+     * the passphrase (the key value is irrelevant once the passphrase unwraps the DEK).
      */
+    @Suppress("LongParameterList")
     suspend fun performRestore(
         context: Context,
         backupFile: File,
-        secretKey: SecretKey = generateBackupKey(context),
+        secretKey: SecretKey,
         passphrase: CharArray? = null,
     ): Result<Unit> {
         return try {
