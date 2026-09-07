@@ -4,6 +4,9 @@ import android.content.Context
 import android.util.Log
 import com.jeffers.notimindlite.data.local.NotificationEntity
 import com.jeffers.notimindlite.data.local.AppDatabase
+import com.jeffers.notimindlite.util.ReciprocalRankFusion
+import com.jeffers.notimindlite.util.SemanticSearchResult
+import com.jeffers.notimindlite.util.VectorEmbeddingHelper
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
