@@ -46,7 +46,6 @@ object EncryptedBackupManager {
         sourceDbFile: File,
         destinationFile: File,
         secretKey: SecretKey,
-        encryptionKeyBase64: String? = null,
         passphrase: CharArray? = null,
     ): Boolean {
         if (!sourceDbFile.exists()) return false
@@ -63,8 +62,8 @@ object EncryptedBackupManager {
                 fileHash = fileHash,
                 signature = signature,
                 fileName = destinationFile.name,
-                logMessage = if (passphrase != null) "Passphrase-wrapped export" else "KeyStore-bound export",
-                encryptionKeyBase64 = encryptionKeyBase64
+                logMessage = if (passphrase != null) "Passphrase-wrapped export" else "KeyStore-bound export"
+                // M4: removed `encryptionKeyBase64 = encryptionKeyBase64` — see domain/backup/EncryptedBackupManager
             )
 
             AppDatabase.getDatabase(context).backupDao().insertRecord(record)
