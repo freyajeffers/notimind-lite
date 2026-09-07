@@ -29,6 +29,7 @@
     <string name="log_history_sort_title">Sort Logs</string>
     <string name="log_history_sort_dismissed">Sort by Time Dismissed %s</string>
     <string name="log_history_sort_received">Sort by Time Received %s</string>
+    <string name="log_history_sort_all">Show All Logs %s</string>
     <string name="log_history_empty_initial">No dismissed notifications logged yet</string>
     <string name="log_history_empty_search">No matching dismissed logs found</string>
     <string name="log_history_unpin_tooltip">Unpin notification</string>
