@@ -367,38 +367,6 @@ fun LogHistoryScreen(dao: NotificationDao, authManager: AuthManager, db: AppData
                         selectedPackages = null
                     }
                 )
-                        if (searchQuery.isBlank() && selectedReasonFilter == null && selectedPackages == null) {
-                            Spacer(modifier = Modifier.height(24.dp))
-                            Text(
-                                text = "Try searching for things you usually lose:",
-                                style = MaterialTheme.typography.labelMedium,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
-                            )
-                            Spacer(modifier = Modifier.height(12.dp))
-                            Column(verticalArrangement = Arrangement.spacedBy(8.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-                                listOf("OTP", "Address", "Confirmation", "Flight").forEach { example ->
-                                    Text(
-                                        text = example,
-                                        modifier = Modifier
-                                            .clickable { searchQuery = example }
-                                            .padding(horizontal = 12.dp, vertical = 6.dp)
-                                            .background(MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(16.dp)),
-                                        style = MaterialTheme.typography.bodySmall,
-                                        color = MaterialTheme.colorScheme.primary
-                                    )
-                                }
-                            }
-                            Spacer(modifier = Modifier.height(24.dp))
-                            Text(
-                                text = "💡 Tip: NotiMind acts as 'Notification Insurance' — it automatically backs up notifications as you dismiss them, so you never lose critical info.",
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
-                                modifier = Modifier.padding(horizontal = 32.dp),
-                                textAlign = androidx.compose.ui.text.style.TextAlign.Center
-                            )
-                        }
-                    }
-                }
             } else {
                 LazyColumn(
                     state = listState,
@@ -423,19 +391,18 @@ fun LogHistoryScreen(dao: NotificationDao, authManager: AuthManager, db: AppData
                     }
                 }
             }
-        }
-    }
-
-    if (showPackagePicker) {
-        AppPackageSelectorDialog(
-            selectedPackages = selectedPackages ?: emptyList(),
-            availableApps = availableApps,
-            onDismiss = { showPackagePicker = false },
-            onPackagesSelected = { pkgs ->
-                selectedPackages = pkgs
-                showPackagePicker = false
+            if (showPackagePicker) {
+                AppPackageSelectorDialog(
+                    selectedPackages = selectedPackages ?: emptyList(),
+                    availableApps = availableApps,
+                    onDismiss = { showPackagePicker = false },
+                    onPackagesSelected = { pkgs ->
+                        selectedPackages = pkgs
+                        showPackagePicker = false
+                    }
+                )
             }
-        )
+        }
     }
 }
 
