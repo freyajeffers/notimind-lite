@@ -1,7 +1,7 @@
 package com.jeffers.notimindlite
 
 import com.jeffers.notimindlite.data.maps.GeminiMapsDetector
-import com.jeffers.notimindlite.util.ActionableEntityExtractor
+import com.jeffers.notimindlite.domain.entity.ActionableEntityExtractor
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
