@@ -1,6 +1,7 @@
 package com.jeffers.notimindlite.repository
 
 import android.content.Context
+import android.database.SQLException
 import com.jeffers.notimindlite.data.local.AppDatabase
 import com.jeffers.notimindlite.data.local.NotificationEntity
 import com.jeffers.notimindlite.domain.entity.Resource
@@ -13,7 +14,7 @@ class NotificationRepository(private val context: Context) {
     suspend fun searchFts(query: String): Resource<List<NotificationEntity>> = withContext(Dispatchers.IO) {
         try {
             Resource.Success(dao.searchNotificationsFtsSync(query))
-        } catch (e: Exception) {
+        } catch (e: SQLException) {
             Resource.Error("Failed to search notifications", e)
         }
     }
@@ -21,7 +22,7 @@ class NotificationRepository(private val context: Context) {
     suspend fun getRecent(limit: Int): Resource<List<NotificationEntity>> = withContext(Dispatchers.IO) {
         try {
             Resource.Success(dao.getRecentNotificationsList(limit))
-        } catch (e: Exception) {
+        } catch (e: SQLException) {
             Resource.Error("Failed to fetch recent notifications", e)
         }
     }
@@ -29,7 +30,7 @@ class NotificationRepository(private val context: Context) {
     suspend fun getById(id: Long): Resource<NotificationEntity?> = withContext(Dispatchers.IO) {
         try {
             Resource.Success(dao.getNotificationById(id))
-        } catch (e: Exception) {
+        } catch (e: SQLException) {
             Resource.Error("Failed to fetch notification by ID", e)
         }
     }
@@ -37,7 +38,7 @@ class NotificationRepository(private val context: Context) {
     suspend fun getAllNotifications(): Resource<List<NotificationEntity>> = withContext(Dispatchers.IO) {
         try {
             Resource.Success(dao.getAllNotificationsSync())
-        } catch (e: Exception) {
+        } catch (e: SQLException) {
             Resource.Error("Failed to fetch all notifications", e)
         }
     }
