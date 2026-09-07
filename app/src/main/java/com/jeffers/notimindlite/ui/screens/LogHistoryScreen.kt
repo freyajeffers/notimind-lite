@@ -41,7 +41,7 @@ import com.jeffers.notimindlite.data.local.NotificationDao
 import com.jeffers.notimindlite.data.local.NotificationEntity
 import com.jeffers.notimindlite.ui.dialogs.AppPackageSelectorDialog
 import com.jeffers.notimindlite.ui.components.NotificationDetailPanel
-import com.jeffers.notimindlite.util.HybridSearchEngine
+import com.jeffers.notimindlite.domain.search.HybridSearchEngine
 import com.jeffers.notimindlite.util.NotificationLauncher
 import com.jeffers.notimindlite.data.auth.AuthManager
 import com.jeffers.notimindlite.data.local.AppDatabase
@@ -354,26 +354,19 @@ fun LogHistoryScreen(dao: NotificationDao, authManager: AuthManager, db: AppData
             }
 
             if (filteredNotifs.isEmpty()) {
-                Box(
-                    modifier = Modifier.fillMaxSize(),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Icon(
-                            imageVector = Icons.Default.History,
-                            contentDescription = null,
-                            modifier = Modifier.size(64.dp),
-                            tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
-                        )
-                        Spacer(modifier = Modifier.height(16.dp))
-                        Text(
-                            text = if (searchQuery.isBlank() && selectedReasonFilter == null && selectedPackages == null)
-                                stringResource(R.string.log_history_empty_initial)
-                            else
-                                stringResource(R.string.log_history_empty_search),
-                            style = MaterialTheme.typography.bodyLarge,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
+                com.jeffers.notimindlite.ui.components.ActiveSearchEmptyState(
+                    title = if (searchQuery.isBlank() && selectedReasonFilter == null && selectedPackages == null)
+                        stringResource(R.string.log_history_empty_initial)
+                    else
+                        stringResource(R.string.log_history_empty_search),
+                    description = "No notifications match your current filters.",
+                    clearButtonText = "Clear All Filters",
+                    onClearClick = {
+                        searchQuery = ""
+                        selectedReasonFilter = null
+                        selectedPackages = null
+                    }
+                )
                         if (searchQuery.isBlank() && selectedReasonFilter == null && selectedPackages == null) {
                             Spacer(modifier = Modifier.height(24.dp))
                             Text(
