@@ -117,6 +117,12 @@ abstract class NotificationDao {
     @Query("SELECT * FROM notifications WHERE key = :key LIMIT 1")
     abstract suspend fun getNotificationByKey(key: String): NotificationEntity?
 
+    @Query("SELECT * FROM notifications WHERE id = :id LIMIT 1")
+    abstract suspend fun getNotificationById(id: Long): NotificationEntity?
+
+    @Query("SELECT * FROM notifications ORDER BY postTime DESC")
+    abstract suspend fun getAllNotificationsSync(): List<NotificationEntity>
+
     @Query("SELECT * FROM notifications WHERE embedding IS NULL")
     abstract suspend fun getNotificationsNeedingVectorization(): List<NotificationEntity>
 
