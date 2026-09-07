@@ -87,7 +87,7 @@ fun SettingsScreen(
                         Icon(Icons.Default.Person, contentDescription = "Profile")
                         Column {
                             Text(
-                                text = session.displayName ?: "Google User",
+                                text = session.displayName ?: stringResource(id = R.string.settings_default_display_name),
                                 style = MaterialTheme.typography.bodyLarge,
                                 fontWeight = FontWeight.Medium
                             )
@@ -342,6 +342,18 @@ fun SettingsScreen(
                         enabled = listenerGranted,
                         onCheckedChange = { prefMgr.setRestoreOnBootEnabled(it) }
                     )
+                }
+                
+                OutlinedButton(
+                    onClick = { /* TODO(CI-H1): restore requires a backup file picker +
+                                   Dialog→performRestore glue that does not exist yet.
+                                   Tracked separately from the CI warnings sweep. */ },
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.primary)
+                ) {
+                    Icon(Icons.Default.Restore, contentDescription = null)
+                    Spacer(Modifier.width(8.dp))
+                    Text("Restore Backup Manually")
                 }
             }
         }
