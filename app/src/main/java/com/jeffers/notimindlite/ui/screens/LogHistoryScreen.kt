@@ -82,7 +82,6 @@ fun LogHistoryScreen(dao: NotificationDao, authManager: AuthManager, db: AppData
     val allNotifsDismissed by dao.getDismissedNotificationsSortedByDismissed().collectAsState(initial = emptyList())
     val allNotifsReceived by dao.getDismissedNotificationsSortedByReceived().collectAsState(initial = emptyList())
     val allNotifsEver by dao.getAllNotificationsSortedByDismissed().collectAsState(initial = emptyList())
-    val totalCount by dao.getTotalNotificationCountFlow().collectAsState(initial = 0)
 
     val activeList = when (sortMode) {
         SortMode.DISMISSED -> allNotifsDismissed
@@ -134,7 +133,12 @@ fun LogHistoryScreen(dao: NotificationDao, authManager: AuthManager, db: AppData
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(stringResource(id = R.string.log_history_title, filteredNotifs.size, totalCount), fontWeight = FontWeight.Bold) },
+                title = {
+                    Text(
+                        text = stringResource(id = R.string.log_history_title, filteredNotifs.size),
+                        fontWeight = FontWeight.Bold
+                    )
+                },
                 actions = {
                     Box {
                         val hasActiveFilters = !selectedPackages.isNullOrEmpty() || selectedReasonFilter != null
