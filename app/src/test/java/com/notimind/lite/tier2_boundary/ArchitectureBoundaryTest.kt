@@ -35,13 +35,20 @@ class ArchitectureBoundaryTest : BaseRobolectricTest() {
     }
 
     @Test
-    fun tc_R1_T2_002_revokedPermissionExceptionHandling() {
+    fun tc_R1_T2_002_revokedPermissionExceptionHandling() = runBlocking {
         val receiver = BootReceiver()
         val dummyIntent = Intent(Intent.ACTION_BOOT_COMPLETED)
 
         try {
             receiver.onReceive(context, dummyIntent)
-            assertTrue(true)
+            // H3: assert the receiver completed BOOT_COMPLETED without crashing and did not
+            // surface synthetic notifications on a fresh DB (the assertion is meaningful: a
+            // buggy receiver could post a notification as a side-effect; this would fail it).
+            assertEquals(
+                "BootReceiver BOOT_COMPLETED must not post notifications to a fresh DB",
+                0,
+                dao.getNotificationCount()
+            )
         } catch (e: Exception) {
             fail("BootReceiver should handle ungranted permissions without throwing exception: ${e.message}")
         }
@@ -59,12 +66,19 @@ class ArchitectureBoundaryTest : BaseRobolectricTest() {
     }
 
     @Test
-    fun tc_R1_T2_004_intentFilterActionIsolation() {
+    fun tc_R1_T2_004_intentFilterActionIsolation() = runBlocking {
         val receiver = BootReceiver()
         val unhandledIntent = Intent("com.notimind.lite.UNHANDLED_CUSTOM_ACTION")
 
         receiver.onReceive(context, unhandledIntent)
-        assertTrue(true)
+        // H3: assert the receiver silently swallowed the unhandled action without posting
+        // any notifications (this would catch a future regression where an unknown action
+        // accidentally reaches a notification-posting branch).
+        assertEquals(
+            "BootReceiver must swallow unknown actions without side effects",
+            0,
+            dao.getNotificationCount()
+        )
     }
 
     @Test
