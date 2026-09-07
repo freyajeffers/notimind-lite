@@ -1,6 +1,6 @@
 package com.jeffers.notimindlite.data.maps
 
-import com.jeffers.notimindlite.util.ActionableEntityExtractor
+import com.jeffers.notimindlite.domain.entity.ActionableEntityExtractor
 
 /**
  * GeminiMapsDetector identifies location-based entities within notification content.
