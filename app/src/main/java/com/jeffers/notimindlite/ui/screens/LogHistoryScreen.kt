@@ -69,7 +69,7 @@ fun LogHistoryScreen(dao: NotificationDao, authManager: AuthManager, db: AppData
     // F-K fix: persist user-meaningful state across process death / rotation.
     // Transient UI state (showSortMenu etc.) stays on `remember` — only durable
     // user input (sort/filter/search) survives.
-    var sortMode by rememberSaveable { mutableStateOf(SortMode.ALL) }
+    var sortMode by rememberSaveable { mutableStateOf(SortMode.DISMISSED) }
     var selectedReasonFilter by rememberSaveable { mutableStateOf<Int?>(null) }
     var selectedPackages by rememberSaveable { mutableStateOf<List<String>?>(null) }
 
@@ -441,6 +441,41 @@ fun LogHistoryScreen(dao: NotificationDao, authManager: AuthManager, db: AppData
     }
 }
 
+@Suppress("FunctionNaming")
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun DismissStatusBadge(item: NotificationEntity) {
+    if (item.isDismissed && item.dismissReason != null) {
+        Spacer(modifier = Modifier.width(6.dp))
+        Surface(
+            color = MaterialTheme.colorScheme.secondary.copy(alpha = 0.2f),
+            shape = MaterialTheme.shapes.extraSmall
+        ) {
+            Text(
+                text = stringResource(id = getReasonLabel(item.dismissReason)),
+                fontSize = 10.sp,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.secondary,
+                modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+            )
+        }
+    } else if (!item.isDismissed) {
+        Spacer(modifier = Modifier.width(6.dp))
+        Surface(
+            color = MaterialTheme.colorScheme.primary.copy(alpha = 0.2f),
+            shape = MaterialTheme.shapes.extraSmall
+        ) {
+            Text(
+                text = "Active",
+                fontSize = 10.sp,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+            )
+        }
+    }
+}
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun LogHistoryCard(
@@ -507,19 +542,7 @@ fun LogHistoryCard(
                         }
                     }
 
-                    Spacer(modifier = Modifier.width(6.dp))
-                    Surface(
-                        color = MaterialTheme.colorScheme.secondary.copy(alpha = 0.2f),
-                        shape = MaterialTheme.shapes.extraSmall
-                    ) {
-                        Text(
-                            text = stringResource(id = getReasonLabel(item.dismissReason)),
-                            fontSize = 10.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.secondary,
-                            modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
-                        )
-                    }
+                    DismissStatusBadge(item)
 
                     Spacer(modifier = Modifier.width(6.dp))
                     TooltipBox(
