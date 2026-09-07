@@ -55,7 +55,8 @@ import java.util.*
 
 enum class SortMode(val label: String) {
     DISMISSED("Time Dismissed"),
-    RECEIVED("Time Received")
+    RECEIVED("Time Received"),
+    ALL("All Notifications")
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -80,9 +81,14 @@ fun LogHistoryScreen(dao: NotificationDao, authManager: AuthManager, db: AppData
 
     val allNotifsDismissed by dao.getDismissedNotificationsSortedByDismissed().collectAsState(initial = emptyList())
     val allNotifsReceived by dao.getDismissedNotificationsSortedByReceived().collectAsState(initial = emptyList())
+    val allNotifsEver by dao.getAllNotificationsSortedByDismissed().collectAsState(initial = emptyList())
     val totalCount by dao.getTotalNotificationCountFlow().collectAsState(initial = 0)
 
-    val activeList = if (sortMode == SortMode.DISMISSED) allNotifsDismissed else allNotifsReceived
+    val activeList = when (sortMode) {
+        SortMode.DISMISSED -> allNotifsDismissed
+        SortMode.RECEIVED -> allNotifsReceived
+        SortMode.ALL -> allNotifsEver
+    }
     // F-K fix: persist search text across process death.
     var searchQuery by rememberSaveable { mutableStateOf("") }
     // debouncedSearchQuery is a derived value, not user input; do not save.
@@ -198,16 +204,44 @@ fun LogHistoryScreen(dao: NotificationDao, authManager: AuthManager, db: AppData
                             onDismissRequest = { showSortMenu = false }
                         ) {
                             DropdownMenuItem(
-                                text = { Text("Sort by Time Dismissed ${if (sortMode == SortMode.DISMISSED) "✓" else ""}") },
+                                text = {
+                                    Text(
+                                        stringResource(
+                                            R.string.log_history_sort_dismissed,
+                                            if (sortMode == SortMode.DISMISSED) "✓" else ""
+                                        )
+                                    )
+                                },
                                 onClick = {
                                     sortMode = SortMode.DISMISSED
                                     showSortMenu = false
                                 }
                             )
                             DropdownMenuItem(
-                                text = { Text("Sort by Time Received ${if (sortMode == SortMode.RECEIVED) "✓" else ""}") },
+                                text = {
+                                    Text(
+                                        stringResource(
+                                            R.string.log_history_sort_received,
+                                            if (sortMode == SortMode.RECEIVED) "✓" else ""
+                                        )
+                                    )
+                                },
                                 onClick = {
                                     sortMode = SortMode.RECEIVED
+                                    showSortMenu = false
+                                }
+                            )
+                            DropdownMenuItem(
+                                text = {
+                                    Text(
+                                        stringResource(
+                                            R.string.log_history_sort_all,
+                                            if (sortMode == SortMode.ALL) "✓" else ""
+                                        )
+                                    )
+                                },
+                                onClick = {
+                                    sortMode = SortMode.ALL
                                     showSortMenu = false
                                 }
                             )
