@@ -76,7 +76,7 @@ import com.jeffers.notimindlite.ui.components.BackupKeyDialog
 import com.jeffers.notimindlite.util.generateBackupKey
 import com.jeffers.notimindlite.util.DatabaseExporter
 import com.jeffers.notimindlite.util.NetworkUtils
-import com.jeffers.notimindlite.util.HybridSearchEngine
+import com.jeffers.notimindlite.domain.search.HybridSearchEngine
 import com.jeffers.notimindlite.util.NotificationLauncher
 import com.jeffers.notimindlite.data.auth.AuthManager
 import com.jeffers.notimindlite.data.local.AppDatabase
