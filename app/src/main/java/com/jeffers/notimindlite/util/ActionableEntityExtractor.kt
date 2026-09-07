@@ -48,7 +48,8 @@ object ActionableEntityExtractor {
         
         // Detect Locations via GeminiMapsDetector
         val locations = com.jeffers.notimindlite.data.maps.GeminiMapsDetector.detect(text)
-        entities.addAll(locations)
+        // GeminiMapsDetector returns domain.entity.ActionableEntity; convert to util type
+        entities.addAll(locations.map { loc -> ActionableEntity(loc.value, EntityType.LOCATION, loc.range) })
         
         return entities.sortedBy { it.range.first }
     }
