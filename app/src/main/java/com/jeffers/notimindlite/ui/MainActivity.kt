@@ -54,6 +54,12 @@ class MainActivity : ComponentActivity() {
         checkPostNotificationsPermission()
 
         lifecycleScope.launch(Dispatchers.IO) {
+            try {
+                com.jeffers.notimindlite.util.DatabaseMigrator
+                    .executeRawDbMergeAndRebuildFts(applicationContext, database)
+            } catch (e: android.database.SQLException) {
+                android.util.Log.e("MainActivity", "Failed merging staging DB", e)
+            }
             DynamicClusterManager.initialize(applicationContext)
         }
 
