@@ -5,6 +5,10 @@ import android.util.Log
 import com.jeffers.notimindlite.data.local.AppDatabase
 import com.jeffers.notimindlite.data.local.BackupKeyCodec
 import com.jeffers.notimindlite.data.local.BackupRecord
+import com.jeffers.notimindlite.util.AuditLogger
+import com.jeffers.notimindlite.util.BackupFileFormat
+import com.jeffers.notimindlite.util.BackupKeyWrap
+import com.jeffers.notimindlite.util.BackupNotaryClient
 import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
 import java.io.File
@@ -46,7 +50,6 @@ object EncryptedBackupManager {
         sourceDbFile: File,
         destinationFile: File,
         secretKey: SecretKey,
-        encryptionKeyBase64: String? = null,
         passphrase: CharArray? = null,
     ): Boolean {
         if (!sourceDbFile.exists()) return false
@@ -63,8 +66,11 @@ object EncryptedBackupManager {
                 fileHash = fileHash,
                 signature = signature,
                 fileName = destinationFile.name,
-                logMessage = if (passphrase != null) "Passphrase-wrapped export" else "KeyStore-bound export",
-                encryptionKeyBase64 = encryptionKeyBase64
+                logMessage = if (passphrase != null) "Passphrase-wrapped export" else "KeyStore-bound export"
+                // M4: removed `encryptionKeyBase64 = encryptionKeyBase64` — the deprecated
+                // field is retained in BackupRecord strictly for Room schema compatibility
+                // (see AppDatabase migration ALTER TABLE) but no caller may persist plaintext
+                // keys. Tests asserting on this column should be migrated separately.
             )
 
             AppDatabase.getDatabase(context).backupDao().insertRecord(record)
@@ -96,7 +102,7 @@ object EncryptedBackupManager {
                 ?: return false
 
             // Verify authorization:
-            *** - Same device: match local DB or persistent signed audit log.
+            // - Same device: match local DB or persistent signed audit log.
             // - Cross-device / post-uninstall: if passphrase successfully unwrapped the DEK,
             //   possession of the passphrase proves authorization; local log match is not required.
             val localRecord = findLocalAuthorizationRecord(context, fileHash)
