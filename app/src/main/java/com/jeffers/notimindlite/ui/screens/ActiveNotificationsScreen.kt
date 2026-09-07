@@ -73,7 +73,7 @@ import com.jeffers.notimindlite.ui.components.ActiveSearchEmptyState
 import com.jeffers.notimindlite.ui.components.ActionableChips
 import com.jeffers.notimindlite.ui.components.SpeedDialSettingsFab
 import com.jeffers.notimindlite.ui.components.BackupKeyDialog
-import com.jeffers.notimindlite.util.generateBackupKey
+import com.jeffers.notimindlite.domain.backup.generateBackupKey
 import com.jeffers.notimindlite.util.DatabaseExporter
 import com.jeffers.notimindlite.util.NetworkUtils
 import com.jeffers.notimindlite.domain.search.HybridSearchEngine

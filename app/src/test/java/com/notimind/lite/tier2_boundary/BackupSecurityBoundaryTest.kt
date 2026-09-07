@@ -1,6 +1,6 @@
 package com.notimind.lite.tier2_boundary
 
-import com.jeffers.notimindlite.util.EncryptedBackupManager
+import com.jeffers.notimindlite.domain.backup.EncryptedBackupManager
 import com.notimind.lite.base.BaseRobolectricTest
 import io.mockk.every
 import io.mockk.mockkObject
