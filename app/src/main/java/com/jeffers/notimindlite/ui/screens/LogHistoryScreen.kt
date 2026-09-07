@@ -69,7 +69,7 @@ fun LogHistoryScreen(dao: NotificationDao, authManager: AuthManager, db: AppData
     // F-K fix: persist user-meaningful state across process death / rotation.
     // Transient UI state (showSortMenu etc.) stays on `remember` — only durable
     // user input (sort/filter/search) survives.
-    var sortMode by rememberSaveable { mutableStateOf(SortMode.DISMISSED) }
+    var sortMode by rememberSaveable { mutableStateOf(SortMode.ALL) }
     var selectedReasonFilter by rememberSaveable { mutableStateOf<Int?>(null) }
     var selectedPackages by rememberSaveable { mutableStateOf<List<String>?>(null) }
 
@@ -111,7 +111,7 @@ fun LogHistoryScreen(dao: NotificationDao, authManager: AuthManager, db: AppData
         activeList.map { it.packageName to it.appName }.distinctBy { it.first }
     }
 
-    val filteredNotifs by remember {
+    val filteredNotifs by remember(activeList, selectedReasonFilter, selectedPackages, debouncedSearchQuery) {
         derivedStateOf {
             var list = activeList.distinctBy { "${it.packageName}_${it.title}_${it.content}" }
 
@@ -126,13 +126,6 @@ fun LogHistoryScreen(dao: NotificationDao, authManager: AuthManager, db: AppData
             if (debouncedSearchQuery.isBlank()) {
                 list
             } else {
-                // F-G read-side [2026-09-02 audit, resolved via H-wire commit]:
-                // Was: naive substring filter on title/content only. Now:
-                // HybridSearchEngine composes FTS4 keyword scoring with
-                // semantic-vector cosine scoring via Reciprocal Rank Fusion.
-                // Run synchronously here because the in-memory overload is
-                // already bounded to `list` (the post-package-filter list),
-                // so even 10k rows score in tens of ms.
                 HybridSearchEngine.searchAndRankBlocking(list, debouncedSearchQuery)
             }
         }
@@ -370,9 +363,9 @@ fun LogHistoryScreen(dao: NotificationDao, authManager: AuthManager, db: AppData
                         Spacer(modifier = Modifier.height(16.dp))
                         Text(
                             text = if (searchQuery.isBlank() && selectedReasonFilter == null && selectedPackages == null)
-                                "No dismissed notifications logged yet"
+                                stringResource(R.string.log_history_empty_initial)
                             else
-                                "No matching dismissed logs found",
+                                stringResource(R.string.log_history_empty_search),
                             style = MaterialTheme.typography.bodyLarge,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
