@@ -2,7 +2,10 @@ package com.jeffers.notimindlite.ui.screens
 
 import android.content.Context
 import android.content.Intent
+import android.net.Uri
 import android.provider.Settings
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CloudSync
@@ -28,8 +31,14 @@ import com.jeffers.notimindlite.data.local.AppDatabase
 import com.jeffers.notimindlite.data.sync.FirestoreSyncRepository
 import com.jeffers.notimindlite.data.sync.SyncWorker
 import com.jeffers.notimindlite.data.local.PreferenceManager
-import com.jeffers.notimindlite.util.generateBackupKey
+import com.jeffers.notimindlite.ui.components.RestoreBackupDialog
+import com.jeffers.notimindlite.util.DatabaseExporter
+import com.jeffers.notimindlite.domain.backup.generateBackupKey
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import java.io.File
+import java.io.FileOutputStream
 import javax.crypto.SecretKey
 
 @Composable
@@ -52,6 +61,23 @@ fun SettingsScreen(
     val context = LocalContext.current
     var isSyncing by remember { mutableStateOf(false) }
     var syncMessage by remember { mutableStateOf<String?>(null) }
+
+    // H1: file picker + restore dialog plumbing. The picker runs on the UI thread but
+    // copies the URI to a local cache File on Dispatchers.IO before invoking performRestore.
+    // Snackbar feedback surfaces success/failure without leaving the Settings screen.
+    var selectedBackupUri by remember { mutableStateOf<Uri?>(null) }
+    var showRestoreDialog by remember { mutableStateOf(false) }
+    val snackbarHostState = remember { SnackbarHostState() }
+    val restoreSuccessMsg = stringResource(id = R.string.settings_restore_success)
+    val restoreFailureMsg = stringResource(id = R.string.settings_restore_failure)
+
+    val pickBackupLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.OpenDocument()
+    ) { uri: Uri? ->
+        if (uri == null) return@rememberLauncherForActivityResult
+        selectedBackupUri = uri
+        showRestoreDialog = true
+    }
 
     Column(
         modifier = Modifier
@@ -345,9 +371,12 @@ fun SettingsScreen(
                 }
                 
                 OutlinedButton(
-                    onClick = { /* TODO(CI-H1): restore requires a backup file picker +
-                                   Dialog→performRestore glue that does not exist yet.
-                                   Tracked separately from the CI warnings sweep. */ },
+                    onClick = {
+                        // Launch the system file picker scoped to .enc backup files. The
+                        // MIME filter keeps irrelevant files (images, docs) out of the chooser.
+                        // Persistable URI permissions are requested implicitly by OpenDocument.
+                        pickBackupLauncher.launch(arrayOf("application/octet-stream", "*/*"))
+                    },
                     modifier = Modifier.fillMaxWidth(),
                     colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.primary)
                 ) {
@@ -386,5 +415,56 @@ fun SettingsScreen(
                 .fillMaxWidth()
                 .padding(vertical = 8.dp),
         )
+
+        // H1: render the restore dialog (if a backup file has been picked). The dialog reads
+        // the passphrase from the user; the snackbar host inside the Column surfaces the
+        // outcome of performRestore() without leaving the Settings screen.
+        val currentUri = selectedBackupUri
+        if (showRestoreDialog && currentUri != null) {
+            val pickedDisplayName = currentUri.lastPathSegment
+                ?: stringResource(id = R.string.settings_restore_picked_default_name)
+            RestoreBackupDialog(
+                fileName = pickedDisplayName,
+                onDismiss = { showRestoreDialog = false },
+                onConfirm = { passphrase ->
+                    showRestoreDialog = false
+                    val uriToRestore = currentUri
+                    scope.launch {
+                        val result = runRestore(
+                            context = context,
+                            uri = uriToRestore,
+                            passphrase = passphrase,
+                        )
+                        val msg = if (result.isSuccess) restoreSuccessMsg else restoreFailureMsg
+                        snackbarHostState.showSnackbar(msg)
+                    }
+                },
+            )
+        }
+
+        SnackbarHost(hostState = snackbarHostState)
+    }
+}
+
+// H1 helper: copy the user-picked URI into the app cache and invoke performRestore.
+// Runs on Dispatchers.IO; returns Result<Unit> so the UI can branch on success/failure.
+// We use the device's hardware-bound key (generateBackupKey(context)) for same-device restore;
+// the passphrase supplied by the user is forwarded for cross-device/post-uninstall unwrap.
+private suspend fun runRestore(
+    context: Context,
+    uri: Uri,
+    passphrase: CharArray?,
+): Result<Unit> = withContext(Dispatchers.IO) {
+    val cacheFile = File(context.cacheDir, "restore_input_${System.currentTimeMillis()}.enc")
+    try {
+        context.contentResolver.openInputStream(uri)?.use { input ->
+            FileOutputStream(cacheFile).use { output -> input.copyTo(output) }
+        } ?: return@withContext Result.failure(IllegalStateException("Could not open backup URI"))
+        val key = generateBackupKey(context)
+        DatabaseExporter.performRestore(context, cacheFile, key, passphrase)
+    } finally {
+        passphrase?.fill('\u0000')
+        // Best-effort cache cleanup; ignore failures to keep restore flow simple.
+        runCatching { cacheFile.delete() }
     }
 }
