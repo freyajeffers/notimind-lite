@@ -145,6 +145,9 @@
     <string name="settings_section_restore">Boot &amp; Restore</string>
     <string name="settings_restore_on_boot_title">Restore on boot</string>
     <string name="settings_restore_on_boot_desc">Re-surface recently active notifications after a device reboot. Requires notification access.</string>
+    <string name="settings_restore_picked_default_name">backup file</string>
+    <string name="settings_restore_success">Backup restored successfully</string>
+    <string name="settings_restore_failure">Restore failed — check passphrase or file integrity</string>
     <string name="settings_section_privacy">Privacy &amp; Telemetry</string>
     <string name="settings_strict_privacy_title">Strict Privacy Mode</string>
     <string name="settings_strict_privacy_desc">Disable all crash reporting and anonymous usage telemetry.</string>
