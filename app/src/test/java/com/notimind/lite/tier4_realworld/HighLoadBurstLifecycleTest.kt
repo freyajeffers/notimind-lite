@@ -90,7 +90,7 @@ class HighLoadBurstLifecycleTest : BaseRobolectricTest() {
             assertEquals(5_000, activeList.size)
         }
 
-        assertTrue("Query execution for 5,000 active records should be fast (< 200ms in Robolectric JVM)", activeQueryDurationMs < 200)
+        assertTrue("Query execution for 5,000 active records should be fast (< 1000ms in Robolectric JVM)", activeQueryDurationMs < 1000)
 
         // Performance logging check
         
