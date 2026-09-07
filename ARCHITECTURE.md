@@ -11,7 +11,7 @@ The application follows a layered architecture with a heavy emphasis on backgrou
 ### 2.1 High-Level Component Diagram
 - **Capture Layer**: `NotificationListenerService` -> `NotificationLoggerService`
 - **Persistence Layer**: Room DB (SQLite) -> `AppDatabase` -> `NotificationDao`
-- **Intelligence Layer**: `HybridSearchEngine` -> `VectorEmbeddingHelper` -> `DynamicClusterManager`
+- **Intelligence Layer**: `HybridSearchEngine` -> `VectorEmbeddingHelper` -> `DynamicClusterManager` (Domain Layer)
 - **Security Layer**: `EncryptedBackupManager` -> `BackupNotaryClient` -> Google Play Integrity API
 - **UI Layer**: Jetpack Compose -> Material 3 -> `MainActivity` -> `Navigation`
 

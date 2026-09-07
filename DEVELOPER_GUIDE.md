@@ -47,7 +47,7 @@ NotiMind Lite uses Room for persistence. Because the app supports **Direct Boot*
 3. **Register Entity**: Add the class to the `@Database(entities = [...])` array in `AppDatabase.kt`.
 4. **Migration Flow**:
    - Increment the version number in `AppDatabase.kt`.
-   - Create a `Migration` object in `com.jeffers.notimindlite.util.DatabaseMigrator.kt` (e.g., `MIGRATION_16_17`).
+   - Create a `Migration` object in `com.jeffers.notimindlite.domain.backup.DatabaseMigrator.kt` (e.g., `MIGRATION_16_17`).
    - Define the SQL `ALTER TABLE` or `CREATE TABLE` statements required.
    - Register the migration in the `AppDatabase` builder.
 
@@ -62,7 +62,7 @@ Search domains are managed by the `DynamicClusterManager`. To add a new semantic
 
 1. **Update Vocabulary**: Add relevant keywords and package names to the `DynamicClusterManager` vocabulary map.
 2. **Refine Domain Inference**: Update the logic that maps `ApplicationInfo.CATEGORY_*` to the new domain.
-3. **Verify Weights**: If the new domain is not appearing in results, adjust the $k$ constant in `com.jeffers.notimindlite.util.ReciprocalRankFusion.kt` to balance semantic vs. exact matches.
+3. **Verify Weights**: If the new domain is not appearing in results, adjust the $k$ constant in `com.jeffers.notimindlite.domain.search.ReciprocalRankFusion.kt` to balance semantic vs. exact matches.
 
 ---
 
