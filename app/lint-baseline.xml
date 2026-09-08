@@ -1101,15 +1101,5 @@
             column="9"/>
     </issue>
 
-    <issue
-        id="UseKtx"
-        message="Use the KTX extension function `SharedPreferences.edit` instead?"
-        errorLine1="        prefs.edit().putBoolean(&quot;has_completed_onboarding&quot;, completed).apply()"
-        errorLine2="        ~~~~~~~~~~~~">
-        <location
-            file="src/main/java/com/jeffers/notimindlite/data/local/PreferenceManager.kt"
-            line="54"
-            column="9"/>
-    </issue>
 
 </issues>
