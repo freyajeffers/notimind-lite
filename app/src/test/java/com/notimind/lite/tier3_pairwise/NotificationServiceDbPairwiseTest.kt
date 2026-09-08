@@ -17,6 +17,13 @@ class NotificationServiceDbPairwiseTest : BaseRobolectricTest() {
     fun tc_T3_001_serviceAndRoomDbPairwiseNotificationLifecycle() = runTest {
         val serviceController = Robolectric.buildService(NotificationLoggerService::class.java)
         val service = serviceController.create().get()
+        // Grant the listener permission so the production guard in onNotificationPosted/Removed
+        // lets through the test's direct method calls.
+        android.provider.Settings.Secure.putString(
+            context.contentResolver,
+            "enabled_notification_listeners",
+            "${context.packageName}/${NotificationLoggerService::class.java.canonicalName}"
+        )
 
         val sbn = createMockStatusBarNotification(
             key = "com.chat.app|101|null|1001",
@@ -51,6 +58,13 @@ class NotificationServiceDbPairwiseTest : BaseRobolectricTest() {
     fun tc_T3_005_concurrentIngestionDuringBootRecoveryExecution() = runTest {
         val serviceController = Robolectric.buildService(NotificationLoggerService::class.java)
         val service = serviceController.create().get()
+        // Grant the listener permission so the production guard in onNotificationPosted
+        // lets through the test's direct method calls.
+        android.provider.Settings.Secure.putString(
+            context.contentResolver,
+            "enabled_notification_listeners",
+            "${context.packageName}/${NotificationLoggerService::class.java.canonicalName}"
+        )
 
         // Insert initial active notifications
         dao.insertNotification(createDummyEntity(key = "boot_k1", isDismissed = false))

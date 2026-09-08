@@ -16,6 +16,13 @@ class DynamicDebounceBoundaryTest : BaseRobolectricTest() {
     fun tc_DEB_001_smart30sDynamicDebounceValidation() = runTest {
         val serviceController = Robolectric.buildService(NotificationLoggerService::class.java)
         val service = serviceController.create().get()
+        // Grant the listener permission so the production guard in onNotificationPosted
+        // lets through the test's direct method calls.
+        android.provider.Settings.Secure.putString(
+            context.contentResolver,
+            "enabled_notification_listeners",
+            "${context.packageName}/${NotificationLoggerService::class.java.canonicalName}"
+        )
 
         val key = "com.chat.app|1001|null|10001"
         val sbn1 = createMockStatusBarNotification(

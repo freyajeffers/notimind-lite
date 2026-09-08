@@ -36,6 +36,13 @@ class NotificationLoggerServiceTest : BaseRobolectricTest() {
         runBlocking {
             val serviceController = Robolectric.buildService(NotificationLoggerService::class.java)
             val service = serviceController.create().get()
+            // Grant the listener permission so the production guard in onNotificationPosted
+            // lets through the test's direct method calls.
+            android.provider.Settings.Secure.putString(
+                context.contentResolver,
+                "enabled_notification_listeners",
+                "${context.packageName}/${NotificationLoggerService::class.java.canonicalName}"
+            )
 
             // 1. Notification from app's own package (com.jeffers.notimindlite)
             val selfSbn = createMockStatusBarNotification(
