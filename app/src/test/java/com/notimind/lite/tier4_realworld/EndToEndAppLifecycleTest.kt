@@ -22,6 +22,13 @@ class EndToEndAppLifecycleTest : BaseRobolectricTest() {
         val service = serviceController.create().get()
         val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
         val shadowNm: ShadowNotificationManager = Shadows.shadowOf(notificationManager)
+        // Grant the listener permission so the production guard in onNotificationPosted/Removed
+        // lets through the test's direct method calls.
+        android.provider.Settings.Secure.putString(
+            context.contentResolver,
+            "enabled_notification_listeners",
+            "${context.packageName}/${NotificationLoggerService::class.java.canonicalName}"
+        )
 
         // Phase 1: Initial Startup verification
         assertEquals("Database should start empty", 0, dao.getNotificationCount())
