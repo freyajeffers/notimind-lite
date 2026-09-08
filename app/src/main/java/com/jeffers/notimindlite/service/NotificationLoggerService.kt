@@ -153,6 +153,10 @@ class NotificationLoggerService : NotificationListenerService() {
     }
 
     override fun onNotificationPosted(sbn: StatusBarNotification) {
+        if (!isNotificationListenerActive()) {
+            Log.w(TAG, "Ignoring notification post event: listener permission revoked")
+            return
+        }
         super.onNotificationPosted(sbn)
         Log.d(TAG, "onNotificationPosted: ${sbn.packageName} - ${sbn.id}")
         RestoredNotificationManager.onOriginalAppNotificationPosted(applicationContext, sbn.packageName)
@@ -186,6 +190,21 @@ class NotificationLoggerService : NotificationListenerService() {
                 }
             }
         }
+    }
+
+    private fun isNotificationListenerActive(): Boolean {
+        val componentName = ComponentName(applicationContext, NotificationLoggerService::class.java)
+        val enabledListeners = android.provider.Settings.Secure.getString(
+            contentResolver,
+            "enabled_notification_listeners"
+        ) ?: return false
+        // `enabled_notification_listeners` is a colon-separated list of components that the
+        // system stores in either fully-qualified form (`pkg/pkg.Cls`) or package-shorthand
+        // form (`pkg/.Cls`). Compare against both to remain robust to whichever format the
+        // current Settings provider used when our entry was written.
+        val short = componentName.flattenToShortString()
+        val long = componentName.flattenToString()
+        return enabledListeners.split(':').any { it == short || it == long }
     }
 
     @Suppress(
@@ -321,11 +340,19 @@ class NotificationLoggerService : NotificationListenerService() {
     }
 
     override fun onNotificationRemoved(sbn: StatusBarNotification) {
+        if (!isNotificationListenerActive()) {
+            Log.w(TAG, "Ignoring notification remove event: listener permission revoked")
+            return
+        }
         super.onNotificationRemoved(sbn)
         handleNotificationRemoved(sbn, null)
     }
 
     override fun onNotificationRemoved(sbn: StatusBarNotification, rankingMap: RankingMap, reason: Int) {
+        if (!isNotificationListenerActive()) {
+            Log.w(TAG, "Ignoring notification remove event: listener permission revoked")
+            return
+        }
         super.onNotificationRemoved(sbn, rankingMap, reason)
         handleNotificationRemoved(sbn, reason)
     }
