@@ -20,6 +20,17 @@
 #
 # To customize query packs, see:
 #   https://github.com/github/codeql/blob/main/docs/using-codeql-code-scanning-with-your-existing-ci-system/configuring-codeql-cli.md
+#
+# IMPORTANT: This repo uses an ADVANCED CodeQL configuration (manual build-mode).
+# The default CodeQL setup (Settings → Code security and analysis → Code scanning)
+# MUST stay disabled (state: not-configured). If GitHub auto-enables default
+# setup, the analyze step will fail with:
+#   "Code Scanning could not process the submitted SARIF file: CodeQL
+#    analyses from advanced configurations cannot be processed when
+#    the default setup is enabled"
+# Disable with:
+#   gh api -X PATCH repos/OWNER/REPO/code-scanning/default-setup \
+#     -f state=not-configured
 
 name: "CodeQL Analysis"
 
