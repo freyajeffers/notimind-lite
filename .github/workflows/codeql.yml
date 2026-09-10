@@ -79,6 +79,23 @@ jobs:
         with:
           cache-provider: enhanced
 
+      # AGP 9.3.2 fails :app:validateSigningDebug if the configured
+      # debug keystore is absent. The release config falls back to
+      # `debugConfig` (see app/build.gradle.kts:49); same applies to
+      # the debug build invoked by CodeQL. Generate the same keystore
+      # that Android Studio creates locally.
+      - name: Generate debug keystore
+        run: |
+          keytool -genkeypair \
+            -keystore debug.keystore \
+            -storepass android \
+            -keypass android \
+            -alias androiddebugkey \
+            -keyalg RSA \
+            -keysize 2048 \
+            -validity 10000 \
+            -dname "CN=Android Debug,O=Android,C=US"
+
       - name: Initialize CodeQL
         uses: github/codeql-action/init@v4
         with:
