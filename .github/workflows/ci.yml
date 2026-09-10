@@ -128,24 +128,6 @@ jobs:
         with:
           cache-provider: enhanced
 
-      # AGP 9.3.2 fails :app:validateSigningRelease if the configured
-      # debug keystore is absent. Older AGP versions auto-generated one
-      # in $ANDROID_USER_HOME; the current GH Actions runner image no
-      # longer ships with that pre-baked. The release config falls back
-      # to `debugConfig` (see app/build.gradle.kts:49) so we materialize
-      # the same debug keystore here that Android Studio creates locally.
-      - name: Generate debug keystore
-        run: |
-          keytool -genkeypair \
-            -keystore debug.keystore \
-            -storepass android \
-            -keypass android \
-            -alias androiddebugkey \
-            -keyalg RSA \
-            -keysize 2048 \
-            -validity 10000 \
-            -dname "CN=Android Debug,O=Android,C=US"
-
       - name: Build Release APK
         run: ./gradlew assembleRelease
 

@@ -8,6 +8,8 @@ plugins {
   id("jacoco")
 }
 
+import java.io.File
+
 android {
   namespace = "com.jeffers.notimindlite"
   compileSdk = 36
@@ -23,6 +25,18 @@ android {
   }
 
   signingConfigs {
+    // The debug keystore is required by AGP 9.3.2's
+    // validateSigning{Debug,Release} tasks. Historically
+    // Android Studio created it once per workstation and
+    // every CI image shipped with a pre-baked one in
+    // $ANDROID_USER_HOME. Both assumptions are no longer
+    // true (Android Studio Iguana+ no longer creates one by
+    // default, and GH Actions runner images ship without it),
+    // so we materialize the standard Android debug keystore
+    // via a Gradle task that runs before any signing
+    // validation. The task is a no-op when the file is
+    // already present (local dev). See `ensureDebugKeystore`
+    // below.
     create("debugConfig") {
       storeFile = file("${rootDir}/debug.keystore")
       storePassword = "android"
@@ -171,5 +185,54 @@ dependencies {
   debugImplementation(libs.androidx.compose.ui.tooling)
   debugImplementation(libs.androidx.compose.ui.test.manifest)
   "ksp"(libs.androidx.room.compiler)
+}
+
+// Auto-generate the Android debug keystore if it does not exist.
+// AGP 9.3.2's validateSigning{Debug,Release} tasks require the file
+// at the path configured in `signingConfigs.debugConfig` (above).
+// This task is a no-op when the keystore already exists (typical for
+// local dev machines that have run Android Studio at least once), so
+// it adds no measurable overhead to existing workflows. CI runners
+// that never created one (e.g. fresh GH Actions images) will have
+// the keystore materialized before signing validation runs.
+//
+// Configuration-cache note: this task opts OUT of the configuration
+// cache via `notCompatibleWithConfigurationCache(...)` because the
+// `Exec` task type's lambdas capture the enclosing build script
+// (`this$0`), which is a script-object reference that Gradle 9.7+
+// configuration cache refuses to serialize. The keystore check is
+// idempotent and cheap (~1 ms on every project load), so we trade
+// the small overhead of a no-op Exec invocation against the larger
+// cost of reworking the entire build script for the cache. The
+// Gradle documentation explicitly endorses this opt-out for tasks
+// that fundamentally need closures over build-script state.
+val debugKeystorePath: String = file("${rootDir}/debug.keystore").absolutePath
+
+val ensureDebugKeystore = tasks.register<Exec>("ensureDebugKeystore") {
+  description = "Materialize the standard Android debug keystore if absent."
+  group = "build setup"
+  notCompatibleWithConfigurationCache("Keystore generation needs script state; see comment above.")
+  // `onlyIf` evaluates at task-graph time and bypasses the action
+  // when the keystore is already present, so this is a no-op on
+  // dev machines and a one-shot generator on fresh CI runners.
+  onlyIf { !File(debugKeystorePath).exists() }
+  commandLine(
+    "keytool", "-genkeypair",
+    "-keystore", debugKeystorePath,
+    "-storepass", "android",
+    "-keypass", "android",
+    "-alias", "androiddebugkey",
+    "-keyalg", "RSA",
+    "-keysize", "2048",
+    "-validity", "10000",
+    "-dname", "CN=Android Debug,O=Android,C=US"
+  )
+}
+
+// Wire ensureDebugKeystore into AGP's signing validation tasks so any
+// build that triggers validateSigning* also runs our generator first.
+afterEvaluate {
+  tasks.matching { it.name.startsWith("validateSigning") }
+    .configureEach { dependsOn(ensureDebugKeystore) }
 }
 
