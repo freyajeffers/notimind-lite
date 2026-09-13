@@ -12,19 +12,27 @@ updates:
     open-pull-requests-limit: 10
     rebase-strategy: "auto"
     groups:
-      # Group AndroidX and Compose updates together
-      androidx-compose:
-        patterns:
-          - "androidx.*"
-      # Group Kotlin and Coroutines updates together
+      # Group Kotlin, KSP, Room, and compiler-coupled dependencies together
       kotlin:
         patterns:
           - "org.jetbrains.kotlin*"
           - "org.jetbrains.kotlinx*"
-      # Group Google and Firebase dependencies
+          - "com.google.devtools.ksp*"
+          - "androidx.room*"
+          - "androidx.credentials*"
+      # Group AndroidX and Compose updates together (excluding compiler/KSP-coupled libs)
+      androidx-compose:
+        patterns:
+          - "androidx.*"
+        exclude-patterns:
+          - "androidx.room*"
+          - "androidx.credentials*"
+      # Group Google and Firebase dependencies (excluding KSP)
       google-services:
         patterns:
           - "com.google.*"
+        exclude-patterns:
+          - "com.google.devtools.ksp*"
       # Group static analysis and tooling plugins
       lint-and-analysis:
         patterns:
