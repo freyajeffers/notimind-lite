@@ -37,16 +37,6 @@ updates:
       lint-and-analysis:
         patterns:
           - "io.gitlab.arturbosch.detekt*"
-    # Pin packages requiring compileSdk 37 until project upgrades to android-37
-    ignore:
-      - dependency-name: "androidx.navigation:navigation-compose"
-        update-types: ["version-update:semver-major", "version-update:semver-minor"]
-      - dependency-name: "androidx.core:core-ktx"
-        update-types: ["version-update:semver-major", "version-update:semver-minor"]
-      - dependency-name: "androidx.core:core"
-        update-types: ["version-update:semver-major", "version-update:semver-minor"]
-      - dependency-name: "androidx.compose:compose-bom"
-        versions: [">= 2026.0.0"]
 
   # 2. GitHub Actions CI/CD workflows
   - package-ecosystem: "github-actions"
