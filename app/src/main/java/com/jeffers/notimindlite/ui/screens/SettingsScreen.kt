@@ -25,6 +25,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.jeffers.notimindlite.R
+import com.jeffers.notimindlite.BuildConfig
 import com.jeffers.notimindlite.data.auth.AuthManager
 import com.jeffers.notimindlite.data.auth.UserSession
 import com.jeffers.notimindlite.data.local.AppDatabase
@@ -399,10 +400,11 @@ fun SettingsScreen(
         val versionCode = remember {
             runCatching {
                 val info = context.packageManager.getPackageInfo(context.packageName, 0)
-                if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.P) {
+                if (BuildConfig.SUPPORTS_LONG_VERSION_CODE) {
                     info.longVersionCode.toInt()
                 } else {
-                    @Suppress("DEPRECATION") info.versionCode
+                    @Suppress("DEPRECATION")
+                    info.versionCode
                 }
             }.getOrDefault(0)
         }
