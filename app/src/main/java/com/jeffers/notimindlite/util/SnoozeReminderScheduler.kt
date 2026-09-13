@@ -4,7 +4,6 @@ import android.app.AlarmManager
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
-import android.os.Build
 import android.util.Log
 import java.util.*
 
@@ -48,11 +47,10 @@ object SnoozeReminderScheduler {
             val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
             val triggerAt = System.currentTimeMillis() + delayMs
 
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            if (alarmManager.canScheduleExactAlarms()) {
                 alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, triggerAt, pendingIntent)
             } else {
-                @Suppress("DEPRECATION")
-                alarmManager.setExact(AlarmManager.RTC_WAKEUP, triggerAt, pendingIntent)
+                alarmManager.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, triggerAt, pendingIntent)
             }
             
             
