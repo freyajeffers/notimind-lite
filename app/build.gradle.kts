@@ -12,7 +12,7 @@ import java.io.File
 
 android {
   namespace = "com.jeffers.notimindlite"
-  compileSdk = 36
+  compileSdk = 37
 
   defaultConfig {
     applicationId = "com.jeffers.notimindlite"
