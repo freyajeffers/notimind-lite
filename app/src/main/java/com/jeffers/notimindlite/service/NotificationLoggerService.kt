@@ -220,10 +220,20 @@ class NotificationLoggerService : NotificationListenerService() {
             val notification = sbn.notification ?: return null
             val packageName = sbn.packageName
             val extras = notification.extras
-            val title = extras?.getCharSequence(Notification.EXTRA_TITLE)?.toString() ?: ""
-            val content = extras?.getCharSequence(Notification.EXTRA_TEXT)?.toString() ?: ""
+            val conversationTitle = extras?.getCharSequence(Notification.EXTRA_CONVERSATION_TITLE)?.toString()
+            val rawTitle = extras?.getCharSequence(Notification.EXTRA_TITLE)?.toString() ?: ""
+            val title = if (rawTitle.isNotBlank()) rawTitle else (conversationTitle ?: "")
+
+            val rawContent = extras?.getCharSequence(Notification.EXTRA_TEXT)?.toString() ?: ""
             val subText = extras?.getCharSequence(Notification.EXTRA_SUB_TEXT)?.toString()
             val bigText = extras?.getCharSequence(Notification.EXTRA_BIG_TEXT)?.toString()
+            val summaryText = extras?.getCharSequence(Notification.EXTRA_SUMMARY_TEXT)?.toString()
+            val content = when {
+                rawContent.isNotBlank() -> rawContent
+                !bigText.isNullOrBlank() -> bigText
+                !summaryText.isNullOrBlank() -> summaryText
+                else -> ""
+            }
 
             val textLines = extras?.getCharSequenceArray(Notification.EXTRA_TEXT_LINES)
             val inboxLinesJson: String? = if (!textLines.isNullOrEmpty()) {
