@@ -7,8 +7,25 @@ import androidx.room.PrimaryKey
 
 @Entity(
     tableName = "notifications",
+    foreignKeys = [
+        ForeignKey(
+            entity = AppEntity::class,
+            parentColumns = ["packageName"],
+            childColumns = ["packageName"],
+            onDelete = ForeignKey.CASCADE,
+            onUpdate = ForeignKey.CASCADE
+        ),
+        ForeignKey(
+            entity = NotificationGroupEntity::class,
+            parentColumns = ["groupKey"],
+            childColumns = ["groupKey"],
+            onDelete = ForeignKey.CASCADE,
+            onUpdate = ForeignKey.CASCADE
+        )
+    ],
     indices = [
         Index(value = ["key"], unique = true),
+        Index(value = ["packageName"]),
         Index(value = ["isDismissed", "postTime"]),
         Index(value = ["isDismissed", "dismissTime"]),
         Index(value = ["isDismissed", "isOngoing", "postTime"]),
@@ -16,6 +33,7 @@ import androidx.room.PrimaryKey
         Index(value = ["packageName", "isDismissed", "postTime"]),
         Index(value = ["isPinned", "postTime"]),
         Index(value = ["isRead", "isDismissed"]),
+        Index(value = ["groupKey", "postTime"]),
         Index(value = ["syncStatus"])
     ]
 )

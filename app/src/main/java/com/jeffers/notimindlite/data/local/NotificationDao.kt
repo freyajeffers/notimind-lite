@@ -27,16 +27,35 @@ abstract class NotificationDao {
 
     @Transaction
     open suspend fun insert(entity: NotificationEntity): Long {
+        val effectiveGroupKey = entity.groupKey?.ifBlank { null } ?: entity.packageName
+        val normalizedEntity = if (entity.groupKey == null) entity.copy(groupKey = effectiveGroupKey) else entity
+
         insertAppInternal(
             AppEntity(
-                packageName = entity.packageName,
-                appName = entity.appName.ifBlank { entity.packageName.ifBlank { "Unknown App" } },
-                firstSeenTime = entity.postTime,
-                lastSeenTime = entity.postTime,
-                appIconUri = entity.appIconUri
+                packageName = normalizedEntity.packageName,
+                appName = normalizedEntity.appName.ifBlank { normalizedEntity.packageName.ifBlank { "Unknown App" } },
+                firstSeenTime = normalizedEntity.postTime,
+                lastSeenTime = normalizedEntity.postTime,
+                appIconUri = normalizedEntity.appIconUri
             )
         )
-        return insertNotificationDirect(entity)
+        insertGroupInternal(
+            NotificationGroupEntity(
+                groupKey = effectiveGroupKey,
+                packageName = normalizedEntity.packageName,
+                appName = normalizedEntity.appName.ifBlank { normalizedEntity.packageName.ifBlank { "Unknown App" } },
+                appIconUri = normalizedEntity.appIconUri,
+                latestPostTime = normalizedEntity.postTime,
+                notificationCount = 1,
+                activeCount = if (normalizedEntity.isDismissed) 0 else 1,
+                isPinned = normalizedEntity.isPinned,
+                isDismissed = normalizedEntity.isDismissed,
+                summaryTitle = normalizedEntity.title,
+                summaryText = normalizedEntity.content,
+                lastUpdatedTime = normalizedEntity.lastUpdatedTime
+            )
+        )
+        return insertNotificationDirect(normalizedEntity)
     }
 
     @Transaction
@@ -47,7 +66,11 @@ abstract class NotificationDao {
     @Transaction
     open suspend fun insertNotifications(notifications: List<NotificationEntity>): List<Long> {
         if (notifications.isEmpty()) return emptyList()
-        val apps = notifications.map { entity ->
+        val normalizedNotifications = notifications.map { entity ->
+            val effectiveGroupKey = entity.groupKey?.ifBlank { null } ?: entity.packageName
+            if (entity.groupKey == null) entity.copy(groupKey = effectiveGroupKey) else entity
+        }
+        val apps = normalizedNotifications.map { entity ->
             AppEntity(
                 packageName = entity.packageName,
                 appName = entity.appName.ifBlank { entity.packageName.ifBlank { "Unknown App" } },
@@ -57,8 +80,72 @@ abstract class NotificationDao {
             )
         }
         insertAppsInternal(apps)
-        return insertNotificationsDirect(notifications)
+
+        val groups = normalizedNotifications.groupBy { it.groupKey ?: it.packageName }.map { (groupKey, items) ->
+            val sorted = items.sortedByDescending { it.postTime }
+            val first = sorted.first()
+            NotificationGroupEntity(
+                groupKey = groupKey,
+                packageName = first.packageName,
+                appName = first.appName.ifBlank { first.packageName.ifBlank { "Unknown App" } },
+                appIconUri = first.appIconUri,
+                latestPostTime = sorted.maxOf { it.postTime },
+                notificationCount = items.size,
+                activeCount = items.count { !it.isDismissed },
+                isPinned = items.any { it.isPinned },
+                isDismissed = items.all { it.isDismissed },
+                summaryTitle = first.title,
+                summaryText = first.content,
+                lastUpdatedTime = sorted.maxOf { it.lastUpdatedTime }
+            )
+        }
+        insertGroupsInternal(groups)
+        return insertNotificationsDirect(normalizedNotifications)
     }
+
+    @Insert(onConflict = OnConflictStrategy.IGNORE)
+    abstract suspend fun insertGroupInternal(group: NotificationGroupEntity): Long
+
+    @Insert(onConflict = OnConflictStrategy.IGNORE)
+    abstract suspend fun insertGroupsInternal(groups: List<NotificationGroupEntity>): List<Long>
+
+    @Transaction
+    @Query("SELECT * FROM notification_groups ORDER BY isPinned DESC, latestPostTime DESC")
+    abstract fun getAllGroupsWithChildrenFlow(): Flow<List<NotificationGroupWithChildren>>
+
+    @Transaction
+    @Query("SELECT * FROM notification_groups WHERE isDismissed = 0 ORDER BY isPinned DESC, latestPostTime DESC")
+    abstract fun getActiveGroupsWithChildrenFlow(): Flow<List<NotificationGroupWithChildren>>
+
+    @Transaction
+    @Query("SELECT * FROM notification_groups WHERE isDismissed = 1 ORDER BY isPinned DESC, latestPostTime DESC")
+    abstract fun getDismissedGroupsWithChildrenFlow(): Flow<List<NotificationGroupWithChildren>>
+
+    @Transaction
+    @Query("SELECT * FROM apps WHERE packageName = :packageName LIMIT 1")
+    abstract fun getAppWithGroupsAndNotifications(packageName: String): Flow<AppWithGroupsAndNotifications?>
+
+    @Transaction
+    @Query("SELECT * FROM notifications WHERE key = :key LIMIT 1")
+    abstract fun getNotificationWithGroupAndApp(key: String): Flow<NotificationWithGroupAndApp?>
+
+    @Query("SELECT * FROM notification_groups ORDER BY isPinned DESC, latestPostTime DESC")
+    abstract fun getAllGroupsFlow(): Flow<List<NotificationGroupEntity>>
+
+    @Query("SELECT * FROM notification_groups WHERE isDismissed = 0 ORDER BY isPinned DESC, latestPostTime DESC")
+    abstract fun getActiveGroupsFlow(): Flow<List<NotificationGroupEntity>>
+
+    @Query("SELECT * FROM notification_groups WHERE isDismissed = 1 ORDER BY isPinned DESC, latestPostTime DESC")
+    abstract fun getDismissedGroupsFlow(): Flow<List<NotificationGroupEntity>>
+
+    @Query("SELECT * FROM notification_groups WHERE groupKey = :groupKey LIMIT 1")
+    abstract suspend fun getGroupByKey(groupKey: String): NotificationGroupEntity?
+
+    @Query("SELECT * FROM notifications WHERE COALESCE(groupKey, packageName) = :groupKey ORDER BY postTime DESC")
+    abstract fun getNotificationsForGroupFlow(groupKey: String): Flow<List<NotificationEntity>>
+
+    @Query("SELECT * FROM notifications WHERE COALESCE(groupKey, packageName) = :groupKey ORDER BY postTime DESC")
+    abstract suspend fun getNotificationsForGroup(groupKey: String): List<NotificationEntity>
 
     @Query("SELECT * FROM notifications ORDER BY postTime DESC")
     abstract fun getAllNotifications(): Flow<List<NotificationEntity>>
@@ -255,6 +342,9 @@ abstract class NotificationDao {
 
     @Query("DELETE FROM notifications WHERE syncStatus = 'PENDING_DELETE'")
     abstract suspend fun purgePendingDeletes()
+
+    @Query("DELETE FROM notification_groups")
+    abstract suspend fun clearGroups()
 
     @Query("DELETE FROM notifications")
     abstract suspend fun clearAll()
