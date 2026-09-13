@@ -10,7 +10,7 @@ To contribute to NotiMind Lite, ensure your development environment meets the fo
 
 - **JDK**: Java Development Kit (JDK) 17 (Temurin recommended).
 - **IDE**: Android Studio (Latest stable version).
-- **SDK**: Android API Level 26 (minSdk) to API Level 36.
+- **SDK**: Android API Level 33 (minSdk) to API Level 36 (targetSdk), API Level 37 (compileSdk).
 - **Build Tool**: Gradle (with KSP/Kapt for Room).
 
 ---

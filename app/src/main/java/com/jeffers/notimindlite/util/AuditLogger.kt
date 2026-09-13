@@ -125,14 +125,10 @@ object AuditLogger {
      * Uses Device Protected Storage (Direct Boot) if available so logs survive across credential encryption state.
      */
     private fun getPersistentLogFile(context: Context): File {
-        val storageContext = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-            try {
-                context.createDeviceProtectedStorageContext()
-            } catch (e: IllegalStateException) {
-                // Direct Boot not supported (rare OEM); fall back to credential-protected storage.
-                context
-            }
-        } else {
+        val storageContext = try {
+            context.createDeviceProtectedStorageContext()
+        } catch (e: IllegalStateException) {
+            // Direct Boot not supported (rare OEM); fall back to credential-protected storage.
             context
         }
         val dir = File(storageContext.filesDir, "audit")
@@ -169,13 +165,9 @@ object AuditLogger {
      */
     suspend fun checkAndLogAppDataCleared(context: Context) = withContext(Dispatchers.IO) {
         try {
-            val deviceContext = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-                try {
-                    context.createDeviceProtectedStorageContext()
-                } catch (e: IllegalStateException) {
-                    context
-                }
-            } else {
+            val deviceContext = try {
+                context.createDeviceProtectedStorageContext()
+            } catch (e: IllegalStateException) {
                 context
             }
 
@@ -240,7 +232,7 @@ object AuditLogger {
                 extraData = mapOf(
                     "fileHash" to record.fileHash,
                     "fileName" to record.fileName,
-                    "remoteSignature" to (record.signature ?: ""),
+                    "remoteSignature" to record.signature,
                     "logMessage" to record.logMessage
                 )
             )

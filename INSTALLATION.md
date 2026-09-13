@@ -7,7 +7,7 @@ This guide provides the step-by-step configuration required to build and deploy 
 Ensure the following development environment is configured:
 - **Java Development Kit (JDK)**: Version 17 (Amazon Corretto or OpenJDK).
 - **Android Studio**: Hedgehog (2023.1.1) or newer.
-- **Android SDK**: API Level 26 (minSdk) and API Level 36 (Target SDK).
+- **Android SDK**: API Level 33 (minSdk) and API Level 36 (Target SDK).
 - **Physical Device**: A device with Google Play Services installed (required for Play Integrity API).
 
 ## 2. Google Cloud Platform (GCP) & Firebase Setup

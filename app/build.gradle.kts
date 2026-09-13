@@ -14,14 +14,21 @@ android {
   namespace = "com.jeffers.notimindlite"
   compileSdk = 37
 
+  val targetMinSdk = (project.findProperty("minSdk") as? String)?.toIntOrNull() ?: 33
+
   defaultConfig {
     applicationId = "com.jeffers.notimindlite"
-    minSdk = 26
+    minSdk = targetMinSdk
     targetSdk = 36
     versionCode = 1
     versionName = "1.0-lite"
 
     testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+
+    buildConfigField("int", "MIN_SDK_VERSION", "$targetMinSdk")
+    buildConfigField("boolean", "SUPPORTS_DYNAMIC_COLOR", "${targetMinSdk >= 31}")
+    buildConfigField("boolean", "SUPPORTS_LONG_VERSION_CODE", "${targetMinSdk >= 28}")
+    buildConfigField("boolean", "REQUIRES_RUNTIME_POST_NOTIFICATIONS", "${targetMinSdk >= 33}")
   }
 
   signingConfigs {
@@ -79,6 +86,7 @@ android {
   }
   buildFeatures {
     compose = true
+    buildConfig = true
   }
   packaging {
     resources {

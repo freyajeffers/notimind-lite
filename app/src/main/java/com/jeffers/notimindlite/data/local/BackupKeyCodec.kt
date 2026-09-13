@@ -34,8 +34,6 @@ object BackupKeyCodec {
         }
 
         val keyGenerator = KeyGenerator.getInstance(KeyProperties.KEY_ALGORITHM_AES, ANDROID_KEYSTORE)
-        // KeyGenParameterSpec.Builder(alias, purposes) is available since API 23 (M);
-        // the static `.builder(...)` factory was only added in API 31. We target minSdk 26.
         val spec = KeyGenParameterSpec.Builder(
             KEY_ALIAS,
             KeyProperties.PURPOSE_ENCRYPT or KeyProperties.PURPOSE_DECRYPT
