@@ -1,0 +1,68 @@
+package com.jeffers.notimindlite.sanitization
+
+object PiiRedactionEngine {
+    // Deterministic, fast compiled patterns.
+    private val otpRegex = Regex("\\b\\d{4,6}\\b")
+    private val emailRegex = Regex("[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}")
+    private val phoneRegex = Regex("\\b(?:\\+?\\d{1,3}[-.\\s]?)?(?:\\(?\\d{3}\\)?[-.\\s]?\\d{3}[-.\\s]?\\d{4})\\b")
+    private val currencyRegex = Regex("\\b\\$\\s?\\d{1,3}(?:[.,]\\d{3})*(?:\\.\\d{2})?\\b")
+    private val ccCandidateRegex = Regex("\\b(?:\\d[ -]?){12,19}\\b")
+
+    // Redaction placeholders
+    private const val OTP_REPLACEMENT = "[REDACTED-OTP]"
+    private const val EMAIL_REPLACEMENT = "[REDACTED-EMAIL]"
+    private const val PHONE_REPLACEMENT = "[REDACTED-PHONE]"
+    private const val CURRENCY_REPLACEMENT = "[REDACTED-CURRENCY]"
+    private const val CC_REPLACEMENT = "[REDACTED-CC]"
+
+    // Public API: return sanitized string, or null to indicate a fail-closed drop.
+    // Deterministic: same input -> same output.
+    fun redact(input: String?): String? {
+        if (input == null) return null
+        var out = input
+
+        try {
+            // Quick rejection: if the entire string looks like a single CC or OTP, drop (fail-closed)
+            val trimmed = out.trim()
+            if (ccCandidateRegex.matches(trimmed)) {
+                // If it's a single numeric token that is a valid CC (Luhn), drop
+                if (isValidLuhn(trimmed)) return null
+                // otherwise mask
+                out = out.replace(ccCandidateRegex, CC_REPLACEMENT)
+            }
+
+            // Replace credit-card-like sequences within text (mask if Luhn-valid)
+            out = out.replace(ccCandidateRegex) { mr ->
+                val candidate = mr.value.replace(Regex("[ -]"), "")
+                if (isValidLuhn(candidate)) CC_REPLACEMENT else CC_REPLACEMENT
+            }
+
+            out = out.replace(otpRegex, OTP_REPLACEMENT)
+            out = out.replace(emailRegex, EMAIL_REPLACEMENT)
+            out = out.replace(phoneRegex, PHONE_REPLACEMENT)
+            out = out.replace(currencyRegex, CURRENCY_REPLACEMENT)
+
+            return out
+        } catch (e: Exception) {
+            // Any unexpected error => fail-closed: signal drop
+            return null
+        }
+    }
+
+    private fun isValidLuhn(digitsOnly: String): Boolean {
+        val s = digitsOnly.filter { it.isDigit() }
+        if (s.length < 12 || s.length > 19) return false
+        var sum = 0
+        var alternate = false
+        for (i in s.length - 1 downTo 0) {
+            var n = s[i] - '0'
+            if (alternate) {
+                n *= 2
+                if (n > 9) n -= 9
+            }
+            sum += n
+            alternate = !alternate
+        }
+        return sum % 10 == 0
+    }
+}
