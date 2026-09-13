@@ -20,6 +20,7 @@ debug.keystore
 /gradle-8.5
 /app/build
 .agents
+.hermes/
 # Gradle files
 .gradle/
 build/
