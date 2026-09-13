@@ -23,6 +23,9 @@ import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material.icons.filled.Search
+import com.jeffers.notimindlite.ui.components.NotificationGroupCard
+import com.jeffers.notimindlite.ui.components.groupNotifications
+import org.json.JSONArray
 import androidx.compose.material.icons.outlined.BookmarkBorder
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -78,6 +81,7 @@ fun LogHistoryScreen(dao: NotificationDao, authManager: AuthManager, db: AppData
     var showExportMenu by remember { mutableStateOf(false) }
     var showPackagePicker by remember { mutableStateOf(false) }
     var expandedCards by remember { mutableStateOf(setOf<String>()) }
+    var collapsedGroups by remember { mutableStateOf(setOf<String>()) }
 
     val allNotifsDismissed by dao.getDismissedNotificationsSortedByDismissed().collectAsState(initial = emptyList())
     val allNotifsReceived by dao.getDismissedNotificationsSortedByReceived().collectAsState(initial = emptyList())
@@ -368,6 +372,7 @@ fun LogHistoryScreen(dao: NotificationDao, authManager: AuthManager, db: AppData
                     }
                 )
             } else {
+                val notificationGroups = groupNotifications(filteredNotifs)
                 LazyColumn(
                     state = listState,
                     modifier = Modifier.fillMaxSize(),
@@ -375,19 +380,57 @@ fun LogHistoryScreen(dao: NotificationDao, authManager: AuthManager, db: AppData
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     items(
-                        items = filteredNotifs,
-                        key = { item -> "history_${item.key}_${item.id}" }
-                    ) { item ->
-                        val cardExpanded = expandedCards.contains(item.key)
-                        LogHistoryCard(
-                            item = item,
-                            dateTimeFormatter = dateTimeFormatter,
-                            dao = dao,
-                            isExpanded = cardExpanded,
-                            onToggleExpand = {
-                                expandedCards = if (cardExpanded) expandedCards - item.key else expandedCards + item.key
-                            }
-                        )
+                        items = notificationGroups,
+                        key = { group -> "history_group_${group.groupKey}" }
+                    ) { group ->
+                        val isGroupExpanded = !collapsedGroups.contains(group.groupKey)
+                        if (group.items.size == 1) {
+                            val item = group.items[0]
+                            val cardExpanded = expandedCards.contains(item.key)
+                            LogHistoryCard(
+                                item = item,
+                                dateTimeFormatter = dateTimeFormatter,
+                                dao = dao,
+                                isExpanded = cardExpanded,
+                                onToggleExpand = {
+                                    expandedCards = if (cardExpanded) {
+                                        expandedCards - item.key
+                                    } else {
+                                        expandedCards + item.key
+                                    }
+                                }
+                            )
+                        } else {
+                            NotificationGroupCard(
+                                group = group,
+                                dateTimeFormatter = dateTimeFormatter,
+                                dao = dao,
+                                isGroupExpanded = isGroupExpanded,
+                                onToggleGroupExpand = {
+                                    collapsedGroups = if (collapsedGroups.contains(group.groupKey)) {
+                                        collapsedGroups - group.groupKey
+                                    } else {
+                                        collapsedGroups + group.groupKey
+                                    }
+                                },
+                                renderChildCard = { childItem ->
+                                    val cardExpanded = expandedCards.contains(childItem.key)
+                                    LogHistoryCard(
+                                        item = childItem,
+                                        dateTimeFormatter = dateTimeFormatter,
+                                        dao = dao,
+                                        isExpanded = cardExpanded,
+                                        onToggleExpand = {
+                                            expandedCards = if (cardExpanded) {
+                                                expandedCards - childItem.key
+                                            } else {
+                                                expandedCards + childItem.key
+                                            }
+                                        }
+                                    )
+                                }
+                            )
+                        }
                     }
                 }
             }
@@ -443,6 +486,7 @@ private fun DismissStatusBadge(item: NotificationEntity) {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
+@Suppress("CyclomaticComplexMethod", "LongMethod", "FunctionNaming")
 fun LogHistoryCard(
     item: NotificationEntity,
     dateTimeFormatter: DateTimeFormatter,
@@ -560,6 +604,59 @@ fun LogHistoryCard(
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.85f)
                         )
+                    }
+                    @Suppress("SwallowedException")
+                    val inboxLines = remember(item.inboxLinesJson) {
+                        if (item.inboxLinesJson.isNullOrBlank()) {
+                            emptyList()
+                        } else {
+                            try {
+                                val array = JSONArray(item.inboxLinesJson)
+                                (0 until array.length()).mapNotNull { idx ->
+                                    val str = array.optString(idx)
+                                    str.takeIf { it.isNotBlank() }
+                                }
+                            } catch (_: org.json.JSONException) {
+                                emptyList()
+                            }
+                        }
+                    }
+                    if (inboxLines.isNotEmpty()) {
+                        Spacer(modifier = Modifier.height(6.dp))
+                        Surface(
+                            shape = RoundedCornerShape(6.dp),
+                            color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.35f),
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Column(
+                                modifier = Modifier.padding(8.dp),
+                                verticalArrangement = Arrangement.spacedBy(2.dp)
+                            ) {
+                                Text(
+                                    text = "Inbox Lines (${inboxLines.size})",
+                                    style = MaterialTheme.typography.labelSmall,
+                                    fontWeight = FontWeight.Bold,
+                                    color = MaterialTheme.colorScheme.primary
+                                )
+                                inboxLines.forEach { line ->
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        verticalAlignment = Alignment.Top
+                                    ) {
+                                        Text(
+                                            text = "• ",
+                                            style = MaterialTheme.typography.bodySmall,
+                                            color = MaterialTheme.colorScheme.primary
+                                        )
+                                        Text(
+                                            text = line,
+                                            style = MaterialTheme.typography.bodySmall,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                                        )
+                                    }
+                                }
+                            }
+                        }
                     }
                     Spacer(modifier = Modifier.height(8.dp))
                     NotificationExpandedAttributes(

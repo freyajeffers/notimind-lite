@@ -33,6 +33,9 @@ import androidx.compose.material.icons.filled.FilterList
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material.icons.filled.PushPin
+import com.jeffers.notimindlite.ui.components.NotificationGroupCard
+import com.jeffers.notimindlite.ui.components.groupNotifications
+import org.json.JSONArray
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.outlined.BookmarkBorder
 import androidx.compose.material3.*
@@ -186,6 +189,7 @@ fun ActiveNotificationsScreen(dao: NotificationDao, authManager: AuthManager, db
     //   transient UI / derived / security-sensitive; do not save.
     var expandedSection by rememberSaveable { mutableStateOf(prefManager.getExpandedSection()) }
     var expandedCards by remember { mutableStateOf(setOf<String>()) }
+    var collapsedGroups by remember { mutableStateOf(setOf<String>()) }
     var isGranted by remember { mutableStateOf(checkNotificationPermission(context)) }
     var searchQuery by rememberSaveable { mutableStateOf("") }
     var debouncedSearchQuery by remember { mutableStateOf("") }
@@ -662,65 +666,14 @@ fun ActiveNotificationsScreen(dao: NotificationDao, authManager: AuthManager, db
                     }
 
                     if (isExpanded) {
-                        if (section == NotificationSection.ACTIVE) {
-                            val groupedByApp = itemsList.groupBy { it.packageName }
-                                .entries.sortedByDescending { (_, list) ->
-                                    val hasOngoing = list.any { it.isOngoing }
-                                    val maxPostTime = list.maxOfOrNull { it.postTime } ?: 0L
-                                    if (hasOngoing) Long.MAX_VALUE / 2 + maxPostTime else maxPostTime
-                                }
-                            for ((pkg, appItems) in groupedByApp) {
-                                val sortedAppItems = appItems.sortedWith(
-                                    compareByDescending<NotificationEntity> { it.isOngoing }
-                                        .thenByDescending { it.postTime }
-                                )
-                                item(key = "app_group_$pkg") {
-                                    val appName = sortedAppItems.firstOrNull()?.appName ?: pkg
-                                    val iconUri = sortedAppItems.firstOrNull()?.appIconUri
-                                    Surface(
-                                        shape = RoundedCornerShape(8.dp),
-                                        color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.45f),
-                                        modifier = Modifier.fillMaxWidth().padding(top = 8.dp, bottom = 4.dp)
-                                    ) {
-                                        Row(
-                                            modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
-                                            verticalAlignment = Alignment.CenterVertically
-                                        ) {
-                                            AppIconImage(appIconUri = iconUri, modifier = Modifier.size(18.dp))
-                                            Spacer(modifier = Modifier.width(8.dp))
-                                            Text(
-                                                text = appName,
-                                                style = MaterialTheme.typography.labelLarge,
-                                                fontWeight = FontWeight.SemiBold
-                                            )
-                                            Spacer(modifier = Modifier.weight(1f))
-                                            Badge {
-                                                Text("${sortedAppItems.size}")
-                                            }
-                                        }
-                                    }
-                                }
-                                items(
-                                    items = sortedAppItems,
-                                    key = { item -> "item_${item.key}" }
-                                ) { item ->
-                                    val cardExpanded = expandedCards.contains(item.key)
-                                    LogNotificationCard(
-                                        item = item,
-                                        dateTimeFormatter = dateTimeFormatter,
-                                        dao = dao,
-                                        isExpanded = cardExpanded,
-                                        onToggleExpand = {
-                                            expandedCards = if (cardExpanded) expandedCards - item.key else expandedCards + item.key
-                                        }
-                                    )
-                                }
-                            }
-                        } else {
-                            items(
-                                items = itemsList,
-                                key = { item -> "item_${item.key}" }
-                            ) { item ->
+                        val notificationGroups = groupNotifications(itemsList)
+                        items(
+                            items = notificationGroups,
+                            key = { group -> "group_${section.keyName}_${group.groupKey}" }
+                        ) { group ->
+                            val isGroupExpanded = !collapsedGroups.contains(group.groupKey)
+                            if (group.items.size == 1) {
+                                val item = group.items[0]
                                 val cardExpanded = expandedCards.contains(item.key)
                                 LogNotificationCard(
                                     item = item,
@@ -729,6 +682,36 @@ fun ActiveNotificationsScreen(dao: NotificationDao, authManager: AuthManager, db
                                     isExpanded = cardExpanded,
                                     onToggleExpand = {
                                         expandedCards = if (cardExpanded) expandedCards - item.key else expandedCards + item.key
+                                    }
+                                )
+                            } else {
+                                NotificationGroupCard(
+                                    group = group,
+                                    dateTimeFormatter = dateTimeFormatter,
+                                    dao = dao,
+                                    isGroupExpanded = isGroupExpanded,
+                                    onToggleGroupExpand = {
+                                        collapsedGroups = if (collapsedGroups.contains(group.groupKey)) {
+                                            collapsedGroups - group.groupKey
+                                        } else {
+                                            collapsedGroups + group.groupKey
+                                        }
+                                    },
+                                    renderChildCard = { childItem ->
+                                        val cardExpanded = expandedCards.contains(childItem.key)
+                                        LogNotificationCard(
+                                            item = childItem,
+                                            dateTimeFormatter = dateTimeFormatter,
+                                            dao = dao,
+                                            isExpanded = cardExpanded,
+                                            onToggleExpand = {
+                                                expandedCards = if (cardExpanded) {
+                                                    expandedCards - childItem.key
+                                                } else {
+                                                    expandedCards + childItem.key
+                                                }
+                                            }
+                                        )
                                     }
                                 )
                             }
@@ -958,6 +941,59 @@ fun LogNotificationCard(
                             color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.85f)
                         )
                     }
+                    @Suppress("SwallowedException")
+                    val inboxLines = remember(item.inboxLinesJson) {
+                        if (item.inboxLinesJson.isNullOrBlank()) {
+                            emptyList()
+                        } else {
+                            try {
+                                val array = JSONArray(item.inboxLinesJson)
+                                (0 until array.length()).mapNotNull { idx ->
+                                    val str = array.optString(idx)
+                                    str.takeIf { it.isNotBlank() }
+                                }
+                            } catch (_: org.json.JSONException) {
+                                emptyList()
+                            }
+                        }
+                    }
+                    if (inboxLines.isNotEmpty()) {
+                        Spacer(modifier = Modifier.height(6.dp))
+                        Surface(
+                            shape = RoundedCornerShape(6.dp),
+                            color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.35f),
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Column(
+                                modifier = Modifier.padding(8.dp),
+                                verticalArrangement = Arrangement.spacedBy(2.dp)
+                            ) {
+                                Text(
+                                    text = "Inbox Lines (${inboxLines.size})",
+                                    style = MaterialTheme.typography.labelSmall,
+                                    fontWeight = FontWeight.Bold,
+                                    color = MaterialTheme.colorScheme.primary
+                                )
+                                inboxLines.forEach { line ->
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        verticalAlignment = Alignment.Top
+                                    ) {
+                                        Text(
+                                            text = "• ",
+                                            style = MaterialTheme.typography.bodySmall,
+                                            color = MaterialTheme.colorScheme.primary
+                                        )
+                                        Text(
+                                            text = line,
+                                            style = MaterialTheme.typography.bodySmall,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                    }
                     Spacer(modifier = Modifier.height(8.dp))
                     NotificationExpandedAttributes(
                         item = item,
@@ -970,7 +1006,7 @@ fun LogNotificationCard(
 }
 
 @Composable
-@Suppress("FunctionNaming") // Composable PascalCase required by Compose API; detekt rule does not exempt.
+@Suppress("FunctionNaming", "LongMethod", "CyclomaticComplexMethod")
 fun NotificationExpandedAttributes(
     item: NotificationEntity,
     dateTimeFormatter: DateTimeFormatter,
@@ -992,6 +1028,9 @@ fun NotificationExpandedAttributes(
                 color = MaterialTheme.colorScheme.primary
             )
             AttributeRow(label = "Package", value = item.packageName)
+            if (item.appName.isNotBlank() && item.appName != item.packageName) {
+                AttributeRow(label = "App Name", value = item.appName)
+            }
             if (!item.channelId.isNullOrEmpty()) {
                 AttributeRow(label = "Channel ID", value = item.channelId)
             }
@@ -1000,7 +1039,16 @@ fun NotificationExpandedAttributes(
             }
             AttributeRow(label = "Priority", value = getPriorityLabel(item.priority))
             AttributeRow(label = "Time Received", value = dateTimeFormatter.format(Instant.ofEpochMilli(item.postTime)))
-            if (item.dismissTime != null) {
+            if (item.lastUpdatedTime > 0 && item.lastUpdatedTime != item.postTime) {
+                AttributeRow(
+                    label = "Last Updated",
+                    value = dateTimeFormatter.format(Instant.ofEpochMilli(item.lastUpdatedTime))
+                )
+            }
+            if (item.updateCount > 1) {
+                AttributeRow(label = "Update Count", value = "${item.updateCount}")
+            }
+            if (item.dismissTime != null && item.dismissTime > 0) {
                 AttributeRow(
                     label = "Time Dismissed",
                     value = dateTimeFormatter.format(Instant.ofEpochMilli(item.dismissTime))
@@ -1009,8 +1057,21 @@ fun NotificationExpandedAttributes(
             if (item.dismissReason != null) {
                 AttributeRow(label = "Dismiss Reason", value = stringResource(id = getReasonLabel(item.dismissReason)))
             }
-            AttributeRow(label = "Ongoing", value = if (item.isOngoing) "Yes" else "No")
-            AttributeRow(label = "Clearable", value = if (item.isClearable) "Yes" else "No")
+            if (item.isOngoing) {
+                AttributeRow(label = "Ongoing", value = "Yes")
+            }
+            if (item.isPersistent) {
+                AttributeRow(label = "Persistent", value = "Yes")
+            }
+            if (!item.isClearable) {
+                AttributeRow(label = "Clearable", value = "No")
+            }
+            if (item.isPinned) {
+                AttributeRow(label = "Pinned", value = "Yes")
+            }
+            if (item.isRead) {
+                AttributeRow(label = "Read Status", value = "Read")
+            }
             if (item.isGroupSummary) {
                 AttributeRow(label = "Group Summary", value = "Yes")
             }
@@ -1018,13 +1079,33 @@ fun NotificationExpandedAttributes(
                 AttributeRow(label = "Group Key", value = item.groupKey)
             }
             if (item.actionsCount > 0) {
-                val actionLabelsSuffix = if (!item.actionLabels.isNullOrEmpty()) " (${item.actionLabels})" else ""
-                AttributeRow(
-                    label = "Actions",
-                    value = "${item.actionsCount}$actionLabelsSuffix"
-                )
+                AttributeRow(label = "Actions Count", value = "${item.actionsCount}")
+            }
+            if (!item.actionLabels.isNullOrEmpty()) {
+                AttributeRow(label = "Action Labels", value = item.actionLabels)
+            }
+            if (!item.intentUri.isNullOrEmpty()) {
+                AttributeRow(label = "Intent URI", value = item.intentUri)
+            }
+            if (item.smallIconRes != 0) {
+                AttributeRow(label = "Small Icon Res", value = "0x${item.smallIconRes.toString(16).uppercase()}")
+            }
+            if (!item.appIconUri.isNullOrEmpty()) {
+                AttributeRow(label = "App Icon URI", value = item.appIconUri)
             }
             AttributeRow(label = "Sync Status", value = item.syncStatus.name)
+            if (item.lastSyncedAt > 0) {
+                AttributeRow(
+                    label = "Last Synced",
+                    value = dateTimeFormatter.format(Instant.ofEpochMilli(item.lastSyncedAt))
+                )
+            }
+            if (item.embedding != null) {
+                AttributeRow(label = "Vector Embedding", value = "128-dim Indexed")
+            }
+            if (item.id > 0) {
+                AttributeRow(label = "Database ID", value = "#${item.id}")
+            }
             AttributeRow(label = "Key", value = item.key)
         }
     }
