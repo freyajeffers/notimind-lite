@@ -46,12 +46,21 @@ object PiiRedactionEngine {
             out = out.replace(currencyRegex, CURRENCY_REPLACEMENT)
 
             // Short numeric tokens (OTP)
+            // Replace phone and currency first so their numeric fragments don't match OTP regex
+            out = out.replace(phoneRegex, PHONE_REPLACEMENT)
+            out = out.replace(currencyRegex, CURRENCY_REPLACEMENT)
+
+            // Short numeric tokens (OTP)
             out = out.replace(otpRegex, OTP_REPLACEMENT)
 
             // Emails
             out = out.replace(emailRegex, EMAIL_REPLACEMENT)
 
             // Post-process placeholders: collapse adjacent placeholder artifacts like "[REDACTED-PHONE]-[REDACTED-OTP]" -> "[REDACTED-PHONE]"
+            out = out.replace(Regex("\[REDACTED-PHONE\][\s\p{Punct}]*\[REDACTED-OTP\]"), "[REDACTED-PHONE]")
+
+            // Ensure CSV-safe output: remove newlines and double embedded quotes
+            out = escapeForCsv(out)
             out = out.replace(Regex("\[REDACTED-PHONE\][\s\p{Punct}]*\[REDACTED-OTP\]"), "[REDACTED-PHONE]")
 
             // Ensure CSV-safe output: remove newlines and double embedded quotes
