@@ -1,5 +1,7 @@
 package com.jeffers.notimindlite.sanitization
 
+import android.content.Context
+
 /**
  * SanitizationPipeline orchestrates package filtering and PII redaction for
  * notification fields. It is deterministic and testable. It returns a
@@ -14,6 +16,7 @@ data class SanitizationResult(
 )
 
 class SanitizationPipeline(
+    private val context: Context? = null,
     private val packageFilterManager: PackageFilterManager = PackageFilterManager.default(),
     private val redactor: PiiRedactionEngine = PiiRedactionEngine
 ) {
@@ -29,14 +32,31 @@ class SanitizationPipeline(
         bigText: String?
     ): SanitizationResult? {
         // If redaction is disabled through settings, short-circuit and return raw fields (fallback empty strings to avoid nulls)
-        val pref = com.jeffers.notimindlite.data.local.PreferenceManager(effectiveContext)
-        if (!pref.isPiiRedactionEnabled()) {
-            val t = title ?: ""
-            val c = content ?: ""
-            val s = subText
-            val b = bigText
-            if (!packageFilterManager.shouldAccept(packageName)) return null
-            return SanitizationResult(t, c, s, b)
+        val isRedactionEnabled = context?.let {
+            com.jeffers.notimindlite.data.local.PreferenceManager(it).isPiiRedactionEnabled()
+        } ?: true
+
+        if (!packageFilterManager.shouldAccept(packageName)) return null
+
+        if (!isRedactionEnabled) {
+            return SanitizationResult(
+                title = title ?: "",
+                content = content ?: "",
+                subText = subText,
+                bigText = bigText
+            )
         }
+
+        val sanitizedTitle = redactor.redact(title ?: "") ?: return null
+        val sanitizedContent = redactor.redact(content ?: "") ?: return null
+        val sanitizedSubText = subText?.let { redactor.redact(it) }
+        val sanitizedBigText = bigText?.let { redactor.redact(it) }
+
+        return SanitizationResult(
+            title = sanitizedTitle,
+            content = sanitizedContent,
+            subText = sanitizedSubText,
+            bigText = sanitizedBigText
+        )
     }
 }
