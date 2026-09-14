@@ -28,12 +28,13 @@ class SanitizationPipeline(
         subText: String?,
         bigText: String?
     ): SanitizationResult? {
-        // Reject on package filter
-        if (!packageFilterManager.shouldAccept(packageName)) return null
+        // Compute values first (avoid multiple early returns to satisfy style rules)
+        val sTitle = redactor.redact(title ?: "")
+        val sContent = redactor.redact(content ?: "")
 
-        // Redact required summary fields: title and content
-        val sTitle = redactor.redact(title ?: "") ?: return null
-        val sContent = redactor.redact(content ?: "") ?: return null
+        if (!packageFilterManager.shouldAccept(packageName) || sTitle == null || sContent == null) {
+            return null
+        }
 
         val sSub = redactor.redact(subText)
         val sBig = redactor.redact(bigText)
