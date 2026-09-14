@@ -1,9 +1,9 @@
 package com.jeffers.notimindlite.sanitization
 
 import org.junit.Test
-import kotlin.test.assertEquals
-import kotlin.test.assertNull
-import kotlin.test.assertNotNull
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
+import org.junit.Assert.assertNotNull
 
 class PiiRedactionEngineTest {
 
@@ -44,7 +44,7 @@ class PiiRedactionEngineTest {
         // 4111 1111 1111 1111 is a common Luhn-valid test card
         val input = "4111 1111 1111 1111"
         val out = PiiRedactionEngine.redact(input)
-        assertNull(out, "A single Luhn-valid CC token should cause a fail-closed drop (null)")
+        assertNull("A single Luhn-valid CC token should cause a fail-closed drop (null)", out)
     }
 
     @Test

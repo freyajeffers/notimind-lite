@@ -4,9 +4,12 @@ object PiiRedactionEngine {
     // Deterministic, fast compiled patterns.
     private val otpRegex = Regex("\\b\\d{4,6}\\b")
     private val emailRegex = Regex("[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}")
-    private val phoneRegex = Regex("\\b(?:\\+?\\d{1,3}[-.\\s]?)?(?:\\(?\\d{3}\\)?[-.\\s]?\\d{3}[-.\\s]?\\d{4})\\b")
-    private val currencyRegex = Regex("\\b\\$\\s?\\d{1,3}(?:[.,]\\d{3})*(?:\\.\\d{2})?\\b")
-    private val ccCandidateRegex = Regex("\\b(?:\\d[ -]?){12,19}\\b")
+    // More permissive phone matcher: international optional, digits with separators
+    private val phoneRegex = Regex("(?:\\+?\\d[\\d\\s().-]{6,}\\d)")
+    // Currency: $ with optional spaces, digits, optional thousands/grouping and cents
+    private val currencyRegex = Regex("\\$\\s?\\d{1,3}(?:[,\\.]\\d{3})*(?:\\.\\d{2})?")
+    // Credit-card candidate: sequences of digits with optional spaces/dashes (12-19 digits total)
+    private val ccCandidateRegex = Regex("(?:\\d[ -]?){12,19}")
 
     // Redaction placeholders
     private const val OTP_REPLACEMENT = "[REDACTED-OTP]"
@@ -26,7 +29,8 @@ object PiiRedactionEngine {
             val trimmed = out.trim()
             if (ccCandidateRegex.matches(trimmed)) {
                 // If it's a single numeric token that is a valid CC (Luhn), drop
-                if (isValidLuhn(trimmed)) return null
+                val digitsOnly = trimmed.filter { it.isDigit() }
+                if (isValidLuhn(digitsOnly)) return null
                 // otherwise mask
                 out = out.replace(ccCandidateRegex, CC_REPLACEMENT)
             }
@@ -37,10 +41,12 @@ object PiiRedactionEngine {
                 if (isValidLuhn(candidate)) CC_REPLACEMENT else CC_REPLACEMENT
             }
 
-            out = out.replace(otpRegex, OTP_REPLACEMENT)
-            out = out.replace(emailRegex, EMAIL_REPLACEMENT)
+            // Replace phone and currency before numeric-only OTP tokens so we don't redact
+            // parts of phone numbers or amounts as OTPs.
             out = out.replace(phoneRegex, PHONE_REPLACEMENT)
             out = out.replace(currencyRegex, CURRENCY_REPLACEMENT)
+            out = out.replace(otpRegex, OTP_REPLACEMENT)
+            out = out.replace(emailRegex, EMAIL_REPLACEMENT)
 
             return out
         } catch (e: Exception) {
