@@ -1,7 +1,8 @@
 package com.jeffers.notimindlite.sanitization
 
 import org.junit.Test
-import org.junit.Assert.*
+import org.junit.Assert.assertTrue
+import org.junit.Assert.assertFalse
 
 class PackageFilterManagerTest {
 

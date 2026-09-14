@@ -251,7 +251,7 @@ class NotificationLoggerService : NotificationListenerService() {
 
             // Run sanitization pipeline (package filter + PII redaction). The pipeline returns null
             // to indicate the notification should be dropped (fail-closed).
-            val pipeline = com.jeffers.notimindlite.sanitization.SanitizationPipeline()
+            val pipeline = com.jeffers.notimindlite.sanitization.SanitizationPipeline(applicationContext)
             val san = pipeline.sanitize(packageName, title, content, subText, bigText) ?: return null
             // overwrite working variables with sanitized values
             title = san.title
