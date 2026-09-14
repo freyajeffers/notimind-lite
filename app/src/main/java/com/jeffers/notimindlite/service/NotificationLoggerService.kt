@@ -254,10 +254,10 @@ class NotificationLoggerService : NotificationListenerService() {
             val pipeline = com.jeffers.notimindlite.sanitization.SanitizationPipeline()
             val san = pipeline.sanitize(packageName, title, content, subText, bigText) ?: return null
             // overwrite working variables with sanitized values
-            val title = san.title
-            val content = san.content
-            val subText = san.subText
-            val bigText = san.bigText
+            title = san.title
+            content = san.content
+            subText = san.subText
+            bigText = san.bigText
 
             if (title.isBlank() && content.isBlank()) return null
 
