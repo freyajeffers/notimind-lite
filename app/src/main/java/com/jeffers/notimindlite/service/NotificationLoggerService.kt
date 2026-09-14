@@ -249,21 +249,15 @@ class NotificationLoggerService : NotificationListenerService() {
             val postTime = sbn.postTime
             val now = System.currentTimeMillis()
 
-            // ── Ingestion Filters ──
-            val blacklistedPackages = setOf(
-                "com.android.shell",
-                "com.google.android.googlequicksearchbox"
-            )
-            if (packageName in blacklistedPackages) return null
-
-            if ((packageName == "android" || packageName == "com.android.systemui") &&
-                (priority <= -2 || category == Notification.CATEGORY_SERVICE || category == Notification.CATEGORY_SYSTEM || category == "sys") &&
-                (title.contains("USB", ignoreCase = true) || title.contains("debugging", ignoreCase = true) || title.contains("charging", ignoreCase = true))
-            ) return null
-
-            if ((packageName == "android" || packageName == "com.android.systemui") &&
-                (category == Notification.CATEGORY_SERVICE || category == Notification.CATEGORY_SYSTEM)
-            ) return null
+            // Run sanitization pipeline (package filter + PII redaction). The pipeline returns null
+            // to indicate the notification should be dropped (fail-closed).
+            val pipeline = com.jeffers.notimindlite.sanitization.SanitizationPipeline()
+            val san = pipeline.sanitize(packageName, title, content, subText, bigText) ?: return null
+            // overwrite working variables with sanitized values
+            val title = san.title
+            val content = san.content
+            val subText = san.subText
+            val bigText = san.bigText
 
             if (title.isBlank() && content.isBlank()) return null
 
