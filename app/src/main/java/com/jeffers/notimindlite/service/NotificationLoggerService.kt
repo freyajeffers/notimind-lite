@@ -222,13 +222,13 @@ class NotificationLoggerService : NotificationListenerService() {
             val extras = notification.extras
             val conversationTitle = extras?.getCharSequence(Notification.EXTRA_CONVERSATION_TITLE)?.toString()
             val rawTitle = extras?.getCharSequence(Notification.EXTRA_TITLE)?.toString() ?: ""
-            val title = if (rawTitle.isNotBlank()) rawTitle else (conversationTitle ?: "")
+            var title = if (rawTitle.isNotBlank()) rawTitle else (conversationTitle ?: "")
 
             val rawContent = extras?.getCharSequence(Notification.EXTRA_TEXT)?.toString() ?: ""
-            val subText = extras?.getCharSequence(Notification.EXTRA_SUB_TEXT)?.toString()
-            val bigText = extras?.getCharSequence(Notification.EXTRA_BIG_TEXT)?.toString()
+            var subText = extras?.getCharSequence(Notification.EXTRA_SUB_TEXT)?.toString()
+            var bigText = extras?.getCharSequence(Notification.EXTRA_BIG_TEXT)?.toString()
             val summaryText = extras?.getCharSequence(Notification.EXTRA_SUMMARY_TEXT)?.toString()
-            val content = when {
+            var content = when {
                 rawContent.isNotBlank() -> rawContent
                 !bigText.isNullOrBlank() -> bigText
                 !summaryText.isNullOrBlank() -> summaryText
