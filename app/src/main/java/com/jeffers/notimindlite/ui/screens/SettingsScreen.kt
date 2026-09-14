@@ -253,6 +253,27 @@ fun SettingsScreen(
                         }
                     )
                 }
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text("PII Redaction Engine", style = MaterialTheme.typography.bodyLarge)
+                        Text(
+                            "Mask OTP codes, cards, phone numbers, and emails before saving.",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                    var piiRedactionChecked by remember { mutableStateOf(PreferenceManager(context).isPiiRedactionEnabled()) }
+                    Switch(
+                        checked = piiRedactionChecked,
+                        onCheckedChange = { enabled ->
+                            piiRedactionChecked = enabled
+                            PreferenceManager(context).setPiiRedactionEnabled(enabled)
+                        }
+                    )
+                }
             }
         }
 
