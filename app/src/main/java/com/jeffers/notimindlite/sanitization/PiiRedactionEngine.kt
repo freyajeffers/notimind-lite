@@ -43,16 +43,24 @@ object PiiRedactionEngine {
 
             // Replace phone and currency before numeric-only OTP tokens so we don't redact
             // parts of phone numbers or amounts as OTPs.
-            out = out.replace(phoneRegex, PHONE_REPLACEMENT)
-            out = out.replace(currencyRegex, CURRENCY_REPLACEMENT)
             out = out.replace(otpRegex, OTP_REPLACEMENT)
             out = out.replace(emailRegex, EMAIL_REPLACEMENT)
+            out = out.replace(phoneRegex, PHONE_REPLACEMENT)
+            out = out.replace(currencyRegex, CURRENCY_REPLACEMENT)
+
+            // Ensure CSV-safe output: remove newlines and double embedded quotes
+            out = escapeForCsv(out)
 
             return out
         } catch (e: Exception) {
             // Any unexpected error => fail-closed: signal drop
             return null
         }
+    }
+
+    // Escape field for inclusion in a CSV cell: double quotes and remove newlines
+    private fun escapeForCsv(s: String): String {
+        return s.replace("\"", "\"\"").replace(Regex("[\r\n]+"), " ")
     }
 
     private fun isValidLuhn(digitsOnly: String): Boolean {
