@@ -28,17 +28,15 @@ class SanitizationPipeline(
         subText: String?,
         bigText: String?
     ): SanitizationResult? {
-        // Compute values first (avoid multiple early returns to satisfy style rules)
-        val sTitle = redactor.redact(title ?: "")
-        val sContent = redactor.redact(content ?: "")
-
-        if (!packageFilterManager.shouldAccept(packageName) || sTitle == null || sContent == null) {
-            return null
+        // If redaction is disabled through settings, short-circuit and return raw fields (fallback empty strings to avoid nulls)
+        val pref = com.jeffers.notimindlite.data.local.PreferenceManager(effectiveContext)
+        if (!pref.isPiiRedactionEnabled()) {
+            val t = title ?: ""
+            val c = content ?: ""
+            val s = subText
+            val b = bigText
+            if (!packageFilterManager.shouldAccept(packageName)) return null
+            return SanitizationResult(t, c, s, b)
         }
-
-        val sSub = redactor.redact(subText)
-        val sBig = redactor.redact(bigText)
-
-        return SanitizationResult(sTitle, sContent, sSub, sBig)
     }
 }
