@@ -4,6 +4,19 @@ All notable changes to NotiMind Lite are documented here. This project adheres t
 
 ---
 
+## [Unreleased] - Ingestion Pipeline Sanitization & Crypto Keystore
+### 🚀 Features
+- **feat(sanitization)**: Implement `PiiRedactionEngine` for deterministic pre-ingestion redaction of OTPs, Luhn-verified cards, phone numbers, emails, and currency values.
+- **feat(sanitization)**: Implement `PackageFilterManager` and fail-closed `SanitizationPipeline` for package filtering and ingestion protection.
+- **feat(prefs)**: Add PII Redaction toggle in `PreferenceManager` and `SettingsScreen`.
+- **feat(crypto)**: Implement `CryptoUtils` with RFC 5869 HKDF-SHA256 key derivation and AES-256-GCM authenticated encryption.
+- **feat(crypto)**: Implement `KeyManager` wrapper for AndroidX Security MasterKeys with JVM test fallback.
+
+### 🧪 Testing
+- **test(crypto)**: Add unit tests for `CryptoUtils` and `KeyManager` covering roundtrip encryption, nonce uniqueness, AAD mismatch, tamper rejection, and RFC HKDF derivation.
+
+---
+
 ## [0.6.0] - Performance & Stability
 ### 🚀 Features
 - **feat(core)**: Implement `SnoozeReminderScheduler` and `SnoozeReminderReceiver` for custom in-app snooze timers.
