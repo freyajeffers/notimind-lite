@@ -45,4 +45,13 @@ class PreferenceManager(context: Context) {
     fun setLastUpdateTime(time: Long) {
         prefs.edit().putLong(PREF_LAST_UPDATE_TIME, time).apply()
     }
+
+    // Toggle for PII redaction (disabled by default)
+    fun isPiiRedactionEnabled(): Boolean {
+        return prefs.getBoolean("pii_redaction_enabled", false)
+    }
+
+    fun setPiiRedactionEnabled(enabled: Boolean) {
+        prefs.edit().putBoolean("pii_redaction_enabled", enabled).apply()
+    }
 }
