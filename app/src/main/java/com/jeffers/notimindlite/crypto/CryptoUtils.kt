@@ -25,7 +25,8 @@ object CryptoUtils {
     /** Derive key material using HKDF-SHA256. Returns exactly length bytes. */
     fun hkdfSha256ExtractAndExpand(salt: ByteArray?, ikm: ByteArray, info: ByteArray?, length: Int): ByteArray {
         // HKDF-Extract
-        val prk = hmacSha256(salt ?: ByteArray(0), ikm)
+        // RFC 5869 specifies an all-zero hash-length salt when no salt is supplied.
+        val prk = hmacSha256(salt ?: ByteArray(32), ikm)
         // HKDF-Expand
         val hashLen = 32
         val n = (length + hashLen - 1) / hashLen
