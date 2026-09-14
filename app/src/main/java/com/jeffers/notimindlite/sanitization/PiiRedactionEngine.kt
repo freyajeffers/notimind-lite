@@ -57,11 +57,7 @@ object PiiRedactionEngine {
             out = out.replace(emailRegex, EMAIL_REPLACEMENT)
 
             // Post-process placeholders: collapse adjacent placeholder artifacts like "[REDACTED-PHONE]-[REDACTED-OTP]" -> "[REDACTED-PHONE]"
-            out = out.replace(Regex("\[REDACTED-PHONE\][\s\p{Punct}]*\[REDACTED-OTP\]"), "[REDACTED-PHONE]")
-
-            // Ensure CSV-safe output: remove newlines and double embedded quotes
-            out = escapeForCsv(out)
-            out = out.replace(Regex("\[REDACTED-PHONE\][\s\p{Punct}]*\[REDACTED-OTP\]"), "[REDACTED-PHONE]")
+            out = out.replace(Regex("""\[REDACTED-PHONE\][\s\p{Punct}]*\[REDACTED-OTP\]"""), "[REDACTED-PHONE]")
 
             // Ensure CSV-safe output: remove newlines and double embedded quotes
             out = escapeForCsv(out)
