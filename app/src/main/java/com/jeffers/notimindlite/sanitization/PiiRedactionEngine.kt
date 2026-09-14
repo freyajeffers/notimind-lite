@@ -5,7 +5,7 @@ object PiiRedactionEngine {
     private val otpRegex = Regex("\\b\\d{4,6}\\b")
     private val emailRegex = Regex("[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}")
     // More permissive phone matcher: international optional, digits with separators
-    private val phoneRegex = Regex("(?:\\+?\\d[\\d\\s().-]{6,}\\d)")
+    private val phoneRegex = Regex("(?:\\+?\\d[\\d\\s().-]{7,}\\d)")
     // Currency: $ with optional spaces, digits, optional thousands/grouping and cents
     private val currencyRegex = Regex("\\$\\s?\\d{1,3}(?:[,\\.]\\d{3})*(?:\\.\\d{2})?")
     // Credit-card candidate: sequences of digits with optional spaces/dashes (12-19 digits total)
@@ -45,10 +45,6 @@ object PiiRedactionEngine {
             out = out.replace(phoneRegex, PHONE_REPLACEMENT)
             out = out.replace(currencyRegex, CURRENCY_REPLACEMENT)
 
-            // Short numeric tokens (OTP)
-            // Replace phone and currency first so their numeric fragments don't match OTP regex
-            out = out.replace(phoneRegex, PHONE_REPLACEMENT)
-            out = out.replace(currencyRegex, CURRENCY_REPLACEMENT)
 
             // Short numeric tokens (OTP)
             out = out.replace(otpRegex, OTP_REPLACEMENT)
