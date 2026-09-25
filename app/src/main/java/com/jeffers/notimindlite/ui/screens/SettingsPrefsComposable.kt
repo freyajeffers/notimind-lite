@@ -10,6 +10,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.res.stringResource
 import com.jeffers.notimindlite.data.local.PreferencesRepository
 import com.jeffers.notimindlite.R
+import com.jeffers.notimindlite.BuildConfig
 
 @Composable
 fun SettingsPreferencesSection(preferencesRepository: PreferencesRepository) {
@@ -52,38 +53,44 @@ fun SettingsPreferencesSection(preferencesRepository: PreferencesRepository) {
                 Switch(checked = enableFts4, onCheckedChange = preferencesRepository::setEnableFts4)
             }
 
-            Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(stringResource(R.string.pref_retention_days_title), style = MaterialTheme.typography.bodyLarge)
-                    Text(stringResource(R.string.pref_retention_days_summary), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                }
-                OutlinedTextField(
-                    value = retentionDays.toString(),
-                    onValueChange = { new ->
-                        new.toIntOrNull()?.let(preferencesRepository::setRetentionDays)
-                    },
-                    modifier = Modifier.width(120.dp),
-                    singleLine = true,
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                    label = { Text(stringResource(R.string.pref_retention_days_unit)) },
-                    supportingText = { Text(stringResource(R.string.pref_retention_days_range)) }
+            if (BuildConfig.DEBUG) {
+                Text(
+                    text = stringResource(R.string.pref_data_search_debug_note),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
-            }
-
-            Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(stringResource(R.string.pref_export_encryption_title), style = MaterialTheme.typography.bodyLarge)
-                    Text(stringResource(R.string.pref_export_encryption_summary), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            } else {
+                Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(stringResource(R.string.pref_retention_days_title), style = MaterialTheme.typography.bodyLarge)
+                        Text(stringResource(R.string.pref_retention_days_summary), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    }
+                    OutlinedTextField(
+                        value = retentionDays.toString(),
+                        onValueChange = { new -> new.toIntOrNull()?.let(preferencesRepository::setRetentionDays) },
+                        modifier = Modifier.width(120.dp),
+                        singleLine = true,
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                        label = { Text(stringResource(R.string.pref_retention_days_unit)) },
+                        supportingText = { Text(stringResource(R.string.pref_retention_days_range)) }
+                    )
                 }
-                Switch(checked = exportEncryption, onCheckedChange = preferencesRepository::setExportEncryption)
-            }
 
-            Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(stringResource(R.string.pref_capture_notifications_title), style = MaterialTheme.typography.bodyLarge)
-                    Text(stringResource(R.string.pref_capture_notifications_summary), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(stringResource(R.string.pref_export_encryption_title), style = MaterialTheme.typography.bodyLarge)
+                        Text(stringResource(R.string.pref_export_encryption_summary), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    }
+                    Switch(checked = exportEncryption, onCheckedChange = preferencesRepository::setExportEncryption)
                 }
-                Switch(checked = captureNotifications, onCheckedChange = preferencesRepository::setCaptureNotifications)
+
+                Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(stringResource(R.string.pref_capture_notifications_title), style = MaterialTheme.typography.bodyLarge)
+                        Text(stringResource(R.string.pref_capture_notifications_summary), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    }
+                    Switch(checked = captureNotifications, onCheckedChange = preferencesRepository::setCaptureNotifications)
+                }
             }
         }
     }
