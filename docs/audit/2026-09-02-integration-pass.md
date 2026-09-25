@@ -9,6 +9,7 @@ imports, calls, and live-compile checks (`./gradlew :app:compileDebugKotlin
 **Result:** 12 distinct findings (A..L), 4 of them real compile-or-runtime-impacting bugs.
 
 Findings are graded:
+
 - **[CRITICAL]** — breaks build, runtime crash, or silent data loss
 - **[MAJOR]** — dead code, broken wiring, policy violation
 - **[MINOR]** — documentation or hygiene
@@ -18,6 +19,7 @@ Findings are graded:
 ## Findings
 
 ### F-A. FTS schema creation conflicts with Room's contentEntity
+
 **[MINOR]** `data/local/NotificationFtsEntity.kt:6` is `@Fts4(contentEntity = NotificationEntity::class)`.
 Room's `contentEntity` mode generates automatic triggers to keep FTS in sync.
 `AppDatabase.kt:147` (MIGRATION_13_14) manually creates the FTS table with the
@@ -29,10 +31,13 @@ manually — don't mix.
 `NotificationFtsEntity.kt:6`.
 
 ### F-B. FTS query joins on rowid but PK is autoGenerate id
+
 **[MINOR]** `NotificationDao.kt:126,134`:
+
 ```sql
 JOIN notifications_fts ON notifications.rowid = notifications_fts.docid
 ```
+
 `NotificationEntity` declares `@PrimaryKey(autoGenerate = true) val id: Long`,
 which Room maps to `INTEGER PRIMARY KEY AUTOINCREMENT`. SQLite's `rowid` is an
 alias for INTEGER PRIMARY KEY when no WITHOUT ROWID is declared, so this works.
@@ -41,13 +46,16 @@ this query silently breaks. The "correct" intent would be `notifications.id`.
 **Files:** `NotificationDao.kt:126,134`.
 
 ### F-C. SyncWorker references missing class (false positive after verification)
+
 **[MINOR]** `SyncWorker.kt:24` constructs `FirestoreSyncRepository(db)`. The
 class exists at `data/sync/FirestoreSyncRepository.kt` (verified by file
 listing). The earlier concern was a `read_file` tool glitch returning empty
 content. **Verified present and compilable.**
 
 ### F-D. FirestoreSyncRepository.purgeUserData is a no-op stub
+
 **[MAJOR]** `FirestoreSyncRepository.kt:140-149`:
+
 ```kotlin
 suspend fun purgeUserData(userId: String): Result<Unit> {
     return try {
@@ -56,6 +64,7 @@ suspend fun purgeUserData(userId: String): Result<Unit> {
     }
 }
 ```
+
 The "permanently disabled deletion" comment claims policy enforcement. The code
 does NOT enforce policy — it just returns failure. A future caller could still
 hit `firestore.collection("users").document(userId).delete()` and bypass this
@@ -64,6 +73,7 @@ would either remove the Firestore SDK entirely OR enforce via Firestore Security
 Rules. **Files:** `data/sync/FirestoreSyncRepository.kt:140-149`.
 
 ### F-E. SyncWorker.generateBackupKey import path is wrong (false positive after verification)
+
 **[MINOR]** `SyncWorker.kt:13` imports `com.jeffers.notimindlite.data.local.generateBackupKey`
 but the function lives in `util/EncryptedBackupManager.kt`. Verified via
 `./gradlew :app:compileDebugKotlin --rerun-tasks` — build succeeds because
@@ -71,6 +81,7 @@ EncryptedBackupManager.kt declares `package com.jeffers.notimindlite.data.local`
 on line 1. See F-F.
 
 ### F-F. util/EncryptedBackupManager.kt declares wrong package
+
 **[CRITICAL]** `util/EncryptedBackupManager.kt:1` declares `package
 com.jeffers.notimindlite.data.local`. The file lives in the `util/` directory
 but claims to be in `data.local`. Result: 8 source files import
@@ -90,11 +101,13 @@ correct but touches 8 imports; the latter is one-line but leaves the file
 in the wrong directory.
 
 **Files:**
+
 - `app/src/main/java/com/jeffers/notimindlite/util/EncryptedBackupManager.kt:1` (wrong package)
 - Imports of `com.jeffers.notimindlite.data.local.EncryptedBackupManager`,
   `.BackupKeyCodec`, `.generateBackupKey` (8 files; verified via grep).
 
 ### F-G. Service pipeline does NOT call ActionableEntityExtractor, VectorEmbeddingHelper, DynamicClusterManager
+
 **[CRITICAL — partially resolved in commits 4b1b43c-adjacent and f279324; read-side
 remaining requires UX direction]**
 
@@ -152,6 +165,7 @@ round-trip through the same byte order as the entity TypeConverter.
 (two filter blocks replaced).
 
 ### F-H. No ViewModels exist (confirmed in AGENTS.md)
+
 **[MINOR — already documented]** Audit pillar 1 says "audit ViewModels."
 Verified: zero `class : ViewModel(` or `ViewModel()` in production source.
 This is **already documented** as a deliberate architectural choice in
@@ -159,11 +173,13 @@ AGENTS.md (rule 7a). UI state is held in Composables via `remember` +
 `StateFlow.collectAsStateWithLifecycle`.
 
 ### F-I. ViewModelUiStatePairwiseTest will fail — there are no ViewModels
+
 **[MINOR]** `tier3_pairwise/ViewModelUiStatePairwiseTest.kt` exists but the
 production code has no ViewModels. Test likely asserts on state objects that
 don't exist. Verify on next test run; flag this with the test author.
 
 ### F-J. SettingsScreen is orphan — not wired into Navigation.kt
+
 **[MAJOR]** `ui/screens/SettingsScreen.kt` exists (141 lines). `Navigation.kt`
 defines `Screen.Active` and `Screen.History` only. No `Screen.Settings`, no
 `composable("settings")` block, no route, no bottom-nav item. Settings is
@@ -177,6 +193,7 @@ launching pattern.
 **Files:** `ui/Navigation.kt`, `ui/screens/SettingsScreen.kt`.
 
 ### F-K. Navigation.kt prefers but does not use SavedStateHandle for filter/search state
+
 **[MINOR]** The audit asks about "SavedStateHandle" for filter/search. Verified:
 zero usages of `SavedStateHandle` in production source. `MainActivity.kt`
 and screens use `rememberSaveable` via Compose's standard mechanisms (search
@@ -189,6 +206,7 @@ in-progress search.
 **Files:** `ui/screens/ActiveNotificationsScreen.kt`, `LogHistoryScreen.kt` (specific lines not audited).
 
 ### F-L. BootReceiver early-returns on Direct Boot, making restoration happen only on BOOT_COMPLETED
+
 **[MAJOR]** `receiver/BootReceiver.kt:60` — on `LOCKED_BOOT_COMPLETED`,
 `isUserUnlocked` is false → `return@launch`. The receiver IS `directBootAware`
 in manifest, but the restoration never happens via Direct Boot path; it only
@@ -241,37 +259,31 @@ session due to scope. Each is flagged for a follow-up audit pass:
 ## Phased Implementation Plan
 
 Phase 0: **Stabilize** (low-risk cleanups, additive only)
+
 1. **F-F fix** — correct `EncryptedBackupManager.kt` package declaration,
    update 8 imports. Verify `./gradlew :app:assembleDebug`.
 2. **F-A, F-B docs** — add KDoc to `NotificationFtsEntity` and
    `NotificationDao.searchNotificationsFts` documenting the rowid vs id
    relationship.
 
-Phase 1: **Wire orphans into navigation** (medium-risk, additive)
-3. **F-J fix** — add `SettingsScreen` route to Navigation.kt.
-4. **F-G fix (part 1)** — call `ActionableEntityExtractor.extract()` from
-   `NotificationLoggerService.onNotificationPosted` before the DAO write.
+Phase 1: **Wire orphans into navigation** (medium-risk, additive) 3. **F-J fix** — add `SettingsScreen` route to Navigation.kt. 4. **F-G fix (part 1)** — call `ActionableEntityExtractor.extract()` from
+`NotificationLoggerService.onNotificationPosted` before the DAO write.
 
-Phase 2: **Direct Boot correctness** (medium-risk, schema-aware)
-5. **F-L fix** — use `getDeInstance`/`getCeInstance` from `AppDatabase` in
-   `BootReceiver` based on `isUserUnlocked`.
-6. **F-G fix (part 2)** — schedule `VectorEmbeddingHelper.computeEmbedding()`
-   as a WorkManager job so it's off the listener path. Add a
-   `clusterId` column to `NotificationEntity` (Migration 18→19).
+Phase 2: **Direct Boot correctness** (medium-risk, schema-aware) 5. **F-L fix** — use `getDeInstance`/`getCeInstance` from `AppDatabase` in
+`BootReceiver` based on `isUserUnlocked`. 6. **F-G fix (part 2)** — schedule `VectorEmbeddingHelper.computeEmbedding()`
+as a WorkManager job so it's off the listener path. Add a
+`clusterId` column to `NotificationEntity` (Migration 18→19).
 
-Phase 3: **Search wiring** (high-risk, requires Room full-text setup review)
-7. **F-G fix (part 3)** — call `DynamicClusterManager.classify()` after
-   embedding is ready; write the cluster ID.
-8. **F-G fix (part 4)** — wire `HybridSearchEngine` into
-   `LogHistoryScreen`'s search invocation.
-9. **F-A/F-B fix** — make the FTS schema the canonical Room-managed one
-   (drop manual trigger management).
+Phase 3: **Search wiring** (high-risk, requires Room full-text setup review) 7. **F-G fix (part 3)** — call `DynamicClusterManager.classify()` after
+embedding is ready; write the cluster ID. 8. **F-G fix (part 4)** — wire `HybridSearchEngine` into
+`LogHistoryScreen`'s search invocation. 9. **F-A/F-B fix** — make the FTS schema the canonical Room-managed one
+(drop manual trigger management).
 
-Phase 4: **Policy enforcement** (audit/hygiene)
-10. **F-D fix** — implement `purgeUserData` either as a real no-op (remove
-    Firebase SDK) or as an actual policy check.
+Phase 4: **Policy enforcement** (audit/hygiene) 10. **F-D fix** — implement `purgeUserData` either as a real no-op (remove
+Firebase SDK) or as an actual policy check.
 
 Each phase should ship with:
+
 - Updated tests in the appropriate tier (1-4)
 - A single atomic commit per fix
 - `./gradlew :app:assembleDebug` and `:app:testDebugUnitTest` both green
@@ -291,6 +303,7 @@ Each phase should ship with:
 - [x] Master remains green at every commit boundary
 
 **Resolution map (commits in chronological order):**
+
 - F-F → `4b1b43c` fix(util): correct package declaration on EncryptedBackupManager
 - F-J → `e6c3a58` feat(ui): wire SettingsScreen into navigation graph
 - F-A, F-B → `098ceed` docs(data): add KDoc notes for FTS4 schema conflicts and rowid fragility

@@ -39,6 +39,7 @@ user data. It rejects every call with
 
 This layer catches every **in-app caller** that routes through the repository.
 It does NOT prevent:
+
 - Code that calls `firestore.collection(...).document(...).delete()` directly
   (bypassing the repository). There is no in-tree caller that does this; a
   future feature MUST route through `purgeUserData`.
@@ -63,6 +64,7 @@ no `allow delete` grant on `users/{uid}` or `users/{uid}/notifications`.
 
 The Room `@Database` declaration does not include any DELETE triggers. The
 only DELETE statements in the codebase are:
+
 - `dao.clearAll()` — clears local `notifications` table. Used by the
   "Clear Log" Settings action.
 - `dao.delete...` — none currently in production code.
@@ -72,11 +74,13 @@ Neither operation removes the persistence store itself or affects Firestore.
 ## What "Clear Log" Does (and Does Not Do)
 
 The Settings screen exposes a "Clear Log" action. When invoked:
+
 - Local Room `notifications` table is emptied (rows deleted).
 - Firestore `users/{uid}/notifications` collection is **NOT** touched.
 
 This is the only deletion operation in the app, and it is explicitly
 opt-in by the user. It does not violate the policy because:
+
 - The persistence store remains (empty table, not dropped table).
 - The cloud record remains (the user's Firestore copy is unaffected).
 - The next notification will re-create a local row.

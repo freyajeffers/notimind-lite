@@ -24,20 +24,23 @@ The notarization process ensures that backups are created by a legitimate, untam
 ## 🚀 API Endpoints
 
 ### Notarize Backup
+
 Signs a backup file hash after successful device and binary attestation.
 
 - **Endpoint**: `POST /v1/notarize`
 - **Content-Type**: `application/json`
 
 #### Request Schema
-| Field | Type | Description |
-| :--- | :--- | :--- |
-| `file_hash` | `string` | The SHA-256 hex string of the encrypted backup file. |
-| `integrity_token` | `string` | The JWT token provided by the Google Play Integrity API. |
-| `nonce` | `string` | A unique, server-generated nonce to prevent replay attacks. |
-| `timestamp` | `string` | ISO-8601 formatted timestamp of the request. |
+
+| Field             | Type     | Description                                                 |
+| :---------------- | :------- | :---------------------------------------------------------- |
+| `file_hash`       | `string` | The SHA-256 hex string of the encrypted backup file.        |
+| `integrity_token` | `string` | The JWT token provided by the Google Play Integrity API.    |
+| `nonce`           | `string` | A unique, server-generated nonce to prevent replay attacks. |
+| `timestamp`       | `string` | ISO-8601 formatted timestamp of the request.                |
 
 **Example Request:**
+
 ```json
 {
   "file_hash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
@@ -48,13 +51,15 @@ Signs a backup file hash after successful device and binary attestation.
 ```
 
 #### Response Schema (`200 OK`)
-| Field | Type | Description |
-| :--- | :--- | :--- |
-| `signature` | `string` | The HMAC-SHA256 hex string signature of the file hash. |
-| `notary_id` | `string` | The identifier of the server node that performed the signing. |
+
+| Field        | Type     | Description                                                                 |
+| :----------- | :------- | :-------------------------------------------------------------------------- |
+| `signature`  | `string` | The HMAC-SHA256 hex string signature of the file hash.                      |
+| `notary_id`  | `string` | The identifier of the server node that performed the signing.               |
 | `expires_at` | `string` | ISO-8601 timestamp indicating when the signature's validity window expires. |
 
 **Example Response:**
+
 ```json
 {
   "signature": "7d2f3a1b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0a1b2c3d4e5f6a7b8c9d0e1f",
@@ -67,11 +72,11 @@ Signs a backup file hash after successful device and binary attestation.
 
 ## ❌ Error Codes
 
-| HTTP Code | Error Code | Meaning | Resolution |
-| :--- | :--- | :--- | :--- |
-| `400` | `INVALID_REQUEST` | Missing required fields or malformed JSON. | Check request schema. |
-| `401` | `ATTESTATION_FAILED` | Integrity token is invalid, expired, or forged. | Request a fresh token from Play Integrity API. |
-| `403` | `UNTRUSTED_ENVIRONMENT` | Device is rooted or fails `deviceIntegrity` check. | Backup will be marked "Unverified". |
-| `403` | `BINARY_MISMATCH` | APK hash does not match known official releases. | Update app to latest official version. |
-| `429` | `TOO_MANY_REQUESTS` | Rate limit exceeded for the device/user. | Implement exponential backoff. |
-| `500` | `INTERNAL_ERROR` | Server-side failure during signing. | Retry after delay. |
+| HTTP Code | Error Code              | Meaning                                            | Resolution                                     |
+| :-------- | :---------------------- | :------------------------------------------------- | :--------------------------------------------- |
+| `400`     | `INVALID_REQUEST`       | Missing required fields or malformed JSON.         | Check request schema.                          |
+| `401`     | `ATTESTATION_FAILED`    | Integrity token is invalid, expired, or forged.    | Request a fresh token from Play Integrity API. |
+| `403`     | `UNTRUSTED_ENVIRONMENT` | Device is rooted or fails `deviceIntegrity` check. | Backup will be marked "Unverified".            |
+| `403`     | `BINARY_MISMATCH`       | APK hash does not match known official releases.   | Update app to latest official version.         |
+| `429`     | `TOO_MANY_REQUESTS`     | Rate limit exceeded for the device/user.           | Implement exponential backoff.                 |
+| `500`     | `INTERNAL_ERROR`        | Server-side failure during signing.                | Retry after delay.                             |

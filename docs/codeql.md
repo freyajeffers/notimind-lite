@@ -132,10 +132,10 @@ inline PR comments when introduced in the PR.
 
 Common tweaks and where they go:
 
-| Goal | Change |
-|---|---|
-| Stricter security review | Override `queries:` to `security-and-quality` on a per-run basis |
-| Faster builds | Drop `--no-build-cache` only if you've already green-lighted the current PR |
-| Different branch | Add to `branches:` list in both `push:` and `pull_request:` triggers |
-| Disable scheduled run | Remove the `schedule:` block |
-| Run on Dependabot PRs | Add `pull_request_target:` trigger (security: read [the docs](https://docs.github.com/en/code-security/dependabot/working-with-dependabot/automating-dependabot-with-github-actions) first) |
+| Goal                     | Change                                                                                                                                                                                      |
+| ------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Stricter security review | Override `queries:` to `security-and-quality` on a per-run basis                                                                                                                            |
+| Faster builds            | Drop `--no-build-cache` only if you've already green-lighted the current PR                                                                                                                 |
+| Different branch         | Add to `branches:` list in both `push:` and `pull_request:` triggers                                                                                                                        |
+| Disable scheduled run    | Remove the `schedule:` block                                                                                                                                                                |
+| Run on Dependabot PRs    | Add `pull_request_target:` trigger (security: read [the docs](https://docs.github.com/en/code-security/dependabot/working-with-dependabot/automating-dependabot-with-github-actions) first) |

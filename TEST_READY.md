@@ -45,4 +45,5 @@ app/src/test/java/com/notimind/lite/
 ```bash
 ./gradlew test
 ```
+
 Result: **BUILD SUCCESSFUL** (100% Tests Passed).

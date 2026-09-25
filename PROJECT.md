@@ -1,9 +1,11 @@
 # Project: NotiMind Lite
 
 ## Architecture
+
 NotiMind Lite is a high-performance Android application for systemic notification interception, semantic filtering, and secure archival. It employs a hybrid search architecture and a zero-trust remote notarization system.
 
 **Package Structure:**
+
 - `com.jeffers.notimindlite.data`: Persistence layer, including Room DB, DAOs, and Entities.
 - `com.jeffers.notimindlite.data.auth`: Identity management via Firebase Auth and Google Sign-In.
 - `com.jeffers.notimindlite.data.sync`: Cloud synchronization via Google Cloud Firestore.
@@ -13,33 +15,37 @@ NotiMind Lite is a high-performance Android application for systemic notificatio
 
 ## Core Implementation Milestones
 
-| # | Name | Scope | Status |
-|---|------|-------|--------|
-| 1 | Project Foundation | Gradle setup, Compose/Room dependencies, AppInitializer | DONE |
-| 2 | Identity & Cloud Sync | Firebase Auth, UserSession, FirestoreSyncRepository, SyncWorker | DONE |
-| 3 | Notification Engine | NotificationLoggerService, Room Schema (v16), FTS4 Integration | DONE |
-| 4 | Intelligence Layer | VectorEmbeddingHelper, DynamicClusterManager, HybridSearchEngine, RRF | DONE |
-| 5 | Security & Notary | EncryptedBackupManager, BackupNotaryClient, Play Integrity API | DONE |
-| 6 | UI/UX Implementation | LogHistoryScreen, ActiveNotificationsScreen, SpeedDial FAB, SplashScreen | DONE |
-| 7 | Stability & Performance | AppIconCache, ComponentCallbacks2 (TrimMemory), Direct Boot Support | DONE |
+| #   | Name                    | Scope                                                                    | Status |
+| --- | ----------------------- | ------------------------------------------------------------------------ | ------ |
+| 1   | Project Foundation      | Gradle setup, Compose/Room dependencies, AppInitializer                  | DONE   |
+| 2   | Identity & Cloud Sync   | Firebase Auth, UserSession, FirestoreSyncRepository, SyncWorker          | DONE   |
+| 3   | Notification Engine     | NotificationLoggerService, Room Schema (v16), FTS4 Integration           | DONE   |
+| 4   | Intelligence Layer      | VectorEmbeddingHelper, DynamicClusterManager, HybridSearchEngine, RRF    | DONE   |
+| 5   | Security & Notary       | EncryptedBackupManager, BackupNotaryClient, Play Integrity API           | DONE   |
+| 6   | UI/UX Implementation    | LogHistoryScreen, ActiveNotificationsScreen, SpeedDial FAB, SplashScreen | DONE   |
+| 7   | Stability & Performance | AppIconCache, ComponentCallbacks2 (TrimMemory), Direct Boot Support      | DONE   |
 
 ## Interface Contracts
 
 ### Intelligence Layer
+
 - `HybridSearchEngine.search(query: String): Flow<List<HybridSearchResult>>`
 - `ReciprocalRankFusion.merge(ftsList, vectorList): List<Result>`
 - `VectorEmbeddingHelper.embed(text: String): FloatArray`
 
 ### Data & Persistence
+
 - `NotificationDao.searchNotificationsFts(query: String): List<NotificationEntity>`
 - `AppDatabase.getNotificationDao(): NotificationDao` (Room schema v19; SQLCipher-backed DE/CE instances)
 - `EncryptedBackupManager.createBackup(): File`
 
 ### Security & Notary
+
 - `BackupNotaryClient.signHash(hash: String, token: String): String`
 - `Google Play Integrity API` $\rightarrow$ `IntegrityToken` $\rightarrow$ `Notary Server` $\rightarrow$ `HMAC-SHA256 Signature`
 
 ## Code Layout
+
 ```
 app/src/main/java/com/jeffers/notimindlite/
 ├── NotiMindApp.kt

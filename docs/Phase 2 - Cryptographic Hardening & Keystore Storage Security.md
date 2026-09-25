@@ -22,7 +22,7 @@ Phase 2 implements SQLCipher open-helper wiring for newly created Room DE/CE dat
 
 To ensure strict security and prevent database locking deadlocks under concurrent coroutine writes, SQLCipher must be initialized with the following PRAGMAs:
 
-PRAGMA key = '...';                     -- 256-bit passphrase provided via SupportFactoryPRAGMA cipher_page_size = 4096;         -- Standard 4KB cryptographic page boundariesPRAGMA kdf_iter = 256000;               -- PBKDF2 iteration count for robust key stretchingPRAGMA cipher_hmac_algorithm = HMAC_SHA512;PRAGMA cipher_default_kdf_algorithm = PBKDF2_HMAC_SHA512;PRAGMA journal_mode = WAL;              -- Write-Ahead Logging for non-blocking concurrent readsPRAGMA synchronous = NORMAL;            -- Resilient, high-performance flush mode for WALPRAGMA busy_timeout = 5000;             -- 5000ms retry buffer preventing SQLITE_BUSY exceptionsPRAGMA foreign_keys = ON;
+PRAGMA key = '...'; -- 256-bit passphrase provided via SupportFactoryPRAGMA cipher_page_size = 4096; -- Standard 4KB cryptographic page boundariesPRAGMA kdf_iter = 256000; -- PBKDF2 iteration count for robust key stretchingPRAGMA cipher_hmac_algorithm = HMAC_SHA512;PRAGMA cipher_default_kdf_algorithm = PBKDF2_HMAC_SHA512;PRAGMA journal_mode = WAL; -- Write-Ahead Logging for non-blocking concurrent readsPRAGMA synchronous = NORMAL; -- Resilient, high-performance flush mode for WALPRAGMA busy_timeout = 5000; -- 5000ms retry buffer preventing SQLITE_BUSY exceptionsPRAGMA foreign_keys = ON;
 
 ## 4. One-Time Plaintext Migration Protocol
 

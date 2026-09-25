@@ -6,7 +6,7 @@ This master plan tracks the transition from the historical single-tier implement
 
 ## 2. Phase Dependency Matrix & Sequencing
 
-[Phase 1: Ingestion Sanitization]          │         ▼[Phase 2: Cryptographic Hardening]          │         ▼[Phase 3: Android OS Boundaries]          │         ▼[Phase 4: Secure Data Export]          │         ▼[Phase 5: Privacy Observability & Lifecycle]
+[Phase 1: Ingestion Sanitization] │ ▼[Phase 2: Cryptographic Hardening] │ ▼[Phase 3: Android OS Boundaries] │ ▼[Phase 4: Secure Data Export] │ ▼[Phase 5: Privacy Observability & Lifecycle]
 
 | Phase | Primary Focus | Dependencies | Target SLA / Latency Budget | Deliverables |
 

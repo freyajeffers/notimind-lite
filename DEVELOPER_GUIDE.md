@@ -20,9 +20,10 @@ To contribute to NotiMind Lite, ensure your development environment meets the fo
 The project utilizes a strict CI/CD pipeline. Developers should replicate the CI environment locally before submitting changes.
 
 ### Common Commands
+
 All commands should be run from the project root:
 
-- **Run Unit Tests**: 
+- **Run Unit Tests**:
   ```bash
   ./gradlew testDebugUnitTest
   ```
@@ -42,6 +43,7 @@ All commands should be run from the project root:
 NotiMind Lite uses Room for persistence. Because the app supports **Direct Boot**, the database is split between Device Protected (DE) and Credential Encrypted (CE) storage.
 
 ### Adding New Data Entities
+
 1. **Define Entity**: Create a new class extending `RoomEntity` (if applicable) or a standard `@Entity` in `com.jeffers.notimindlite.data.local`.
 2. **Update DAO**: Add the necessary `@Query` or `@Insert` methods to the corresponding DAO interface.
 3. **Register Entity**: Add the class to the `@Database(entities = [...])` array in `AppDatabase.kt`.
@@ -58,6 +60,7 @@ NotiMind Lite uses Room for persistence. Because the app supports **Direct Boot*
 The `HybridSearchEngine` combines Full-Text Search (FTS) and Vector Space Projection.
 
 ### Adding Search Domains
+
 Search domains are managed by the `DynamicClusterManager`. To add a new semantic category (e.g., "Health"):
 
 1. **Update Vocabulary**: Add relevant keywords and package names to the `DynamicClusterManager` vocabulary map.
@@ -67,7 +70,9 @@ Search domains are managed by the `DynamicClusterManager`. To add a new semantic
 ---
 
 ## ⚠️ Engineering Invariants
+
 When modifying the code, adhere to these rules:
+
 - **Main Thread Zero-I/O**: All database, file, and vector operations MUST occur on `Dispatchers.IO`.
 - **Direct Boot Awareness**: Any component requiring early-boot access must be marked `android:directBootAware="true"` in the Manifest.
 - **Memory Efficiency**: Use the `AppIconCache` for all bitmap operations to prevent OOM crashes.

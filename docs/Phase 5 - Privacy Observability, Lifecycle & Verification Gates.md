@@ -24,13 +24,13 @@ Current source includes SQLCipher R8 keep guidance in the hardening plan, encryp
 
 In app/proguard-rules.pro, add explicit bytecode stripping rules for logging methods:
 
-# Strip all debug, verbose, and informational logging calls in release builds-assumenosideeffects class android.util.Log {    public static boolean isLoggable(java.lang.String, int);    public static int v(...);    public static int d(...);    public static int i(...);}# Preserve cryptographic security classes and SQLCipher native bindings-keep class net.zetetic.database.sqlcipher.** { *; }-dontwarn net.zetetic.database.sqlcipher.**-keep class androidx.security.crypto.** { *; }
+# Strip all debug, verbose, and informational logging calls in release builds-assumenosideeffects class android.util.Log { public static boolean isLoggable(java.lang.String, int); public static int v(...); public static int d(...); public static int i(...);}# Preserve cryptographic security classes and SQLCipher native bindings-keep class net.zetetic.database.sqlcipher.** { \*; }-dontwarn net.zetetic.database.sqlcipher.**-keep class androidx.security.crypto.\*_ { _; }
 
 ## 4. Automated Retention Lifecycle & WorkManager Policy
 
 To prevent indefinite data accumulation and unbounded storage growth:
 
-// Daily WorkManager task for automatic TTL pruningclass AutoPruneRetentionWorker(    context: Context,    workerParams: WorkerParameters) : CoroutineWorker(context, workerParams) {    override suspend fun doWork(): Result {        val prefManager = EncryptedPreferenceManager(applicationContext)        val retentionDays = prefManager.getRetentionDays() // e.g. 30 days        if (retentionDays <= 0) return Result.success() // 0 = indefinite                val cutoffTimestamp = System.currentTimeMillis() - (retentionDays * 86_400_000L)        val db = EncryptedDatabaseFactory.getDatabase(applicationContext)                // Execute atomic deletion of non-pinned dismissed records older than cutoff        db.notificationDao().deleteDismissedOlderThan(cutoffTimestamp)        return Result.success()    }}
+// Daily WorkManager task for automatic TTL pruningclass AutoPruneRetentionWorker( context: Context, workerParams: WorkerParameters) : CoroutineWorker(context, workerParams) { override suspend fun doWork(): Result { val prefManager = EncryptedPreferenceManager(applicationContext) val retentionDays = prefManager.getRetentionDays() // e.g. 30 days if (retentionDays <= 0) return Result.success() // 0 = indefinite val cutoffTimestamp = System.currentTimeMillis() - (retentionDays \* 86_400_000L) val db = EncryptedDatabaseFactory.getDatabase(applicationContext) // Execute atomic deletion of non-pinned dismissed records older than cutoff db.notificationDao().deleteDismissedOlderThan(cutoffTimestamp) return Result.success() }}
 
 ## 5. 5-Tier Verification & Testing Architecture
 
