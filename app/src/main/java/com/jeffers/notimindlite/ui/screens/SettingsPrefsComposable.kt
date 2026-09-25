@@ -67,20 +67,32 @@ fun SettingsPreferencesSection(preferencesRepository: PreferencesRepository) {
                 Switch(checked = enableSemanticRanking, onCheckedChange = preferencesRepository::setEnableSemanticRanking)
             }
 
-            Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
-                Column(modifier = Modifier.weight(1f)) {
-                    Text("Auto-delete when read", style = MaterialTheme.typography.bodyLarge)
-                    Text("Delete notifications automatically after they are marked read.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            if (BuildConfig.DEBUG) {
+                LaunchedEffect(Unit) {
+                    preferencesRepository.setAutoDeleteOnRead(false)
+                    preferencesRepository.setAnonymizeTitles(false)
                 }
-                Switch(checked = autoDeleteOnRead, onCheckedChange = preferencesRepository::setAutoDeleteOnRead)
-            }
-
-            Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
-                Column(modifier = Modifier.weight(1f)) {
-                    Text("Anonymize notification titles", style = MaterialTheme.typography.bodyLarge)
-                    Text("Reduce sensitive title content in local displays and exports.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                }
-                Switch(checked = anonymizeTitles, onCheckedChange = preferencesRepository::setAnonymizeTitles)
+                DisabledPreferenceRow(
+                    title = stringResource(R.string.pref_auto_delete_on_read_title),
+                    summary = stringResource(R.string.pref_disabled_in_debug)
+                )
+                DisabledPreferenceRow(
+                    title = stringResource(R.string.pref_anonymize_titles_title),
+                    summary = stringResource(R.string.pref_disabled_in_debug)
+                )
+            } else {
+                PreferenceSwitchRow(
+                    title = stringResource(R.string.pref_auto_delete_on_read_title),
+                    summary = stringResource(R.string.pref_auto_delete_on_read_summary),
+                    checked = autoDeleteOnRead,
+                    onCheckedChange = preferencesRepository::setAutoDeleteOnRead
+                )
+                PreferenceSwitchRow(
+                    title = stringResource(R.string.pref_anonymize_titles_title),
+                    summary = stringResource(R.string.pref_anonymize_titles_summary),
+                    checked = anonymizeTitles,
+                    onCheckedChange = preferencesRepository::setAnonymizeTitles
+                )
             }
 
             if (BuildConfig.DEBUG) {
@@ -123,5 +135,28 @@ fun SettingsPreferencesSection(preferencesRepository: PreferencesRepository) {
                 }
             }
         }
+    }
+}
+
+
+@Composable
+private fun DisabledPreferenceRow(title: String, summary: String) {
+    PreferenceSwitchRow(title, summary, checked = false, onCheckedChange = {}, enabled = false)
+}
+
+@Composable
+private fun PreferenceSwitchRow(
+    title: String,
+    summary: String,
+    checked: Boolean,
+    onCheckedChange: (Boolean) -> Unit,
+    enabled: Boolean = true
+) {
+    Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
+        Column(modifier = Modifier.weight(1f)) {
+            Text(title, style = MaterialTheme.typography.bodyLarge)
+            Text(summary, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        }
+        Switch(checked = checked, onCheckedChange = onCheckedChange, enabled = enabled)
     }
 }
