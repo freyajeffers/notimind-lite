@@ -39,6 +39,18 @@ class PreferencesRepository(context: Context) {
     val maxCacheSizeMb: StateFlow<Int> = _maxCacheSizeMb
     val semanticWeight: StateFlow<Int> = _semanticWeight
 
+    private val _enableTelemetry = MutableStateFlow(backing.getBoolean(KEY_ENABLE_TELEMETRY, true))
+    private val _telemetryLevel = MutableStateFlow(backing.getString(KEY_TELEMETRY_LEVEL, "minimal") ?: "minimal")
+    private val _maxDbMb = MutableStateFlow(backing.getInt(KEY_MAX_DB_MB, 512))
+    private val _lowMemoryMode = MutableStateFlow(backing.getBoolean(KEY_LOW_MEMORY_MODE, false))
+    private val _vectorCacheMax = MutableStateFlow(backing.getInt(KEY_VECTOR_CACHE_MAX, 1000))
+    val enableTelemetry: StateFlow<Boolean> = _enableTelemetry
+    val telemetryLevel: StateFlow<String> = _telemetryLevel
+    val maxDbMb: StateFlow<Int> = _maxDbMb
+    val lowMemoryMode: StateFlow<Boolean> = _lowMemoryMode
+    val vectorCacheMax: StateFlow<Int> = _vectorCacheMax
+
+
     fun setEnableSync(value: Boolean) { backing.edit().putBoolean(KEY_ENABLE_SYNC, value).apply(); _enableSync.value = value }
     fun setEnableVector(value: Boolean) { backing.edit().putBoolean(KEY_ENABLE_VECTOR, value).apply(); _enableVector.value = value }
     fun setEnableFts4(value: Boolean) { backing.edit().putBoolean(KEY_ENABLE_FTS4, value).apply(); _enableFts4.value = value }
@@ -51,6 +63,11 @@ class PreferencesRepository(context: Context) {
     fun setAnonymizeTitles(value: Boolean) { backing.edit().putBoolean(KEY_ANONYMIZE_TITLES, value).apply(); _anonymizeTitles.value = value }
     fun setMaxCacheSizeMb(value: Int) { val safe = value.coerceIn(1, 1024); backing.edit().putInt(KEY_MAX_CACHE_MB, safe).apply(); _maxCacheSizeMb.value = safe }
     fun setSemanticWeight(value: Int) { val safe = value.coerceIn(0, 100); backing.edit().putInt(KEY_SEMANTIC_WEIGHT, safe).apply(); _semanticWeight.value = safe }
+    fun setEnableTelemetry(value: Boolean) { backing.edit().putBoolean(KEY_ENABLE_TELEMETRY, value).apply(); _enableTelemetry.value = value }
+    fun setTelemetryLevel(value: String) { backing.edit().putString(KEY_TELEMETRY_LEVEL, value).apply(); _telemetryLevel.value = value }
+    fun setMaxDbMb(value: Int) { val safe = value.coerceIn(1, 4096); backing.edit().putInt(KEY_MAX_DB_MB, safe).apply(); _maxDbMb.value = safe }
+    fun setLowMemoryMode(value: Boolean) { backing.edit().putBoolean(KEY_LOW_MEMORY_MODE, value).apply(); _lowMemoryMode.value = value }
+    fun setVectorCacheMax(value: Int) { val safe = value.coerceIn(1, 10000); backing.edit().putInt(KEY_VECTOR_CACHE_MAX, safe).apply(); _vectorCacheMax.value = safe }
 
     companion object {
         private const val DEFAULT_RETENTION_DAYS = 30
@@ -67,5 +84,10 @@ class PreferencesRepository(context: Context) {
         private const val KEY_ANONYMIZE_TITLES = "config_anonymize_titles"
         private const val KEY_MAX_CACHE_MB = "config_max_cache_mb"
         private const val KEY_SEMANTIC_WEIGHT = "config_semantic_weight"
+        private const val KEY_ENABLE_TELEMETRY = "config_enable_telemetry"
+        private const val KEY_TELEMETRY_LEVEL = "config_telemetry_level"
+        private const val KEY_MAX_DB_MB = "config_max_db_mb"
+        private const val KEY_LOW_MEMORY_MODE = "config_low_memory_mode"
+        private const val KEY_VECTOR_CACHE_MAX = "config_vector_cache_max"
     }
 }
