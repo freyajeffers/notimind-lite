@@ -172,6 +172,7 @@ fun SettingsScreen(
         SettingsCaptureSection(preferencesRepository = preferencesRepository)
         SettingsPreferencesSection(preferencesRepository = preferencesRepository)
         SettingsSyncSection(preferencesRepository = preferencesRepository)
+        SettingsPrivacySection(preferencesRepository = preferencesRepository)
         SettingsAdvancedSection(preferencesRepository = preferencesRepository)
 
         if (session.isAuthenticated) {
