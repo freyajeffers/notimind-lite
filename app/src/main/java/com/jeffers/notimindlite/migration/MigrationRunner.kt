@@ -2,6 +2,7 @@ package com.jeffers.notimindlite.migration
 
 import android.content.Context
 import android.os.StatFs
+import androidx.sqlite.db.SupportSQLiteDatabase
 import com.jeffers.notimindlite.data.local.AppDatabase
 import java.io.File
 import kotlinx.coroutines.Dispatchers
@@ -12,7 +13,10 @@ import kotlinx.coroutines.withContext
  * copy/cutover must not be enabled until the SQLCipher key and rollback protocol
  * are implemented and covered by device tests.
  */
-class MigrationRunner(private val context: Context) {
+class MigrationRunner(
+  private val context: Context,
+  private val orchestrator: DatabaseMigrationOrchestrator = DatabaseMigrationOrchestrator()
+) {
 
   suspend fun runMigrationIfNeeded(featureFlag: Boolean = false): MigrationState = withContext(Dispatchers.IO) {
     if (!featureFlag) return@withContext MigrationState.NOT_REQUIRED
@@ -33,10 +37,26 @@ class MigrationRunner(private val context: Context) {
     return MigrationPreflight(plaintext, encrypted, plaintext.exists(), encrypted.exists(), availableBytes, requiredBytes)
   }
 
+  fun migrateOpenedDatabases(
+    source: SupportSQLiteDatabase,
+    target: SupportSQLiteDatabase,
+    plaintextFile: File,
+    encryptedTempFile: File,
+    quarantineFile: File,
+    closeDatabases: () -> Unit,
+    executeCutover: Boolean = false,
+    batchSize: Int = 500
+  ): MigrationResult {
+    val copyResult = orchestrator.copyAndVerify(source, target, batchSize)
+    if (copyResult.state != MigrationState.VERIFYING) return copyResult
+    if (!executeCutover) return copyResult.copy(state = MigrationState.CUTOVER_PENDING)
+    closeDatabases()
+    return orchestrator.atomicCutover(plaintextFile, encryptedTempFile, quarantineFile)
+  }
+
   /**
-   * Prototype streaming copy for tests.
-   * Copies a minimal set of columns from the notifications table in sourceDb into targetDb
-   * in batches. This method is non-destructive and intended for unit/integration tests only.
+   * Compatibility helper for the original in-memory migration tests. This method copies the
+   * complete notifications rows in batches and never replaces or deletes source files.
    */
   fun performStreamingCopyForTest(sourceDb: AppDatabase, targetDb: AppDatabase, batchSize: Int = 50) {
     val src = sourceDb.openHelper.readableDatabase
