@@ -33,13 +33,13 @@ The app uses a specialized service to intercept notifications in real-time.
 ### 3.2 Persistence Layer (The Vault)
 The application uses a normalized SQLite schema managed via Room.
 
-- **Schema Version 16**: Supports complex migrations.
+- **Schema Version 19**: Supports explicit migrations through notification-group persistence.
 - **Core Entities**:
     - `NotificationEntity`: The primary record of a notification.
     - `AppEntity`: Metadata about the source application (icon URI, package name).
     - `BackupRecord`: Audit log of encrypted backup exports.
 - **FTS Integration**: Uses `NotificationFtsEntity` (FTS4) to provide near-instant full-text search across millions of records.
-- **Direct Boot Support**: The database is configured for device-protected storage, allowing the `BootReceiver` and `UnlockReceiver` to restore state before the user unlocks the device.
+- **Direct Boot Support**: Separate SQLCipher-backed DE and CE databases allow the `BootReceiver` and `UnlockReceiver` to restore state before the user unlocks the device.
 
 ### 3.3 The Intelligence Engine (Hybrid Search)
 The "Brain" of the app combines traditional keyword matching with semantic vector space projection.
