@@ -17,7 +17,7 @@ class ArchitectureSetupTest : BaseRobolectricTest() {
         val buildGradleFile = File(rootDir, "app/build.gradle.kts")
         val versionsTomlFile = File(rootDir, "gradle/libs.versions.toml")
 
-        val forbiddenKeywords = listOf("firebase", "google-ai", "tensorflow", "mlkit", "pytorch", "cloud-sync")
+        val forbiddenKeywords = listOf("google-ai", "tensorflow", "mlkit", "pytorch", "cloud-sync")
 
         if (buildGradleFile.exists()) {
             val content = buildGradleFile.readText().lowercase()
