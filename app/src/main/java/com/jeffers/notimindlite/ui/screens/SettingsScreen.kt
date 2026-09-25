@@ -170,6 +170,7 @@ fun SettingsScreen(
         }
 
         SettingsPreferencesSection(preferencesRepository = preferencesRepository)
+        SettingsAdvancedSection(preferencesRepository = preferencesRepository)
 
         if (session.isAuthenticated) {
             Card(
