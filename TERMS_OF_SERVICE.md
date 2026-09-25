@@ -22,7 +22,7 @@ The developers of NotiMind Lite shall not be held liable for:
 - Any misuse of the archived data.
 
 ## 5. Termination
-You may terminate this agreement at any time by uninstalling the application and exercising your "Right to be Forgotten" to purge cloud data.
+You may terminate this agreement at any time by uninstalling the application. Local clearing is available in Settings; cloud-record deletion is currently disabled by the application's non-deletion policy and remains a future compliance task.
 
 ## 6. Changes to Terms
 We reserve the right to modify these terms. Significant changes will be notified via an in-app update.

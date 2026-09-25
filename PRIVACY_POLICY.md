@@ -25,7 +25,7 @@ Your data is used exclusively to provide the following features:
 
 ## 3. Data Storage & Security
 ### Local Storage
-Data is stored on your device using an encrypted SQLite database (Room). We utilize Android's Credential Encrypted (CE) storage to ensure data is inaccessible until the device is unlocked.
+Data is stored on your device using Room with SQLCipher open helpers for the credential-encrypted and device-encrypted database instances. Per-database passphrases are wrapped with Android Keystore keys. Existing plaintext database migration is not yet implemented; users upgrading from a pre-SQLCipher build require a migration release before this guarantee applies to legacy files.
 
 ### Cloud Synchronization
 If you enable Cloud Sync:
@@ -42,7 +42,8 @@ If you enable Cloud Sync:
 Regardless of your location, we provide the following controls:
 - **Right to Access**: All captured data is viewable within the app.
 - **Right to Portability**: You may export your notification history as a CSV file.
-- **Right to be Forgotten**: You can delete your account and all associated cloud data instantly via the Settings menu.
+- **Local clearing**: You can clear the local notification log from Settings. This does not delete the Firestore copy.
+- **Cloud deletion**: Application-level cloud purge is currently disabled by policy; a GDPR/account-erasure workflow remains pending and must be implemented with matching Firestore Rules changes.
 
 ## 6. Contact
 For privacy-related inquiries, please contact the development team via the project repository.

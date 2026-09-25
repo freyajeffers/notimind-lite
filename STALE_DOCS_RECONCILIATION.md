@@ -31,7 +31,7 @@ Generated from the repository state on 2026-09-24.
 - Production namespace/application ID: `com.jeffers.notimindlite`.
 - Database version: Room v19.
 - Current cloud behavior: Firebase Auth and Firestore synchronization enabled.
-- Current security gap: SQLCipher was not previously wired into Room; plaintext Room files were possible.
+- Current security gap: migration of legacy plaintext database files and device-level SQLCipher validation remain pending; new DE/CE database instances use the SQLCipher open-helper and Keystore-wrapped passphrase path.
 
 ## Remaining documentation work
 

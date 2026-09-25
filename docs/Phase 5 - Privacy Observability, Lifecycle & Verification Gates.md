@@ -4,15 +4,17 @@
 
 Phase 5 establishes operational longevity and regression immunity. It addresses information leakage through system telemetry (Logcat), enforces automated data retention lifecycles via background workers, and deploys a 5-tier testing and verification framework to ensure security guarantees persist across future releases.
 
-## 2. Architectural Components & Responsibilities
+## 2. Current implementation status
+
+Current source includes SQLCipher R8 keep guidance in the hardening plan, encrypted backup utilities, and tiered JVM test infrastructure. The release log-stripping rules, automated retention worker, and complete five-tier adversarial gate are not all implemented; see `todo.md`. Do not describe those controls as current guarantees until verified by release/device tests.
+
+## 3. Architectural Components & Responsibilities
 
 | Component | Primary Responsibility | Design & Hardening Details |
 
-| --- | --- | --- |
-
 | SafeLogger Wrapper | Encapsulates all logging calls; completely disables debug and verbose logging in release builds. | Prevents accidental leakage of notification extras or titles to Android Logcat. |
 
-| ProGuard / R8 Rules | Configures bytecode optimizer to strip android.util.Log.d and Log.v call-sites during APK compilation. | Guarantees zero log overhead and zero data residue in production binaries. |
+| ProGuard / R8 Rules | Planned configuration to strip android.util.Log.d and Log.v call-sites during APK compilation. | Pending release-build verification; not yet a current guarantee. |
 
 | AutoPruneRetentionWorker | AndroidX WorkManager periodic task running daily to prune dismissed notifications exceeding the retention TTL. | Runs in background under battery-friendly constraints (device idle, charging). |
 

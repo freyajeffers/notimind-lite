@@ -2,9 +2,9 @@
 
 ## 1. Executive Summary
 
-The automated unit and integration test suite for **NotiMind Lite** has been fully implemented, verified, and integrated under `app/src/test/java/com/notimind/lite/`.
+The automated unit and integration test suite for **NotiMind Lite** is integrated under `app/src/test/java/com/notimind/lite/`.
 
-All tests pass cleanly with **100% success rate** under `./gradlew test`. The test suite provides comprehensive coverage across **Tier 1 (Feature Coverage)**, **Tier 2 (Boundary & Corner Cases)**, **Tier 3 (Cross-Feature Combinations)**, and **Tier 4 (Real-World Scenarios)** without relying on external servers, emulators, or cloud SDKs.
+The current debug unit-test gate passes under `./gradlew :app:testDebugUnitTest`. Tests use Robolectric and in-memory Room where appropriate; Firebase and SQLCipher-backed production paths are not fully covered by JVM tests and require device/integration validation.
 
 ## 2. Test Suite Architecture & Summary Matrix
 
@@ -34,7 +34,7 @@ app/src/test/java/com/notimind/lite/
 
 ## 3. Key Capability & Requirement Verifications
 
-- **R1: Zero AI/Firebase & Manifest Audit**: Verified complete absence of Firebase, TensorFlow, PyTorch, or cloud-sync SDKs. Enforced permission boundaries (`POST_NOTIFICATIONS`, `RECEIVE_BOOT_COMPLETED`) and complete omission of `INTERNET` permission.
+- **R1: Manifest and dependency audit**: Current source includes Firebase Auth/Firestore and network permissions for cloud features. The test suite verifies manifest and architecture constraints that are actually current; older claims of complete Firebase/network absence are historical.
 - **R2: High-Load Database Persistence & SLA**: Verified Room entity fields, default values, and sub-2ms query SLA on 10,000-record datasets. Concurrency tests verified double-checked locking singleton and multi-threaded coroutine safety.
 - **R3: Smart 30s Debounce & Boot Deduplication**: Verified that identical notifications within 30 seconds are suppressed, while modified title/content bypasses debounce instantly. Verified `BootReceiver` active status bar deduplication checking IDs, titles, and text.
 - **R4: Export Integrity & Formula Injection Escaping**: Verified valid JSON output structure and CSV formula injection escaping for `=`, `+`, `-`, `@`, `\t`, `\r` prefixes. Validated `FileProvider` URI generation and cache file cleanup.
