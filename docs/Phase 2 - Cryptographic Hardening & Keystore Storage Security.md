@@ -2,7 +2,7 @@
 
 ## 1. Scope & Objectives
 
-Phase 2 eliminates cleartext storage of user notification logs across all local Android persistence layers. By integrating SQLCipher for Android into AndroidX Room and anchoring cryptographic keys in the hardware-backed Android Keystore System (StrongBox / TEE), the application ensures full data-at-rest encryption with 256-bit AES-GCM. In addition, user preferences are migrated from plain SharedPreferences to EncryptedSharedPreferences.
+Phase 2 implements SQLCipher open-helper wiring for newly created Room DE/CE database instances and Keystore-wrapped passphrases. It does not yet provide a complete plaintext-install migration or EncryptedSharedPreferences replacement; those remain pending.
 
 ## 2. Architectural Components & Responsibilities
 
@@ -16,7 +16,7 @@ Phase 2 eliminates cleartext storage of user notification logs across all local 
 
 | DatabaseMigrationOrchestrator | Performs safe, transactional, one-time offline migration from plaintext SQLite to encrypted SQLCipher via sqlcipher_export(). | Cryptographically verifies row counts and schema integrity before shredding the old plaintext database file. |
 
-| EncryptedPreferenceManager | Replaces plain SharedPreferences with AndroidX Security EncryptedSharedPreferences. | Encrypts preference keys with deterministic AES-SIV and values with AES-256-GCM. |
+| EncryptedPreferenceManager | Planned replacement for plain preference storage. | Not implemented in the current source; existing preference handling remains separate from SQLCipher database encryption. |
 
 ## 3. Database PRAGMA Configuration & Storage Tuning
 
@@ -48,9 +48,13 @@ Crucial Migration Safety: Existing user installations must not lose logged notif
 
 - Single-Writer Actor Model: All database insert and update operations are serialized through coroutine channels or a dedicated Room writer dispatcher to eliminate lock contention on encrypted pages.
 
+### Status
+
+The cryptographic helpers and SQLCipher Room wiring are implemented for new database instances. The complete plaintext-to-encrypted migration orchestrator, encrypted preferences replacement, StrongBox validation, and device acceptance tests remain pending.
+
 ## 6. Acceptance Criteria & Verification Tests
 
-- TC-CRYPTO-001 (At-Rest Inspection): Pull the notimind_lite_encrypted.db file via ADB; executing sqlite3 notimind_lite_encrypted.db "SELECT * FROM notifications;" must fail with Error: file is not a database.
+- TC-CRYPTO-001 (At-Rest Inspection): Pull the database file via ADB on a device; executing sqlite3 against a SQLCipher database without the key must fail with an invalid-database error.
 
 - TC-CRYPTO-002 (Keystore Binding): Verify that the encryption key is successfully generated inside the Android Keystore and is backed by hardware (StrongBox/TEE where supported).
 

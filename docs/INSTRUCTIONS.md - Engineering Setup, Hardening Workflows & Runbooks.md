@@ -2,11 +2,9 @@
 
 ## 1. Workstation Prerequisites & Toolchain
 
-- Java Development Kit: OpenJDK 17 LTS (Java 17).
-
-- Android SDK: Build-tools 34.0.0, compileSdk 34, minSdk 26, targetSdk 34.
-
-- Gradle: Gradle Wrapper 8.4+ with Kotlin 1.9.22+.
+- **JDK**: OpenJDK 17.
+- **Android SDK**: `compileSdk = 37`, `minSdk = 33`, `targetSdk = 36`.
+- **Gradle/Kotlin**: Use the checked-in Gradle wrapper and version catalog; do not copy the older SDK/version values from this document.
 
 - Host OS: Linux (Arch, Ubuntu 22.04 LTS), macOS, or Windows (WSL2).
 
@@ -28,15 +26,9 @@ dependencies {    // SQLCipher for Android (Room SQLite encryption)    implement
 
 - Hook SanitizationPipeline into NotificationLoggerService.processNotification prior to dao.insertNotification().
 
-### Phase 2: SQLCipher & Keystore Storage Migration
+### Phase 2: SQLCipher & Keystore Storage
 
-- Implement KeystoreKeyManager.kt to generate AES-256-GCM keys via Android Keystore.
-
-- Update AppDatabase.kt to accept SupportFactory initialized with the Keystore-backed passphrase.
-
-- Implement DatabaseMigrationOrchestrator.kt to migrate legacy plaintext databases via sqlcipher_export().
-
-- Replace PreferenceManager.kt internal SharedPreferences with EncryptedSharedPreferences.
+Implemented for newly opened DE/CE databases through `EncryptedDatabaseFactory` and `SqlCipherKeyManager`. Pending work is legacy plaintext database migration, device/StrongBox validation, and production migration testing.
 
 ### Phase 3: Manifest & OS Boundary Locking
 

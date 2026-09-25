@@ -14,7 +14,7 @@ This guide provides systemic diagnostics and resolution paths for common failure
 ### Persistence & Data
 | Error / Exception | Cause | Resolution |
 | :--- | :--- | :--- |
-| `IllegalStateException: Room cannot verify the data integrity` | Database schema mismatch after a version increment without a migration. | Implement a `Migration` object in `DatabaseMigrator` or use `fallbackToDestructiveMigration()` for development builds. |
+| `IllegalStateException: Room cannot verify the data integrity` | Database schema mismatch after a version increment without a migration. | Implement and register an explicit `Migration` object; never use `fallbackToDestructiveMigration()` on user data paths. |
 | `SQLiteFullException` | Device storage is exhausted. | Implement a cleanup policy in `NotificationDao` to prune records older than $X$ days. |
 
 ---

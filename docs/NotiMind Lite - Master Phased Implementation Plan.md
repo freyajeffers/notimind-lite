@@ -2,7 +2,7 @@
 
 ## 1. Strategic Roadmap & Architectural Objectives
 
-This master plan bridges the existing single-tier, unencrypted implementation of NotiMind Lite into an enterprise-hardened, privacy-first mobile architecture. The implementation is broken into five sequential phases, structured such that each phase establishes strict cryptographic, procedural, and OS-level security invariants that subsequent phases depend upon.
+This master plan tracks the transition from the historical single-tier implementation to the current privacy-focused architecture. Current source already includes Room v19, SQLCipher open-helper wiring for new DE/CE instances, sanitization, Firebase synchronization, and Direct Boot; remaining hardening work is explicitly marked pending and tracked in `todo.md`.
 
 ## 2. Phase Dependency Matrix & Sequencing
 
@@ -24,7 +24,11 @@ This master plan bridges the existing single-tier, unencrypted implementation of
 
 ## 3. Phase Summaries & Architectural Boundaries
 
-Phase 1: Ingestion Pipeline Sanitization & PII Redaction Engine
+### Current status
+
+Phase 1 ingestion sanitization is implemented. Phase 2 SQLCipher/Keystore wiring is implemented for new databases, with legacy migration pending. Phase 3 manifest hardening, Phase 4 export governance, and Phase 5 retention/logging hardening are partial and tracked in `todo.md`. Firebase Auth/Firestore sync is implemented and is not an offline-only feature.
+
+### Phase 1: Ingestion Pipeline Sanitization & PII Redaction Engine
 
 Goal: Stop toxic data ingestion at the system boundary. Before any notification touches SQLite or memory caches, it must pass through an extensible sanitization pipeline that redacts OTPs, masking financial values, and drops notifications from blacklisted or sensitive applications.
 
@@ -34,15 +38,15 @@ Goal: Stop toxic data ingestion at the system boundary. Before any notification 
 
 Phase 2: Cryptographic Hardening & Keystore Storage Security
 
-Goal: Protect data at-rest using hardware-backed cryptographic primitives. Replace standard SQLite with SQLCipher for Android, binding the encryption passphrase to the device's hardware-backed Keystore.
+Goal: Protect data at-rest using SQLCipher open helpers and Keystore-wrapped passphrases for newly created DE/CE databases. Legacy plaintext-install migration, encrypted preferences replacement, and device validation remain pending.
 
 - Key Components: EncryptedDatabaseFactory, KeystoreKeyManager, EncryptedPreferenceManager.
 
-- Security Invariant: Plaintext database handles are forbidden; database files on disk must be fully encrypted with 256-bit AES-GCM.
+- Security Invariant (target): New database files must use SQLCipher; legacy plaintext files must not be silently accepted after the migration path is implemented.
 
-Phase 3: Android OS System Boundaries & Component Hardening
+### Phase 3 status
 
-Goal: Seal application perimeter against inter-process attack vectors, backup extraction, and unauthorized intent launching.
+Current manifest and receivers still require hardening review: `allowBackup` is enabled, `QUERY_ALL_PACKAGES` and `QUICKBOOT_POWERON` remain declared, and device backup/intent behavior has not completed the planned acceptance tests.
 
 - Key Components: Hardened AndroidManifest.xml, data_extraction_rules.xml, SecureBootReceiver, SanitizedIntentLauncher.
 

@@ -4,11 +4,13 @@
 
 Phase 3 hardens the Android operating system perimeter around NotiMind Lite. It addresses attack vectors originating from inter-process communication (IPC), broadcast spoofing, over-privileged manifest declarations, unprotected backup channels, and unsafe intent deserialization.
 
-## 2. Architectural Components & Responsibilities
+## 2. Current status
+
+Backup/data-extraction rules and the FileProvider are present. `QUICKBOOT_POWERON` remains declared, `QUERY_ALL_PACKAGES` remains intentionally declared under the root project policy, and the planned full broadcast/intent/backup acceptance tests remain pending.
+
+## 3. Architectural Components & Responsibilities
 
 | Component | Vulnerability Addressed | Hardened Architecture |
-
-| --- | --- | --- |
 
 | AndroidManifest.xml | Uncontrolled data extraction via ADB/cloud backup; over-broad package inventory permissions. | Declare allowBackup="false" or configure strict extraction rules; remove QUERY_ALL_PACKAGES in favor of scoped <queries>. |
 
