@@ -9,7 +9,8 @@ This document captures the engineering rationale behind the core architectural c
 **Decision**: Use **Reciprocal Rank Fusion (RRF)** to combine Full-Text Search (FTS) and Vector results.
 
 **Rationale**:
-The primary challenge in hybrid search is the "score incompatibility" problem. 
+The primary challenge in hybrid search is the "score incompatibility" problem.
+
 - **FTS (SQLite FTS4)** returns scores based on term frequency and document length (BM25-like), where higher numbers indicate better matches, and the range is unbounded.
 - **Vector Search** returns Cosine Similarity, which is strictly bounded between $-1.0$ and $1.0$.
 
@@ -38,6 +39,7 @@ Standard encryption modes like AES-CBC provide **confidentiality** but not **int
 The goal is "Zero-Knowledge Signing." If the signing key or the secret salt were delivered to the app (even in an encrypted form), the key would eventually exist in the device's memory. On rooted devices or via memory dumping, an attacker could extract the key and sign forged backups offline.
 
 By using a **Remote Notary**, the signing key never leaves the secure server. The app must prove its identity and integrity via the **Google Play Integrity API**. The server only signs the file hash if:
+
 1. The APK signature is authentic.
 2. The device is not rooted/compromised.
 3. The request is fresh (verified via nonce).
@@ -52,12 +54,12 @@ This shifts the trust root from the app binary to a combination of hardware atte
 
 **Trade-off Analysis**:
 
-| Metric | Local FTS4 (Chosen) | Remote Search Index |
-| :--- | :--- | :--- |
-| **Latency** | Near-zero (local I/O). | High (network round-trip). |
-| **Privacy** | Maximum. Data never leaves device. | Lower. Queries must be sent to server. |
-| **Availability** | Works offline. | Requires internet connection. |
-| **Capability** | Basic keyword/prefix matching. | Advanced NLP / Global Aggregation. |
-| **Complexity** | Low (integrated in Room). | High (requires index sync/sharding). |
+| Metric           | Local FTS4 (Chosen)                | Remote Search Index                    |
+| :--------------- | :--------------------------------- | :------------------------------------- |
+| **Latency**      | Near-zero (local I/O).             | High (network round-trip).             |
+| **Privacy**      | Maximum. Data never leaves device. | Lower. Queries must be sent to server. |
+| **Availability** | Works offline.                     | Requires internet connection.          |
+| **Capability**   | Basic keyword/prefix matching.     | Advanced NLP / Global Aggregation.     |
+| **Complexity**   | Low (integrated in Room).          | High (requires index sync/sharding).   |
 
 **Conclusion**: Given that NotiMind Lite is positioned as a "privacy-first" notification insurance tool, the latency and privacy costs of a remote index were unacceptable. Local FTS4 provides the necessary speed and security, while the `HybridSearchEngine` fills the semantic gap using local vector computations.

@@ -4,12 +4,14 @@ Authoritative operating protocol for AI agents working on **NotiMind Lite**.
 A backup of the v1 file is preserved at `AGENTS.md.bak.v1`.
 
 ## 🎯 Project Mission
+
 Privacy-focused Android app that captures, logs, and recovers system notifications.
 It provides a high-utility "notification insurance" policy: dismissed notifications are
 recoverable via FTS4 keyword search, vector semantic search, hybrid RRF ranking,
 and bidirectional Firestore sync.
 
 ## 🏗️ Technical Architecture
+
 - **Language / SDK**: Kotlin, JDK 17 toolchain, `compileSdk = 37`, `minSdk = 33`, `targetSdk = 36`
 - **UI Layer**: Jetpack Compose + Material 3 (dynamic theming); no XML layouts under `ui/`
 - **Persistence**: Room SQLite (DB v19, 18 migrations), FTS4 virtual table for keyword search,
@@ -25,6 +27,7 @@ and bidirectional Firestore sync.
 - **DI**: NONE. Constructors + `AppInitializer` (singleton object, `AtomicBoolean` guard).
 
 ## 🧱 Package Map (Production Source)
+
 Production code lives **exclusively** under `com.jeffers.notimindlite.*`. Tests live
 under `com.notimind.lite.*` — see Test Stack below.
 
@@ -65,6 +68,7 @@ com.jeffers.notimindlite
 ```
 
 ### Namespace Integrity (DO NOT BREAK)
+
 - `applicationId = "com.jeffers.notimindlite"`
 - `namespace = "com.jeffers.notimindlite"`
 - `versionCode = 1`, `versionName = "1.0-lite"` — set in `app/build.gradle.kts`
@@ -75,12 +79,13 @@ com.jeffers.notimindlite
   explicit user direction.
 
 ## 🛠️ Authoritative Reference Materials
+
 Located at `/home/freya/antigravity/NotiMind-Lite/chat-extract/` (paths shown un-prefixed):
 
-| File | Role |
-|---|---|
-| `summary.md` | "How" — literal diffs and phased requirements |
-| `ideal_commits.txt` | "When" — definitive atomic commit order |
+| File                 | Role                                                     |
+| -------------------- | -------------------------------------------------------- |
+| `summary.md`         | "How" — literal diffs and phased requirements            |
+| `ideal_commits.txt`  | "When" — definitive atomic commit order                  |
 | `ideal_changelog.md` | Release milestones (mirror of root `ideal_changelog.md`) |
 
 Project-root companions: `INSTRUCTIONS.md` (phase roadmap), `ARCHITECTURE.md`,
@@ -94,6 +99,7 @@ When `chat-extract/` (source-of-truth) disagrees with the on-disk code (current 
 ASK the user which wins before applying.
 
 ## 🚦 Operating Principles
+
 1. **Linearity**: Strict dependency graph — Build → Data → Service → UI → Sync → Perf.
    Never skip a phase or a commit from `ideal_commits.txt`.
 2. **Atomic Application**: One commit per change. Do not bundle.
@@ -109,10 +115,10 @@ ASK the user which wins before applying.
    New components touching the DB pre-unlock MUST join this list.
 7. **No Hilt / No Dagger**: Constructors only. Adding DI is a structural change that
    requires explicit user approval.
-7a. **No ViewModels**: UI state is held in Composables via `remember` +
-    `StateFlow.collectAsStateWithLifecycle` directly from repositories. Do NOT add
-    `ViewModel` classes; `lifecycle-viewmodel-compose` is on the classpath but unused
-    in the production tree.
+   7a. **No ViewModels**: UI state is held in Composables via `remember` +
+   `StateFlow.collectAsStateWithLifecycle` directly from repositories. Do NOT add
+   `ViewModel` classes; `lifecycle-viewmodel-compose` is on the classpath but unused
+   in the production tree.
 8. **No Placeholder Data**: All implementations must use real, runtime-derived values.
    Hard-coded example IDs, names, or tokens are rejected by code review.
 9. **Firebase Headless Safety**: `AppInitializer.initialize` wraps
@@ -141,6 +147,7 @@ ASK the user which wins before applying.
 ## 🧪 Test Stack
 
 ### Frameworks (pinned in `app/build.gradle.kts`)
+
 - JUnit 4 (`testImplementation(libs.junit)`)
 - MockK (`testImplementation(libs.mockk)`)
 - Robolectric (`testImplementation(libs.robolectric)`), `unitTests.isIncludeAndroidResources = true`
@@ -151,16 +158,17 @@ ASK the user which wins before applying.
 - Compose UI tests live in `app/src/androidTest/`
 
 ### Test Package Tiers (Tiered Bottom-Up)
+
 Tests live under `app/src/test/java/com/notimind/lite/...` — a deliberately different
 root from production to keep test infrastructure namespaced.
 
-| Tier | Package | Purpose |
-|---|---|---|
-| 0 (legacy) | `com.jeffers.notimindlite.*` | Older scattered tests co-located with prod package; new tests go to tiers 1–4 |
-| 1 Feature | `com.notimind.lite.tier1_feature` | Unit tests for one component in isolation (DAO, screen, Worker, ViewModel) |
-| 2 Boundary | `com.notimind.lite.tier2_boundary` | Two-component boundaries (security, sync, RRF, vector, snooze loop, debounce, GCM integrity, export sanitization, persistence, backup) |
-| 3 Pairwise | `com.notimind.lite.tier3_pairwise` | Cross-feature integration (BootReceiver ↔ DB, NotificationLoggerService ↔ DB, Settings ↔ Clear Log, Sync ↔ Repository, ViewModel ↔ UI State) |
-| 4 Real-World | `com.notimind.lite.tier4_realworld` | Chaos / load / lifecycle (CloudChaos, NotificationBurst, PermissionRevocationLifecycle, EndToEndAppLifecycle, HighLoadBurst) |
+| Tier         | Package                             | Purpose                                                                                                                                           |
+| ------------ | ----------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 0 (legacy)   | `com.jeffers.notimindlite.*`        | Older scattered tests co-located with prod package; new tests go to tiers 1–4                                                                     |
+| 1 Feature    | `com.notimind.lite.tier1_feature`   | Unit tests for one component in isolation (DAO, screen, Worker, ViewModel)                                                                        |
+| 2 Boundary   | `com.notimind.lite.tier2_boundary`  | Two-component boundaries (security, sync, RRF, vector, snooze loop, debounce, GCM integrity, export sanitization, persistence, backup)            |
+| 3 Pairwise   | `com.notimind.lite.tier3_pairwise`  | Cross-feature integration (BootReceiver ↔ DB, NotificationLoggerService ↔ DB, Settings ↔ Clear Log, Sync ↔ Repository, ViewModel ↔ UI State) |
+| 4 Real-World | `com.notimind.lite.tier4_realworld` | Chaos / load / lifecycle (CloudChaos, NotificationBurst, PermissionRevocationLifecycle, EndToEndAppLifecycle, HighLoadBurst)                      |
 
 Shared base class: `com.notimind.lite.base.BaseRobolectricTest`
 (`@RunWith(RobolectricTestRunner::class)`, `@Config(sdk = [33])`,
@@ -168,15 +176,18 @@ in-memory Room via `Room.inMemoryDatabaseBuilder().allowMainThreadQueries()`,
 `PRAGMA foreign_keys = OFF`, calls `AppDatabase.setTestInstance` and `resetInstance`).
 
 ### Test Commands
+
 ```
 ./gradlew :app:testDebugUnitTest         # tiers 0–4
 ./gradlew :app:connectedDebugAndroidTest # androidTest/ (instrumented)
 ./gradlew :app:testCoverageReport       # Jacoco HTML+XML report
 ```
+
 Test code MUST call `AppDatabase.resetInstance()` in `@After` to prevent singleton
 leaks across tests (see `BaseRobolectricTest.teardown`).
 
 ### Known Quirks
+
 - `BaseRobolectricTest` disables `PRAGMA foreign_keys` — tests that rely on FK
   enforcement must re-enable locally.
 - `@Config(sdk = [33])` is hardcoded. Bumping means verifying every tier test still
@@ -187,20 +198,22 @@ leaks across tests (see `BaseRobolectricTest.teardown`).
 ## 🛠️ Build & Verification
 
 ### Gate Commands (per task)
-| Concern | Command |
-|---|---|
-| Build | `./gradlew :app:assembleDebug` |
-| Unit tests | `./gradlew :app:testDebugUnitTest` |
-| Coverage | `./gradlew :app:testCoverageReport` |
-| Lint (fail on new) | `./gradlew :app:lintDebug` (uses `lint-baseline.xml`) |
-| Detekt | `./gradlew :app:detekt` (uses `detekt-baseline.xml`) |
-| Release / R8 | `./gradlew :app:assembleRelease` (then `apkanalyzer dex packages` to verify Direct Boot classes aren't stripped) |
-| Room migration | `:app:testDebugUnitTest --tests "*MigrationTest*"` |
+
+| Concern            | Command                                                                                                          |
+| ------------------ | ---------------------------------------------------------------------------------------------------------------- |
+| Build              | `./gradlew :app:assembleDebug`                                                                                   |
+| Unit tests         | `./gradlew :app:testDebugUnitTest`                                                                               |
+| Coverage           | `./gradlew :app:testCoverageReport`                                                                              |
+| Lint (fail on new) | `./gradlew :app:lintDebug` (uses `lint-baseline.xml`)                                                            |
+| Detekt             | `./gradlew :app:detekt` (uses `detekt-baseline.xml`)                                                             |
+| Release / R8       | `./gradlew :app:assembleRelease` (then `apkanalyzer dex packages` to verify Direct Boot classes aren't stripped) |
+| Room migration     | `:app:testDebugUnitTest --tests "*MigrationTest*"`                                                               |
 
 For this repo the agreed gates are `assembleDebug` + `testDebugUnitTest`.
 Do NOT claim "done" without the gate command exiting 0 in the same turn.
 
 ### Build Properties (`gradle.properties`)
+
 - `org.gradle.jvmargs=-Xmx6g -XX:+UseParallelGC`
 - `org.gradle.parallel=true`, `caching=true`, `configuration-cache=true`
 - `android.nonTransitiveRClass=true`, `kotlin.incremental=true`, `ksp.incremental=true`
@@ -208,6 +221,7 @@ Do NOT claim "done" without the gate command exiting 0 in the same turn.
 - `org.gradle.workers.max=8`
 
 ### Room Schemas (exportSchema enabled)
+
 `@Database(... exportSchema = true)` and `ksp.arg("room.schemaLocation",
 "$projectDir/schemas")` together emit `app/schemas/<fully-qualified-class-name>/<version>.json`
 on every Room compile. Currently only `18.json` is committed. Adding historical
@@ -217,12 +231,14 @@ emitted JSON, and returning to master. See `tier1_feature/MigrationTest` for the
 scaffolded migration test that consumes these files via `MigrationTestHelper`.
 
 ### Detekt / Lint / ProGuard
+
 - `app/detekt-baseline.xml`, `app/lint-baseline.xml` exist — treat them as
   "known-acceptable noise", not a permission to add more.
 - `app/proguard-rules.pro` is checked in. R8 is enabled for release (`isMinifyEnabled = true`,
   `isShrinkResources = true`). Always re-test after touching `proguard-rules.pro`.
 
 ## 📲 Runtime / On-Device Verification
+
 After installing on a device, use this checklist before declaring "works on hardware."
 
 1. **Confirm listener permission was granted:**
@@ -247,7 +263,9 @@ After installing on a device, use this checklist before declaring "works on hard
    `adb shell "screencap -p /sdcard/screen.png" && adb pull /sdcard/screen.png`
 
 ## 🏁 Definition of Done (per task)
+
 A task is **done** when ALL of the following are satisfied in the same turn:
+
 1. The literal code from `summary.md` (or the user-supplied diff) is applied.
 2. The associated `ideal_commits.txt` entry is implemented (or documented as future work).
 3. `./gradlew :app:assembleDebug` exited 0.
@@ -261,6 +279,7 @@ A task is **done** when ALL of the following are satisfied in the same turn:
 If any gate fails, the task is NOT done — report the blocker honestly.
 
 ## ⚠️ Common Pitfalls
+
 - **Skipping a phase** → cascading compile / DI / lifecycle failures.
 - **Forgetting `directBootAware="true"`** on a pre-unlock DB-touching component
   → silent failure on reboot until first unlock.
@@ -277,6 +296,7 @@ If any gate fails, the task is NOT done — report the blocker honestly.
 - **`String` passed to `LocalClipboardManager.setText`** → Compose type mismatch warning.
 
 ## 📚 Reference Index
+
 - Project root: `/home/freya/antigravity/NotiMind-Lite/`
 - Build files: `build.gradle.kts`, `settings.gradle.kts`, `gradle.properties`,
   `gradle/libs.versions.toml`, `gradle/wrapper/`, `app/build.gradle.kts`
@@ -287,6 +307,7 @@ If any gate fails, the task is NOT done — report the blocker honestly.
   adb verification recipe, key-collision fix.
 
 ## 🤝 Working With Hermes on This Repo
+
 - Load the `notimind-lite-coding` skill at the start of each session
   (or ask Hermes to load it).
 - Reference commits by ID from `ideal_commits.txt` whenever possible.

@@ -34,7 +34,7 @@ Mandatory Confirmation Gate: Before invoking Intent.ACTION_SEND, the application
 
 To prevent abandoned export files from lingering in device storage:
 
-// Ephemeral cache manager with aggressive TTL cleanupclass EphemeralExportCache(private val context: Context) {    private val exportsDir = File(context.cacheDir, "exports")        fun createEphemeralExportFile(extension: String): File {        pruneStaleExports(maxAgeMs = 15 * 60 * 1000L) // 15-minute TTL        if (!exportsDir.exists()) exportsDir.mkdirs()        return File(exportsDir, "notimind_export_${System.currentTimeMillis()}.$extension")    }        fun pruneStaleExports(maxAgeMs: Long) {        val now = System.currentTimeMillis()        exportsDir.listFiles()?.forEach { file ->            if (now - file.lastModified() > maxAgeMs) {                file.delete()            }        }    }}
+// Ephemeral cache manager with aggressive TTL cleanupclass EphemeralExportCache(private val context: Context) { private val exportsDir = File(context.cacheDir, "exports") fun createEphemeralExportFile(extension: String): File { pruneStaleExports(maxAgeMs = 15 _ 60 _ 1000L) // 15-minute TTL if (!exportsDir.exists()) exportsDir.mkdirs() return File(exportsDir, "notimind*export*${System.currentTimeMillis()}.$extension") } fun pruneStaleExports(maxAgeMs: Long) { val now = System.currentTimeMillis() exportsDir.listFiles()?.forEach { file -> if (now - file.lastModified() > maxAgeMs) { file.delete() } } }}
 
 ## 5. Security Invariants & Sanitization Controls
 

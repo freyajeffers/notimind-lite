@@ -20,7 +20,7 @@ The objective of Phase 1 is to establish a rigorous, modular pre-ingestion filte
 
 ## 3. Inter-Module Data Contracts & Entities
 
-// Immutable pre-sanitization ingestion modeldata class RawNotificationData(    val key: String,    val packageName: String,    val rawTitle: String,    val rawContent: String,    val rawSubText: String?,    val rawBigText: String?,    val category: String?,    val channelId: String?,    val postTime: Long)// Sanitized output entity ready for persistencedata class SanitizedNotificationResult(    val shouldPersist: Boolean,    val dropReason: String? = null,    val sanitizedTitle: String,    val sanitizedContent: String,    val sanitizedSubText: String?,    val sanitizedBigText: String?,    val isRedacted: Boolean,    val redactedCategories: List<RedactionCategory>)enum class RedactionCategory {    OTP_2FA,    FINANCIAL_CARD,    FINANCIAL_BALANCE,    SSN_TAX_ID,    HEALTH_MEDICATION}
+// Immutable pre-sanitization ingestion modeldata class RawNotificationData( val key: String, val packageName: String, val rawTitle: String, val rawContent: String, val rawSubText: String?, val rawBigText: String?, val category: String?, val channelId: String?, val postTime: Long)// Sanitized output entity ready for persistencedata class SanitizedNotificationResult( val shouldPersist: Boolean, val dropReason: String? = null, val sanitizedTitle: String, val sanitizedContent: String, val sanitizedSubText: String?, val sanitizedBigText: String?, val isRedacted: Boolean, val redactedCategories: List<RedactionCategory>)enum class RedactionCategory { OTP_2FA, FINANCIAL_CARD, FINANCIAL_BALANCE, SSN_TAX_ID, HEALTH_MEDICATION}
 
 ## 4. Heuristic & Regex Redaction Specifications
 
@@ -30,15 +30,15 @@ The PiiRedactionEngine must enforce deterministic replacement for known sensitiv
 
 | --- | --- | --- |
 
-| One-Time Passwords (OTPs) | 4–8 digit standalone numbers following keywords like  code, verification, otp, password, pin, token, secret . | [REDACTED OTP] |
+| One-Time Passwords (OTPs) | 4–8 digit standalone numbers following keywords like code, verification, otp, password, pin, token, secret . | [REDACTED OTP] |
 
 | Payment Card Numbers | 13–19 digit sequences matching Luhn algorithm checks with optional hyphens or spaces. | [REDACTED CARD: ****] |
 
 | US Social Security Numbers | Standard \b\d{3}-\d{2}-\d{4}\b pattern. | [REDACTED SSN] |
 
-| Currency Balances & Debts | Explicit monetary figures exceeding threshold amounts when accompanied by  due, statement, balance, payment . | [AMOUNT REDACTED] |
+| Currency Balances & Debts | Explicit monetary figures exceeding threshold amounts when accompanied by due, statement, balance, payment . | [AMOUNT REDACTED] |
 
-| Prescription Dosage | Milligram/microgram quantities accompanied by medication keywords (e.g.,  mg, dosage, take, pill ). | [MEDICATION DETAILS REDACTED] |
+| Prescription Dosage | Milligram/microgram quantities accompanied by medication keywords (e.g., mg, dosage, take, pill ). | [MEDICATION DETAILS REDACTED] |
 
 ## 5. Security Invariants & Failure Modes
 
