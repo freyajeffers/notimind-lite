@@ -153,6 +153,23 @@
     <string name="settings_strict_privacy_desc">Disable all crash reporting and anonymous usage telemetry.</string>
     <string name="settings_version_footer">NotiMind Lite · v%1$s (%2$d)</string>
 
+    <!-- Settings: Data & Search preferences -->
+    <string name="pref_data_search_title">Data &amp; Search</string>
+    <string name="pref_enable_sync_title">Enable Cloud Sync</string>
+    <string name="pref_enable_sync_summary">Toggle automatic cloud sync and backups.</string>
+    <string name="pref_enable_vector_title">Enable Semantic Vector Search</string>
+    <string name="pref_enable_vector_summary">Enable semantic similarity search using vector embeddings.</string>
+    <string name="pref_enable_fts4_title">Enable FTS4 Keyword Search</string>
+    <string name="pref_enable_fts4_summary">Enable full-text keyword search using FTS4.</string>
+    <string name="pref_retention_days_title">Retention (days)</string>
+    <string name="pref_retention_days_summary">How long to keep notifications before auto-deleting.</string>
+    <string name="pref_retention_days_unit">Days</string>
+    <string name="pref_retention_days_range">Allowed range: 1–3650 days</string>
+    <string name="pref_export_encryption_title">Encrypt Exports</string>
+    <string name="pref_export_encryption_summary">Require passphrase when exporting backups.</string>
+    <string name="pref_capture_notifications_title">Capture Notifications</string>
+    <string name="pref_capture_notifications_summary">If disabled, the notification listener will not persist new notifications.</string>
+
     <!-- Backup Key -->
     <string name="backup_key_generated_title">Encryption Key Generated</string>
     <string name="backup_key_share">Share Key</string>

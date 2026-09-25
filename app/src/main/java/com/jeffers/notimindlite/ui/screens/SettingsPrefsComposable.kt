@@ -5,8 +5,11 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.text.input.KeyboardOptions
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.res.stringResource
 import com.jeffers.notimindlite.data.local.PreferencesRepository
-
+import com.jeffers.notimindlite.R
 
 @Composable
 fun SettingsPreferencesSection(preferencesRepository: PreferencesRepository) {
@@ -23,54 +26,62 @@ fun SettingsPreferencesSection(preferencesRepository: PreferencesRepository) {
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
     ) {
         Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-            Text(text = "Data & Search", style = MaterialTheme.typography.titleMedium)
+            Text(text = stringResource(R.string.pref_data_search_title), style = MaterialTheme.typography.titleMedium)
 
             Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
                 Column(modifier = Modifier.weight(1f)) {
-                    Text("Enable Cloud Sync", style = MaterialTheme.typography.bodyLarge)
-                    Text("Toggle automatic cloud sync and backups.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text(stringResource(R.string.pref_enable_sync_title), style = MaterialTheme.typography.bodyLarge)
+                    Text(stringResource(R.string.pref_enable_sync_summary), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
                 Switch(checked = enableSync, onCheckedChange = preferencesRepository::setEnableSync)
             }
 
             Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
                 Column(modifier = Modifier.weight(1f)) {
-                    Text("Enable Semantic Vector Search", style = MaterialTheme.typography.bodyLarge)
-                    Text("Enable semantic similarity search using vector embeddings.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text(stringResource(R.string.pref_enable_vector_title), style = MaterialTheme.typography.bodyLarge)
+                    Text(stringResource(R.string.pref_enable_vector_summary), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
                 Switch(checked = enableVector, onCheckedChange = preferencesRepository::setEnableVector)
             }
 
             Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
                 Column(modifier = Modifier.weight(1f)) {
-                    Text("Enable FTS4 Keyword Search", style = MaterialTheme.typography.bodyLarge)
-                    Text("Enable full-text keyword search using FTS4.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text(stringResource(R.string.pref_enable_fts4_title), style = MaterialTheme.typography.bodyLarge)
+                    Text(stringResource(R.string.pref_enable_fts4_summary), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
                 Switch(checked = enableFts4, onCheckedChange = preferencesRepository::setEnableFts4)
             }
 
             Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
                 Column(modifier = Modifier.weight(1f)) {
-                    Text("Retention (days)", style = MaterialTheme.typography.bodyLarge)
-                    Text("How long to keep notifications before auto-deleting.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text(stringResource(R.string.pref_retention_days_title), style = MaterialTheme.typography.bodyLarge)
+                    Text(stringResource(R.string.pref_retention_days_summary), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
-                OutlinedTextField(value = retentionDays.toString(), onValueChange = { new ->
-                    new.toIntOrNull()?.let(preferencesRepository::setRetentionDays)
-                }, modifier = Modifier.width(120.dp))
+                OutlinedTextField(
+                    value = retentionDays.toString(),
+                    onValueChange = { new ->
+                        new.toIntOrNull()?.let(preferencesRepository::setRetentionDays)
+                    },
+                    modifier = Modifier.width(120.dp),
+                    singleLine = true,
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                    label = { Text(stringResource(R.string.pref_retention_days_unit)) },
+                    supportingText = { Text(stringResource(R.string.pref_retention_days_range)) }
+                )
             }
 
             Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
                 Column(modifier = Modifier.weight(1f)) {
-                    Text("Encrypt Exports", style = MaterialTheme.typography.bodyLarge)
-                    Text("Require passphrase when exporting backups.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text(stringResource(R.string.pref_export_encryption_title), style = MaterialTheme.typography.bodyLarge)
+                    Text(stringResource(R.string.pref_export_encryption_summary), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
                 Switch(checked = exportEncryption, onCheckedChange = preferencesRepository::setExportEncryption)
             }
 
             Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
                 Column(modifier = Modifier.weight(1f)) {
-                    Text("Capture Notifications", style = MaterialTheme.typography.bodyLarge)
-                    Text("If disabled, the notification listener will not persist new notifications.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text(stringResource(R.string.pref_capture_notifications_title), style = MaterialTheme.typography.bodyLarge)
+                    Text(stringResource(R.string.pref_capture_notifications_summary), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
                 Switch(checked = captureNotifications, onCheckedChange = preferencesRepository::setCaptureNotifications)
             }
