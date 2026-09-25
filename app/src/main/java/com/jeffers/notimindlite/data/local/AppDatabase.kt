@@ -424,6 +424,7 @@ abstract class AppDatabase : RoomDatabase() {
                     val appContext = context.applicationContext
                     val deContext = if (appContext.isDeviceProtectedStorage) appContext else appContext.createDeviceProtectedStorageContext()
                     Room.databaseBuilder(deContext, AppDatabase::class.java, DE_DATABASE_NAME)
+                        .apply { EncryptedDatabaseFactory.openHelperFactory(deContext, DE_DATABASE_NAME)?.let(::openHelperFactory) }
                         .addCallback(DB_CALLBACK)
                         .setJournalMode(JournalMode.WRITE_AHEAD_LOGGING)
                         .build().also { deInstance = it }
@@ -443,6 +444,7 @@ abstract class AppDatabase : RoomDatabase() {
                         AppDatabase::class.java,
                         CE_DATABASE_NAME
                     )
+                    .apply { EncryptedDatabaseFactory.openHelperFactory(appContext, CE_DATABASE_NAME)?.let(::openHelperFactory) }
                     .addMigrations(
                         MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7,
                         MIGRATION_7_8, MIGRATION_8_9, MIGRATION_9_10,

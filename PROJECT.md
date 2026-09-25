@@ -32,7 +32,7 @@ NotiMind Lite is a high-performance Android application for systemic notificatio
 
 ### Data & Persistence
 - `NotificationDao.searchNotificationsFts(query: String): List<NotificationEntity>`
-- `AppDatabase.getNotificationDao(): NotificationDao`
+- `AppDatabase.getNotificationDao(): NotificationDao` (Room schema v19; SQLCipher-backed DE/CE instances)
 - `EncryptedBackupManager.createBackup(): File`
 
 ### Security & Notary

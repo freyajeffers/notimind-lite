@@ -12,7 +12,7 @@ and bidirectional Firestore sync.
 ## 🏗️ Technical Architecture
 - **Language / SDK**: Kotlin, JDK 17 toolchain, `compileSdk = 37`, `minSdk = 33`, `targetSdk = 36`
 - **UI Layer**: Jetpack Compose + Material 3 (dynamic theming); no XML layouts under `ui/`
-- **Persistence**: Room SQLite (DB v18, 17 migrations), FTS4 virtual table for keyword search,
+- **Persistence**: Room SQLite (DB v19, 18 migrations), FTS4 virtual table for keyword search,
   BLOB column for vector embeddings (semantic search). NO Hilt/Dagger — constructor injection only.
 - **Background**:
   - `NotificationLoggerService` (NotificationListenerService) for real-time capture

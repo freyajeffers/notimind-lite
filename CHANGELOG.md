@@ -11,6 +11,8 @@ All notable changes to NotiMind Lite are documented here. This project adheres t
 - **feat(prefs)**: Add PII Redaction toggle in `PreferenceManager` and `SettingsScreen`.
 - **feat(crypto)**: Implement `CryptoUtils` with RFC 5869 HKDF-SHA256 key derivation and AES-256-GCM authenticated encryption.
 - **feat(crypto)**: Implement `KeyManager` wrapper for AndroidX Security MasterKeys with JVM test fallback.
+- **feat(crypto)**: Wire SQLCipher-backed Room open helpers for both Direct Boot databases, with per-database Keystore-wrapped passphrases.
+- **feat(data)**: Advance the Room baseline to schema v19 with notification-group persistence and explicit `MIGRATION_18_19`.
 
 ### 🧪 Testing
 - **test(crypto)**: Add unit tests for `CryptoUtils` and `KeyManager` covering roundtrip encryption, nonce uniqueness, AAD mismatch, tamper rejection, and RFC HKDF derivation.
