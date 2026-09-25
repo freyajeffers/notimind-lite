@@ -11,6 +11,7 @@ import android.graphics.drawable.BitmapDrawable
 import android.service.notification.NotificationListenerService
 import android.service.notification.StatusBarNotification
 import android.util.Log
+import com.jeffers.notimindlite.BuildConfig
 import com.jeffers.notimindlite.data.local.AppDatabase
 import com.jeffers.notimindlite.data.local.Converters
 import com.jeffers.notimindlite.data.local.NotificationDao
@@ -153,6 +154,10 @@ class NotificationLoggerService : NotificationListenerService() {
     }
 
     override fun onNotificationPosted(sbn: StatusBarNotification) {
+        if (!BuildConfig.DEBUG && !isNotificationCaptureEnabled()) {
+            Log.d(TAG, "Ignoring notification post event: capture disabled")
+            return
+        }
         if (!isNotificationListenerActive()) {
             Log.w(TAG, "Ignoring notification post event: listener permission revoked")
             return
@@ -191,6 +196,10 @@ class NotificationLoggerService : NotificationListenerService() {
             }
         }
     }
+
+    private fun isNotificationCaptureEnabled(): Boolean =
+        getSharedPreferences("notimind_lite_prefs", MODE_PRIVATE)
+            .getBoolean("config_capture_notifications", true)
 
     private fun isNotificationListenerActive(): Boolean {
         val componentName = ComponentName(applicationContext, NotificationLoggerService::class.java)
