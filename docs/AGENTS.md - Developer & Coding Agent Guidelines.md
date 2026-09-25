@@ -1,14 +1,14 @@
 # AGENTS.md — Developer & Autonomous Coding Agent Guidelines
 
-## 1. Purpose & Operational Scope
+## 1. Status and Scope
 
-This document defines non-negotiable operational invariants, architectural constraints, and coding standards for human engineers and autonomous coding agents contributing to the NotiMind Lite codebase. All modifications must conform strictly to these directives.
+This is a hardening plan, not a statement that every control is already implemented. Current source uses Firebase Auth/Firestore, `INTERNET`, and `ACCESS_NETWORK_STATE`; therefore the older zero-network/offline-only invariant below is historical and does not apply to the current product. The root `AGENTS.md` and current source take precedence.
 
 ## 2. Non-Negotiable Security Invariants
 
-Invariant 1: Zero Network Permission Axiom
+Invariant 1: Network access is deliberate and user-scoped
 
-Under no circumstances may android.permission.INTERNET or any network-related permission be added to AndroidManifest.xml. NotiMind Lite is strictly offline-first. Remote analytics, crash reporters, and network sockets are permanently prohibited.
+Firebase Auth, Firestore synchronization, and backup notarization are current features. Network calls must remain user-scoped, authenticated, explicit, and free of notification-content logging. Do not add unrelated telemetry or permissions without review.
 
 Invariant 2: Zero Plaintext At-Rest Persistence
 

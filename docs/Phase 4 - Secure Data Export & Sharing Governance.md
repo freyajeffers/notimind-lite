@@ -44,7 +44,11 @@ To prevent abandoned export files from lingering in device storage:
 
 - Scoped URI Grant: Intent.FLAG_GRANT_READ_URI_PERMISSION is granted strictly to the target chosen activity; write permissions are strictly omitted.
 
-## 6. Acceptance Criteria & Verification Tests
+## 6. Current implementation status
+
+`DatabaseExporter` implements CSV formula-injection escaping and scoped content URI sharing. The governance dialog, date/package filtering, secondary export PII scrubber, and 15-minute TTL cache manager described below remain pending; see `todo.md`.
+
+## 7. Acceptance Criteria & Verification Tests
 
 - TC-EXP-001 (Date Boundary Filter): Request export for "Last 24 Hours"; verify that no notification older than 24 hours appears in the resulting JSON/CSV.
 

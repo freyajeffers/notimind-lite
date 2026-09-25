@@ -18,7 +18,7 @@ The system is governed by four non-negotiable engineering constraints:
 
 ### 1.3 High-Level Component Diagram
 - **Capture Layer**: `NotificationListenerService` $\\rightarrow$ `NotificationLoggerService`
-- **Persistence Layer**: Room DB (SQLite) $\\rightarrow$ `AppDatabase` $\\rightarrow$ `NotificationDao`
+- **Persistence Layer**: SQLCipher-backed Room DB (SQLite) $\\rightarrow$ `AppDatabase` $\\rightarrow$ `NotificationDao`
 - **Intelligence Layer**: `HybridSearchEngine` $\\rightarrow$ `VectorEmbeddingHelper` $\\rightarrow$ `DynamicClusterManager`
 - **Security Layer**: `EncryptedBackupManager` $\\rightarrow$ `BackupNotaryClient` $\\rightarrow$ Google Play Integrity API
 - **Cloud Sync Layer**: `SyncWorker` $\\rightarrow$ `FirestoreSyncRepository` $\\rightarrow$ Google Cloud Firestore
@@ -32,7 +32,8 @@ The system is governed by four non-negotiable engineering constraints:
 ### 2.1 Codebase Map (Class Directory)
 
 #### Data Layer (`com.jeffers.notimindlite.data`)
-- **`AppDatabase`**: Room database singleton. Manages SQLite connection and provides DAOs.
+- **`AppDatabase`**: Room v19 database singleton with explicit migrations through `MIGRATION_18_19`; builds separate DE and CE instances.
+- **`EncryptedDatabaseFactory` / `SqlCipherKeyManager`**: SQLCipher open-helper wiring and per-database Keystore-wrapped passphrases. Existing plaintext-install migration remains pending.
 - **`NotificationDao`**: Primary data access point. Contains complex `@Query` logic for FTS and hybrid search.
 - **`AppDao`**: Manages the `AppEntity` table, ensuring a 1:N relationship between apps and notifications.
 - **`BackupDao`**: Handles the audit trail of backup exports and their corresponding signatures.
@@ -51,6 +52,8 @@ The system is governed by four non-negotiable engineering constraints:
 
 #### Security Layer (`com.jeffers.notimindlite.util`)
 - **`EncryptedBackupManager`**: The cryptographer. Handles AES-GCM encryption and orchestrates the notarization flow.
+- **`CryptoUtils` / `EncryptedStorage`**: JVM-testable HKDF-SHA256 and AES-256-GCM helpers.
+- **`SqlCipherKeyManager`**: Keystore-wrapped SQLCipher passphrase storage.
 - **`BackupNotaryClient`**: The communicator. Handles the Google Play Integrity handshake and Notary Server API calls.
 - **`BackupKeyCodec`**: Utility for Base64 encoding/decoding of `SecretKey` objects.
 
@@ -151,7 +154,7 @@ Encryption is handled via the **Tink** library.
 | :--- | :--- | :--- |
 | **Notary Server Offline** | Local caching of last valid signature + exponential backoff. | Backup created; "Notarized" status pending. |
 | **Rooted Device** | Play Integrity `deviceIntegrity` check fails. | Server refuses to sign; backup marked "Unverified". |
-| **DB Corruption** | `DatabaseMigrator` $\rightarrow$ `fallbackToDestructiveMigration()`. | DB wiped and restored from latest verified backup. |
+| **DB Corruption** | Explicit Room migrations, SQLCipher authentication, and backup restore; destructive fallback is prohibited. | Preserve data or fail closed; restore only from a verified backup. |
 | **Main Thread I/O** | `StrictMode` enabled in debug $\rightarrow$ Move to `Dispatchers.IO`. | Prevents ANRs (App Not Responding). |
 | **Snooze Alarm Missed** | `SnoozeReminderReceiver` checks time on boot. | Missed reminders fire immediately after unlock. |
 

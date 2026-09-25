@@ -16,7 +16,7 @@ The objective of Phase 1 is to establish a rigorous, modular pre-ingestion filte
 
 | SanitizationPipeline | Orchestrates the end-to-end sanitization workflow: package filtering, clutter filtering, dynamic debouncing, and text redaction. | Acts as the single entry gate between NotificationLoggerService and NotificationDao. |
 
-| PackageFilterPreferences | Persists package filtering rules, user-selected exclusions, and sensitivity toggles in encrypted preferences. | Exposes StateFlow streams consumed by the Settings UI and the background service. |
+| PackageFilterPreferences | Planned persistence for package filtering rules and sensitivity toggles. | Current implementation uses the existing preference layer; encrypted preference migration remains pending. |
 
 ## 3. Inter-Module Data Contracts & Entities
 
@@ -47,6 +47,10 @@ The PiiRedactionEngine must enforce deterministic replacement for known sensitiv
 - ReDoS Defense: All regular expressions must be strictly bounded in length and compiled with non-backtracking constructs to prevent Regular Expression Denial of Service (ReDoS) under adversary-crafted notification strings.
 
 - Memory Scrubbing: Temporary string buffers holding raw notification extras must not be retained in memory beyond the immediate scope of the ingestion coroutine.
+
+### Implementation status
+
+`PiiRedactionEngine`, `PackageFilterManager`, and `SanitizationPipeline` are implemented and integrated into notification ingestion. Current matching covers supported OTP, card, phone, email, and currency patterns. SSN, medication-specific masking, encrypted user-configurable package profiles, ReDoS fuzzing, and the stated performance SLA remain pending; see `todo.md`.
 
 ## 6. Acceptance Criteria & Verification Tests
 
