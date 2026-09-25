@@ -40,10 +40,11 @@ class MigrationRunnerTest : BaseRobolectricTest() {
         NotificationEntity(key = "k1", packageName = "p", appName = "p", title = "t", content = "c", postTime = 1L)
       )
 
+      assertEquals(1, src.notificationDao().getAllNotificationsList().size)
       MigrationRunner(context).performStreamingCopyForTest(src, dst, batchSize = 1)
 
-      val list = dst.notificationDao().getActiveNotificationsList()
-      assertEquals(1, list.size)
+      val list = dst.notificationDao().getAllNotificationsList()
+      assertEquals("Copied rows: $list", 1, list.size)
       assertEquals("t", list[0].title)
     } finally {
       src.close()

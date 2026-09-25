@@ -52,24 +52,24 @@ class MigrationRunner(private val context: Context) {
     var offset = 0L
     while (offset < total) {
       val sel = src.query(
-        "SELECT `key`, packageName, title, content, postTime, isDismissed FROM notifications LIMIT $batchSize OFFSET $offset"
+        "SELECT * FROM notifications LIMIT $batchSize OFFSET $offset"
       )
 
       dst.beginTransaction()
       try {
         while (sel.moveToNext()) {
-          val key = sel.getString(0)
-          val pkg = sel.getString(1)
-          val title = sel.getString(2)
-          val content = sel.getString(3)
-          val postTime = sel.getLong(4)
-          val isDismissed = sel.getInt(5)
-
-          // Insert into target (column list must match)
-          dst.execSQL(
-            "INSERT OR IGNORE INTO notifications (`key`, packageName, appName, title, content, postTime, isDismissed) VALUES (?, ?, ?, ?, ?, ?, ?)",
-            arrayOf(key, pkg, pkg, title, content, postTime, isDismissed)
-          )
+          val values = android.content.ContentValues()
+          for (columnIndex in 0 until sel.columnCount) {
+            val columnName = sel.getColumnName(columnIndex)
+            when (sel.getType(columnIndex)) {
+              android.database.Cursor.FIELD_TYPE_NULL -> values.putNull(columnName)
+              android.database.Cursor.FIELD_TYPE_INTEGER -> values.put(columnName, sel.getLong(columnIndex))
+              android.database.Cursor.FIELD_TYPE_FLOAT -> values.put(columnName, sel.getDouble(columnIndex))
+              android.database.Cursor.FIELD_TYPE_BLOB -> values.put(columnName, sel.getBlob(columnIndex))
+              else -> values.put(columnName, sel.getString(columnIndex))
+            }
+          }
+          dst.insert("notifications", android.database.sqlite.SQLiteDatabase.CONFLICT_IGNORE, values)
         }
         dst.setTransactionSuccessful()
       } finally {
