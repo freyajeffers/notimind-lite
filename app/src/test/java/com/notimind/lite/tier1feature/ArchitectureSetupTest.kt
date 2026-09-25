@@ -17,6 +17,8 @@ class ArchitectureSetupTest : BaseRobolectricTest() {
         val buildGradleFile = File(rootDir, "app/build.gradle.kts")
         val versionsTomlFile = File(rootDir, "gradle/libs.versions.toml")
 
+        // Allowlist: Firebase is intentionally used in this project (Auth + Firestore).
+        // This audit intends to block large model / AI stacks, not Firebase product usage.
         val forbiddenKeywords = listOf("google-ai", "tensorflow", "mlkit", "pytorch", "cloud-sync")
 
         if (buildGradleFile.exists()) {
