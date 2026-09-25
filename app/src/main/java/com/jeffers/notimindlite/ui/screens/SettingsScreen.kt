@@ -69,6 +69,7 @@ fun SettingsScreen(
     var selectedBackupUri by remember { mutableStateOf<Uri?>(null) }
     var showRestoreDialog by remember { mutableStateOf(false) }
     val snackbarHostState = remember { SnackbarHostState() }
+    val preferencesRepository = remember { com.jeffers.notimindlite.data.local.PreferencesRepository(context) }
     val restoreSuccessMsg = stringResource(id = R.string.settings_restore_success)
     val restoreFailureMsg = stringResource(id = R.string.settings_restore_failure)
 
@@ -167,6 +168,8 @@ fun SettingsScreen(
                 }
             }
         }
+
+        SettingsPreferencesSection(preferencesRepository = preferencesRepository)
 
         if (session.isAuthenticated) {
             Card(
