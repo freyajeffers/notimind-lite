@@ -1,5 +1,8 @@
 package com.jeffers.notimindlite.migration
 
+import androidx.room.Room
+import com.jeffers.notimindlite.data.local.AppDatabase
+import com.jeffers.notimindlite.data.local.NotificationEntity
 import com.notimind.lite.base.BaseRobolectricTest
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
@@ -24,5 +27,27 @@ class MigrationRunnerTest : BaseRobolectricTest() {
   fun featureFlagOnStartsPreflight() = runTest {
     val state = MigrationRunner(context).runMigrationIfNeeded(featureFlag = true)
     assertEquals(MigrationState.PREFLIGHT, state)
+  }
+
+  @Test
+  fun streamingCopyCopiesRows() = runTest {
+    val src = Room.inMemoryDatabaseBuilder(context, AppDatabase::class.java)
+      .allowMainThreadQueries().build()
+    val dst = Room.inMemoryDatabaseBuilder(context, AppDatabase::class.java)
+      .allowMainThreadQueries().build()
+    try {
+      src.notificationDao().insertNotification(
+        NotificationEntity(key = "k1", packageName = "p", appName = "p", title = "t", content = "c", postTime = 1L)
+      )
+
+      MigrationRunner(context).performStreamingCopyForTest(src, dst, batchSize = 1)
+
+      val list = dst.notificationDao().getActiveNotificationsList()
+      assertEquals(1, list.size)
+      assertEquals("t", list[0].title)
+    } finally {
+      src.close()
+      dst.close()
+    }
   }
 }
