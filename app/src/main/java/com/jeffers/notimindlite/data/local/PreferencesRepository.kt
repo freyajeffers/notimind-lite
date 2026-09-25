@@ -44,12 +44,27 @@ class PreferencesRepository(context: Context) {
     private val _maxDbMb = MutableStateFlow(backing.getInt(KEY_MAX_DB_MB, 512))
     private val _lowMemoryMode = MutableStateFlow(backing.getBoolean(KEY_LOW_MEMORY_MODE, false))
     private val _vectorCacheMax = MutableStateFlow(backing.getInt(KEY_VECTOR_CACHE_MAX, 1000))
+
+    private val _syncIntervalMin = MutableStateFlow(backing.getInt(KEY_SYNC_INTERVAL_MIN, 60))
+    private val _syncWifiOnly = MutableStateFlow(backing.getBoolean(KEY_SYNC_WIFI_ONLY, true))
+    private val _syncChargingOnly = MutableStateFlow(backing.getBoolean(KEY_SYNC_CHARGING_ONLY, false))
+    private val _redactPii = MutableStateFlow(backing.getBoolean(KEY_REDACT_PII, true))
+    private val _encryptedExports = MutableStateFlow(backing.getBoolean(KEY_ENCRYPTED_EXPORTS, true))
+    private val _requirePassphrase = MutableStateFlow(backing.getBoolean(KEY_REQUIRE_PASSPHRASE, true))
+    private val _autoLockDb = MutableStateFlow(backing.getBoolean(KEY_AUTO_LOCK_DB, false))
+
     val enableTelemetry: StateFlow<Boolean> = _enableTelemetry
     val telemetryLevel: StateFlow<String> = _telemetryLevel
     val maxDbMb: StateFlow<Int> = _maxDbMb
     val lowMemoryMode: StateFlow<Boolean> = _lowMemoryMode
     val vectorCacheMax: StateFlow<Int> = _vectorCacheMax
-
+    val syncIntervalMin: StateFlow<Int> = _syncIntervalMin
+    val syncWifiOnly: StateFlow<Boolean> = _syncWifiOnly
+    val syncChargingOnly: StateFlow<Boolean> = _syncChargingOnly
+    val redactPii: StateFlow<Boolean> = _redactPii
+    val encryptedExports: StateFlow<Boolean> = _encryptedExports
+    val requirePassphrase: StateFlow<Boolean> = _requirePassphrase
+    val autoLockDb: StateFlow<Boolean> = _autoLockDb
 
     fun setEnableSync(value: Boolean) { backing.edit().putBoolean(KEY_ENABLE_SYNC, value).apply(); _enableSync.value = value }
     fun setEnableVector(value: Boolean) { backing.edit().putBoolean(KEY_ENABLE_VECTOR, value).apply(); _enableVector.value = value }
@@ -68,6 +83,13 @@ class PreferencesRepository(context: Context) {
     fun setMaxDbMb(value: Int) { val safe = value.coerceIn(1, 4096); backing.edit().putInt(KEY_MAX_DB_MB, safe).apply(); _maxDbMb.value = safe }
     fun setLowMemoryMode(value: Boolean) { backing.edit().putBoolean(KEY_LOW_MEMORY_MODE, value).apply(); _lowMemoryMode.value = value }
     fun setVectorCacheMax(value: Int) { val safe = value.coerceIn(1, 10000); backing.edit().putInt(KEY_VECTOR_CACHE_MAX, safe).apply(); _vectorCacheMax.value = safe }
+    fun setSyncIntervalMin(value: Int) { val safe = value.coerceIn(1, 1440); backing.edit().putInt(KEY_SYNC_INTERVAL_MIN, safe).apply(); _syncIntervalMin.value = safe }
+    fun setSyncWifiOnly(value: Boolean) { backing.edit().putBoolean(KEY_SYNC_WIFI_ONLY, value).apply(); _syncWifiOnly.value = value }
+    fun setSyncChargingOnly(value: Boolean) { backing.edit().putBoolean(KEY_SYNC_CHARGING_ONLY, value).apply(); _syncChargingOnly.value = value }
+    fun setRedactPii(value: Boolean) { backing.edit().putBoolean(KEY_REDACT_PII, value).apply(); _redactPii.value = value }
+    fun setEncryptedExports(value: Boolean) { backing.edit().putBoolean(KEY_ENCRYPTED_EXPORTS, value).apply(); _encryptedExports.value = value }
+    fun setRequirePassphrase(value: Boolean) { backing.edit().putBoolean(KEY_REQUIRE_PASSPHRASE, value).apply(); _requirePassphrase.value = value }
+    fun setAutoLockDb(value: Boolean) { backing.edit().putBoolean(KEY_AUTO_LOCK_DB, value).apply(); _autoLockDb.value = value }
 
     companion object {
         private const val DEFAULT_RETENTION_DAYS = 30
@@ -89,5 +111,12 @@ class PreferencesRepository(context: Context) {
         private const val KEY_MAX_DB_MB = "config_max_db_mb"
         private const val KEY_LOW_MEMORY_MODE = "config_low_memory_mode"
         private const val KEY_VECTOR_CACHE_MAX = "config_vector_cache_max"
+        private const val KEY_SYNC_INTERVAL_MIN = "config_sync_interval_min"
+        private const val KEY_SYNC_WIFI_ONLY = "config_sync_wifi_only"
+        private const val KEY_SYNC_CHARGING_ONLY = "config_sync_charging_only"
+        private const val KEY_REDACT_PII = "config_redact_pii"
+        private const val KEY_ENCRYPTED_EXPORTS = "config_encrypted_exports"
+        private const val KEY_REQUIRE_PASSPHRASE = "config_require_passphrase"
+        private const val KEY_AUTO_LOCK_DB = "config_auto_lock_db"
     }
 }
