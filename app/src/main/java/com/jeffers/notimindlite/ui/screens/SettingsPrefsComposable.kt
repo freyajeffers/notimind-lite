@@ -21,6 +21,12 @@ fun SettingsPreferencesSection(preferencesRepository: PreferencesRepository) {
     val retentionDays by preferencesRepository.retentionDays.collectAsState(initial = 30)
     val exportEncryption by preferencesRepository.exportEncryption.collectAsState(initial = true)
     val captureNotifications by preferencesRepository.captureNotifications.collectAsState(initial = true)
+    val enableSemanticRanking by preferencesRepository.enableSemanticRanking.collectAsState(initial = true)
+    val autoDeleteOnRead by preferencesRepository.autoDeleteOnRead.collectAsState(initial = false)
+    val backupIntervalDays by preferencesRepository.backupIntervalDays.collectAsState(initial = 0)
+    val anonymizeTitles by preferencesRepository.anonymizeTitles.collectAsState(initial = false)
+    val maxCacheSizeMb by preferencesRepository.maxCacheSizeMb.collectAsState(initial = 50)
+    val semanticWeight by preferencesRepository.semanticWeight.collectAsState(initial = 50)
 
     Card(
         modifier = Modifier.fillMaxWidth(),
@@ -51,6 +57,30 @@ fun SettingsPreferencesSection(preferencesRepository: PreferencesRepository) {
                     Text(stringResource(R.string.pref_enable_fts4_summary), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
                 Switch(checked = enableFts4, onCheckedChange = preferencesRepository::setEnableFts4)
+            }
+
+            Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Text("Semantic ranking", style = MaterialTheme.typography.bodyLarge)
+                    Text("Blend semantic similarity into search ranking.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+                Switch(checked = enableSemanticRanking, onCheckedChange = preferencesRepository::setEnableSemanticRanking)
+            }
+
+            Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Text("Auto-delete when read", style = MaterialTheme.typography.bodyLarge)
+                    Text("Delete notifications automatically after they are marked read.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+                Switch(checked = autoDeleteOnRead, onCheckedChange = preferencesRepository::setAutoDeleteOnRead)
+            }
+
+            Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Text("Anonymize notification titles", style = MaterialTheme.typography.bodyLarge)
+                    Text("Reduce sensitive title content in local displays and exports.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+                Switch(checked = anonymizeTitles, onCheckedChange = preferencesRepository::setAnonymizeTitles)
             }
 
             if (BuildConfig.DEBUG) {
