@@ -80,6 +80,29 @@ fun SettingsPreferencesSection(preferencesRepository: PreferencesRepository) {
                     title = stringResource(R.string.pref_anonymize_titles_title),
                     summary = stringResource(R.string.pref_disabled_in_debug)
                 )
+
+                // Show debug-effective controls while preventing changes to them.
+                Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(stringResource(R.string.pref_retention_days_title), style = MaterialTheme.typography.bodyLarge)
+                        Text(stringResource(R.string.pref_retention_days_summary), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    }
+                    OutlinedTextField(
+                        value = retentionDays.toString(),
+                        onValueChange = { /* disabled in debug */ },
+                        modifier = Modifier.width(120.dp),
+                        singleLine = true,
+                        enabled = false,
+                        label = { Text(stringResource(R.string.pref_retention_days_unit)) }
+                    )
+                }
+                Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(stringResource(R.string.pref_capture_notifications_title), style = MaterialTheme.typography.bodyLarge)
+                        Text(stringResource(R.string.pref_capture_notifications_summary), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    }
+                    Switch(checked = true, onCheckedChange = { /* disabled in debug */ }, enabled = false)
+                }
             } else {
                 PreferenceSwitchRow(
                     title = stringResource(R.string.pref_auto_delete_on_read_title),
