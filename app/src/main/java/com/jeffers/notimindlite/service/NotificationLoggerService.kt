@@ -174,12 +174,19 @@ class NotificationLoggerService : NotificationListenerService() {
                 try {
                     val dao = getDb().notificationDao()
                     val existing = dao.getNotificationByKey(entity.key)
-                    val updateCount = (existing?.updateCount ?: 0) + 1
-                    val originalPostTime =
-                        if (existing != null && existing.postTime > 0) existing.postTime else entity.postTime
+                    
+                    // Logic: Only treat as a "new notification" (new row) if the content has changed significantly.
+                    // Significant change = title or content is different.
+                    // Otherwise, update the existing row (increment update count).
+                    val hasSignificantChange = existing == null || 
+                        existing.title != entity.title || 
+                        existing.content != entity.content
+                    
+                    val updateCount = if (hasSignificantChange) 1 else (existing?.updateCount ?: 0) + 1
+                    val originalPostTime = if (hasSignificantChange) entity.postTime else (existing?.postTime ?: entity.postTime)
                     
                     val finalEntity = entity.copy(
-                        id = existing?.id ?: 0L,
+                        id = if (hasSignificantChange) 0L else (existing?.id ?: 0L),
                         updateCount = updateCount,
                         postTime = originalPostTime,
                         isRead = existing?.isRead ?: false,
