@@ -8,8 +8,9 @@ import androidx.compose.ui.test.performClick
 import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import com.jeffers.notimindlite.data.auth.AuthManager
 import com.jeffers.notimindlite.data.local.AppDatabase
-import com.jeffers.notimindlite.ui.MainNavigationGraph
+import com.jeffers.notimindlite.ui.MainNavigation
 import com.jeffers.notimindlite.ui.theme.NotiMindLiteTheme
 import org.junit.After
 import org.junit.Before
@@ -42,7 +43,11 @@ class MainActivityInstrumentedTest {
     fun mainActivity_launchesAndDisplaysNavigationTabs() {
         composeTestRule.setContent {
             NotiMindLiteTheme {
-                MainNavigationGraph(dao = database.notificationDao())
+                MainNavigation(
+                    notificationDao = database.notificationDao(),
+                    authManager = AuthManager(ApplicationProvider.getApplicationContext()),
+                    db = database
+                )
             }
         }
         composeTestRule.onNodeWithText("Active").assertIsDisplayed()
@@ -53,7 +58,11 @@ class MainActivityInstrumentedTest {
     fun mainActivity_navigatesToHistoryTabOnSelect() {
         composeTestRule.setContent {
             NotiMindLiteTheme {
-                MainNavigationGraph(dao = database.notificationDao())
+                MainNavigation(
+                    notificationDao = database.notificationDao(),
+                    authManager = AuthManager(ApplicationProvider.getApplicationContext()),
+                    db = database
+                )
             }
         }
         composeTestRule.onNodeWithText("History").performClick()

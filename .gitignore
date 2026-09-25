@@ -60,3 +60,9 @@ ideal_changelog.md
 ideal_commits.txt
 notimind-commits.txt
 summary.md
+
+# Local/exported account-manifest artifacts; migration scripts already tracked remain tracked
+/exports-scripts/*
+!/exports-scripts/sqlcipher-migration-smoke.sh
+!/exports-scripts/sqlcipher-create-fixture.sh
+!/exports-scripts/sqlcipher-run-migration.sh
