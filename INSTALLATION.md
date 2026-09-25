@@ -5,6 +5,7 @@ This guide provides the step-by-step configuration required to build and deploy 
 ## 1. Prerequisites
 
 Ensure the following development environment is configured:
+
 - **Java Development Kit (JDK)**: Version 17 (Amazon Corretto or OpenJDK).
 - **Android Studio**: Hedgehog (2023.1.1) or newer.
 - **Android SDK**: API Level 33 (minSdk) and API Level 36 (Target SDK).
@@ -15,6 +16,7 @@ Ensure the following development environment is configured:
 NotiMind Lite relies on Firebase and the Play Integrity API for security notarization.
 
 ### Firebase Configuration
+
 1. Create a new project in the [Firebase Console](https://console.firebase.google.com/).
 2. Add an Android App to the project. Use the `applicationId` defined in `app/build.gradle.kts` (`com.jeffers.notimindlite`).
 3. Enable **Firebase Authentication** (Google Sign-In provider).
@@ -22,6 +24,7 @@ NotiMind Lite relies on Firebase and the Play Integrity API for security notariz
 5. Place the file in the `/app/` directory of the project root.
 
 ### Play Integrity API Setup
+
 1. Navigate to the **Google Cloud Console** $\rightarrow$ **APIs & Services**.
 2. Enable the **Play Integrity API**.
 3. Link your Firebase project to the Google Play Console under **Setup $\rightarrow$ App Integrity**.
@@ -31,13 +34,17 @@ NotiMind Lite relies on Firebase and the Play Integrity API for security notariz
 Release builds require a valid signing keystore to pass the Play Integrity check.
 
 ### Generating a Keystore
+
 Use the Android Studio `Build $\rightarrow$ Generate Signed Bundle/APK` wizard or the command line:
+
 ```bash
 keytool -genkey -v -keystore notimind_release.jks -keyalg RSA -keysize 2048 -validity 10000 -alias notimind_alias
 ```
 
 ### Configuring `build.gradle.kts`
+
 Update the `signingConfigs` block in the app-level Gradle file:
+
 ```kotlin
 signingConfigs {
     create("release") {
@@ -48,11 +55,13 @@ signingConfigs {
     }
 }
 ```
-*Note: Do not hardcode passwords. Use environment variables or a `local.properties` file.*
+
+_Note: Do not hardcode passwords. Use environment variables or a `local.properties` file._
 
 ## 4. Local Properties Setup
 
 Create a `local.properties` file in the project root to handle environment-specific paths:
+
 ```properties
 sdk.dir=/path/to/android-sdk
 # Optional: Custom Notary Server URL for development

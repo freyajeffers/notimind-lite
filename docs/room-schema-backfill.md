@@ -28,12 +28,12 @@ matter what backfill work is done.
 Each commit's `AppDatabase.kt` references entities that didn't exist at that
 commit:
 
-| Entity                | Introduced at version | Introducing commit |
-|-----------------------|-----------------------|--------------------|
-| `NotificationEntity`  | v6                    | `b5e921c` (initial) |
-| `AppEntity`           | v10                   | `8ff1c04`           |
-| `NotificationFtsEntity` | v14                 | `8e90e85`           |
-| `BackupRecord`        | v16                   | `e292424`           |
+| Entity                  | Introduced at version | Introducing commit  |
+| ----------------------- | --------------------- | ------------------- |
+| `NotificationEntity`    | v6                    | `b5e921c` (initial) |
+| `AppEntity`             | v10                   | `8ff1c04`           |
+| `NotificationFtsEntity` | v14                   | `8e90e85`           |
+| `BackupRecord`          | v16                   | `e292424`           |
 
 Attempting to check out a historical `AppDatabase.kt` (e.g., v17) against
 current sources produces:
