@@ -14,6 +14,13 @@ class MigrationRunnerTest : BaseRobolectricTest() {
   }
 
   @Test
+  fun preflightReportsMissingPlaintextSourceWithoutWriting() {
+    val preflight = MigrationRunner(context).preflight()
+    assertEquals(false, preflight.plaintextExists)
+    assertEquals(false, preflight.encryptedExists)
+  }
+
+  @Test
   fun featureFlagOnStartsPreflight() = runTest {
     val state = MigrationRunner(context).runMigrationIfNeeded(featureFlag = true)
     assertEquals(MigrationState.PREFLIGHT, state)
