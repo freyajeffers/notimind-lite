@@ -384,7 +384,7 @@ class PreferencesRepository(context: Context) {
 
     companion object {
         private const val DEFAULT_RETENTION_DAYS = 30
-        private const val RETAIN_ALL_DAYS = 3650
+        const val RETAIN_ALL_DAYS = 3650
         private const val KEY_ENABLE_SYNC = "config_enable_sync"
         private const val KEY_ENABLE_VECTOR = "config_enable_vector"
         private const val KEY_ENABLE_FTS4 = "config_enable_fts4"
