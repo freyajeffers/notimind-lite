@@ -18,6 +18,7 @@ import com.jeffers.notimindlite.data.local.NotificationDao
 import com.jeffers.notimindlite.data.local.NotificationEntity
 import com.jeffers.notimindlite.data.local.PreferencesRepository
 import com.jeffers.notimindlite.util.NotificationLauncher
+import com.jeffers.notimindlite.util.NotificationActionExecutor
 import com.jeffers.notimindlite.util.VectorEmbeddingHelper
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -44,6 +45,7 @@ class NotificationLoggerService : NotificationListenerService() {
     private fun getDb(): AppDatabase = AppDatabase.getDatabase(applicationContext)
     private val serviceJob = SupervisorJob()
     private val scope = CoroutineScope(Dispatchers.IO + serviceJob)
+    private val actionExecutor by lazy { NotificationActionExecutor(PreferencesRepository(applicationContext)) }
 
     companion object {
         @Suppress("UnusedPrivateProperty") // Reserved for future debounce/filter tuning per F-A audit.
@@ -189,6 +191,8 @@ class NotificationLoggerService : NotificationListenerService() {
         // (Single inserts are already optimized via Room, but we maintain compatibility)
         val entity = extractNotificationEntity(sbn)
         if (entity != null) {
+            registerNotificationActions(sbn, entity.key)
+            actionExecutor.executeOnNotification(applicationContext, entity.key, entity.packageName, entity.title)
             scope.launch {
                 try {
                     val dao = getDb().notificationDao()
@@ -220,6 +224,12 @@ class NotificationLoggerService : NotificationListenerService() {
                     Log.e(TAG, "DB insert failed for ${entity.title}", e)
                 }
             }
+        }
+    }
+
+    private fun registerNotificationActions(sbn: StatusBarNotification, key: String) {
+        sbn.notification?.actions?.forEachIndexed { index, action ->
+            NotificationLauncher.registerActionIntent(key, index, action.actionIntent)
         }
     }
 
