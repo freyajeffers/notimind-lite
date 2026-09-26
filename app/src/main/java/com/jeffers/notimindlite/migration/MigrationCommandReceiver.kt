@@ -17,11 +17,15 @@ import java.io.File
 /** Debug-only, non-destructive migration trigger. */
 class MigrationCommandReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
-        if (intent.action != ACTION_RUN_MIGRATION_DRYRUN) return
+        if (intent.action != ACTION_RUN_MIGRATION_DRYRUN && intent.action != ACTION_RUN_MIGRATION_CUTOVER) return
         val pending = goAsync()
         CoroutineScope(Dispatchers.IO).launch {
             try {
-                runDryRun(context.applicationContext)
+                if (intent.action == ACTION_RUN_MIGRATION_DRYRUN) {
+                    runDryRun(context.applicationContext)
+                } else {
+                    runCutover(context.applicationContext)
+                }
             } finally {
                 pending.finish()
             }
@@ -73,6 +77,42 @@ class MigrationCommandReceiver : BroadcastReceiver() {
         }
     }
 
+    private fun runCutover(context: Context) {
+        val databaseName = AppDatabase.CE_DATABASE_NAME
+        val databaseDir = context.getDatabasePath(databaseName).parentFile
+            ?: error("Unable to resolve database directory")
+        val source = File(databaseDir, databaseName)
+        val encryptedTemp = File(databaseDir, "$databaseName.tmp_encrypted")
+        val quarantine = File(databaseDir, "$databaseName.quarantine")
+        val sidecars = listOf("-wal", "-shm").map { suffix ->
+            File(databaseDir, "$databaseName$suffix") to File(databaseDir, "$databaseName$suffix.quarantine")
+        }
+        check(source.isFile && encryptedTemp.isFile) { "Cutover files are missing" }
+        check(!quarantine.exists() && sidecars.none { it.second.exists() }) {
+            "A quarantine file already exists; refusing cutover"
+        }
+
+        val movedSidecars = mutableListOf<Pair<File, File>>()
+        try {
+            sidecars.filter { it.first.exists() }.forEach { (current, backup) ->
+                check(current.renameTo(backup)) { "Unable to quarantine ${current.name}" }
+                movedSidecars += current to backup
+            }
+            val result = DatabaseMigrationOrchestrator().atomicCutover(source, encryptedTemp, quarantine)
+            if (result.state != MigrationState.COMPLETE) {
+                movedSidecars.asReversed().forEach { (current, backup) -> backup.renameTo(current) }
+            }
+            File(context.filesDir, REPORT_NAME).writeText(
+                "state=${result.state}\nquarantine=${quarantine.absolutePath}\n" +
+                    "failure=${result.failure?.stackTraceToString().orEmpty()}\n"
+            )
+            Log.i(TAG, "Migration cutover completed with state=${result.state}")
+        } catch (failure: Throwable) {
+            movedSidecars.asReversed().forEach { (current, backup) -> backup.renameTo(current) }
+            throw failure
+        }
+    }
+
     private fun plaintextHelper(context: Context, name: String): SupportSQLiteOpenHelper {
         val callback = object : SupportSQLiteOpenHelper.Callback(AppDatabase.DATABASE_VERSION) {
             override fun onCreate(db: androidx.sqlite.db.SupportSQLiteDatabase) = Unit
@@ -91,6 +131,7 @@ class MigrationCommandReceiver : BroadcastReceiver() {
 
     companion object {
         const val ACTION_RUN_MIGRATION_DRYRUN = "com.jeffers.notimindlite.ACTION_RUN_MIGRATION_DRYRUN"
+        const val ACTION_RUN_MIGRATION_CUTOVER = "com.jeffers.notimindlite.ACTION_RUN_MIGRATION_CUTOVER"
         const val REPORT_NAME = "migration_dryrun_report.txt"
         private const val TAG = "MigrationCommandReceiver"
     }
