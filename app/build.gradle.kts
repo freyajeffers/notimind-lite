@@ -220,21 +220,11 @@ val debugKeystorePath: String = file("${rootDir}/debug.keystore").absolutePath
 val ensureDebugKeystore = tasks.register<Exec>("ensureDebugKeystore") {
   description = "Materialize the standard Android debug keystore if absent."
   group = "build setup"
-  notCompatibleWithConfigurationCache("Keystore generation needs script state; see comment above.")
-  // `onlyIf` evaluates at task-graph time and bypasses the action
-  // when the keystore is already present, so this is a no-op on
-  // dev machines and a one-shot generator on fresh CI runners.
-  onlyIf { !File(debugKeystorePath).exists() }
+  // Keep the task configuration-cache compatible: use only serializable
+  // command-line arguments and make the idempotence check part of the command.
   commandLine(
-    "keytool", "-genkeypair",
-    "-keystore", debugKeystorePath,
-    "-storepass", "android",
-    "-keypass", "android",
-    "-alias", "androiddebugkey",
-    "-keyalg", "RSA",
-    "-keysize", "2048",
-    "-validity", "10000",
-    "-dname", "CN=Android Debug,O=Android,C=US"
+    "sh", "-c",
+    "test -f \"$debugKeystorePath\" || exec keytool -genkeypair -keystore \"$debugKeystorePath\" -storepass android -keypass android -alias androiddebugkey -keyalg RSA -keysize 2048 -validity 10000 -dname 'CN=Android Debug,O=Android,C=US'"
   )
 }
 
