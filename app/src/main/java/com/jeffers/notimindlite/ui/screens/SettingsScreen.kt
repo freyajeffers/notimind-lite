@@ -170,6 +170,7 @@ fun SettingsScreen(
         }
 
         SettingsCaptureSection(preferencesRepository = preferencesRepository)
+        ProfileManagerSection(repository = preferencesRepository)
         SettingsPreferencesSection(preferencesRepository = preferencesRepository)
         SettingsSyncSection(preferencesRepository = preferencesRepository)
         SettingsPrivacySection(preferencesRepository = preferencesRepository)
@@ -200,7 +201,7 @@ fun SettingsScreen(
                             session.uid?.let { uid ->
                                 scope.launch {
                                     isSyncing = true
-                                    val repo = FirestoreSyncRepository(db)
+                                    val repo = FirestoreSyncRepository(db, profileId = preferencesRepository.activeProfileId.value)
 
                                     val secretKey: SecretKey = generateBackupKey(context)
 

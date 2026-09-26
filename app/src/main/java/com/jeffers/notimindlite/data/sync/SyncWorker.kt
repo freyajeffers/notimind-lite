@@ -10,6 +10,7 @@ import androidx.work.WorkManager
 import androidx.work.WorkerParameters
 import com.google.firebase.auth.FirebaseAuth
 import com.jeffers.notimindlite.data.local.AppDatabase
+import com.jeffers.notimindlite.data.local.PreferencesRepository
 import com.jeffers.notimindlite.domain.backup.generateBackupKey
 import java.util.concurrent.TimeUnit
 
@@ -21,7 +22,8 @@ class SyncWorker(
     override suspend fun doWork(): Result {
         val user = FirebaseAuth.getInstance().currentUser ?: return Result.success()
         val db = AppDatabase.getDatabase(applicationContext)
-        val repository = FirestoreSyncRepository(db)
+        val profileId = PreferencesRepository.activeProfileId(applicationContext)
+        val repository = FirestoreSyncRepository(db, profileId = profileId)
         
         // Use a stable device-bound key for background sync (Android KeyStore-backed).
         val secretKey = generateBackupKey(applicationContext)
