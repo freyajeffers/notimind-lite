@@ -70,18 +70,18 @@ fun SettingsPreferencesSection(preferencesRepository: PreferencesRepository) {
             PreferenceSelectRow(stringResource(R.string.pref_long_press_title), longPressAction, listOf("open" to stringResource(R.string.pref_action_open), "reply" to stringResource(R.string.pref_action_reply), "dismiss" to stringResource(R.string.pref_action_dismiss)), preferencesRepository::setLongPressAction)
             Text(stringResource(R.string.pref_auto_rules_title), style = MaterialTheme.typography.bodyLarge)
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
-                OutlinedTextField(rulePackage, { rulePackage = it }, Modifier.weight(1f).semantics { contentDescription = stringResource(R.string.pref_auto_rule_package) }, singleLine = true, label = { Text(stringResource(R.string.pref_auto_rule_package)) })
-                OutlinedTextField(ruleTitle, { ruleTitle = it }, Modifier.weight(1f).semantics { contentDescription = stringResource(R.string.pref_auto_rule_title) }, singleLine = true, label = { Text(stringResource(R.string.pref_auto_rule_title)) })
-                OutlinedTextField(ruleAction, { ruleAction = it }, Modifier.width(72.dp).semantics { contentDescription = stringResource(R.string.pref_auto_rule_action) }, singleLine = true, label = { Text(stringResource(R.string.pref_auto_rule_action)) }, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number))
+                OutlinedTextField(rulePackage, { rulePackage = it }, Modifier.weight(1f), singleLine = true, label = { Text(stringResource(R.string.pref_auto_rule_package)) })
+                OutlinedTextField(ruleTitle, { ruleTitle = it }, Modifier.weight(1f), singleLine = true, label = { Text(stringResource(R.string.pref_auto_rule_title)) })
+                OutlinedTextField(ruleAction, { ruleAction = it }, Modifier.width(72.dp), singleLine = true, label = { Text(stringResource(R.string.pref_auto_rule_action)) }, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number))
             }
             Button(onClick = {
                 preferencesRepository.addAutoExecuteRule(AutoExecuteRule(packageName = rulePackage.trim(), titleContains = ruleTitle.trim(), actionIndex = ruleAction.toIntOrNull()?.coerceAtLeast(0) ?: 0))
                 rulePackage = ""; ruleTitle = ""; ruleAction = "0"
-            }, modifier = Modifier.semantics { contentDescription = stringResource(R.string.pref_auto_rule_add) }) { Text(stringResource(R.string.pref_auto_rule_add)) }
+            }) { Text(stringResource(R.string.pref_auto_rule_add)) }
             autoExecuteRules.forEach { rule ->
                 Row(verticalAlignment = androidx.compose.ui.Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
                     Text("${rule.packageName.ifBlank { stringResource(R.string.pref_auto_rule_any_app) }} · ${rule.titleContains.ifBlank { stringResource(R.string.pref_auto_rule_any_title) }} · ${stringResource(R.string.pref_auto_rule_action).lowercase()} ${rule.actionIndex}", Modifier.weight(1f), style = MaterialTheme.typography.bodySmall)
-                    TextButton(onClick = { preferencesRepository.removeAutoExecuteRule(rule.id) }, modifier = Modifier.semantics { contentDescription = stringResource(R.string.pref_auto_rule_remove) }) { Text(stringResource(R.string.pref_auto_rule_remove)) }
+                    TextButton(onClick = { preferencesRepository.removeAutoExecuteRule(rule.id) }) { Text(stringResource(R.string.pref_auto_rule_remove)) }
                 }
             }
 
