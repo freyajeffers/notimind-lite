@@ -10,8 +10,10 @@ import java.io.File
 /** Creates Room's SQLCipher open-helper factory for one database identity. */
 object EncryptedDatabaseFactory {
     fun openHelperFactory(context: Context, databaseName: String): SupportSQLiteOpenHelper.Factory? {
-        if (Build.FINGERPRINT == "robolectric") return null
-        if (isPlaintextDatabase(context.getDatabasePath(databaseName))) return null
+        if (
+            Build.FINGERPRINT == "robolectric" ||
+            isPlaintextDatabase(context.getDatabasePath(databaseName))
+        ) return null
         ensureNativeLibraryLoaded()
         val passphrase = SqlCipherKeyManager.getOrCreatePassphrase(context, databaseName)
         return SupportOpenHelperFactory(passphrase).also {
