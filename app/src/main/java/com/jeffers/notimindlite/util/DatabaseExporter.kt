@@ -234,7 +234,7 @@ object DatabaseExporter {
     private fun applyPrivacy(notification: NotificationEntity, context: Context?): NotificationEntity {
         val preferences = context?.let { PreferencesRepository(it.applicationContext) } ?: return notification
         fun redact(value: String): String = PiiRedactionEngine.redact(value) ?: "[REDACTED]"
-        val title = if (preferences.anonymizeTitles.value) "[REDACTED-TITLE]" else notification.title
+        val title = if (preferences.exportAnonymize.value || preferences.anonymizeTitles.value) "[REDACTED-TITLE]" else notification.title
         return notification.copy(
             title = if (preferences.redactPii.value) redact(title) else title,
             content = if (preferences.redactPii.value) redact(notification.content) else notification.content,
@@ -276,6 +276,9 @@ object DatabaseExporter {
     ) {
         try {
             val preferences = PreferencesRepository(context.applicationContext)
+            val requestedFormat = if (isJson) "json" else "csv"
+            val allowedFormats = preferences.exportFormats.value.split(',').map(String::trim).toSet()
+            check(requestedFormat in allowedFormats) { "Export format '$requestedFormat' is disabled in Settings" }
             check(!preferences.exportRequiresBiometric.value || biometricAuthenticated) {
                 "Biometric authentication is required before exporting"
             }
