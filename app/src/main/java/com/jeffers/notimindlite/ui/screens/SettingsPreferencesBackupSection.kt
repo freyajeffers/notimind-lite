@@ -10,6 +10,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.jeffers.notimindlite.R
+import com.jeffers.notimindlite.data.local.PreferencesRepository
 import com.jeffers.notimindlite.util.PreferencesBackup
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -49,10 +50,29 @@ fun SettingsPreferencesBackupSection() {
         }
     }
 
+    val preferences = remember { PreferencesRepository(context) }
+    val exportFormats by preferences.exportFormats.collectAsState()
+    val exportAnonymize by preferences.exportAnonymize.collectAsState()
+
     Card(modifier = Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)) {
         Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
             Text(stringResource(R.string.pref_backup_settings_title), style = MaterialTheme.typography.titleMedium)
             Text(stringResource(R.string.pref_backup_settings_summary), style = MaterialTheme.typography.bodySmall)
+            OutlinedTextField(
+                value = exportFormats,
+                onValueChange = preferences::setExportFormats,
+                label = { Text(stringResource(R.string.pref_export_formats)) },
+                supportingText = { Text(stringResource(R.string.pref_export_formats_summary)) },
+                singleLine = true,
+                modifier = Modifier.fillMaxWidth()
+            )
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                Column(Modifier.weight(1f)) {
+                    Text(stringResource(R.string.pref_export_anonymize), style = MaterialTheme.typography.bodyLarge)
+                    Text(stringResource(R.string.pref_export_anonymize_summary), style = MaterialTheme.typography.bodySmall)
+                }
+                Switch(checked = exportAnonymize, onCheckedChange = preferences::setExportAnonymize)
+            }
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 Button(onClick = { exportLauncher.launch("notimind-preferences.json") }) { Text(stringResource(R.string.pref_backup_export)) }
                 OutlinedButton(onClick = { importLauncher.launch(arrayOf("application/json", "text/json", "*/*")) }) { Text(stringResource(R.string.pref_backup_import)) }
