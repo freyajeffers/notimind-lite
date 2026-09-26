@@ -92,6 +92,8 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
 import java.time.Instant
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
@@ -318,9 +320,11 @@ fun ActiveNotificationsScreen(dao: NotificationDao, authManager: AuthManager, db
                 val end = (start + PREFETCH_AHEAD).coerceAtMost(prefetchCandidates.size)
                 if (start < end) {
                     withContext(Dispatchers.IO) {
-                        prefetchCandidates.subList(start, end).forEach { item ->
-                            AppIconCache.getIcon(context, item.appIconUri)
-                        }
+                        prefetchCandidates.subList(start, end)
+                            .mapNotNull { it.appIconUri }
+                            .distinct()
+                            .map { uri -> async { AppIconCache.getIcon(context, uri) } }
+                            .awaitAll()
                     }
                 }
             }
