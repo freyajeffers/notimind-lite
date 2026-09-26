@@ -151,6 +151,7 @@ enum class NotificationSection(val keyName: String, val title: String, val subti
 }
 
 @Composable
+@Suppress("FunctionNaming") // Composable PascalCase required by Compose API.
 fun AppIconImage(appIconUri: String?, modifier: Modifier = Modifier) {
     val imageBitmap = remember(appIconUri) {
         if (!appIconUri.isNullOrEmpty()) {

@@ -4,6 +4,7 @@ import android.content.Context
 import android.os.UserManager
 import androidx.core.content.edit
 
+@Suppress("TooManyFunctions") // Compatibility facade preserves the established preference API.
 class PreferenceManager(context: Context) {
 
     private val effectiveContext: Context = run {
@@ -65,5 +66,6 @@ class PreferenceManager(context: Context) {
     fun getReindexDays() = PreferencesRepository(effectiveContext).getReindexDays()
     fun setReindexDays(value: Int) = PreferencesRepository(effectiveContext).setReindexDays(value)
     fun isEmbeddingOffloadEnabled() = PreferencesRepository(effectiveContext).isEmbeddingOffloadEnabled()
-    fun setEmbeddingOffloadEnabled(value: Boolean) = PreferencesRepository(effectiveContext).setEmbeddingOffloadEnabled(value)
+    fun setEmbeddingOffloadEnabled(value: Boolean) =
+        PreferencesRepository(effectiveContext).setEmbeddingOffloadEnabled(value)
 }
