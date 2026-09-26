@@ -26,7 +26,8 @@ class PreferencesRepository(context: Context) {
     val captureNotifications: StateFlow<Boolean> = _captureNotifications
 
     private val _enableSemanticRanking = MutableStateFlow(backing.getBoolean(KEY_ENABLE_SEMANTIC_RANKING, true))
-    private val _autoDeleteOnRead = MutableStateFlow(if (BuildConfig.DEBUG) false else backing.getBoolean(KEY_AUTO_DELETE_ON_READ, false))\n    private val _backupIntervalDays = MutableStateFlow(backing.getInt(KEY_BACKUP_INTERVAL_DAYS, 0))
+    private val _autoDeleteOnRead = MutableStateFlow(backing.getBoolean(KEY_AUTO_DELETE_ON_READ, false))
+    private val _backupIntervalDays = MutableStateFlow(backing.getInt(KEY_BACKUP_INTERVAL_DAYS, 0))
     private val _anonymizeTitles = MutableStateFlow(backing.getBoolean(KEY_ANONYMIZE_TITLES, false))
     private val _maxCacheSizeMb = MutableStateFlow(backing.getInt(KEY_MAX_CACHE_MB, 50))
     private val _semanticWeight = MutableStateFlow(backing.getInt(KEY_SEMANTIC_WEIGHT, 50))
@@ -43,28 +44,60 @@ class PreferencesRepository(context: Context) {
     private val _maxDbMb = MutableStateFlow(backing.getInt(KEY_MAX_DB_MB, 512))
     private val _lowMemoryMode = MutableStateFlow(backing.getBoolean(KEY_LOW_MEMORY_MODE, false))
     private val _vectorCacheMax = MutableStateFlow(backing.getInt(KEY_VECTOR_CACHE_MAX, 1000))
-
-    private val _syncIntervalMin = MutableStateFlow(backing.getInt(KEY_SYNC_INTERVAL_MIN, 60))
-    private val _syncWifiOnly = MutableStateFlow(backing.getBoolean(KEY_SYNC_WIFI_ONLY, true))
-    private val _syncChargingOnly = MutableStateFlow(backing.getBoolean(KEY_SYNC_CHARGING_ONLY, false))
-    private val _redactPii = MutableStateFlow(backing.getBoolean(KEY_REDACT_PII, true))
-    private val _encryptedExports = MutableStateFlow(backing.getBoolean(KEY_ENCRYPTED_EXPORTS, true))
-    private val _requirePassphrase = MutableStateFlow(backing.getBoolean(KEY_REQUIRE_PASSPHRASE, true))
-    private val _autoLockDb = MutableStateFlow(backing.getBoolean(KEY_AUTO_LOCK_DB, false))
-
     val enableTelemetry: StateFlow<Boolean> = _enableTelemetry
     val telemetryLevel: StateFlow<String> = _telemetryLevel
     val maxDbMb: StateFlow<Int> = _maxDbMb
     val lowMemoryMode: StateFlow<Boolean> = _lowMemoryMode
     val vectorCacheMax: StateFlow<Int> = _vectorCacheMax
-    val syncIntervalMin: StateFlow<Int> = _syncIntervalMin
-    val syncWifiOnly: StateFlow<Boolean> = _syncWifiOnly
-    val syncChargingOnly: StateFlow<Boolean> = _syncChargingOnly
+
+    private val _captureForegroundOnly = MutableStateFlow(backing.getBoolean("config_capture_foreground_only", false))
+    private val _captureAttachments = MutableStateFlow(backing.getBoolean("config_capture_attachments", true))
+    private val _captureOngoing = MutableStateFlow(backing.getBoolean("config_capture_ongoing", true))
+    private val _capturePackageAllowlist = MutableStateFlow(backing.getString("config_capture_allowlist", "") ?: "")
+    private val _capturePackageBlocklist = MutableStateFlow(backing.getString("config_capture_blocklist", "") ?: "")
+    private val _minImportance = MutableStateFlow(backing.getInt("config_min_importance", 0))
+    private val _captureActionsOnly = MutableStateFlow(backing.getBoolean("config_capture_actions_only", false))
+    val captureForegroundOnly: StateFlow<Boolean> = _captureForegroundOnly
+    val captureAttachments: StateFlow<Boolean> = _captureAttachments
+    val captureOngoing: StateFlow<Boolean> = _captureOngoing
+    val capturePackageAllowlist: StateFlow<String> = _capturePackageAllowlist
+    val capturePackageBlocklist: StateFlow<String> = _capturePackageBlocklist
+    val minImportance: StateFlow<Int> = _minImportance
+    val captureActionsOnly: StateFlow<Boolean> = _captureActionsOnly
+
+    private val _redactPii = MutableStateFlow(backing.getBoolean("config_redact_pii", true))
+    private val _encryptedExports = MutableStateFlow(backing.getBoolean("config_encrypted_exports", true))
+    private val _requirePassphrase = MutableStateFlow(backing.getBoolean("config_require_passphrase", false))
+    private val _autoLockDb = MutableStateFlow(backing.getBoolean("config_auto_lock_db", false))
     val redactPii: StateFlow<Boolean> = _redactPii
     val encryptedExports: StateFlow<Boolean> = _encryptedExports
     val requirePassphrase: StateFlow<Boolean> = _requirePassphrase
     val autoLockDb: StateFlow<Boolean> = _autoLockDb
 
+    private val _syncInterval = MutableStateFlow(backing.getInt("config_sync_interval_min", 360))
+    private val _syncWifiOnly = MutableStateFlow(backing.getBoolean("config_sync_wifi_only", true))
+    private val _syncChargingOnly = MutableStateFlow(backing.getBoolean("config_sync_charging_only", true))
+    private val _lastSyncTs = MutableStateFlow(backing.getLong("config_last_sync_ts", 0L))
+    val syncInterval: StateFlow<Int> = _syncInterval
+    val syncWifiOnly: StateFlow<Boolean> = _syncWifiOnly
+    val syncChargingOnly: StateFlow<Boolean> = _syncChargingOnly
+    val lastSyncTs: StateFlow<Long> = _lastSyncTs
+
+    fun setCaptureForegroundOnly(v: Boolean) { backing.edit().putBoolean("config_capture_foreground_only", v).apply(); _captureForegroundOnly.value = v }
+    fun setCaptureAttachments(v: Boolean) { backing.edit().putBoolean("config_capture_attachments", v).apply(); _captureAttachments.value = v }
+    fun setCaptureOngoing(v: Boolean) { backing.edit().putBoolean("config_capture_ongoing", v).apply(); _captureOngoing.value = v }
+    fun setCapturePackageAllowlist(v: String) { backing.edit().putString("config_capture_allowlist", v).apply(); _capturePackageAllowlist.value = v }
+    fun setCapturePackageBlocklist(v: String) { backing.edit().putString("config_capture_blocklist", v).apply(); _capturePackageBlocklist.value = v }
+    fun setMinImportance(v: Int) { val n = v.coerceIn(0, 5); backing.edit().putInt("config_min_importance", n).apply(); _minImportance.value = n }
+    fun setCaptureActionsOnly(v: Boolean) { backing.edit().putBoolean("config_capture_actions_only", v).apply(); _captureActionsOnly.value = v }
+    fun setRedactPii(v: Boolean) { backing.edit().putBoolean("config_redact_pii", v).apply(); _redactPii.value = v }
+    fun setEncryptedExports(v: Boolean) { backing.edit().putBoolean("config_encrypted_exports", v).apply(); _encryptedExports.value = v }
+    fun setRequirePassphrase(v: Boolean) { backing.edit().putBoolean("config_require_passphrase", v).apply(); _requirePassphrase.value = v }
+    fun setAutoLockDb(v: Boolean) { backing.edit().putBoolean("config_auto_lock_db", v).apply(); _autoLockDb.value = v }
+    fun setSyncInterval(v: Int) { val n = v.coerceIn(15, 1440); backing.edit().putInt("config_sync_interval_min", n).apply(); _syncInterval.value = n }
+    fun setSyncWifiOnly(v: Boolean) { backing.edit().putBoolean("config_sync_wifi_only", v).apply(); _syncWifiOnly.value = v }
+    fun setSyncChargingOnly(v: Boolean) { backing.edit().putBoolean("config_sync_charging_only", v).apply(); _syncChargingOnly.value = v }
+    fun setLastSyncTs(v: Long) { backing.edit().putLong("config_last_sync_ts", v).apply(); _lastSyncTs.value = v }
     fun setEnableSync(value: Boolean) { backing.edit().putBoolean(KEY_ENABLE_SYNC, value).apply(); _enableSync.value = value }
     fun setEnableVector(value: Boolean) { backing.edit().putBoolean(KEY_ENABLE_VECTOR, value).apply(); _enableVector.value = value }
     fun setEnableFts4(value: Boolean) { backing.edit().putBoolean(KEY_ENABLE_FTS4, value).apply(); _enableFts4.value = value }
@@ -82,13 +115,6 @@ class PreferencesRepository(context: Context) {
     fun setMaxDbMb(value: Int) { val safe = value.coerceIn(1, 4096); backing.edit().putInt(KEY_MAX_DB_MB, safe).apply(); _maxDbMb.value = safe }
     fun setLowMemoryMode(value: Boolean) { backing.edit().putBoolean(KEY_LOW_MEMORY_MODE, value).apply(); _lowMemoryMode.value = value }
     fun setVectorCacheMax(value: Int) { val safe = value.coerceIn(1, 10000); backing.edit().putInt(KEY_VECTOR_CACHE_MAX, safe).apply(); _vectorCacheMax.value = safe }
-    fun setSyncIntervalMin(value: Int) { val safe = value.coerceIn(1, 1440); backing.edit().putInt(KEY_SYNC_INTERVAL_MIN, safe).apply(); _syncIntervalMin.value = safe }
-    fun setSyncWifiOnly(value: Boolean) { backing.edit().putBoolean(KEY_SYNC_WIFI_ONLY, value).apply(); _syncWifiOnly.value = value }
-    fun setSyncChargingOnly(value: Boolean) { backing.edit().putBoolean(KEY_SYNC_CHARGING_ONLY, value).apply(); _syncChargingOnly.value = value }
-    fun setRedactPii(value: Boolean) { backing.edit().putBoolean(KEY_REDACT_PII, value).apply(); _redactPii.value = value }
-    fun setEncryptedExports(value: Boolean) { backing.edit().putBoolean(KEY_ENCRYPTED_EXPORTS, value).apply(); _encryptedExports.value = value }
-    fun setRequirePassphrase(value: Boolean) { backing.edit().putBoolean(KEY_REQUIRE_PASSPHRASE, value).apply(); _requirePassphrase.value = value }
-    fun setAutoLockDb(value: Boolean) { backing.edit().putBoolean(KEY_AUTO_LOCK_DB, value).apply(); _autoLockDb.value = value }
 
     companion object {
         private const val DEFAULT_RETENTION_DAYS = 30
@@ -110,12 +136,5 @@ class PreferencesRepository(context: Context) {
         private const val KEY_MAX_DB_MB = "config_max_db_mb"
         private const val KEY_LOW_MEMORY_MODE = "config_low_memory_mode"
         private const val KEY_VECTOR_CACHE_MAX = "config_vector_cache_max"
-        private const val KEY_SYNC_INTERVAL_MIN = "config_sync_interval_min"
-        private const val KEY_SYNC_WIFI_ONLY = "config_sync_wifi_only"
-        private const val KEY_SYNC_CHARGING_ONLY = "config_sync_charging_only"
-        private const val KEY_REDACT_PII = "config_redact_pii"
-        private const val KEY_ENCRYPTED_EXPORTS = "config_encrypted_exports"
-        private const val KEY_REQUIRE_PASSPHRASE = "config_require_passphrase"
-        private const val KEY_AUTO_LOCK_DB = "config_auto_lock_db"
     }
 }

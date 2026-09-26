@@ -37,7 +37,23 @@ class SyncWorker(
     companion object {
         private const val SYNC_WORK_NAME = "notimind_firestore_sync"
 
-        fun schedulePeriodicSync(context: Context) {\n            val prefs = com.jeffers.notimindlite.data.local.PreferencesRepository(context)\n            val constraints = Constraints.Builder()\n                .setRequiredNetworkType(if (prefs.syncWifiOnly.value) NetworkType.UNMETERED else NetworkType.CONNECTED)\n                .setRequiresCharging(prefs.syncChargingOnly.value)\n                .setRequiresDeviceIdle(true)\n                .build()\n\n            val intervalHours = prefs.syncIntervalMin.value / 60\n            val interval = if (intervalHours < 1) 1 else intervalHours.toLong()\n\n            val request = PeriodicWorkRequestBuilder<SyncWorker>(interval, TimeUnit.HOURS)\n                .setConstraints(constraints)\n                .build()\n\n            WorkManager.getInstance(context).enqueueUniquePeriodicWork(\n                SYNC_WORK_NAME,\n                ExistingPeriodicWorkPolicy.UPDATE,\n                request\n            )\n        }
+        fun schedulePeriodicSync(context: Context) {
+            val constraints = Constraints.Builder()
+                .setRequiredNetworkType(NetworkType.UNMETERED)
+                .setRequiresCharging(true)
+                .setRequiresDeviceIdle(true)
+                .build()
+
+            val request = PeriodicWorkRequestBuilder<SyncWorker>(6, TimeUnit.HOURS)
+                .setConstraints(constraints)
+                .build()
+
+            WorkManager.getInstance(context).enqueueUniquePeriodicWork(
+                SYNC_WORK_NAME,
+                ExistingPeriodicWorkPolicy.KEEP,
+                request
+            )
+        }
 
         fun cancelPeriodicSync(context: Context) {
             WorkManager.getInstance(context).cancelUniqueWork(SYNC_WORK_NAME)
