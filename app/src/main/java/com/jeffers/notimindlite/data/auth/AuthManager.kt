@@ -1,6 +1,7 @@
 package com.jeffers.notimindlite.data.auth
 
 import android.content.Context
+import android.content.MutableContextWrapper
 import androidx.credentials.CredentialManager
 import androidx.credentials.GetCredentialRequest
 import androidx.credentials.exceptions.GetCredentialException
@@ -17,6 +18,7 @@ class AuthManager(
     private val context: Context,
     private val firebaseAuth: FirebaseAuth = FirebaseAuth.getInstance()
 ) {
+    private val credentialContext = MutableContextWrapper(context)
     private val _session = MutableStateFlow(mapFirebaseUser(firebaseAuth.currentUser))
     val session: StateFlow<UserSession> = _session.asStateFlow()
 
@@ -29,7 +31,7 @@ class AuthManager(
     suspend fun signInWithGoogle(webClientId: String): Result<UserSession> {
         _session.value = _session.value.copy(isAuthenticating = true, error = null)
         return try {
-            val credentialManager = CredentialManager.create(context)
+            val credentialManager = CredentialManager.create(credentialContext)
             val googleIdOption = GetGoogleIdOption.Builder()
                 .setFilterByAuthorizedAccounts(false)
                 .setServerClientId(webClientId)
@@ -40,7 +42,7 @@ class AuthManager(
                 .addCredentialOption(googleIdOption)
                 .build()
 
-            val result = credentialManager.getCredential(context, request)
+            val result = credentialManager.getCredential(credentialContext, request)
             val googleCredential = GoogleIdTokenCredential.createFrom(result.credential.data)
             val authCredential = GoogleAuthProvider.getCredential(googleCredential.idToken, null)
 

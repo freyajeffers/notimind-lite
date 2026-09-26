@@ -151,7 +151,7 @@ enum class NotificationSection(val keyName: String, val title: String, val subti
 }
 
 @Composable
-fun AppIconImage(appIconUri: String?, modifier: Modifier = Modifier.size(20.dp)) {
+fun AppIconImage(appIconUri: String?, modifier: Modifier = Modifier) {
     val imageBitmap = remember(appIconUri) {
         if (!appIconUri.isNullOrEmpty()) {
             try {
@@ -168,7 +168,7 @@ fun AppIconImage(appIconUri: String?, modifier: Modifier = Modifier.size(20.dp))
         Image(
             bitmap = imageBitmap,
             contentDescription = "App Icon",
-            modifier = modifier
+            modifier = modifier.size(20.dp)
         )
     }
 }
