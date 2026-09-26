@@ -29,6 +29,7 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun backupDao(): BackupDao
 
     companion object {
+        const val DATABASE_VERSION = 19
         const val DE_DATABASE_NAME = "notimind_de.db"
         const val CE_DATABASE_NAME = "notimind_lite_database"
 
