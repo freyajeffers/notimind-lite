@@ -46,6 +46,23 @@ class VectorEmbeddingBoundaryTest {
     }
 
     @Test
+    fun `low memory mode reduces cache and embedding batch size`() {
+        VectorEmbeddingHelper.configure(lowMemoryMode = true, cacheSize = 1000)
+        assertEquals(VectorEmbeddingHelper.LOW_MEMORY_CACHE_SIZE, VectorEmbeddingHelper.cacheCapacity())
+        assertEquals(VectorEmbeddingHelper.LOW_MEMORY_BATCH_SIZE, VectorEmbeddingHelper.embeddingBatchSize())
+        VectorEmbeddingHelper.configure(lowMemoryMode = false, cacheSize = 300)
+        assertEquals(300, VectorEmbeddingHelper.cacheCapacity())
+        assertEquals(VectorEmbeddingHelper.DEFAULT_BATCH_SIZE, VectorEmbeddingHelper.embeddingBatchSize())
+    }
+
+    @Test
+    fun `computeEmbedding accepts low memory mode at call site`() {
+        VectorEmbeddingHelper.configure(lowMemoryMode = false)
+        VectorEmbeddingHelper.computeEmbedding("runtime tuning", lowMemoryMode = true)
+        assertTrue(VectorEmbeddingHelper.isLowMemoryMode())
+    }
+
+    @Test
     fun `cosineSimilarity - identical vectors return 1`() {
         val vec = FloatArray(128) { 0.1f }
         // Normalize first because the helper expects normalized vectors
