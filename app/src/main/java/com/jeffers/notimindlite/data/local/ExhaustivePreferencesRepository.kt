@@ -11,9 +11,11 @@ import kotlinx.coroutines.flow.StateFlow
  * PreferencesRepository until reviewed.
  */
 class ExhaustivePreferencesRepository(context: Context) {
-    private val backing = context.getSharedPreferences("notimind_lite_prefs", Context.MODE_PRIVATE)
+    private val appContext = context.applicationContext
 
-    fun initializeDefaults() {
+    /** Initialize the active profile's store, not the legacy unscoped store. */
+    fun initializeDefaults(profileId: String = "default") {
+        val backing = appContext.getSharedPreferences("notimind_lite_prefs_$profileId", Context.MODE_PRIVATE)
         val edit = backing.edit()
         fun bool(key: String, value: Boolean) { if (!backing.contains(key)) edit.putBoolean(key, value) }
         fun int(key: String, value: Int) { if (!backing.contains(key)) edit.putInt(key, value) }
