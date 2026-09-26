@@ -17,10 +17,10 @@ class TelemetryPolicyTest {
 
     @Test
     fun `disabled telemetry never allows events`() {
-        TelemetryManager.configure(androidx.test.core.app.ApplicationProvider.getApplicationContext(), false, "full")
+        TelemetryManager.configurePolicy(false, "full")
         assertFalse(TelemetryManager.isEnabled())
         assertFalse(TelemetryManager.allows(TelemetryManager.Level.MINIMAL))
-        TelemetryManager.configure(androidx.test.core.app.ApplicationProvider.getApplicationContext(), true, "standard")
+        TelemetryManager.configurePolicy(true, "standard")
         assertTrue(TelemetryManager.allows(TelemetryManager.Level.MINIMAL))
         assertFalse(TelemetryManager.allows(TelemetryManager.Level.FULL))
     }
