@@ -176,6 +176,8 @@
     <string name="pref_enable_vector_summary">Enable semantic similarity search using vector embeddings.</string>
     <string name="pref_enable_fts4_title">Enable FTS4 Keyword Search</string>
     <string name="pref_enable_fts4_summary">Enable full-text keyword search using FTS4.</string>
+    <string name="pref_semantic_ranking_title">Semantic ranking</string>
+    <string name="pref_semantic_ranking_summary">Blend semantic similarity into search ranking.</string>
     <string name="pref_retention_days_title">Retention (days)</string>
     <string name="pref_retention_days_summary">How long to keep notifications before auto-deleting.</string>
     <string name="pref_retention_days_unit">Days</string>
