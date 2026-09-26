@@ -50,6 +50,8 @@ import com.jeffers.notimindlite.data.auth.AuthManager
 import com.jeffers.notimindlite.data.local.AppDatabase
 import com.jeffers.notimindlite.util.AppIconCache
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.launch
@@ -159,7 +161,7 @@ fun LogHistoryScreen(dao: NotificationDao, authManager: AuthManager, db: AppData
                     .mapNotNull { it.appIconUri }
                     .distinct()
                 withContext(Dispatchers.IO) {
-                    candidates.forEach { uri -> AppIconCache.getIcon(context, uri) }
+                    candidates.distinct().map { uri -> async { AppIconCache.getIcon(context, uri) } }.awaitAll()
                 }
             }
     }
