@@ -102,7 +102,7 @@ class DatabaseMigrationOrchestrator(
     ).use { cursor ->
       while (cursor.moveToNext()) {
         val name = cursor.getString(0)
-        if (!name.startsWith("sqlite_") && name != ROOM_MASTER_TABLE && name != ANDROID_METADATA_TABLE && !name.contains("_fts")) {
+        if (isUserTable(name)) {
           names += name
         }
       }
@@ -158,6 +158,12 @@ class DatabaseMigrationOrchestrator(
     }
     return values
   }
+
+  private fun isUserTable(name: String): Boolean =
+    !name.startsWith("sqlite_") &&
+      name != ROOM_MASTER_TABLE &&
+      name != ANDROID_METADATA_TABLE &&
+      !name.contains("_fts")
 
   private fun countRows(database: SupportSQLiteDatabase, table: String): Long {
     return database.query("SELECT COUNT(*) FROM ${quote(table)}").use { cursor ->

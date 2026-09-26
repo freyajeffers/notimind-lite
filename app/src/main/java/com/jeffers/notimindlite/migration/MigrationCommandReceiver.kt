@@ -107,7 +107,7 @@ class MigrationCommandReceiver : BroadcastReceiver() {
                     "failure=${result.failure?.stackTraceToString().orEmpty()}\n"
             )
             Log.i(TAG, "Migration cutover completed with state=${result.state}")
-        } catch (failure: Throwable) {
+        } catch (failure: IllegalStateException) {
             movedSidecars.asReversed().forEach { (current, backup) -> backup.renameTo(current) }
             throw failure
         }
