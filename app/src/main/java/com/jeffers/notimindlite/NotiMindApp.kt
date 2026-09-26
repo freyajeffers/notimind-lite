@@ -12,9 +12,6 @@ import com.jeffers.notimindlite.util.AppIconCache
 import com.jeffers.notimindlite.data.local.AppDatabase
 import com.jeffers.notimindlite.data.local.PreferencesRepository
 import com.jeffers.notimindlite.util.DatabaseLockManager
-import androidx.lifecycle.DefaultLifecycleObserver
-import androidx.lifecycle.LifecycleOwner
-import androidx.lifecycle.ProcessLifecycleOwner
 
 class NotiMindApp : Application(), android.content.ComponentCallbacks2 {
     companion object {
@@ -24,20 +21,7 @@ class NotiMindApp : Application(), android.content.ComponentCallbacks2 {
     override fun onCreate() {
         super.onCreate()
         com.jeffers.notimindlite.util.AppInitializer.initialize(this)
-        ProcessLifecycleOwner.get().lifecycle.addObserver(object : DefaultLifecycleObserver {
-            override fun onStart(owner: LifecycleOwner) {
-                if (PreferencesRepository(this@NotiMindApp).autoLockDb.value) {
-                    DatabaseLockManager.unlock()
-                }
-            }
-
-            override fun onStop(owner: LifecycleOwner) {
-                if (PreferencesRepository(this@NotiMindApp).autoLockDb.value) {
-                    DatabaseLockManager.lock()
-                    AppDatabase.resetInstance()
-                }
-            }
-        })
+        if (PreferencesRepository(this).autoLockDb.value) DatabaseLockManager.unlock()
         Log.i(TAG, "NotiMind Lite Application Initialized")
     }
 
@@ -49,6 +33,10 @@ class NotiMindApp : Application(), android.content.ComponentCallbacks2 {
         when (level) {
             android.content.ComponentCallbacks2.TRIM_MEMORY_UI_HIDDEN -> {
                 AppIconCache.clearCache()
+                if (PreferencesRepository(this).autoLockDb.value) {
+                    DatabaseLockManager.lock()
+                    AppDatabase.resetInstance()
+                }
             }
             android.content.ComponentCallbacks2.TRIM_MEMORY_RUNNING_LOW,
             android.content.ComponentCallbacks2.TRIM_MEMORY_RUNNING_CRITICAL -> {

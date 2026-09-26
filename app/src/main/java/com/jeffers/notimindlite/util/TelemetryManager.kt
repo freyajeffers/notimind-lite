@@ -10,10 +10,15 @@ object TelemetryManager {
     @Volatile private var enabled = false
     @Volatile private var level = Level.MINIMAL
 
-    fun configure(context: Context, enabled: Boolean, telemetryLevel: String): Level {
+    /** Configure policy without requiring an Android Context; useful for headless callers/tests. */
+    fun configurePolicy(enabled: Boolean, telemetryLevel: String): Level {
         this.enabled = enabled
         this.level = parseLevel(telemetryLevel)
-        // Firebase may be unavailable in local/headless builds; retain the local policy state.
+        return this.level
+    }
+
+    fun configure(context: Context, enabled: Boolean, telemetryLevel: String): Level {
+        configurePolicy(enabled, telemetryLevel)
         runCatching {
             FirebaseAnalytics.getInstance(context).setAnalyticsCollectionEnabled(enabled)
         }

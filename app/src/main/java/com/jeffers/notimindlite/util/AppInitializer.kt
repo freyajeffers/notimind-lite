@@ -4,6 +4,7 @@ import android.content.Context
 import android.util.Log
 import com.google.firebase.FirebaseApp
 import com.jeffers.notimindlite.data.local.PreferencesRepository
+import kotlinx.coroutines.launch
 import java.util.concurrent.atomic.AtomicBoolean
 
 /**
