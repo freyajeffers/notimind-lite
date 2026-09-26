@@ -73,6 +73,8 @@ class PreferencesRepository(context: Context) {
     private val _enableSemanticRanking = MutableStateFlow(backing.getBoolean(KEY_ENABLE_SEMANTIC_RANKING, true))
     private val _autoDeleteOnRead = MutableStateFlow(backing.getBoolean(KEY_AUTO_DELETE_ON_READ, false))
     private val _backupIntervalDays = MutableStateFlow(backing.getInt(KEY_BACKUP_INTERVAL_DAYS, 0))
+    private val _exportFormats = MutableStateFlow(backing.getString("config_export_formats", "json,csv") ?: "json,csv")
+    private val _exportAnonymize = MutableStateFlow(backing.getBoolean("config_export_anonymize", false))
     private val _anonymizeTitles = MutableStateFlow(backing.getBoolean(KEY_ANONYMIZE_TITLES, false))
     private val _maxCacheSizeMb = MutableStateFlow(backing.getInt(KEY_MAX_CACHE_MB, 50))
     private val _semanticWeight = MutableStateFlow(backing.getInt(KEY_SEMANTIC_WEIGHT, 50))
@@ -86,6 +88,8 @@ class PreferencesRepository(context: Context) {
     val enableSemanticRanking: StateFlow<Boolean> = _enableSemanticRanking
     val autoDeleteOnRead: StateFlow<Boolean> = _autoDeleteOnRead
     val backupIntervalDays: StateFlow<Int> = _backupIntervalDays
+    val exportFormats: StateFlow<String> = _exportFormats
+    val exportAnonymize: StateFlow<Boolean> = _exportAnonymize
     val anonymizeTitles: StateFlow<Boolean> = _anonymizeTitles
     val maxCacheSizeMb: StateFlow<Int> = _maxCacheSizeMb
     val semanticWeight: StateFlow<Int> = _semanticWeight
@@ -282,7 +286,7 @@ class PreferencesRepository(context: Context) {
         _enableFts4.value = backing.getBoolean(KEY_ENABLE_FTS4, true); _retentionDays.value = backing.getInt(KEY_RETENTION_DAYS, DEFAULT_RETENTION_DAYS)
         _exportEncryption.value = backing.getBoolean(KEY_EXPORT_ENCRYPTION, true); _captureNotifications.value = backing.getBoolean(KEY_CAPTURE_NOTIFICATIONS, true)
         _enableSemanticRanking.value = backing.getBoolean(KEY_ENABLE_SEMANTIC_RANKING, true); _autoDeleteOnRead.value = backing.getBoolean(KEY_AUTO_DELETE_ON_READ, false)
-        _backupIntervalDays.value = backing.getInt(KEY_BACKUP_INTERVAL_DAYS, 0); _anonymizeTitles.value = backing.getBoolean(KEY_ANONYMIZE_TITLES, false)
+        _backupIntervalDays.value = backing.getInt(KEY_BACKUP_INTERVAL_DAYS, 0); _exportFormats.value = backing.getString("config_export_formats", "json,csv") ?: "json,csv"; _exportAnonymize.value = backing.getBoolean("config_export_anonymize", false); _anonymizeTitles.value = backing.getBoolean(KEY_ANONYMIZE_TITLES, false)
         _maxCacheSizeMb.value = backing.getInt(KEY_MAX_CACHE_MB, 50); _semanticWeight.value = backing.getInt(KEY_SEMANTIC_WEIGHT, 50)
         _compactMode.value = backing.getBoolean(KEY_COMPACT_MODE, false); _showAppIcons.value = backing.getBoolean(KEY_SHOW_APP_ICONS, true)
         _sortOrder.value = backing.getString(KEY_SORT_ORDER, "newest") ?: "newest"; _groupByApp.value = backing.getBoolean(KEY_GROUP_BY_APP, true)
@@ -340,6 +344,8 @@ class PreferencesRepository(context: Context) {
         _autoDeleteOnRead.value = safe
     }
     fun setBackupIntervalDays(value: Int) { val safe = value.coerceAtLeast(0); backing.edit().putInt(KEY_BACKUP_INTERVAL_DAYS, safe).apply(); _backupIntervalDays.value = safe }
+    fun setExportFormats(value: String) { val safe = value.split(',', ' ', '\n').map(String::trim).filter { it == "json" || it == "csv" || it == "ndjson" }.distinct().joinToString(",").ifBlank { "json" }; backing.edit().putString("config_export_formats", safe).apply(); _exportFormats.value = safe }
+    fun setExportAnonymize(value: Boolean) { backing.edit().putBoolean("config_export_anonymize", value).apply(); _exportAnonymize.value = value }
     fun setAnonymizeTitles(value: Boolean) { backing.edit().putBoolean(KEY_ANONYMIZE_TITLES, value).apply(); _anonymizeTitles.value = value }
     fun setMaxCacheSizeMb(value: Int) { val safe = value.coerceIn(1, 1024); backing.edit().putInt(KEY_MAX_CACHE_MB, safe).apply(); _maxCacheSizeMb.value = safe }
     fun setSemanticWeight(value: Int) { val safe = value.coerceIn(0, 100); backing.edit().putInt(KEY_SEMANTIC_WEIGHT, safe).apply(); _semanticWeight.value = safe }
