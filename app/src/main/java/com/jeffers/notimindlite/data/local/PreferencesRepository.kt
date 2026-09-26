@@ -13,6 +13,9 @@ class PreferencesRepository(context: Context) {
         const val DEFAULT_REINDEX_DAYS = 30
         const val DEFAULT_EMBEDDING_OFFLOAD = true
 
+        private const val MIN_THREAD_POOL_SIZE = 1
+        private const val MAX_THREAD_POOL_SIZE = 32
+
         private const val PREFS = "notimind_lite_prefs"
         private const val THREAD_POOL_SIZE = "performance_thread_pool_size"
         private const val EMBEDDING_RATE_MS = "performance_embedding_rate_ms"
@@ -29,8 +32,12 @@ class PreferencesRepository(context: Context) {
         effective.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
     }
 
-    fun getThreadPoolSize() = prefs.getInt(THREAD_POOL_SIZE, DEFAULT_THREAD_POOL_SIZE).coerceIn(1, 32)
-    fun setThreadPoolSize(value: Int) = prefs.edit { putInt(THREAD_POOL_SIZE, value.coerceIn(1, 32)) }
+    fun getThreadPoolSize() = prefs.getInt(THREAD_POOL_SIZE, DEFAULT_THREAD_POOL_SIZE)
+        .coerceIn(MIN_THREAD_POOL_SIZE, MAX_THREAD_POOL_SIZE)
+
+    fun setThreadPoolSize(value: Int) = prefs.edit {
+        putInt(THREAD_POOL_SIZE, value.coerceIn(MIN_THREAD_POOL_SIZE, MAX_THREAD_POOL_SIZE))
+    }
     fun getEmbeddingRateMs() = prefs.getLong(EMBEDDING_RATE_MS, DEFAULT_EMBEDDING_RATE_MS).coerceAtLeast(0L)
     fun setEmbeddingRateMs(value: Long) = prefs.edit { putLong(EMBEDDING_RATE_MS, value.coerceAtLeast(0L)) }
     fun getDbCompactionDays() = prefs.getInt(DB_COMPACTION_DAYS, DEFAULT_DB_COMPACTION_DAYS).coerceAtLeast(1)

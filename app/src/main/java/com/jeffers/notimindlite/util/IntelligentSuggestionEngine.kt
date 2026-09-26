@@ -18,6 +18,7 @@ object IntelligentSuggestionEngine {
 
     suspend fun predictSuggestions(
         dismissedNotifications: List<NotificationEntity>
-    ): List<NotificationEntity> =
-        com.jeffers.notimindlite.domain.suggestion.IntelligentSuggestionEngine.predictSuggestions(dismissedNotifications)
+    ): List<NotificationEntity> = com.jeffers.notimindlite.domain.suggestion
+        .IntelligentSuggestionEngine
+        .predictSuggestions(dismissedNotifications)
 }
