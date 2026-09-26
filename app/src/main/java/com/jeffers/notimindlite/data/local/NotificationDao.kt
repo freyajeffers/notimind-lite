@@ -257,13 +257,35 @@ abstract class NotificationDao {
     abstract suspend fun updatePinnedStatusBatch(keys: List<String>, isPinned: Boolean)
 
     @Query("UPDATE notifications SET isRead = 1 WHERE key = :key")
-    abstract suspend fun markAsRead(key: String)
+    protected abstract suspend fun markAsReadInternal(key: String)
+
+    @Query("DELETE FROM notifications WHERE key = :key")
+    protected abstract suspend fun deleteByKey(key: String)
+
+    open suspend fun markAsRead(key: String, autoDeleteOnRead: Boolean = false) {
+        if (autoDeleteOnRead) deleteByKey(key) else markAsReadInternal(key)
+    }
 
     @Query("UPDATE notifications SET isRead = 1 WHERE key IN (:keys)")
-    abstract suspend fun markAsReadBatch(keys: List<String>)
+    protected abstract suspend fun markAsReadBatchInternal(keys: List<String>)
+
+    @Query("DELETE FROM notifications WHERE key IN (:keys)")
+    protected abstract suspend fun deleteByKeys(keys: List<String>)
+
+    open suspend fun markAsReadBatch(keys: List<String>, autoDeleteOnRead: Boolean = false) {
+        if (keys.isEmpty()) return
+        if (autoDeleteOnRead) deleteByKeys(keys) else markAsReadBatchInternal(keys)
+    }
 
     @Query("UPDATE notifications SET isRead = 1 WHERE isRead = 0")
-    abstract suspend fun markAllAsRead()
+    protected abstract suspend fun markAllAsReadInternal()
+
+    @Query("DELETE FROM notifications WHERE isRead = 0")
+    protected abstract suspend fun deleteUnread()
+
+    open suspend fun markAllAsRead(autoDeleteOnRead: Boolean = false) {
+        if (autoDeleteOnRead) deleteUnread() else markAllAsReadInternal()
+    }
 
     @Query("SELECT COUNT(*) FROM notifications WHERE isRead = 0 AND isDismissed = 0")
     abstract fun getUnreadCountFlow(): Flow<Int>
