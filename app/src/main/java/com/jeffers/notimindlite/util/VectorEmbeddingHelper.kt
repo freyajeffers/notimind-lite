@@ -7,13 +7,7 @@ import kotlin.math.sqrt
  * Produces normalized 128-dimensional dense vector embeddings using
  * subword n-gram hashing and dynamically generated ApplicationInfo category clusters.
  */
-object VectorEmbeddingHelper {
-
-    const val EMBEDDING_DIM = 128
-    private val embeddingCache = android.util.LruCache<String, FloatArray>(256)
-
-    fun clearCache() {
-        embeddingCache.evictAll()
+object VectorEmbeddingHelper {\n\n    const val EMBEDDING_DIM = 128\n    private var cacheSize = 256\n    private var embeddingCache = android.util.LruCache<String, FloatArray>(cacheSize)\n\n    fun updateCacheSize(newSize: Int) {\n        if (cacheSize == newSize) return\n        cacheSize = newSize\n        embeddingCache = android.util.LruCache(cacheSize)\n    }\n\n    fun clearCache() {\n        embeddingCache.evictAll()
     }
 
 
