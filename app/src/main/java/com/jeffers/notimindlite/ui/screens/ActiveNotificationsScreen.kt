@@ -66,6 +66,7 @@ import com.jeffers.notimindlite.R
 import com.jeffers.notimindlite.data.local.NotificationDao
 import com.jeffers.notimindlite.data.local.NotificationEntity
 import com.jeffers.notimindlite.data.local.PreferenceManager
+import com.jeffers.notimindlite.data.local.PreferencesRepository
 import com.jeffers.notimindlite.service.NotificationLoggerService
 import com.jeffers.notimindlite.ui.dialogs.AppPackageSelectorDialog
 import com.jeffers.notimindlite.ui.components.ActiveFilterChip
@@ -179,6 +180,12 @@ fun ActiveNotificationsScreen(dao: NotificationDao, authManager: AuthManager, db
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
     val prefManager = remember { PreferenceManager(context) }
+    val preferences = remember { PreferencesRepository(context) }
+    val compactMode by preferences.compactMode.collectAsState()
+    val showAppIcons by preferences.showAppIcons.collectAsState()
+    val groupByApp by preferences.groupByApp.collectAsState()
+    val sortOrder by preferences.sortOrder.collectAsState()
+    val previewLength by preferences.previewLength.collectAsState()
 
     // F-K fix: persist user-meaningful state across process death / rotation.
     // - expandedSection: user's last-toggled section (was lost; PrefManager was only
@@ -666,7 +673,7 @@ fun ActiveNotificationsScreen(dao: NotificationDao, authManager: AuthManager, db
                     }
 
                     if (isExpanded) {
-                        val notificationGroups = groupNotifications(itemsList)
+                        val notificationGroups = groupNotifications(itemsList, groupByApp, sortOrder)
                         items(
                             items = notificationGroups,
                             key = { group -> "group_${section.keyName}_${group.groupKey}" }
@@ -680,6 +687,9 @@ fun ActiveNotificationsScreen(dao: NotificationDao, authManager: AuthManager, db
                                     dateTimeFormatter = dateTimeFormatter,
                                     dao = dao,
                                     isExpanded = cardExpanded,
+                                    showAppIcon = showAppIcons,
+                                    compactMode = compactMode,
+                                    previewLength = previewLength,
                                     onToggleExpand = {
                                         expandedCards = if (cardExpanded) expandedCards - item.key else expandedCards + item.key
                                     }
@@ -704,6 +714,9 @@ fun ActiveNotificationsScreen(dao: NotificationDao, authManager: AuthManager, db
                                             dateTimeFormatter = dateTimeFormatter,
                                             dao = dao,
                                             isExpanded = cardExpanded,
+                                    showAppIcon = showAppIcons,
+                                    compactMode = compactMode,
+                                    previewLength = previewLength,
                                             onToggleExpand = {
                                                 expandedCards = if (cardExpanded) {
                                                     expandedCards - childItem.key
@@ -791,7 +804,10 @@ fun LogNotificationCard(
     dateTimeFormatter: DateTimeFormatter,
     dao: NotificationDao,
     isExpanded: Boolean,
-    onToggleExpand: () -> Unit
+    onToggleExpand: () -> Unit,
+    showAppIcon: Boolean = true,
+    compactMode: Boolean = false,
+    previewLength: Int = 140
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
@@ -806,7 +822,7 @@ fun LogNotificationCard(
             containerColor = MaterialTheme.colorScheme.surface
         )
     ) {
-        Column(modifier = Modifier.padding(14.dp)) {
+        Column(modifier = Modifier.padding(if (compactMode) 8.dp else 14.dp)) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -816,8 +832,8 @@ fun LogNotificationCard(
                     verticalAlignment = Alignment.CenterVertically,
                     modifier = Modifier.weight(1f)
                 ) {
-                    AppIconImage(appIconUri = item.appIconUri)
-                    if (!item.appIconUri.isNullOrEmpty()) {
+                    if (showAppIcon) AppIconImage(appIconUri = item.appIconUri)
+                    if (showAppIcon && !item.appIconUri.isNullOrEmpty()) {
                         Spacer(modifier = Modifier.width(6.dp))
                     }
                     Text(
@@ -898,7 +914,7 @@ fun LogNotificationCard(
                 }
                 if (item.content.isNotEmpty()) {
                     Text(
-                        text = item.content,
+                        text = item.content.take(previewLength),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         maxLines = 2,

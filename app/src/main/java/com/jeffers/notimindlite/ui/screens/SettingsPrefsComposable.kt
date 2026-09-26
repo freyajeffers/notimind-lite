@@ -27,6 +27,12 @@ fun SettingsPreferencesSection(preferencesRepository: PreferencesRepository) {
     val anonymizeTitles by preferencesRepository.anonymizeTitles.collectAsState(initial = false)
     val maxCacheSizeMb by preferencesRepository.maxCacheSizeMb.collectAsState(initial = 50)
     val semanticWeight by preferencesRepository.semanticWeight.collectAsState(initial = 50)
+    val compactMode by preferencesRepository.compactMode.collectAsState(initial = false)
+    val showAppIcons by preferencesRepository.showAppIcons.collectAsState(initial = true)
+    val groupByApp by preferencesRepository.groupByApp.collectAsState(initial = true)
+    val sortOrder by preferencesRepository.sortOrder.collectAsState(initial = "newest")
+    val previewLength by preferencesRepository.previewLength.collectAsState(initial = 140)
+    val themeAccent by preferencesRepository.themeAccent.collectAsState(initial = "system")
 
     Card(
         modifier = Modifier.fillMaxWidth(),
@@ -34,6 +40,20 @@ fun SettingsPreferencesSection(preferencesRepository: PreferencesRepository) {
     ) {
         Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
             Text(text = stringResource(R.string.pref_data_search_title), style = MaterialTheme.typography.titleMedium)
+
+            Text("Display & appearance", style = MaterialTheme.typography.titleMedium)
+            PreferenceSwitchRow("Compact mode", "Use denser notification cards.", compactMode, preferencesRepository::setCompactMode)
+            PreferenceSwitchRow("Show app icons", "Show application icons in notification cards.", showAppIcons, preferencesRepository::setShowAppIcons)
+            PreferenceSwitchRow("Group by app", "Combine notifications from the same application.", groupByApp, preferencesRepository::setGroupByApp)
+            PreferenceSelectRow("Sort order", sortOrder, listOf("newest", "oldest", "app"), preferencesRepository::setSortOrder)
+            PreferenceSelectRow("Theme accent", themeAccent, listOf("system", "blue", "green", "purple", "orange"), preferencesRepository::setThemeAccent)
+            Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Text("Preview length", style = MaterialTheme.typography.bodyLarge)
+                    Text("Maximum characters shown before expanding.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+                OutlinedTextField(value = previewLength.toString(), onValueChange = { it.toIntOrNull()?.let(preferencesRepository::setPreviewLength) }, modifier = Modifier.width(110.dp), singleLine = true, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number))
+            }
 
             Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
                 Column(modifier = Modifier.weight(1f)) {
@@ -181,5 +201,21 @@ private fun PreferenceSwitchRow(
             Text(summary, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
         Switch(checked = checked, onCheckedChange = onCheckedChange, enabled = enabled)
+    }
+}
+
+@Composable
+private fun PreferenceSelectRow(title: String, selected: String, options: List<String>, onSelected: (String) -> Unit) {
+    var expanded by remember { mutableStateOf(false) }
+    Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
+        Text(title, style = MaterialTheme.typography.bodyLarge, modifier = Modifier.weight(1f))
+        Box {
+            OutlinedButton(onClick = { expanded = true }) { Text(selected.replaceFirstChar { it.uppercase() }) }
+            DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
+                options.forEach { option ->
+                    DropdownMenuItem(text = { Text(option.replaceFirstChar { it.uppercase() }) }, onClick = { onSelected(option); expanded = false })
+                }
+            }
+        }
     }
 }
