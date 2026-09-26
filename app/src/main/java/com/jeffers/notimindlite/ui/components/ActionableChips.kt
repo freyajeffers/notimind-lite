@@ -1,6 +1,5 @@
 package com.jeffers.notimindlite.ui.components
 
-import android.content.ActivityNotFoundException
 import android.content.Intent
 import android.net.Uri
 import androidx.compose.foundation.layout.*
