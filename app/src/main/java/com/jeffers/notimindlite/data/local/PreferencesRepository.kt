@@ -25,7 +25,28 @@ class PreferencesRepository(context: Context) {
         get() = appContext.getSharedPreferences("notimind_lite_prefs_$activeId", Context.MODE_PRIVATE)
 
     init {
-        ExhaustivePreferencesRepository(context).initializeDefaults()
+        migrateRenamedKeys()
+        ExhaustivePreferencesRepository(context).initializeDefaults(activeId)
+    }
+
+    private fun migrateRenamedKeys() {
+        val editor = backing.edit()
+        val aliases = mapOf(
+            "config_capture_allowlist" to "config_capture_package_allowlist",
+            "config_capture_blocklist" to "config_capture_package_blocklist",
+            "config_redact_pii" to "config_pii_redaction"
+        )
+        aliases.forEach { (oldKey, newKey) ->
+            if (!backing.contains(newKey) && backing.contains(oldKey)) {
+                when (val value = backing.all[oldKey]) {
+                    is Boolean -> editor.putBoolean(newKey, value)
+                    is Int -> editor.putInt(newKey, value)
+                    is Long -> editor.putLong(newKey, value)
+                    is String -> editor.putString(newKey, value)
+                }
+            }
+        }
+        editor.apply()
     }
 
     private val _profiles = MutableStateFlow(readProfiles())
@@ -103,8 +124,8 @@ class PreferencesRepository(context: Context) {
     private val _captureForegroundOnly = MutableStateFlow(backing.getBoolean("config_capture_foreground_only", false))
     private val _captureAttachments = MutableStateFlow(backing.getBoolean("config_capture_attachments", true))
     private val _captureOngoing = MutableStateFlow(backing.getBoolean("config_capture_ongoing", true))
-    private val _capturePackageAllowlist = MutableStateFlow(backing.getString("config_capture_allowlist", "") ?: "")
-    private val _capturePackageBlocklist = MutableStateFlow(backing.getString("config_capture_blocklist", "") ?: "")
+    private val _capturePackageAllowlist = MutableStateFlow(backing.getString("config_capture_package_allowlist", backing.getString("config_capture_allowlist", "")) ?: "")
+    private val _capturePackageBlocklist = MutableStateFlow(backing.getString("config_capture_package_blocklist", backing.getString("config_capture_blocklist", "")) ?: "")
     private val _minImportance = MutableStateFlow(backing.getInt("config_min_importance", 0))
     private val _captureActionsOnly = MutableStateFlow(backing.getBoolean("config_capture_actions_only", false))
     val captureForegroundOnly: StateFlow<Boolean> = _captureForegroundOnly
@@ -115,7 +136,7 @@ class PreferencesRepository(context: Context) {
     val minImportance: StateFlow<Int> = _minImportance
     val captureActionsOnly: StateFlow<Boolean> = _captureActionsOnly
 
-    private val _redactPii = MutableStateFlow(backing.getBoolean("config_redact_pii", true))
+    private val _redactPii = MutableStateFlow(backing.getBoolean("config_pii_redaction", backing.getBoolean("config_redact_pii", true)))
     private val _encryptedExports = MutableStateFlow(backing.getBoolean("config_encrypted_exports", true))
     private val _requirePassphrase = MutableStateFlow(backing.getBoolean("config_require_passphrase", false))
     private val _autoLockDb = MutableStateFlow(backing.getBoolean("config_auto_lock_db", false))
@@ -286,11 +307,11 @@ class PreferencesRepository(context: Context) {
     fun setCaptureForegroundOnly(v: Boolean) { backing.edit().putBoolean("config_capture_foreground_only", v).apply(); _captureForegroundOnly.value = v }
     fun setCaptureAttachments(v: Boolean) { backing.edit().putBoolean("config_capture_attachments", v).apply(); _captureAttachments.value = v }
     fun setCaptureOngoing(v: Boolean) { backing.edit().putBoolean("config_capture_ongoing", v).apply(); _captureOngoing.value = v }
-    fun setCapturePackageAllowlist(v: String) { backing.edit().putString("config_capture_allowlist", v).apply(); _capturePackageAllowlist.value = v }
-    fun setCapturePackageBlocklist(v: String) { backing.edit().putString("config_capture_blocklist", v).apply(); _capturePackageBlocklist.value = v }
+    fun setCapturePackageAllowlist(v: String) { backing.edit().putString("config_capture_package_allowlist", v).apply(); _capturePackageAllowlist.value = v }
+    fun setCapturePackageBlocklist(v: String) { backing.edit().putString("config_capture_package_blocklist", v).apply(); _capturePackageBlocklist.value = v }
     fun setMinImportance(v: Int) { val n = v.coerceIn(0, 5); backing.edit().putInt("config_min_importance", n).apply(); _minImportance.value = n }
     fun setCaptureActionsOnly(v: Boolean) { backing.edit().putBoolean("config_capture_actions_only", v).apply(); _captureActionsOnly.value = v }
-    fun setRedactPii(v: Boolean) { backing.edit().putBoolean("config_redact_pii", v).apply(); _redactPii.value = v }
+    fun setRedactPii(v: Boolean) { backing.edit().putBoolean("config_pii_redaction", v).apply(); _redactPii.value = v }
     fun setEncryptedExports(v: Boolean) { backing.edit().putBoolean("config_encrypted_exports", v).apply(); _encryptedExports.value = v }
     fun setRequirePassphrase(v: Boolean) { backing.edit().putBoolean("config_require_passphrase", v).apply(); _requirePassphrase.value = v }
     fun setAutoLockDb(v: Boolean) { backing.edit().putBoolean("config_auto_lock_db", v).apply(); _autoLockDb.value = v }

@@ -234,8 +234,8 @@ class NotificationLoggerService : NotificationListenerService() {
     }
 
     private fun isNotificationCaptureEnabled(): Boolean =
-        getSharedPreferences("notimind_lite_prefs", MODE_PRIVATE)
-            .getBoolean("config_capture_notifications", true)
+        com.jeffers.notimindlite.data.local.PreferencesRepository(applicationContext)
+            .captureNotifications.value
 
     private fun isNotificationListenerActive(): Boolean {
         val componentName = ComponentName(applicationContext, NotificationLoggerService::class.java)
@@ -259,7 +259,29 @@ class NotificationLoggerService : NotificationListenerService() {
     // returns early (blank content, summary, stale, missing app, etc.) — the function is intentionally
     // structured as a filter pipeline. Splitting it is tracked as future work; current contract is
     // well-covered by NotificationLoggerServiceTest.
+    private fun shouldCaptureNotification(sbn: StatusBarNotification): Boolean {
+        if (sbn.packageName == applicationContext.packageName) return false
+        val preferences = com.jeffers.notimindlite.data.local.PreferencesRepository(applicationContext)
+        if (!preferences.captureOngoing.value && sbn.isOngoing) return false
+        val notification = sbn.notification ?: return false
+        if (preferences.captureActionsOnly.value && notification.actions.isNullOrEmpty()) return false
+        val allow = preferences.capturePackageAllowlist.value.split(',', '\n', ' ', '\t')
+            .map(String::trim).filter(String::isNotEmpty).toSet()
+        val block = preferences.capturePackageBlocklist.value.split(',', '\n', ' ', '\t')
+            .map(String::trim).filter(String::isNotEmpty).toSet()
+        if (allow.isNotEmpty() && sbn.packageName !in allow) return false
+        if (sbn.packageName in block) return false
+        val importance = if (android.os.Build.VERSION.SDK_INT >= 26) {
+            notification.channelId?.let { getSystemService(android.app.NotificationManager::class.java)?.getNotificationChannel(it)?.importance }
+                ?: android.app.NotificationManager.IMPORTANCE_DEFAULT
+        } else {
+            (notification.priority + 2).coerceIn(0, 5)
+        }
+        return importance >= preferences.minImportance.value
+    }
+
     private fun extractNotificationEntity(sbn: StatusBarNotification): NotificationEntity? {
+        if (!shouldCaptureNotification(sbn)) return null
         try {
             if (sbn.packageName == applicationContext.packageName) return null
             val notification = sbn.notification ?: return null
