@@ -185,6 +185,19 @@
     <string name="pref_capture_notifications_title">Capture Notifications</string>
     <string name="pref_capture_notifications_summary">If disabled, the notification listener will not persist new notifications.</string>
 
+    <string name="pref_capture_title">Capture Settings</string>
+    <string name="pref_capture_enabled_title">Capture Notifications</string><string name="pref_capture_enabled_summary">Persist incoming notifications.</string>
+    <string name="pref_capture_foreground_title">Foreground only</string><string name="pref_capture_foreground_summary">Capture only while the app is visible.</string>
+    <string name="pref_capture_attachments_title">Capture attachments</string><string name="pref_capture_attachments_summary">Include notification attachments.</string>
+    <string name="pref_capture_ongoing_title">Capture ongoing</string><string name="pref_capture_ongoing_summary">Include ongoing notifications.</string>
+    <string name="pref_capture_allowlist_title">Package allowlist</string><string name="pref_capture_allowlist_summary">Comma-separated package names to include.</string>
+    <string name="pref_capture_blocklist_title">Package blocklist</string><string name="pref_capture_blocklist_summary">Comma-separated package names to exclude.</string>
+    <string name="pref_capture_min_importance_title">Minimum importance</string><string name="pref_capture_min_importance_summary">Ignore notifications below this importance.</string>
+    <string name="pref_capture_actions_only_title">Actions only</string><string name="pref_capture_actions_only_summary">Capture notifications with actionable content.</string>
+    <string name="pref_privacy_title">Privacy &amp; Redaction</string><string name="pref_auto_delete_title">Auto-delete on read</string><string name="pref_auto_delete_summary">Delete notifications after reading.</string><string name="pref_anonymize_title">Anonymize titles</string><string name="pref_anonymize_summary">Remove sensitive title content.</string><string name="pref_redact_pii_title">Redact PII</string><string name="pref_redact_pii_summary">Redact common personal information.</string>
+    <string name="pref_security_title">Security &amp; Encryption</string><string name="pref_encrypted_exports_title">Encrypted backups</string><string name="pref_encrypted_exports_summary">Encrypt exported backups.</string><string name="pref_require_passphrase_title">Require passphrase</string><string name="pref_require_passphrase_summary">Require a passphrase for protected operations.</string><string name="pref_auto_lock_title">Auto-lock database</string><string name="pref_auto_lock_summary">Lock database access when backgrounded.</string>
+    <string name="pref_sync_title">Cloud Sync</string><string name="pref_sync_interval_title">Sync interval (minutes)</string><string name="pref_sync_interval_summary">How often background sync runs.</string><string name="pref_sync_wifi_title">Wi-Fi only</string><string name="pref_sync_wifi_summary">Sync only on unmetered networks.</string><string name="pref_sync_charging_title">Charging only</string><string name="pref_sync_charging_summary">Sync only while charging.</string><string name="pref_sync_last">Last sync: %s</string><string name="pref_sync_never">never</string><string name="pref_sync_now">Sync now</string>
+
     <!-- Backup Key -->
     <string name="backup_key_generated_title">Encryption Key Generated</string>
     <string name="backup_key_share">Share Key</string>

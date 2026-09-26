@@ -108,5 +108,40 @@ object HybridSearchEngine {
     /**
      * Search the entire database using FTS and Vector search.
      */
-    suspend fun searchAndRank(\n        context: Context,\n        query: String\n    ): List<NotificationEntity> = withContext(Dispatchers.IO) {\n        val trimmedQuery = query.trim()\n        if (trimmedQuery.isEmpty()) return@withContext emptyList<NotificationEntity>()\n\n        val prefs = com.jeffers.notimindlite.data.local.PreferencesRepository(context)\n        val db = AppDatabase.getDatabase(context)\n        val dao = db.notificationDao()\n\n        // 1. FTS Pass (Keyword Search) - High Precision, Fast\n        val ftsResults = if (prefs.enableFts4.value) {\n            dao.searchNotificationsFtsSync(trimmedQuery)\n        } else {\n            emptyList()\n        }\n\n        // 2. Vector Pass (Semantic Search)\n        val semanticResults = if (prefs.enableVector.value) {\n            val queryVector = VectorEmbeddingHelper.computeEmbedding(trimmedQuery)\n            \n            // OPTIMIZATION: Limit vector scoring to prevent OOM and latency.\n            // We score the union of FTS results and the most recent notifications.\n            val recentNotifications = dao.getRecentNotificationsList(1000)\n            val candidateSet = (ftsResults + recentNotifications).distinctBy { it.id }\n            \n            candidateSet.mapNotNull { entity ->\n                val entityVector = entity.embedding ?: return@mapNotNull null\n                val similarity = VectorEmbeddingHelper.cosineSimilarity(queryVector, entityVector)\n                SemanticSearchResult(entity, similarity)\n            }.sortedByDescending { it.similarityScore }\n        } else {\n            emptyList()\n        }\n\n        // 3. Fusion (RRF)\n        if (ftsResults.isEmpty() && semanticResults.isEmpty()) return@withContext emptyList()\n        \n        val fusedResults = ReciprocalRankFusion.merge(\n            ftsResults = ftsResults,\n            semanticResults = semanticResults,\n            k = RRF_K\n        )\n\n        fusedResults.map { it.notification }\n    }
+    suspend fun searchAndRank(
+        context: Context,
+        query: String
+    ): List<NotificationEntity> = withContext(Dispatchers.IO) {
+        val trimmedQuery = query.trim()
+        if (trimmedQuery.isEmpty()) return@withContext emptyList<NotificationEntity>()
+
+        val db = AppDatabase.getDatabase(context)
+        val dao = db.notificationDao()
+
+        // 1. FTS Pass (Keyword Search) - High Precision, Fast
+        val ftsResults = dao.searchNotificationsFtsSync(trimmedQuery)
+
+        // 2. Vector Pass (Semantic Search)
+        val queryVector = VectorEmbeddingHelper.computeEmbedding(trimmedQuery)
+        
+        // OPTIMIZATION: Limit vector scoring to prevent OOM and latency.
+        // We score the union of FTS results and the most recent notifications.
+        val recentNotifications = dao.getRecentNotificationsList(1000)
+        val candidateSet = (ftsResults + recentNotifications).distinctBy { it.id }
+        
+        val semanticResults = candidateSet.mapNotNull { entity ->
+            val entityVector = entity.embedding ?: return@mapNotNull null
+            val similarity = VectorEmbeddingHelper.cosineSimilarity(queryVector, entityVector)
+            SemanticSearchResult(entity, similarity)
+        }.sortedByDescending { it.similarityScore }
+
+        // 3. Fusion (RRF)
+        val fusedResults = ReciprocalRankFusion.merge(
+            ftsResults = ftsResults,
+            semanticResults = semanticResults,
+            k = RRF_K
+        )
+
+        fusedResults.map { it.notification }
+    }
 }
