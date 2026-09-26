@@ -2,7 +2,7 @@ package com.jeffers.notimindlite.ui.screens
 
 import android.content.Context
 import android.content.Intent
-import android.graphics.BitmapFactory
+import android.graphics.Bitmap
 import android.provider.Settings
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateColorAsState
@@ -40,6 +40,7 @@ import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.outlined.BookmarkBorder
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.produceState
 import androidx.compose.runtime.saveable.rememberSaveable
 import android.util.Log
 import androidx.compose.ui.Alignment
@@ -79,6 +80,7 @@ import com.jeffers.notimindlite.ui.components.BackupKeyDialog
 import com.jeffers.notimindlite.domain.backup.generateBackupKey
 import com.jeffers.notimindlite.util.DatabaseExporter
 import com.jeffers.notimindlite.util.NetworkUtils
+import com.jeffers.notimindlite.util.AppIconCache
 import com.jeffers.notimindlite.domain.search.HybridSearchEngine
 import com.jeffers.notimindlite.util.NotificationLauncher
 import com.jeffers.notimindlite.data.auth.AuthManager
@@ -86,6 +88,8 @@ import com.jeffers.notimindlite.data.local.AppDatabase
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.withContext
 import java.time.Instant
 import java.time.ZoneId
@@ -150,24 +154,22 @@ enum class NotificationSection(val keyName: String, val title: String, val subti
     LOST("LOST", "Lost Notifications", "App cancelled or package changed notifications (sorted by time dismissed)")
 }
 
+private const val PREFETCH_AHEAD = 12
+private const val PREFETCH_BEHIND = 2
+
 @Composable
 @Suppress("FunctionNaming") // Composable PascalCase required by Compose API.
 fun AppIconImage(appIconUri: String?, modifier: Modifier = Modifier) {
-    val imageBitmap = remember(appIconUri) {
-        if (!appIconUri.isNullOrEmpty()) {
-            try {
-                BitmapFactory.decodeFile(appIconUri)?.asImageBitmap()
-            } catch (e: Exception) {
-                null
-            }
-        } else {
-            null
+    val context = LocalContext.current
+    val imageBitmap by produceState<Bitmap?>(initialValue = null, appIconUri) {
+        value = withContext(Dispatchers.IO) {
+            AppIconCache.getIcon(context, appIconUri)
         }
     }
 
     if (imageBitmap != null) {
         Image(
-            bitmap = imageBitmap,
+            bitmap = imageBitmap!!.asImageBitmap(),
             contentDescription = "App Icon",
             modifier = modifier.size(20.dp)
         )
@@ -297,6 +299,31 @@ fun ActiveNotificationsScreen(dao: NotificationDao, authManager: AuthManager, db
     }
 
     val listState = rememberLazyListState()
+
+    val prefetchCandidates = remember(sectionOrder, notificationsBySection, expandedSection) {
+        sectionOrder
+            .filter { it.keyName == expandedSection }
+            .flatMap { section ->
+                groupNotifications(notificationsBySection[section].orEmpty())
+                    .flatMap { it.items }
+            }
+    }
+
+    LaunchedEffect(prefetchCandidates) {
+        snapshotFlow { listState.firstVisibleItemIndex }
+            .distinctUntilChanged()
+            .collectLatest { firstVisibleIndex ->
+                val start = (firstVisibleIndex - PREFETCH_BEHIND).coerceAtLeast(0)
+                val end = (start + PREFETCH_AHEAD).coerceAtMost(prefetchCandidates.size)
+                if (start < end) {
+                    withContext(Dispatchers.IO) {
+                        prefetchCandidates.subList(start, end).forEach { item ->
+                            AppIconCache.getIcon(context, item.appIconUri)
+                        }
+                    }
+                }
+            }
+    }
 
     fun toggleSection(sectionKey: String) {
         val newExpanded = if (expandedSection == sectionKey) "NONE" else sectionKey
