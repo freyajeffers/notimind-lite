@@ -16,8 +16,7 @@ import androidx.compose.material.icons.automirrored.filled.Sort
 import androidx.compose.material.icons.filled.Bookmark
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Download
-import androidx.compose.material.icons.filled.ExpandLess
-import androidx.compose.material.icons.filled.ExpandMore
+import androidx.compose.material.icons.filled.OpenInNew
 import androidx.compose.material.icons.filled.FilterList
 import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.KeyboardArrowDown
@@ -530,9 +529,7 @@ fun LogHistoryCard(
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable {
-                NotificationLauncher.launchNotification(context, item.packageName, item.key, item.intentUri)
-            },
+            .clickable(onClick = onToggleExpand),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surface
         )
@@ -586,16 +583,23 @@ fun LogHistoryCard(
                     Spacer(modifier = Modifier.width(6.dp))
                     TooltipBox(
                         positionProvider = TooltipDefaults.rememberPlainTooltipPositionProvider(),
-                        tooltip = { PlainTooltip { Text(if (isExpanded) "Collapse details" else "Expand details") } },
+                        tooltip = { PlainTooltip { Text("Open notification") } },
                         state = rememberTooltipState()
                     ) {
                         IconButton(
-                            onClick = onToggleExpand,
+                            onClick = {
+                                NotificationLauncher.launchNotification(
+                                    context,
+                                    item.packageName,
+                                    item.key,
+                                    item.intentUri
+                                )
+                            },
                             modifier = Modifier.size(24.dp)
                         ) {
                             Icon(
-                                imageVector = if (isExpanded) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
-                                contentDescription = null
+                                imageVector = Icons.Default.OpenInNew,
+                                contentDescription = "Open notification"
                             )
                         }
                     }
