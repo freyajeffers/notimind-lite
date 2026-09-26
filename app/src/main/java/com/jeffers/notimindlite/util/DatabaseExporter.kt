@@ -138,6 +138,37 @@ object DatabaseExporter {
         return jsonArray.toString(2)
     }
 
+    fun exportToNdjsonString(notifications: List<NotificationEntity>, context: Context? = null): String {
+        val sb = StringBuilder()
+        for (notif in notifications.map { applyPrivacy(it, context) }) {
+            val jsonObject = JSONObject().apply {
+                put("id", notif.id)
+                put("key", notif.key)
+                put("packageName", notif.packageName)
+                put("appName", notif.appName)
+                put("title", notif.title)
+                put("content", notif.content)
+                put("subText", notif.subText ?: "")
+                put("bigText", notif.bigText ?: "")
+                put("category", notif.category ?: "")
+                put("channelId", notif.channelId ?: "")
+                put("priority", notif.priority)
+                put("postTime", notif.postTime)
+                put("postTimeFormatted", SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).format(Date(notif.postTime)))
+                put("isDismissed", notif.isDismissed)
+                put("dismissTime", notif.dismissTime ?: 0L)
+                put("dismissReason", notif.dismissReason ?: -1)
+                put("isOngoing", notif.isOngoing)
+                put("isClearable", notif.isClearable)
+                put("isPinned", notif.isPinned)
+                put("actionsCount", notif.actionsCount)
+            }
+            sb.append(jsonObject.toString())
+            sb.append("\n")
+        }
+        return sb.toString()
+    }
+
     fun exportToJsonFile(file: File, notifications: List<NotificationEntity>, context: Context? = null) {
         file.outputStream().use { os ->
             android.util.JsonWriter(java.io.OutputStreamWriter(os, "UTF-8")).use { writer ->

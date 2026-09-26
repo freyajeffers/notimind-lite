@@ -128,4 +128,16 @@ class DatabaseExporterTest {
         assertFalse("Old export file should be deleted", oldFile.exists())
         assertTrue("Recent export file should be retained", recentFile.exists())
     }
+
+    @Test
+    fun testNdjsonExportProducesOneJsonPerLine() {
+        val entity1 = NotificationEntity(key = "n1", packageName = "p", appName = "A", title = "T1", content = "C1")
+        val entity2 = NotificationEntity(key = "n2", packageName = "p", appName = "A", title = "T2", content = "C2")
+        val ndjson = DatabaseExporter.exportToNdjsonString(listOf(entity1, entity2))
+        assertNotNull(ndjson)
+        val lines = ndjson.lines().filter { it.isNotBlank() }
+        assertEquals(2, lines.size)
+        assertTrue(lines[0].contains("\"key\":\"n1\""))
+        assertTrue(lines[1].contains("\"key\":\"n2\""))
+    }
 }
