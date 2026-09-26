@@ -6,6 +6,8 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import com.jeffers.notimindlite.BuildConfig
 import com.jeffers.notimindlite.data.local.PreferencesRepository
 import com.jeffers.notimindlite.R
@@ -33,7 +35,8 @@ fun SettingsPrivacySection(preferencesRepository: PreferencesRepository) {
                 Switch(
                     checked = autoDelete, 
                     onCheckedChange = { scope.launch { preferencesRepository.setAutoDeleteOnRead(it) } },
-                    enabled = !BuildConfig.DEBUG
+                    enabled = !BuildConfig.DEBUG,
+                    modifier = Modifier
                 )
             }
 
@@ -45,7 +48,8 @@ fun SettingsPrivacySection(preferencesRepository: PreferencesRepository) {
                 Switch(
                     checked = anonymizeTitles, 
                     onCheckedChange = { scope.launch { preferencesRepository.setAnonymizeTitles(it) } },
-                    enabled = !BuildConfig.DEBUG
+                    enabled = !BuildConfig.DEBUG,
+                    modifier = Modifier
                 )
             }
 
