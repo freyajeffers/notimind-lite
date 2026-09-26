@@ -6,6 +6,8 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import com.jeffers.notimindlite.BuildConfig
 import com.jeffers.notimindlite.data.local.PreferencesRepository
 import com.jeffers.notimindlite.R
