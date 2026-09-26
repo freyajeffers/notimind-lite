@@ -89,7 +89,11 @@ object VectorEmbeddingHelper {
     suspend fun computeEmbedding(context: Context, text: String): FloatArray {
         val preferences = PreferencesRepository(context)
         return if (preferences.isEmbeddingOffloadEnabled()) {
-            withContext(PerformanceExecutors.embeddingExecutor(context).asCoroutineDispatcher()) { computeEmbedding(text) }
+            withContext(
+                PerformanceExecutors.embeddingExecutor(context).asCoroutineDispatcher()
+            ) {
+                computeEmbedding(text)
+            }
         } else {
             computeEmbedding(text)
         }

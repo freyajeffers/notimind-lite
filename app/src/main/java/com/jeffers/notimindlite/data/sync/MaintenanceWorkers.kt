@@ -32,10 +32,22 @@ object MaintenanceScheduler {
     fun schedule(context: Context) {
         val preferences = PreferencesRepository(context)
         val work = WorkManager.getInstance(context)
-        work.enqueueUniquePeriodicWork(COMPACTION, ExistingPeriodicWorkPolicy.UPDATE,
-            PeriodicWorkRequestBuilder<DatabaseCompactionWorker>(preferences.getDbCompactionDays().toLong(), TimeUnit.DAYS).build())
-        work.enqueueUniquePeriodicWork(REINDEX, ExistingPeriodicWorkPolicy.UPDATE,
-            PeriodicWorkRequestBuilder<EmbeddingReindexWorker>(preferences.getReindexDays().toLong(), TimeUnit.DAYS).build())
+        work.enqueueUniquePeriodicWork(
+            COMPACTION,
+            ExistingPeriodicWorkPolicy.UPDATE,
+            PeriodicWorkRequestBuilder<DatabaseCompactionWorker>(
+                preferences.getDbCompactionDays().toLong(),
+                TimeUnit.DAYS
+            ).build()
+        )
+        work.enqueueUniquePeriodicWork(
+            REINDEX,
+            ExistingPeriodicWorkPolicy.UPDATE,
+            PeriodicWorkRequestBuilder<EmbeddingReindexWorker>(
+                preferences.getReindexDays().toLong(),
+                TimeUnit.DAYS
+            ).build()
+        )
     }
 
     fun cancel(context: Context) {
