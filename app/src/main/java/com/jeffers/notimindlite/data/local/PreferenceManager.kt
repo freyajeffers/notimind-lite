@@ -54,4 +54,15 @@ class PreferenceManager(context: Context) {
     fun setPiiRedactionEnabled(enabled: Boolean) {
         prefs.edit().putBoolean("pii_redaction_enabled", enabled).apply()
     }
+
+    fun getThreadPoolSize() = PreferencesRepository(effectiveContext).getThreadPoolSize()
+    fun setThreadPoolSize(value: Int) = PreferencesRepository(effectiveContext).setThreadPoolSize(value)
+    fun getEmbeddingRateMs() = PreferencesRepository(effectiveContext).getEmbeddingRateMs()
+    fun setEmbeddingRateMs(value: Long) = PreferencesRepository(effectiveContext).setEmbeddingRateMs(value)
+    fun getDbCompactionDays() = PreferencesRepository(effectiveContext).getDbCompactionDays()
+    fun setDbCompactionDays(value: Int) = PreferencesRepository(effectiveContext).setDbCompactionDays(value)
+    fun getReindexDays() = PreferencesRepository(effectiveContext).getReindexDays()
+    fun setReindexDays(value: Int) = PreferencesRepository(effectiveContext).setReindexDays(value)
+    fun isEmbeddingOffloadEnabled() = PreferencesRepository(effectiveContext).isEmbeddingOffloadEnabled()
+    fun setEmbeddingOffloadEnabled(value: Boolean) = PreferencesRepository(effectiveContext).setEmbeddingOffloadEnabled(value)
 }
