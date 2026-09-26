@@ -30,6 +30,7 @@ import androidx.compose.material.icons.outlined.BookmarkBorder
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -48,13 +49,19 @@ import com.jeffers.notimindlite.domain.search.HybridSearchEngine
 import com.jeffers.notimindlite.util.NotificationLauncher
 import com.jeffers.notimindlite.data.auth.AuthManager
 import com.jeffers.notimindlite.data.local.AppDatabase
+import com.jeffers.notimindlite.util.AppIconCache
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.time.Instant
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.util.*
+
+private const val PREFETCH_AHEAD = 12
+private const val PREFETCH_BEHIND = 2
 
 enum class SortMode(val label: String) {
     DISMISSED("Time Dismissed"),
@@ -133,6 +140,29 @@ fun LogHistoryScreen(dao: NotificationDao, authManager: AuthManager, db: AppData
                 HybridSearchEngine.searchAndRankBlocking(list, debouncedSearchQuery)
             }
         }
+    }
+
+    val notificationGroups = remember(filteredNotifs) {
+        groupNotifications(filteredNotifs)
+    }
+
+    LaunchedEffect(notificationGroups, listState) {
+        snapshotFlow { listState.layoutInfo.visibleItemsInfo.map { it.index } }
+            .distinctUntilChanged()
+            .collect { visibleIndexes ->
+                if (visibleIndexes.isEmpty() || notificationGroups.isEmpty()) return@collect
+                val first = ((visibleIndexes.minOrNull() ?: 0) - PREFETCH_BEHIND).coerceAtLeast(0)
+                val last = ((visibleIndexes.maxOrNull() ?: 0) + PREFETCH_AHEAD)
+                    .coerceAtMost(notificationGroups.lastIndex)
+                val candidates = notificationGroups
+                    .subList(first, last + 1)
+                    .flatMap { it.items }
+                    .mapNotNull { it.appIconUri }
+                    .distinct()
+                withContext(Dispatchers.IO) {
+                    candidates.forEach { uri -> AppIconCache.getIcon(context, uri) }
+                }
+            }
     }
 
     Scaffold(
@@ -372,7 +402,6 @@ fun LogHistoryScreen(dao: NotificationDao, authManager: AuthManager, db: AppData
                     }
                 )
             } else {
-                val notificationGroups = groupNotifications(filteredNotifs)
                 LazyColumn(
                     state = listState,
                     modifier = Modifier.fillMaxSize(),
@@ -381,7 +410,8 @@ fun LogHistoryScreen(dao: NotificationDao, authManager: AuthManager, db: AppData
                 ) {
                     items(
                         items = notificationGroups,
-                        key = { group -> "history_group_${group.groupKey}" }
+                        key = { group -> "history_group_${group.groupKey}" },
+                        contentType = { group -> if (group.items.size == 1) "notification" else "group" }
                     ) { group ->
                         val isGroupExpanded = !collapsedGroups.contains(group.groupKey)
                         if (group.items.size == 1) {
