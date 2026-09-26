@@ -3,6 +3,7 @@ package com.jeffers.notimindlite.crypto
 import android.content.Context
 import android.os.Build
 import android.util.Base64
+import androidx.core.content.edit
 import java.nio.ByteBuffer
 import java.security.KeyStore
 import javax.crypto.Cipher
@@ -34,7 +35,11 @@ object SqlCipherKeyManager {
 
         val passphrase = ByteArray(PASSPHRASE_BYTES).also { java.security.SecureRandom().nextBytes(it) }
         val encrypted = encrypt(appContext, databaseName, passphrase)
-        check(prefs.edit().putString(VALUE, Base64.encodeToString(encrypted, Base64.NO_WRAP)).commit()) {
+        val encodedPassphrase = Base64.encodeToString(encrypted, Base64.NO_WRAP)
+        prefs.edit(commit = true) {
+            putString(VALUE, encodedPassphrase)
+        }
+        check(prefs.getString(VALUE, null) == encodedPassphrase) {
             "Unable to persist SQLCipher passphrase"
         }
         return passphrase
