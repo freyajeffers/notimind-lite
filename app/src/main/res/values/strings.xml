@@ -158,11 +158,11 @@
     <string name="pref_advanced_title">Advanced &amp; Developer</string>
     <string name="pref_display_title">Display &amp; Appearance</string>
     <string name="pref_compact_mode_title">Compact mode</string>
-    <string name="pref_compact_mode_summary">Use denser notification cards.</string>
+    <string name="pref_compact_mode_summary">Fit more notifications on screen by reducing card spacing.</string>
     <string name="pref_show_app_icons_title">Show app icons</string>
-    <string name="pref_show_app_icons_summary">Show application icons in notification cards.</string>
+    <string name="pref_show_app_icons_summary">Show each app’s icon beside its notifications.</string>
     <string name="pref_group_by_app_title">Group by app</string>
-    <string name="pref_group_by_app_summary">Combine notifications from the same application.</string>
+    <string name="pref_group_by_app_summary">Keep notifications from the same app together.</string>
     <string name="pref_sort_order_title">Sort order</string>
     <string name="pref_sort_newest">Newest first</string>
     <string name="pref_sort_oldest">Oldest first</string>
@@ -175,50 +175,50 @@
     <string name="pref_theme_orange">Orange</string>
     <string name="pref_security_local_title">Local security</string>
     <string name="pref_export_biometric_title">Require biometric for exports</string>
-    <string name="pref_export_biometric_summary">Authenticate before creating an encrypted export.</string>
+    <string name="pref_export_biometric_summary">Ask for your fingerprint or face before exporting protected data.</string>
     <string name="pref_app_lock_title">App lock</string>
-    <string name="pref_app_lock_summary">Lock database access when the app leaves the foreground.</string>
+    <string name="pref_app_lock_summary">Protect your saved notifications whenever the app is backgrounded.</string>
     <string name="pref_encrypt_database_title">Encrypt database</string>
-    <string name="pref_encrypt_database_summary">Protect the local Room database with SQLCipher.</string>
+    <string name="pref_encrypt_database_summary">Encrypt notifications stored on this device.</string>
     <string name="pref_database_key_mode_title">Database key mode</string>
     <string name="pref_keystore_title">Use Android Keystore</string>
-    <string name="pref_keystore_summary">Keep the database key protected by the device Keystore.</string>
+    <string name="pref_keystore_summary">Keep encryption keys in Android’s protected key store.</string>
     <string name="pref_preview_length_title">Preview length</string>
     <string name="pref_preview_length_summary">Maximum characters shown before expanding.</string>
     <string name="pref_preview_length_label">Characters</string>
     <string name="pref_enable_telemetry_title">Enable telemetry</string>
-    <string name="pref_enable_telemetry_summary">Allow anonymous usage and crash telemetry.</string>
+    <string name="pref_enable_telemetry_summary">Share anonymous diagnostics to help improve the app.</string>
     <string name="pref_low_memory_mode_title">Low memory mode</string>
-    <string name="pref_low_memory_mode_summary">Reduce caches and in-memory embeddings when enabled.</string>
+    <string name="pref_low_memory_mode_summary">Use less memory and battery, with slightly slower searches.</string>
     <string name="pref_max_db_mb_title">Max DB size (MB)</string>
-    <string name="pref_max_db_mb_summary">Maximum on-disk DB size before garbage collection.</string>
+    <string name="pref_max_db_mb_summary">Limit how much storage the notification database may use.</string>
     <string name="pref_vector_cache_max_title">Vector cache size</string>
-    <string name="pref_vector_cache_max_summary">Maximum number of embeddings held in memory.</string>
+    <string name="pref_vector_cache_max_summary">Choose how many search results stay ready for faster searches.</string>
     <string name="pref_data_search_debug_note">Debug build: notification capture is always enabled and notifications are retained indefinitely.</string>
     <string name="pref_disabled_in_debug">Disabled in debug builds to preserve captured data.</string>
     <string name="pref_auto_delete_on_read_title">Auto-delete when read</string>
-    <string name="pref_auto_delete_on_read_summary">Delete notifications automatically after they are marked read.</string>
+    <string name="pref_auto_delete_on_read_summary">Remove a notification as soon as you mark it read. This cannot be undone.</string>
     <string name="pref_anonymize_titles_title">Anonymize notification titles</string>
-    <string name="pref_anonymize_titles_summary">Reduce sensitive title content in local displays and exports.</string>
+    <string name="pref_anonymize_titles_summary">Hide sensitive words in notification titles when shown or exported.</string>
     <string name="pref_enable_sync_title">Enable Cloud Sync</string>
-    <string name="pref_enable_sync_summary">Toggle automatic cloud sync and backups.</string>
+    <string name="pref_enable_sync_summary">Back up notifications and keep them available on your other devices.</string>
     <string name="pref_enable_vector_title">Enable Semantic Vector Search</string>
-    <string name="pref_enable_vector_summary">Enable semantic similarity search using vector embeddings.</string>
+    <string name="pref_enable_vector_summary">Find related notifications even when they use different words.</string>
     <string name="pref_enable_fts4_title">Enable FTS4 Keyword Search</string>
-    <string name="pref_enable_fts4_summary">Enable full-text keyword search using FTS4.</string>
+    <string name="pref_enable_fts4_summary">Search notification text for exact words and phrases.</string>
     <string name="pref_semantic_ranking_title">Semantic ranking</string>
     <string name="pref_semantic_ranking_summary">Blend semantic similarity into search ranking.</string>
     <string name="pref_retention_days_title">Retention (days)</string>
-    <string name="pref_retention_days_summary">How long to keep notifications before auto-deleting.</string>
+    <string name="pref_retention_days_summary">Choose how long notifications remain before automatic cleanup.</string>
     <string name="pref_retention_days_unit">Days</string>
     <string name="pref_retention_days_range">Allowed range: 1–3650 days</string>
     <string name="pref_export_encryption_title">Encrypt Exports</string>
-    <string name="pref_export_encryption_summary">Require passphrase when exporting backups.</string>
+    <string name="pref_export_encryption_summary">Protect exported backups so only someone with the key can open them.</string>
     <string name="pref_capture_notifications_title">Capture Notifications</string>
-    <string name="pref_capture_notifications_summary">If disabled, the notification listener will not persist new notifications.</string>
+    <string name="pref_capture_notifications_summary">Save new notifications so you can search and review them later.</string>
     <string name="pref_automation_title">Automation &amp; Actions</string>
     <string name="pref_auto_act_title">Auto-act on notifications</string>
-    <string name="pref_auto_act_summary">Execute the first matching notification action when a notification arrives.</string>
+    <string name="pref_auto_act_summary">Automatically perform a matching action when a notification arrives. Use with care.</string>
     <string name="pref_default_reply_title">Default reply method</string>
     <string name="pref_long_press_title">Long-press action</string>
     <string name="pref_reply_inline">Inline reply</string>
@@ -251,6 +251,14 @@
     <string name="pref_privacy_title">Privacy &amp; Redaction</string><string name="pref_auto_delete_title">Auto-delete on read</string><string name="pref_auto_delete_summary">Delete notifications after reading.</string><string name="pref_anonymize_title">Anonymize titles</string><string name="pref_anonymize_summary">Remove sensitive title content.</string><string name="pref_redact_pii_title">Redact PII</string><string name="pref_redact_pii_summary">Redact common personal information.</string>
     <string name="pref_security_title">Security &amp; Encryption</string><string name="pref_encrypted_exports_title">Encrypted backups</string><string name="pref_encrypted_exports_summary">Encrypt exported backups.</string><string name="pref_require_passphrase_title">Require passphrase</string><string name="pref_require_passphrase_summary">Require a passphrase for protected operations.</string><string name="pref_auto_lock_title">Auto-lock database</string><string name="pref_auto_lock_summary">Lock database access when backgrounded.</string>
     <string name="pref_sync_title">Cloud Sync</string><string name="pref_sync_interval_title">Sync interval (minutes)</string><string name="pref_sync_interval_summary">How often background sync runs.</string><string name="pref_sync_wifi_title">Wi-Fi only</string><string name="pref_sync_wifi_summary">Sync only on unmetered networks.</string><string name="pref_sync_charging_title">Charging only</string><string name="pref_sync_charging_summary">Sync only while charging.</string><string name="pref_sync_last">Last sync: %s</string><string name="pref_sync_never">never</string><string name="pref_sync_now">Sync now</string>
+
+    <string name="pref_backup_settings_title">Settings backup</string>
+    <string name="pref_backup_settings_summary">Export your preferences to JSON or import a saved configuration.</string>
+    <string name="pref_backup_export">Export settings</string>
+    <string name="pref_backup_import">Import settings</string>
+    <string name="pref_backup_exported">Settings exported successfully.</string>
+    <string name="pref_backup_imported">Settings imported. Reopen affected screens to refresh values.</string>
+    <string name="pref_backup_failed">Settings backup failed: %s</string>
 
     <!-- Backup Key -->
     <string name="backup_key_generated_title">Encryption Key Generated</string>

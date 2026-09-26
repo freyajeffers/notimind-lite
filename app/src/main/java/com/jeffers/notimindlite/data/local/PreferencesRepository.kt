@@ -24,6 +24,10 @@ class PreferencesRepository(context: Context) {
     private val backing: android.content.SharedPreferences
         get() = appContext.getSharedPreferences("notimind_lite_prefs_$activeId", Context.MODE_PRIVATE)
 
+    init {
+        ExhaustivePreferencesRepository(context).initializeDefaults()
+    }
+
     private val _profiles = MutableStateFlow(readProfiles())
     private val _activeProfileId = MutableStateFlow(activeId)
     val profiles: StateFlow<List<Profile>> = _profiles.asStateFlow()
