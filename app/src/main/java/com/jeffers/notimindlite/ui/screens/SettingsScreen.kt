@@ -175,6 +175,7 @@ fun SettingsScreen(
         SettingsSyncSection(preferencesRepository = preferencesRepository)
         SettingsPrivacySection(preferencesRepository = preferencesRepository)
         SettingsAdvancedSection(preferencesRepository = preferencesRepository)
+        SettingsPreferencesBackupSection()
 
         if (session.isAuthenticated) {
             Card(
