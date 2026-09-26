@@ -6,6 +6,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.res.stringResource
+import com.jeffers.notimindlite.BuildConfig
 import com.jeffers.notimindlite.data.local.PreferencesRepository
 import com.jeffers.notimindlite.R
 import kotlinx.coroutines.launch
