@@ -16,6 +16,7 @@ import com.jeffers.notimindlite.data.local.AppDatabase
 import com.jeffers.notimindlite.data.local.Converters
 import com.jeffers.notimindlite.data.local.NotificationDao
 import com.jeffers.notimindlite.data.local.NotificationEntity
+import com.jeffers.notimindlite.data.local.PreferencesRepository
 import com.jeffers.notimindlite.util.NotificationLauncher
 import com.jeffers.notimindlite.util.VectorEmbeddingHelper
 import kotlinx.coroutines.CoroutineScope
@@ -82,6 +83,24 @@ class NotificationLoggerService : NotificationListenerService() {
             } catch (e: Exception) {
                 Log.e("NotificationLoggerSrv", "Failed to rebind notification listener service", e)
             }
+        }
+
+        suspend fun markNotificationAsRead(context: Context, key: String) {
+            val preferences = PreferencesRepository(context)
+            AppDatabase.getDatabase(context).notificationDao()
+                .markAsRead(key, preferences.autoDeleteOnRead.value)
+        }
+
+        suspend fun markNotificationsAsRead(context: Context, keys: List<String>) {
+            val preferences = PreferencesRepository(context)
+            AppDatabase.getDatabase(context).notificationDao()
+                .markAsReadBatch(keys, preferences.autoDeleteOnRead.value)
+        }
+
+        suspend fun markAllNotificationsAsRead(context: Context) {
+            val preferences = PreferencesRepository(context)
+            AppDatabase.getDatabase(context).notificationDao()
+                .markAllAsRead(preferences.autoDeleteOnRead.value)
         }
     }
 
@@ -274,6 +293,9 @@ class NotificationLoggerService : NotificationListenerService() {
             content = san.content
             subText = san.subText
             bigText = san.bigText
+            if (PreferencesRepository(applicationContext).anonymizeTitles.value) {
+                title = "[REDACTED-TITLE]"
+            }
 
             if (title.isBlank() && content.isBlank()) return null
 

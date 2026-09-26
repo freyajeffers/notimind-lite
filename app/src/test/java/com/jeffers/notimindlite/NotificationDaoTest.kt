@@ -220,6 +220,21 @@ class NotificationDaoTest {
     }
 
     @Test
+    fun markAsRead_autoDeleteRemovesNotificationWhenEnabled() = runBlocking {
+        dao.insertNotification(NotificationEntity(key = "privacy_read", packageName = "p", appName = "A", title = "T", content = "C"))
+        dao.markAsRead("privacy_read", autoDeleteOnRead = true)
+        assertTrue(dao.getAllNotificationsList().none { it.key == "privacy_read" })
+    }
+
+    @Test
+    fun markAsRead_withoutAutoDeleteRetainsRowAndMarksRead() = runBlocking {
+        dao.insertNotification(NotificationEntity(key = "privacy_keep", packageName = "p", appName = "A", title = "T", content = "C"))
+        dao.markAsRead("privacy_keep", autoDeleteOnRead = false)
+        val row = dao.getAllNotificationsList().single { it.key == "privacy_keep" }
+        assertTrue(row.isRead)
+    }
+
+    @Test
     fun clearAll_deletesAllNotifications() = runBlocking {
         val entity = NotificationEntity(
             key = "test_clear_1",
