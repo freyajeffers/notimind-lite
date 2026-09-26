@@ -34,33 +34,7 @@ fun SettingsCaptureSection(preferencesRepository: PreferencesRepository) {
                     Text(stringResource(R.string.pref_capture_enabled_title), style = MaterialTheme.typography.bodyLarge)
                     Text(stringResource(R.string.pref_capture_enabled_summary), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
-                Switch(checked = captureEnabled, onCheckedChange = { scope.launch { preferencesRepository.setCaptureNotifications(it) } }, enabled = !BuildConfig.DEBUG)
-            }
-
-            Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(stringResource(R.string.pref_capture_foreground_title), style = MaterialTheme.typography.bodyLarge)
-                    Text(stringResource(R.string.pref_capture_foreground_summary), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                }
-                Switch(checked = foregroundOnly, onCheckedChange = { scope.launch { preferencesRepository.setCaptureForegroundOnly(it) } })
-            }
-
-            Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(stringResource(R.string.pref_capture_attachments_title), style = MaterialTheme.typography.bodyLarge)
-                    Text(stringResource(R.string.pref_capture_attachments_summary), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                }
-                Switch(checked = attachments, onCheckedChange = { scope.launch { preferencesRepository.setCaptureAttachments(it) } })
-            }
-
-            Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(stringResource(R.string.pref_capture_ongoing_title), style = MaterialTheme.typography.bodyLarge)
-                    Text(stringResource(R.string.pref_capture_ongoing_summary), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                }
-                Switch(checked = ongoing, onCheckedChange = { scope.launch { preferencesRepository.setCaptureOngoing(it) } })
-            }
-
+                Switch(checked = captureEnabled, onCheckedChange = { scope.launch { preferencesRepository.setCaptureNotifications(it) } }, enabled = !BuildConfig.DEBUG)\n            }\n\n            Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {\n                Column(modifier = Modifier.weight(1f)) {\n                    Text(stringResource(R.string.pref_capture_foreground_title), style = MaterialTheme.typography.bodyLarge)\n                    Text(stringResource(R.string.pref_capture_foreground_summary), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)\n                }\n                Switch(checked = foregroundOnly, onCheckedChange = { scope.launch { preferencesRepository.setCaptureForegroundOnly(it) } }, enabled = !BuildConfig.DEBUG)\n            }\n\n            Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {\n                Column(modifier = Modifier.weight(1f)) {\n                    Text(stringResource(R.string.pref_capture_attachments_title), style = MaterialTheme.typography.bodyLarge)\n                    Text(stringResource(R.string.pref_capture_attachments_summary), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)\n                }\n                Switch(checked = attachments, onCheckedChange = { scope.launch { preferencesRepository.setCaptureAttachments(it) } }, enabled = !BuildConfig.DEBUG)\n            }\n\n            Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {\n                Column(modifier = Modifier.weight(1f)) {\n                    Text(stringResource(R.string.pref_capture_ongoing_title), style = MaterialTheme.typography.bodyLarge)\n                    Text(stringResource(R.string.pref_capture_ongoing_summary), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)\n                }\n                Switch(checked = ongoing, onCheckedChange = { scope.launch { preferencesRepository.setCaptureOngoing(it) } }, enabled = !BuildConfig.DEBUG)\n            }\n
             Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
                 Column(modifier = Modifier.weight(1f)) {
                     Text(stringResource(R.string.pref_capture_allowlist_title), style = MaterialTheme.typography.bodyLarge)
