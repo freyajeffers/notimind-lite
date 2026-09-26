@@ -1,19 +1,15 @@
 <?xml version="1.0" ?>
 <SmellBaseline>
-  <ManuallySuppressedIssues></ManuallySuppressedIssues>
+  <ManuallySuppressedIssues/>
   <CurrentIssues>
     <ID>ComplexCondition:DatabaseExporter.kt$DatabaseExporter$trimmedSpace.startsWith("=") || trimmedSpace.startsWith("+") || trimmedSpace.startsWith("-") || trimmedSpace.startsWith("@") || trimmedSpace.startsWith("\t") || trimmedSpace.startsWith("\r")</ID>
-    <ID>ComplexCondition:NotificationLoggerService.kt$NotificationLoggerService$(packageName == "android" || packageName == "com.android.systemui") &amp;&amp; (category == Notification.CATEGORY_SERVICE || category == Notification.CATEGORY_SYSTEM)</ID>
-    <ID>ComplexCondition:NotificationLoggerService.kt$NotificationLoggerService$(packageName == "android" || packageName == "com.android.systemui") &amp;&amp; (priority &lt;= -2 || category == Notification.CATEGORY_SERVICE || category == Notification.CATEGORY_SYSTEM || category == "sys") &amp;&amp; (title.contains("USB", ignoreCase = true) || title.contains("debugging", ignoreCase = true) || title.contains("charging", ignoreCase = true))</ID>
     <ID>ComplexCondition:NotificationLoggerService.kt$NotificationLoggerService$summaryRegex.matches(title) || summaryRegex.matches(content) || (subText != null &amp;&amp; summaryRegex.matches(subText))</ID>
     <ID>ComplexCondition:VectorEmbeddingHelper.kt$VectorEmbeddingHelper$!a.isNaN() &amp;&amp; !b.isNaN() &amp;&amp; !a.isInfinite() &amp;&amp; !b.isInfinite()</ID>
     <ID>CyclomaticComplexMethod:ActiveNotificationsScreen.kt$@OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class) @Composable fun ActiveNotificationsScreen(dao: NotificationDao, authManager: AuthManager, db: AppDatabase)</ID>
     <ID>CyclomaticComplexMethod:ActiveNotificationsScreen.kt$fun getReasonLabel(reason: Int?): Int</ID>
     <ID>CyclomaticComplexMethod:DynamicClusterManager.kt$DynamicClusterManager$fun initialize(context: Context)</ID>
     <ID>CyclomaticComplexMethod:DynamicClusterManager.kt$DynamicClusterManager$private fun inferDomainFromPackageName(pkgName: String, appLabel: String?): String?</ID>
-    <ID>CyclomaticComplexMethod:FirestoreSyncRepository.kt$FirestoreSyncRepository$suspend fun sync(userId: String, secretKey: SecretKey): Result&lt;Int&gt;</ID>
     <ID>CyclomaticComplexMethod:LogHistoryScreen.kt$@OptIn(ExperimentalMaterial3Api::class) @Composable fun LogHistoryScreen(dao: NotificationDao, authManager: AuthManager, db: AppDatabase)</ID>
-    <ID>CyclomaticComplexMethod:NotificationLoggerService.kt$NotificationLoggerService$private fun processNotification(sbn: StatusBarNotification)</ID>
     <ID>EmptyCatchBlock:ActionableChips.kt${ }</ID>
     <ID>EmptyCatchBlock:BootReceiver.kt$BootReceiver${ }</ID>
     <ID>EmptyCatchBlock:DatabaseMigrator.kt$DatabaseMigrator${ }</ID>
@@ -21,39 +17,35 @@
     <ID>FunctionNaming:ActionableChips.kt$@Composable fun ActionableChips( text: String, modifier: Modifier = Modifier )</ID>
     <ID>FunctionNaming:ActionableChips.kt$@Composable private fun ActionChip( entity: ActionableEntityExtractor.ActionableEntity )</ID>
     <ID>FunctionNaming:ActiveNotificationsScreen.kt$@Composable fun AppIconImage(appIconUri: String?, modifier: Modifier = Modifier.size(20.dp))</ID>
-    <ID>FunctionNaming:ActiveNotificationsScreen.kt$@OptIn(ExperimentalMaterial3Api::class) @Composable fun LogNotificationCard( item: NotificationEntity, dateTimeFormatter: DateTimeFormatter, dao: NotificationDao, isExpanded: Boolean, onToggleExpand: () -&gt; Unit )</ID>
     <ID>FunctionNaming:ActiveNotificationsScreen.kt$@OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class) @Composable fun ActiveNotificationsScreen(dao: NotificationDao, authManager: AuthManager, db: AppDatabase)</ID>
     <ID>FunctionNaming:AppPackageSelectorDialog.kt$@Composable fun AppPackageSelectorDialog( selectedPackages: List&lt;String&gt;, availableApps: List&lt;Pair&lt;String, String&gt;&gt;, // (packageName, appName) onDismiss: () -&gt; Unit, onPackagesSelected: (List&lt;String&gt;?) -&gt; Unit )</ID>
-    <ID>FunctionNaming:BackupKeyDialog.kt$@Composable fun BackupKeyDialog( keyBase64: String, onDismiss: () -&gt; Unit, onConfirm: () -&gt; Unit )</ID>
-    <ID>FunctionNaming:LogHistoryScreen.kt$@OptIn(ExperimentalMaterial3Api::class) @Composable fun LogHistoryCard( item: NotificationEntity, dateTimeFormatter: DateTimeFormatter, dao: NotificationDao, isExpanded: Boolean, onToggleExpand: () -&gt; Unit )</ID>
     <ID>FunctionNaming:LogHistoryScreen.kt$@OptIn(ExperimentalMaterial3Api::class) @Composable fun LogHistoryScreen(dao: NotificationDao, authManager: AuthManager, db: AppDatabase)</ID>
-    <ID>FunctionNaming:Navigation.kt$@Composable fun MainNavigation( modifier: Modifier = Modifier, notificationDao: NotificationDao, authManager: AuthManager, db: AppDatabase )</ID>
     <ID>FunctionNaming:NotificationDetailPanel.kt$@Composable fun NotificationDetailPanel( item: NotificationEntity, dateTimeFormatter: DateTimeFormatter )</ID>
     <ID>FunctionNaming:NotificationDetailPanel.kt$@Composable private fun DetailRow(label: String, value: String)</ID>
-    <ID>FunctionNaming:SettingsScreen.kt$@Composable fun SettingsScreen( authManager: AuthManager, db: AppDatabase, webClientId: String = "" )</ID>
+    <ID>FunctionNaming:SettingsAdvancedSection.kt$@Composable fun SettingsAdvancedSection(preferencesRepository: PreferencesRepository)</ID>
+    <ID>FunctionNaming:SettingsCaptureSection.kt$@Composable fun SettingsCaptureSection(preferencesRepository: PreferencesRepository)</ID>
+    <ID>FunctionNaming:SettingsSyncSection.kt$@Composable fun SettingsSyncSection(preferencesRepository: PreferencesRepository)</ID>
     <ID>FunctionNaming:SpeedDialSettingsFab.kt$@Composable fun SpeedDialSettingsFab( onSyncClick: () -&gt; Unit, onBackupClick: () -&gt; Unit, onSettingsClick: () -&gt; Unit, modifier: Modifier = Modifier )</ID>
     <ID>FunctionNaming:SpeedDialSettingsFab.kt$@Composable private fun SpeedDialItem( icon: ImageVector, label: String, scale: Float, onClick: () -&gt; Unit )</ID>
     <ID>FunctionNaming:SplashScreen.kt$@Composable fun SplashScreen(onTimeout: () -&gt; Unit)</ID>
     <ID>FunctionNaming:Theme.kt$@Composable fun NotiMindLiteTheme( darkTheme: Boolean = isSystemInDarkTheme(), dynamicColor: Boolean = true, content: @Composable () -&gt; Unit )</ID>
-    <ID>InvalidPackageDeclaration:EncryptedBackupManager.kt$package com.jeffers.notimindlite.data.local</ID>
+    <ID>InvalidPackageDeclaration:DatabaseMigrationOrchestratorTest.kt$package com.jeffers.notimindlite.migration</ID>
     <ID>InvalidPackageDeclaration:GeminiMapsDetectorTest.kt$package com.jeffers.notimindlite</ID>
+    <ID>InvalidPackageDeclaration:MigrationRunnerTest.kt$package com.jeffers.notimindlite.migration</ID>
     <ID>LongMethod:ActionableChips.kt$@Composable private fun ActionChip( entity: ActionableEntityExtractor.ActionableEntity )</ID>
-    <ID>LongMethod:ActiveNotificationsScreen.kt$@OptIn(ExperimentalMaterial3Api::class) @Composable fun LogNotificationCard( item: NotificationEntity, dateTimeFormatter: DateTimeFormatter, dao: NotificationDao, isExpanded: Boolean, onToggleExpand: () -&gt; Unit )</ID>
     <ID>LongMethod:ActiveNotificationsScreen.kt$@OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class) @Composable fun ActiveNotificationsScreen(dao: NotificationDao, authManager: AuthManager, db: AppDatabase)</ID>
     <ID>LongMethod:AppPackageSelectorDialog.kt$@Composable fun AppPackageSelectorDialog( selectedPackages: List&lt;String&gt;, availableApps: List&lt;Pair&lt;String, String&gt;&gt;, // (packageName, appName) onDismiss: () -&gt; Unit, onPackagesSelected: (List&lt;String&gt;?) -&gt; Unit )</ID>
     <ID>LongMethod:BootReceiver.kt$BootReceiver$override fun onReceive(context: Context?, intent: Intent?)</ID>
     <ID>LongMethod:DatabaseMigrator.kt$DatabaseMigrator$fun executeRawDbMergeAndRebuildFts(context: Context, ceDatabase: AppDatabase)</ID>
-    <ID>LongMethod:FirestoreSyncRepository.kt$FirestoreSyncRepository$suspend fun sync(userId: String, secretKey: SecretKey): Result&lt;Int&gt;</ID>
     <ID>LongMethod:HighLoadBurstLifecycleTest.kt$HighLoadBurstLifecycleTest$@Test fun tc_T4_002_stressTenThousandEventsStabilityAndDatabaseSla()</ID>
-    <ID>LongMethod:LogHistoryScreen.kt$@OptIn(ExperimentalMaterial3Api::class) @Composable fun LogHistoryCard( item: NotificationEntity, dateTimeFormatter: DateTimeFormatter, dao: NotificationDao, isExpanded: Boolean, onToggleExpand: () -&gt; Unit )</ID>
     <ID>LongMethod:LogHistoryScreen.kt$@OptIn(ExperimentalMaterial3Api::class) @Composable fun LogHistoryScreen(dao: NotificationDao, authManager: AuthManager, db: AppDatabase)</ID>
     <ID>LongMethod:MainActivity.kt$MainActivity$override fun onCreate(savedInstanceState: Bundle?)</ID>
     <ID>LongMethod:NotificationDaoTest.kt$NotificationDaoTest$@Test fun sub2msQueryPerformanceSLA_50kRecords()</ID>
-    <ID>LongMethod:NotificationLoggerService.kt$NotificationLoggerService$private fun processNotification(sbn: StatusBarNotification)</ID>
     <ID>LongMethod:PersistenceBoundaryTest.kt$PersistenceBoundaryTest$@Test fun tc_R2_T2_008_fiftyThousandEntityQueryPerformanceBenchmark()</ID>
-    <ID>LongMethod:SettingsScreen.kt$@Composable fun SettingsScreen( authManager: AuthManager, db: AppDatabase, webClientId: String = "" )</ID>
+    <ID>LongMethod:SettingsCaptureSection.kt$@Composable fun SettingsCaptureSection(preferencesRepository: PreferencesRepository)</ID>
     <ID>LongParameterList:BaseRobolectricTest.kt$BaseRobolectricTest$( key: String = "com.example.app|101|null|10001", packageName: String = "com.example.app", title: String = "Mock Title", text: String = "Mock Text", postTime: Long = System.currentTimeMillis(), isOngoing: Boolean = false, isClearable: Boolean = true )</ID>
     <ID>LongParameterList:BaseRobolectricTest.kt$BaseRobolectricTest$( key: String = "test_key_${System.currentTimeMillis()}_${(1..1000).random()}", packageName: String = "com.example.app", appName: String = "Example App", title: String = "Test Title", content: String = "Test Content Body", postTime: Long = System.currentTimeMillis(), isDismissed: Boolean = false, isPersistent: Boolean = false )</ID>
+    <ID>LongParameterList:MigrationRunner.kt$MigrationRunner$( source: SupportSQLiteDatabase, target: SupportSQLiteDatabase, plaintextFile: File, encryptedTempFile: File, quarantineFile: File, closeDatabases: () -&gt; Unit, executeCutover: Boolean = false, batchSize: Int = 500 )</ID>
     <ID>LongParameterList:NotificationDao.kt$NotificationDao$(key: String, packageName: String, title: String, content: String, reason: Int, dismissTime: Long = System.currentTimeMillis())</ID>
     <ID>MagicNumber:ActiveNotificationsScreen.kt$0.9f</ID>
     <ID>MagicNumber:ActiveNotificationsScreen.kt$10</ID>
@@ -98,14 +90,14 @@
     <ID>MagicNumber:AppIconCache.kt$AppIconCache$1024</ID>
     <ID>MagicNumber:AppIconCache.kt$AppIconCache$8</ID>
     <ID>MagicNumber:AppIconCache.kt$AppIconCache.&lt;no name provided&gt;$1024</ID>
-    <ID>MagicNumber:BackupNotaryClient.kt$BackupNotaryClient$16</ID>
     <ID>MagicNumber:BackupNotaryClient.kt$BackupNotaryClient$200</ID>
     <ID>MagicNumber:BackupNotaryClient.kt$BackupNotaryClient$5000</ID>
     <ID>MagicNumber:BootReceiver.kt$BootReceiver$0x7FFFFFFF</ID>
     <ID>MagicNumber:BootReceiver.kt$BootReceiver$1000</ID>
     <ID>MagicNumber:Converters.kt$Converters$4</ID>
+    <ID>MagicNumber:CryptoUtils.kt$CryptoUtils$32</ID>
     <ID>MagicNumber:EncryptedBackupManager.kt$256</ID>
-    <ID>MagicNumber:EncryptedBackupManager.kt$EncryptedBackupManager$8192</ID>
+    <ID>MagicNumber:EncryptedStorage.kt$EncryptedStorage$32</ID>
     <ID>MagicNumber:HybridSearchEngine.kt$HybridSearchEngine$1000</ID>
     <ID>MagicNumber:IntelligentSuggestionEngine.kt$IntelligentSuggestionEngine$10</ID>
     <ID>MagicNumber:LogHistoryScreen.kt$0.9f</ID>
@@ -113,12 +105,15 @@
     <ID>MagicNumber:LogHistoryScreen.kt$4</ID>
     <ID>MagicNumber:NotificationLoggerService.kt$NotificationLoggerService$100</ID>
     <ID>MagicNumber:NotificationLoggerService.kt$NotificationLoggerService$1000L</ID>
-    <ID>MagicNumber:NotificationLoggerService.kt$NotificationLoggerService$2</ID>
     <ID>MagicNumber:NotificationLoggerService.kt$NotificationLoggerService$24</ID>
     <ID>MagicNumber:NotificationLoggerService.kt$NotificationLoggerService$30L</ID>
     <ID>MagicNumber:NotificationLoggerService.kt$NotificationLoggerService$60</ID>
     <ID>MagicNumber:NotificationLoggerService.kt$NotificationLoggerService.Companion.&lt;no name provided&gt;$0.75f</ID>
     <ID>MagicNumber:NotificationLoggerService.kt$NotificationLoggerService.Companion.&lt;no name provided&gt;$16</ID>
+    <ID>MagicNumber:PiiRedactionEngine.kt$PiiRedactionEngine$10</ID>
+    <ID>MagicNumber:PiiRedactionEngine.kt$PiiRedactionEngine$12</ID>
+    <ID>MagicNumber:PiiRedactionEngine.kt$PiiRedactionEngine$19</ID>
+    <ID>MagicNumber:PiiRedactionEngine.kt$PiiRedactionEngine$9</ID>
     <ID>MagicNumber:SplashScreen.kt$0.8f</ID>
     <ID>MagicNumber:SplashScreen.kt$1500</ID>
     <ID>MagicNumber:SplashScreen.kt$500</ID>
@@ -165,11 +160,9 @@
     <ID>MatchingDeclarationName:LogHistoryScreen.kt$SortMode</ID>
     <ID>MatchingDeclarationName:Navigation.kt$Screen</ID>
     <ID>MaxLineLength:ActionableChips.kt$ActionChipConfig(Icons.Default.ContentCopy, "OTP", MaterialTheme.colorScheme.primaryContainer, MaterialTheme.colorScheme.onPrimaryContainer)</ID>
-    <ID>MaxLineLength:ActionableChips.kt$ActionChipConfig(Icons.Default.OpenInNew, "Link", MaterialTheme.colorScheme.secondaryContainer, MaterialTheme.colorScheme.onSecondaryContainer)</ID>
     <ID>MaxLineLength:ActionableChips.kt$ActionChipConfig(Icons.Default.Place, "Place", MaterialTheme.colorScheme.tertiaryContainer, MaterialTheme.colorScheme.onTertiaryContainer)</ID>
     <ID>MaxLineLength:ActionableChips.kt$if</ID>
     <ID>MaxLineLength:ActionableChips.kt$leadingIcon = { Icon(Icons.Default.ContentCopy, contentDescription = null, modifier = Modifier.size(18.dp)) }</ID>
-    <ID>MaxLineLength:ActionableChips.kt$leadingIcon = { Icon(Icons.Default.OpenInNew, contentDescription = null, modifier = Modifier.size(18.dp)) }</ID>
     <ID>MaxLineLength:ActionableChips.kt$text = { Text("Copy ${if (entity.type == ActionableEntityExtractor.EntityType.OTP) "Code" else if (entity.type == ActionableEntityExtractor.EntityType.URL) "Link" else "Address"}") }</ID>
     <ID>MaxLineLength:ActionableChips.kt$text = { Text(if (entity.type == ActionableEntityExtractor.EntityType.URL) "Open in Browser" else "Open in Maps") }</ID>
     <ID>MaxLineLength:ActionableChips.kt$val uriString = if (entity.type == ActionableEntityExtractor.EntityType.URL) entity.value else "geo:0,0?q=${Uri.encode(entity.value)}"</ID>
@@ -179,8 +172,6 @@
     <ID>MaxLineLength:ActiveNotificationsScreen.kt$containerColor = if (isGranted) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.errorContainer</ID>
     <ID>MaxLineLength:ActiveNotificationsScreen.kt$contentColor = if (isGranted) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onErrorContainer</ID>
     <ID>MaxLineLength:ActiveNotificationsScreen.kt$expandedCards = if (cardExpanded) expandedCards - item.key else expandedCards + item.key</ID>
-    <ID>MaxLineLength:ActiveNotificationsScreen.kt$filtered.filter { it.title.contains(debouncedSearchQuery, ignoreCase = true) || it.content.contains(debouncedSearchQuery, ignoreCase = true) }</ID>
-    <ID>MaxLineLength:ActiveNotificationsScreen.kt$filteredList.filter { it.title.contains(debouncedSearchQuery, ignoreCase = true) || it.content.contains(debouncedSearchQuery, ignoreCase = true) }</ID>
     <ID>MaxLineLength:ActiveNotificationsScreen.kt$imageVector = if (isExpanded) Icons.Default.ExpandLess else Icons.Default.ExpandMore</ID>
     <ID>MaxLineLength:ActiveNotificationsScreen.kt$imageVector = if (item.isPinned) Icons.Default.Bookmark else Icons.Outlined.BookmarkBorder</ID>
     <ID>MaxLineLength:ActiveNotificationsScreen.kt$listOf(NotificationSection.ACTIVE, NotificationSection.FILTERED, NotificationSection.DISMISSED, NotificationSection.LOST)</ID>
@@ -188,19 +179,11 @@
     <ID>MaxLineLength:ActiveNotificationsScreen.kt$text = if (isGranted) "Status: Active &amp; Listening" else "Status: Permission Required"</ID>
     <ID>MaxLineLength:ActiveNotificationsScreen.kt$tint = if (!selectedPackages.isNullOrEmpty()) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface</ID>
     <ID>MaxLineLength:ActiveNotificationsScreen.kt$tint = if (item.isPinned) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant</ID>
-    <ID>MaxLineLength:ActiveNotificationsScreen.kt$tint = if (searchQuery.isNotEmpty() || isSearchExplicitlyOpened || isSearchFocused) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface</ID>
     <ID>MaxLineLength:ActiveNotificationsScreen.kt$title = { Text(stringResource(id = R.string.active_notifications_title), fontWeight = FontWeight.Bold) }</ID>
     <ID>MaxLineLength:ActiveNotificationsScreen.kt$tooltip = { PlainTooltip { Text(if (item.isPinned) "Unpin notification" else "Pin notification") } }</ID>
     <ID>MaxLineLength:ActiveNotificationsScreen.kt$tooltip = { PlainTooltip { Text(stringResource(id = R.string.active_notifications_filter_apps)) } }</ID>
     <ID>MaxLineLength:ActiveNotificationsScreen.kt$tooltip = { PlainTooltip { Text(stringResource(id = R.string.active_notifications_search_placeholder)) } }</ID>
     <ID>MaxLineLength:ActiveNotificationsScreen.kt$val</ID>
-    <ID>MaxLineLength:AppDatabase.kt$AppDatabase$@Database(entities = [NotificationEntity::class, AppEntity::class, NotificationFtsEntity::class, BackupRecord::class], version = 17, exportSchema = false)</ID>
-    <ID>MaxLineLength:AppDatabase.kt$AppDatabase.Companion$val deContext = if (appContext.isDeviceProtectedStorage) appContext else appContext.createDeviceProtectedStorageContext()</ID>
-    <ID>MaxLineLength:AppDatabase.kt$AppDatabase.Companion.&lt;no name provided&gt;$db.execSQL("CREATE INDEX IF NOT EXISTS `index_notifications_isDismissed_dismissTime` ON `notifications` (`isDismissed`, `dismissTime`)")</ID>
-    <ID>MaxLineLength:AppDatabase.kt$AppDatabase.Companion.&lt;no name provided&gt;$db.execSQL("CREATE INDEX IF NOT EXISTS `index_notifications_isDismissed_postTime` ON `notifications` (`isDismissed`, `postTime`)")</ID>
-    <ID>MaxLineLength:AppDatabase.kt$AppDatabase.Companion.&lt;no name provided&gt;$db.execSQL("CREATE INDEX IF NOT EXISTS `index_notifications_isPinned_postTime` ON `notifications` (`isPinned`, `postTime`)")</ID>
-    <ID>MaxLineLength:AppDatabase.kt$AppDatabase.Companion.&lt;no name provided&gt;$db.execSQL("CREATE INDEX IF NOT EXISTS `index_notifications_packageName_isDismissed` ON `notifications` (`packageName`, `isDismissed`)")</ID>
-    <ID>MaxLineLength:AppDatabase.kt$AppDatabase.Companion.&lt;no name provided&gt;$db.execSQL("CREATE INDEX IF NOT EXISTS `index_notifications_packageName` ON `notifications` (`packageName`)")</ID>
     <ID>MaxLineLength:AppPackageSelectorDialog.kt$Button</ID>
     <ID>MaxLineLength:AppPackageSelectorDialog.kt$Text(pkg, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)</ID>
     <ID>MaxLineLength:ArchitectureBoundaryTest.kt$ArchitectureBoundaryTest$assertSame("All concurrent thread calls must return the identical database instance", firstInstance, instance)</ID>
@@ -211,12 +194,11 @@
     <ID>MaxLineLength:ArchitectureSetupTest.kt$ArchitectureSetupTest$assertTrue("RECEIVE_BOOT_COMPLETED permission must be declared", requestedPermissions.contains("android.permission.RECEIVE_BOOT_COMPLETED"))</ID>
     <ID>MaxLineLength:AuthManager.kt$AuthManager$val session = _session.value.copy(isAuthenticating = false, error = e.localizedMessage ?: "Google Sign-In canceled")</ID>
     <ID>MaxLineLength:BackupConnectivityBoundaryTest.kt$BackupConnectivityBoundaryTest$coEvery { DatabaseExporter.performEncryptedBackup(context, testKey) } returns Result.success(java.io.File("/dev/null"))</ID>
-    <ID>MaxLineLength:BackupKeyDialog.kt$"This key is required to decrypt your backup. Store it safely in a password manager or secure note. If you lose this key, the backup cannot be recovered."</ID>
-    <ID>MaxLineLength:BackupKeyDialog.kt$Icon(Icons.Default.ContentCopy, contentDescription = "Copy Key", modifier = Modifier.size(18.dp))</ID>
     <ID>MaxLineLength:BackupNotaryClient.kt$BackupNotaryClient$private suspend</ID>
     <ID>MaxLineLength:BootRestoreManager.kt$BootRestoreManager$suspend</ID>
     <ID>MaxLineLength:CloudChaosStabilityTest.kt$CloudChaosStabilityTest$FirebaseFirestoreException("Network connection lost mid-upload", FirebaseFirestoreException.Code.UNAVAILABLE)</ID>
     <ID>MaxLineLength:CloudChaosStabilityTest.kt$CloudChaosStabilityTest$assertTrue("Sync should complete successfully for large batches. Failure: ${result.exceptionOrNull()?.message}", result.isSuccess)</ID>
+    <ID>MaxLineLength:CryptoUtilsTest.kt$CryptoUtilsTest$val outDifferentInfo = CryptoUtils.hkdfSha256ExtractAndExpand(salt, ikm, "different-info".toByteArray(Charsets.UTF_8), 32)</ID>
     <ID>MaxLineLength:DatabaseExporter.kt$DatabaseExporter$put("postTimeFormatted", SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).format(Date(notif.postTime)))</ID>
     <ID>MaxLineLength:DatabaseExporter.kt$DatabaseExporter$return Result.failure(IllegalStateException("Active internet connection is required to create a backup"))</ID>
     <ID>MaxLineLength:DatabaseExporter.kt$DatabaseExporter$sb.append("${n.id},${n.packageName},$escapedAppName,$escapedTitle,$escapedContent,$postTimeStr,${n.isDismissed},${n.dismissReason ?: ""},${n.isPinned}\n")</ID>
@@ -274,37 +256,23 @@
     <ID>MaxLineLength:DynamicClusterManager.kt$DynamicClusterManager$combined.contains("shop") || combined.contains("store") || combined.contains("deal") || combined.contains("cart") || combined.contains("mall") -&gt; "shopping"</ID>
     <ID>MaxLineLength:DynamicClusterManager.kt$DynamicClusterManager$combined.contains("task") || combined.contains("note") || combined.contains("cal") || combined.contains("office") || combined.contains("doc") || combined.contains("meet") -&gt; "productivity"</ID>
     <ID>MaxLineLength:DynamicClusterManager.kt$DynamicClusterManager$it != "com" &amp;&amp; it != "android" &amp;&amp; it != "app" &amp;&amp; it != "mobile" &amp;&amp; it != "apps" &amp;&amp; it.length &gt; 2</ID>
-    <ID>MaxLineLength:EncryptedBackupManager.kt$EncryptedBackupManager$private suspend</ID>
+    <ID>MaxLineLength:EncryptedStorage.kt$EncryptedStorage$fun</ID>
     <ID>MaxLineLength:EndToEndAppLifecycleTest.kt$EndToEndAppLifecycleTest$private fun String.capitalize(): String</ID>
     <ID>MaxLineLength:EndToEndAppLifecycleTest.kt$EndToEndAppLifecycleTest$val slackMatch = allHistory.filter { it.appName == "Slack" || it.title.contains("Slack") || it.content.contains("v1.2") }</ID>
     <ID>MaxLineLength:ExportSanitizationBoundaryTest.kt$ExportSanitizationBoundaryTest$val csvStr = DatabaseExporter.exportToCsvString(listOf(formulaEqual, formulaPlus, formulaMinus, formulaAt, formulaTab))</ID>
     <ID>MaxLineLength:FirestoreSyncBoundaryTest.kt$FirestoreSyncBoundaryTest$assertTrue("Sync should complete successfully even if some remote docs are corrupted. Failure: ${result.exceptionOrNull()?.message}", result.isSuccess)</ID>
-    <ID>MaxLineLength:FirestoreSyncRepository.kt$FirestoreSyncRepository$"actionLabels" to notification.actionLabels?.let { SyncEncryptionHelper.encrypt(it, secretKey) }</ID>
-    <ID>MaxLineLength:FirestoreSyncRepository.kt$FirestoreSyncRepository$"inboxLinesJson" to notification.inboxLinesJson?.let { SyncEncryptionHelper.encrypt(it, secretKey) }</ID>
-    <ID>MaxLineLength:FirestoreSyncRepository.kt$FirestoreSyncRepository$Result.failure(UnsupportedOperationException("Database and Firestore cloud deletion is permanently disabled."))</ID>
-    <ID>MaxLineLength:FirestoreSyncRepository.kt$FirestoreSyncRepository$actionLabels = doc.getString("actionLabels")?.let { SyncEncryptionHelper.decrypt(it, secretKey) }</ID>
-    <ID>MaxLineLength:FirestoreSyncRepository.kt$FirestoreSyncRepository$inboxLinesJson = doc.getString("inboxLinesJson")?.let { SyncEncryptionHelper.decrypt(it, secretKey) }</ID>
     <ID>MaxLineLength:HighLoadBurstLifecycleTest.kt$HighLoadBurstLifecycleTest$"INSERT INTO notifications (key, packageName, appName, title, content, postTime, lastUpdatedTime, updateCount, isDismissed, isPinned, isPersistent, isRead, isGroupSummary, priority, isOngoing, isClearable, actionsCount, smallIconRes, syncStatus, lastSyncedAt) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"</ID>
     <ID>MaxLineLength:HighLoadBurstLifecycleTest.kt$HighLoadBurstLifecycleTest$"INSERT OR IGNORE INTO apps (packageName, appName, firstSeenTime, lastSeenTime, syncStatus, lastSyncedAt) VALUES (?, ?, ?, ?, ?, ?)"</ID>
-    <ID>MaxLineLength:HighLoadBurstLifecycleTest.kt$HighLoadBurstLifecycleTest$assertTrue("Query execution for 5,000 active records should be fast (&lt; 200ms in Robolectric JVM)", activeQueryDurationMs &lt; 200)</ID>
     <ID>MaxLineLength:IntelligentSuggestionEngine.kt$IntelligentSuggestionEngine$if</ID>
     <ID>MaxLineLength:IntelligentSuggestionEngine.kt$IntelligentSuggestionEngine$suspend</ID>
-    <ID>MaxLineLength:LogHistoryScreen.kt$.</ID>
-    <ID>MaxLineLength:LogHistoryScreen.kt$Column</ID>
     <ID>MaxLineLength:LogHistoryScreen.kt$imageVector = if (item.isPinned) Icons.Default.Bookmark else Icons.Outlined.BookmarkBorder</ID>
-    <ID>MaxLineLength:LogHistoryScreen.kt$list.filter { it.title.contains(debouncedSearchQuery, ignoreCase = true) || it.content.contains(debouncedSearchQuery, ignoreCase = true) }</ID>
-    <ID>MaxLineLength:LogHistoryScreen.kt$text</ID>
-    <ID>MaxLineLength:LogHistoryScreen.kt$text = "💡 Tip: NotiMind acts as 'Notification Insurance' — it automatically backs up notifications as you dismiss them, so you never lose critical info."</ID>
-    <ID>MaxLineLength:LogHistoryScreen.kt$text = { Text("Sort by Time Dismissed ${if (sortMode == SortMode.DISMISSED) "✓" else ""}") }</ID>
-    <ID>MaxLineLength:LogHistoryScreen.kt$text = { Text("Sort by Time Received ${if (sortMode == SortMode.RECEIVED) "✓" else ""}") }</ID>
     <ID>MaxLineLength:LogHistoryScreen.kt$text = { Text(stringResource(id = R.string.log_history_filter_all_reasons, if (selectedReasonFilter == null) "✓" else "")) }</ID>
     <ID>MaxLineLength:LogHistoryScreen.kt$text = { Text(stringResource(id = R.string.log_history_filter_app_count, selectedPackages?.size?.toString() ?: "All")) }</ID>
     <ID>MaxLineLength:LogHistoryScreen.kt$text = { Text(stringResource(id = R.string.log_history_filter_reason_item, getReasonLabel(reasonCode), reasonCode, if (selectedReasonFilter == reasonCode) "✓" else "")) }</ID>
     <ID>MaxLineLength:LogHistoryScreen.kt$tint = if (hasActiveFilters) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface</ID>
     <ID>MaxLineLength:LogHistoryScreen.kt$tint = if (item.isPinned) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant</ID>
-    <ID>MaxLineLength:LogHistoryScreen.kt$title = { Text(stringResource(id = R.string.log_history_title, filteredNotifs.size, totalCount), fontWeight = FontWeight.Bold) }</ID>
     <ID>MaxLineLength:LogHistoryScreen.kt$tooltip = { PlainTooltip { Text(if (item.isPinned) "Unpin notification" else "Pin notification") } }</ID>
-    <ID>MaxLineLength:LogHistoryScreen.kt$val dismissedNotifsDismissed by dao.getDismissedNotificationsSortedByDismissed().collectAsState(initial = emptyList())</ID>
+    <ID>MaxLineLength:MigrationRunner.kt$MigrationRunner$return MigrationPreflight(plaintext, encrypted, plaintext.exists(), encrypted.exists(), availableBytes, requiredBytes)</ID>
     <ID>MaxLineLength:Navigation.kt$Screen.Active$icon = { Icon(Icons.Default.NotificationsActive, contentDescription = stringResource(id = R.string.nav_active_title)) }</ID>
     <ID>MaxLineLength:NavigationAndSettingsUiTest.kt$NavigationAndSettingsUiTest$val appMatch = list.filter { it.appName.contains("Mail", ignoreCase = true) || it.title.contains("Mail", ignoreCase = true) || it.content.contains("Mail", ignoreCase = true) || it.packageName.contains("Mail", ignoreCase = true) }</ID>
     <ID>MaxLineLength:NavigationAndSettingsUiTest.kt$NavigationAndSettingsUiTest$val contentMatch = list.filter { it.appName.contains("Password", ignoreCase = true) || it.title.contains("Password", ignoreCase = true) || it.content.contains("Password", ignoreCase = true) || it.packageName.contains("Password", ignoreCase = true) }</ID>
@@ -313,8 +281,6 @@
     <ID>MaxLineLength:NavigationAndSettingsUiTest.kt$NavigationAndSettingsUiTest$val n3 = NotificationEntity(id = 3L, key = "k3", packageName = "com.social.media", appName = "SocialFeed", title = "New Like", content = "Alice liked your post", postTime = 3000L, isDismissed = true)</ID>
     <ID>MaxLineLength:NavigationAndSettingsUiTest.kt$NavigationAndSettingsUiTest$val pkgMatch = list.filter { it.appName.contains("social", ignoreCase = true) || it.title.contains("social", ignoreCase = true) || it.content.contains("social", ignoreCase = true) || it.packageName.contains("social", ignoreCase = true) }</ID>
     <ID>MaxLineLength:NavigationAndSettingsUiTest.kt$NavigationAndSettingsUiTest$val titleMatch = list.filter { it.appName.contains("Meeting", ignoreCase = true) || it.title.contains("Meeting", ignoreCase = true) || it.content.contains("Meeting", ignoreCase = true) || it.packageName.contains("Meeting", ignoreCase = true) }</ID>
-    <ID>MaxLineLength:NotificationDao.kt$NotificationDao$@Query("SELECT * FROM notifications WHERE isDismissed = 1 AND (dismissReason IN (5, 8) OR dismissReason NOT IN (1, 2, 3) OR dismissReason IS NULL) ORDER BY COALESCE(dismissTime, postTime) DESC")</ID>
-    <ID>MaxLineLength:NotificationDao.kt$NotificationDao$@Query("SELECT * FROM notifications WHERE isDismissed = 1 AND dismissReason IN (1, 2, 3) ORDER BY COALESCE(dismissTime, postTime) DESC")</ID>
     <ID>MaxLineLength:NotificationDao.kt$NotificationDao$@Query("UPDATE notifications SET isDismissed = 1, dismissReason = :reason, dismissTime = :dismissTime WHERE key = :key")</ID>
     <ID>MaxLineLength:NotificationDao.kt$NotificationDao$abstract</ID>
     <ID>MaxLineLength:NotificationDaoTest.kt$NotificationDaoTest$"INSERT INTO notifications (key, packageName, appName, title, content, postTime, lastUpdatedTime, updateCount, isDismissed, isPinned, isPersistent, isRead, isGroupSummary, priority, isOngoing, isClearable, actionsCount, smallIconRes, syncStatus, lastSyncedAt) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"</ID>
@@ -326,28 +292,70 @@
     <ID>MaxLineLength:NotificationLauncherTest.kt$NotificationLauncherTest$org.junit.Assert.assertEquals("ActionIntent cache must be empty after unregistration", 0, NotificationLauncher.getActionIntentCacheSize())</ID>
     <ID>MaxLineLength:NotificationLauncherTest.kt$NotificationLauncherTest$org.junit.Assert.assertEquals("PendingIntent cache must be 0 after 10,000 burst cycle removals", 0, NotificationLauncher.getPendingIntentCacheSize())</ID>
     <ID>MaxLineLength:NotificationLauncherTest.kt$NotificationLauncherTest$org.junit.Assert.assertEquals("PendingIntent cache must be empty after unregistration", 0, NotificationLauncher.getPendingIntentCacheSize())</ID>
-    <ID>MaxLineLength:NotificationLoggerService.kt$NotificationLoggerService$(priority &lt;= -2 || category == Notification.CATEGORY_SERVICE || category == Notification.CATEGORY_SYSTEM || category == "sys")</ID>
-    <ID>MaxLineLength:NotificationLoggerService.kt$NotificationLoggerService$(title.contains("USB", ignoreCase = true) || title.contains("debugging", ignoreCase = true) || title.contains("charging", ignoreCase = true))</ID>
-    <ID>MaxLineLength:NotificationLoggerService.kt$NotificationLoggerService$if</ID>
-    <ID>MaxLineLength:NotificationLoggerService.kt$NotificationLoggerService$val originalPostTime = if (existing != null &amp;&amp; existing.postTime &gt; 0) existing.postTime else postTime</ID>
     <ID>MaxLineLength:NotificationLoggerServiceTest.kt$NotificationLoggerServiceTest$assertEquals("Blank title and content notification clutter must be suppressed", 0, dao.getAllNotificationsList().size)</ID>
     <ID>MaxLineLength:NotificationLoggerServiceTest.kt$NotificationLoggerServiceTest$assertEquals("Summary clutter ('x more notifications') must be suppressed", 0, dao.getAllNotificationsList().size)</ID>
     <ID>MaxLineLength:NotificationLoggerServiceTest.kt$NotificationLoggerServiceTest$assertEquals("System USB debugging notification clutter must be suppressed", 0, dao.getAllNotificationsList().size)</ID>
     <ID>MaxLineLength:NotificationLoggerServiceTest.kt$NotificationLoggerServiceTest$assertEquals("System charging notification clutter must be suppressed", 0, dao.getAllNotificationsList().size)</ID>
+    <ID>MaxLineLength:PackageFilterManager.kt$PackageFilterManager$class</ID>
+    <ID>MaxLineLength:PackageFilterManager.kt$PackageFilterManager.Companion$return PackageFilterManager(blacklist = setOf("com.android.shell", "com.google.android.googlequicksearchbox"))</ID>
     <ID>MaxLineLength:PermissionRevocationLifecycleTest.kt$PermissionRevocationLifecycleTest$android.provider.Settings.Secure.putString(context.contentResolver, "enabled_notification_listeners", componentNameStr)</ID>
     <ID>MaxLineLength:PersistenceBoundaryTest.kt$PersistenceBoundaryTest$"50,000 entity query response time ($queryDurationMs ms) must be within SLA limit (&lt; 2000.0 ms in Robolectric JVM)"</ID>
     <ID>MaxLineLength:PersistenceBoundaryTest.kt$PersistenceBoundaryTest$"INSERT INTO notifications (id, key, packageName, appName, title, content, postTime, lastUpdatedTime, updateCount, isDismissed, isPinned, isPersistent, isRead, isGroupSummary, priority, isOngoing, isClearable, actionsCount, smallIconRes, syncStatus, lastSyncedAt) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"</ID>
     <ID>MaxLineLength:PersistenceBoundaryTest.kt$PersistenceBoundaryTest$"INSERT OR IGNORE INTO apps (packageName, appName, firstSeenTime, lastSeenTime, syncStatus, lastSyncedAt) VALUES (?, ?, ?, ?, ?, ?)"</ID>
-    <ID>MaxLineLength:SettingsScreen.kt$Text(text = err, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)</ID>
+    <ID>MaxLineLength:PiiRedactionEngine.kt$PiiRedactionEngine$// Post-process placeholders: collapse adjacent placeholder artifacts like "[REDACTED-PHONE]-[REDACTED-OTP]" -&gt; "[REDACTED-PHONE]"</ID>
+    <ID>MaxLineLength:SanitizationPipeline.kt$SanitizationPipeline$// If redaction is disabled through settings, short-circuit and return raw fields (fallback empty strings to avoid nulls)</ID>
+    <ID>MaxLineLength:SettingsAdvancedSection.kt$OutlinedTextField(value = maxDbMb.toString(), onValueChange = { it.toIntOrNull()?.let(preferencesRepository::setMaxDbMb) }, modifier = Modifier.width(120.dp), singleLine = true)</ID>
+    <ID>MaxLineLength:SettingsAdvancedSection.kt$OutlinedTextField(value = vectorCacheMax.toString(), onValueChange = { it.toIntOrNull()?.let(preferencesRepository::setVectorCacheMax) }, modifier = Modifier.width(120.dp), singleLine = true)</ID>
+    <ID>MaxLineLength:SettingsAdvancedSection.kt$Row</ID>
+    <ID>MaxLineLength:SettingsAdvancedSection.kt$Text(stringResource(R.string.pref_enable_telemetry_summary), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)</ID>
+    <ID>MaxLineLength:SettingsAdvancedSection.kt$Text(stringResource(R.string.pref_enable_telemetry_title), style = MaterialTheme.typography.bodyLarge)</ID>
+    <ID>MaxLineLength:SettingsAdvancedSection.kt$Text(stringResource(R.string.pref_low_memory_mode_summary), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)</ID>
+    <ID>MaxLineLength:SettingsAdvancedSection.kt$Text(stringResource(R.string.pref_low_memory_mode_title), style = MaterialTheme.typography.bodyLarge)</ID>
+    <ID>MaxLineLength:SettingsAdvancedSection.kt$Text(stringResource(R.string.pref_max_db_mb_summary), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)</ID>
+    <ID>MaxLineLength:SettingsAdvancedSection.kt$Text(stringResource(R.string.pref_vector_cache_max_summary), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)</ID>
+    <ID>MaxLineLength:SettingsAdvancedSection.kt$Text(stringResource(R.string.pref_vector_cache_max_title), style = MaterialTheme.typography.bodyLarge)</ID>
+    <ID>MaxLineLength:SettingsCaptureSection.kt$OutlinedTextField(value = allowlist, onValueChange = { scope.launch { preferencesRepository.setCapturePackageAllowlist(it) } }, modifier = Modifier.width(200.dp), singleLine = true)</ID>
+    <ID>MaxLineLength:SettingsCaptureSection.kt$OutlinedTextField(value = blocklist, onValueChange = { scope.launch { preferencesRepository.setCapturePackageBlocklist(it) } }, modifier = Modifier.width(200.dp), singleLine = true)</ID>
+    <ID>MaxLineLength:SettingsCaptureSection.kt$OutlinedTextField(value = minImportance.toString(), onValueChange = { it.toIntOrNull()?.let { v -&gt; scope.launch { preferencesRepository.setMinImportance(v) } } }, modifier = Modifier.width(120.dp), singleLine = true)</ID>
+    <ID>MaxLineLength:SettingsCaptureSection.kt$Row</ID>
+    <ID>MaxLineLength:SettingsCaptureSection.kt$Switch(checked = actionsOnly, onCheckedChange = { scope.launch { preferencesRepository.setCaptureActionsOnly(it) } })</ID>
+    <ID>MaxLineLength:SettingsCaptureSection.kt$Switch(checked = attachments, onCheckedChange = { scope.launch { preferencesRepository.setCaptureAttachments(it) } })</ID>
+    <ID>MaxLineLength:SettingsCaptureSection.kt$Switch(checked = captureEnabled, onCheckedChange = { scope.launch { preferencesRepository.setCaptureNotifications(it) } }, enabled = !BuildConfig.DEBUG)</ID>
+    <ID>MaxLineLength:SettingsCaptureSection.kt$Switch(checked = foregroundOnly, onCheckedChange = { scope.launch { preferencesRepository.setCaptureForegroundOnly(it) } })</ID>
+    <ID>MaxLineLength:SettingsCaptureSection.kt$Switch(checked = ongoing, onCheckedChange = { scope.launch { preferencesRepository.setCaptureOngoing(it) } })</ID>
+    <ID>MaxLineLength:SettingsCaptureSection.kt$Text(stringResource(R.string.pref_capture_actions_only_summary), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)</ID>
+    <ID>MaxLineLength:SettingsCaptureSection.kt$Text(stringResource(R.string.pref_capture_actions_only_title), style = MaterialTheme.typography.bodyLarge)</ID>
+    <ID>MaxLineLength:SettingsCaptureSection.kt$Text(stringResource(R.string.pref_capture_allowlist_summary), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)</ID>
+    <ID>MaxLineLength:SettingsCaptureSection.kt$Text(stringResource(R.string.pref_capture_allowlist_title), style = MaterialTheme.typography.bodyLarge)</ID>
+    <ID>MaxLineLength:SettingsCaptureSection.kt$Text(stringResource(R.string.pref_capture_attachments_summary), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)</ID>
+    <ID>MaxLineLength:SettingsCaptureSection.kt$Text(stringResource(R.string.pref_capture_attachments_title), style = MaterialTheme.typography.bodyLarge)</ID>
+    <ID>MaxLineLength:SettingsCaptureSection.kt$Text(stringResource(R.string.pref_capture_blocklist_summary), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)</ID>
+    <ID>MaxLineLength:SettingsCaptureSection.kt$Text(stringResource(R.string.pref_capture_blocklist_title), style = MaterialTheme.typography.bodyLarge)</ID>
+    <ID>MaxLineLength:SettingsCaptureSection.kt$Text(stringResource(R.string.pref_capture_enabled_summary), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)</ID>
+    <ID>MaxLineLength:SettingsCaptureSection.kt$Text(stringResource(R.string.pref_capture_enabled_title), style = MaterialTheme.typography.bodyLarge)</ID>
+    <ID>MaxLineLength:SettingsCaptureSection.kt$Text(stringResource(R.string.pref_capture_foreground_summary), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)</ID>
+    <ID>MaxLineLength:SettingsCaptureSection.kt$Text(stringResource(R.string.pref_capture_foreground_title), style = MaterialTheme.typography.bodyLarge)</ID>
+    <ID>MaxLineLength:SettingsCaptureSection.kt$Text(stringResource(R.string.pref_capture_min_importance_summary), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)</ID>
+    <ID>MaxLineLength:SettingsCaptureSection.kt$Text(stringResource(R.string.pref_capture_min_importance_title), style = MaterialTheme.typography.bodyLarge)</ID>
+    <ID>MaxLineLength:SettingsCaptureSection.kt$Text(stringResource(R.string.pref_capture_ongoing_summary), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)</ID>
+    <ID>MaxLineLength:SettingsCaptureSection.kt$Text(stringResource(R.string.pref_capture_ongoing_title), style = MaterialTheme.typography.bodyLarge)</ID>
+    <ID>MaxLineLength:SettingsSyncSection.kt$Button</ID>
+    <ID>MaxLineLength:SettingsSyncSection.kt$OutlinedTextField(value = syncInterval.toString(), onValueChange = { it.toIntOrNull()?.let { v -&gt; scope.launch { preferencesRepository.setSyncInterval(v) } } }, modifier = Modifier.width(120.dp), singleLine = true)</ID>
+    <ID>MaxLineLength:SettingsSyncSection.kt$Row</ID>
+    <ID>MaxLineLength:SettingsSyncSection.kt$Switch(checked = syncChargingOnly, onCheckedChange = { scope.launch { preferencesRepository.setSyncChargingOnly(it) } })</ID>
+    <ID>MaxLineLength:SettingsSyncSection.kt$Switch(checked = syncWifiOnly, onCheckedChange = { scope.launch { preferencesRepository.setSyncWifiOnly(it) } })</ID>
+    <ID>MaxLineLength:SettingsSyncSection.kt$Text(stringResource(R.string.pref_sync_charging_summary), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)</ID>
+    <ID>MaxLineLength:SettingsSyncSection.kt$Text(stringResource(R.string.pref_sync_interval_summary), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)</ID>
+    <ID>MaxLineLength:SettingsSyncSection.kt$Text(stringResource(R.string.pref_sync_wifi_summary), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)</ID>
+    <ID>MaxLineLength:SettingsSyncSection.kt$Text(text = stringResource(R.string.pref_sync_last, if (lastSyncTs == 0L) stringResource(R.string.pref_sync_never) else java.text.DateFormat.getDateTimeInstance().format(java.util.Date(lastSyncTs))), style = MaterialTheme.typography.bodySmall)</ID>
     <ID>MaxLineLength:SpeedDialSettingsFab.kt$val rotation by animateFloatAsState(targetValue = if (expanded) 45f else 0f, animationSpec = animationSpec, label = "fabRotation")</ID>
     <ID>MaxLineLength:SpeedDialSettingsFab.kt$val scale by animateFloatAsState(targetValue = if (expanded) 1f else 0f, animationSpec = animationSpec, label = "fabScale")</ID>
+    <ID>MaxLineLength:SqlCipherKeyManager.kt$SqlCipherKeyManager$SecretKeySpec(ByteArray(PASSPHRASE_BYTES).also { java.security.SecureRandom().nextBytes(it) }, KEY_ALGORITHM)</ID>
     <ID>NestedBlockDepth:BackupSecurityBoundaryTest.kt$BackupSecurityBoundaryTest$private fun createEncryptedBackupFile(sourceText: String, secretKey: SecretKey): File</ID>
     <ID>NestedBlockDepth:DatabaseExporter.kt$DatabaseExporter$fun cleanupExportFiles(context: Context, maxAgeMillis: Long = 3600_000L)</ID>
     <ID>NestedBlockDepth:DynamicClusterManager.kt$DynamicClusterManager$fun findMatchingClusters(queryTokens: List&lt;String&gt;): Map&lt;String, Set&lt;ClusterNode&gt;&gt;</ID>
-    <ID>NestedBlockDepth:EncryptedBackupManager.kt$EncryptedBackupManager$private fun performDecryption(source: File, dest: File, key: SecretKey): Boolean</ID>
-    <ID>NestedBlockDepth:EncryptedBackupManager.kt$EncryptedBackupManager$private fun performEncryption(source: File, dest: File, key: SecretKey): Boolean</ID>
+    <ID>NestedBlockDepth:MigrationRunner.kt$MigrationRunner$fun performStreamingCopyForTest(sourceDb: AppDatabase, targetDb: AppDatabase, batchSize: Int = 50)</ID>
     <ID>PackageNaming:ArchitectureBoundaryTest.kt$package com.notimind.lite.tier2_boundary</ID>
-    <ID>PackageNaming:ArchitectureSetupTest.kt$package com.notimind.lite.tier1_feature</ID>
     <ID>PackageNaming:BackupConnectivityBoundaryTest.kt$package com.notimind.lite.tier2_boundary</ID>
     <ID>PackageNaming:BackupSecurityBoundaryTest.kt$package com.notimind.lite.tier2_boundary</ID>
     <ID>PackageNaming:BackupSecurityTest.kt$package com.notimind.lite.tier2_boundary</ID>
@@ -360,12 +368,10 @@
     <ID>PackageNaming:FirestoreSyncBoundaryTest.kt$package com.notimind.lite.tier2_boundary</ID>
     <ID>PackageNaming:GcmIntegrityBoundaryTest.kt$package com.notimind.lite.tier2_boundary</ID>
     <ID>PackageNaming:HighLoadBurstLifecycleTest.kt$package com.notimind.lite.tier4_realworld</ID>
-    <ID>PackageNaming:MigrationTest.kt$package com.notimind.lite.tier1_feature</ID>
     <ID>PackageNaming:NotificationBurstServiceTest.kt$package com.notimind.lite.tier4_realworld</ID>
     <ID>PackageNaming:NotificationServiceDbPairwiseTest.kt$package com.notimind.lite.tier3_pairwise</ID>
     <ID>PackageNaming:PermissionRevocationLifecycleTest.kt$package com.notimind.lite.tier4_realworld</ID>
     <ID>PackageNaming:PersistenceBoundaryTest.kt$package com.notimind.lite.tier2_boundary</ID>
-    <ID>PackageNaming:PersistenceSchemaTest.kt$package com.notimind.lite.tier1_feature</ID>
     <ID>PackageNaming:RrfRankingTest.kt$package com.notimind.lite.tier2_boundary</ID>
     <ID>PackageNaming:SettingsClearLogPairwiseTest.kt$package com.notimind.lite.tier3_pairwise</ID>
     <ID>PackageNaming:SnoozeLoopBoundaryTest.kt$package com.notimind.lite.tier2_boundary</ID>
@@ -374,23 +380,24 @@
     <ID>PackageNaming:ViewModelUiStatePairwiseTest.kt$package com.notimind.lite.tier3_pairwise</ID>
     <ID>ReturnCount:AppIconCache.kt$AppIconCache$fun getIcon(context: Context, uri: String?, targetSize: Int = 64): Bitmap?</ID>
     <ID>ReturnCount:BootReceiver.kt$BootReceiver$override fun onReceive(context: Context?, intent: Intent?)</ID>
-    <ID>ReturnCount:DatabaseExporter.kt$DatabaseExporter$suspend fun performEncryptedBackup(context: Context, secretKey: SecretKey): Result&lt;File&gt;</ID>
-    <ID>ReturnCount:EncryptedBackupManager.kt$EncryptedBackupManager$suspend fun createAuthorizedBackup( context: Context, sourceDbFile: File, destinationFile: File, secretKey: SecretKey, encryptionKeyBase64: String? = null ): Boolean</ID>
-    <ID>ReturnCount:EncryptedBackupManager.kt$EncryptedBackupManager$suspend fun restoreAuthorizedBackup( context: Context, sourceBackupFile: File, destinationDbFile: File, secretKey: SecretKey ): Boolean</ID>
+    <ID>ReturnCount:DatabaseMigrationOrchestrator.kt$DatabaseMigrationOrchestrator$fun atomicCutover( plaintextFile: File, encryptedTempFile: File, quarantineFile: File ): MigrationResult</ID>
+    <ID>ReturnCount:MigrationRunner.kt$MigrationRunner$fun migrateOpenedDatabases( source: SupportSQLiteDatabase, target: SupportSQLiteDatabase, plaintextFile: File, encryptedTempFile: File, quarantineFile: File, closeDatabases: () -&gt; Unit, executeCutover: Boolean = false, batchSize: Int = 500 ): MigrationResult</ID>
     <ID>ReturnCount:NetworkUtils.kt$NetworkUtils$fun isInternetAvailable(context: Context): Boolean</ID>
-    <ID>ReturnCount:NotificationLoggerService.kt$NotificationLoggerService$private fun processNotification(sbn: StatusBarNotification)</ID>
+    <ID>ReturnCount:PackageFilterManager.kt$PackageFilterManager$fun shouldAccept(packageName: String?): Boolean</ID>
+    <ID>ReturnCount:PiiRedactionEngine.kt$PiiRedactionEngine$fun redact(input: String?): String?</ID>
+    <ID>ReturnCount:SanitizationPipeline.kt$SanitizationPipeline$fun sanitize( packageName: String?, title: String?, content: String?, subText: String?, bigText: String? ): SanitizationResult?</ID>
     <ID>ReturnCount:VectorEmbeddingHelper.kt$VectorEmbeddingHelper$fun computeEmbedding(text: String): FloatArray</ID>
     <ID>ReturnCount:VectorEmbeddingHelper.kt$VectorEmbeddingHelper$fun cosineSimilarity(vecA: FloatArray, vecB: FloatArray): Float</ID>
     <ID>SwallowedException:ActionableChips.kt$e: Exception</ID>
     <ID>SwallowedException:ActiveNotificationsScreen.kt$e: Exception</ID>
     <ID>SwallowedException:AppIconCache.kt$AppIconCache$e: Exception</ID>
-    <ID>SwallowedException:BackupNotaryClient.kt$BackupNotaryClient$e: Exception</ID>
     <ID>SwallowedException:BackupSecurityTest.kt$BackupSecurityTest$e: Exception</ID>
     <ID>SwallowedException:BootReceiver.kt$BootReceiver$e: Exception</ID>
     <ID>SwallowedException:DatabaseMigrator.kt$DatabaseMigrator$e: Exception</ID>
     <ID>SwallowedException:DynamicClusterManager.kt$DynamicClusterManager$e: Exception</ID>
-    <ID>SwallowedException:EncryptedBackupManager.kt$EncryptedBackupManager$e: Exception</ID>
-    <ID>SwallowedException:NotificationLoggerService.kt$NotificationLoggerService$e: Exception</ID>
+    <ID>SwallowedException:KeyManager.kt$KeyManager$e: ClassNotFoundException</ID>
+    <ID>SwallowedException:PiiRedactionEngine.kt$PiiRedactionEngine$e: Exception</ID>
+    <ID>SwallowedException:SqlCipherKeyManager.kt$SqlCipherKeyManager$e: Exception</ID>
     <ID>TooGenericExceptionCaught:ActionableChips.kt$e: Exception</ID>
     <ID>TooGenericExceptionCaught:ActiveNotificationsScreen.kt$e: Exception</ID>
     <ID>TooGenericExceptionCaught:AppIconCache.kt$AppIconCache$e: Exception</ID>
@@ -399,35 +406,38 @@
     <ID>TooGenericExceptionCaught:BackupNotaryClient.kt$BackupNotaryClient$e: Exception</ID>
     <ID>TooGenericExceptionCaught:BootReceiver.kt$BootReceiver$e: Exception</ID>
     <ID>TooGenericExceptionCaught:DatabaseExporter.kt$DatabaseExporter$e: Exception</ID>
+    <ID>TooGenericExceptionCaught:DatabaseMigrationOrchestrator.kt$DatabaseMigrationOrchestrator$failure: Throwable</ID>
+    <ID>TooGenericExceptionCaught:DatabaseMigrationOrchestrator.kt$DatabaseMigrationOrchestrator$promotionFailure: Throwable</ID>
     <ID>TooGenericExceptionCaught:DatabaseMigrator.kt$DatabaseMigrator$e: Exception</ID>
     <ID>TooGenericExceptionCaught:DynamicClusterManager.kt$DynamicClusterManager$e: Exception</ID>
     <ID>TooGenericExceptionCaught:EncryptedBackupManager.kt$EncryptedBackupManager$e: Exception</ID>
-    <ID>TooGenericExceptionCaught:FirestoreSyncRepository.kt$FirestoreSyncRepository$e: Exception</ID>
+    <ID>TooGenericExceptionCaught:KeyManager.kt$KeyManager$e: Exception</ID>
     <ID>TooGenericExceptionCaught:NetworkUtils.kt$NetworkUtils$e: Exception</ID>
     <ID>TooGenericExceptionCaught:NotificationLauncher.kt$NotificationLauncher$e: Exception</ID>
     <ID>TooGenericExceptionCaught:NotificationLoggerService.kt$NotificationLoggerService$e: Exception</ID>
     <ID>TooGenericExceptionCaught:NotificationLoggerService.kt$NotificationLoggerService.Companion$e: Exception</ID>
+    <ID>TooGenericExceptionCaught:PiiRedactionEngine.kt$PiiRedactionEngine$e: Exception</ID>
     <ID>TooGenericExceptionCaught:SnoozeReminderScheduler.kt$SnoozeReminderScheduler$e: Exception</ID>
+    <ID>TooGenericExceptionCaught:SqlCipherKeyManager.kt$SqlCipherKeyManager$e: Exception</ID>
     <ID>TooGenericExceptionCaught:UnlockReceiver.kt$UnlockReceiver$e: Exception</ID>
     <ID>TooGenericExceptionThrown:BackupNotaryClient.kt$BackupNotaryClient$throw Exception("Notary server returned ${connection.responseCode}")</ID>
     <ID>TooManyFunctions:NotificationDao.kt$NotificationDao</ID>
     <ID>UnusedParameter:ActiveNotificationsScreen.kt$authManager: AuthManager</ID>
     <ID>UnusedParameter:ActiveNotificationsScreen.kt$db: AppDatabase</ID>
     <ID>UnusedParameter:EncryptedBackupManager.kt$EncryptedBackupManager$secretKey: SecretKey</ID>
-    <ID>UnusedParameter:FirestoreSyncRepository.kt$FirestoreSyncRepository$userId: String</ID>
+    <ID>UnusedParameter:KeyManager.kt$KeyManager$context: Context?</ID>
     <ID>UnusedParameter:LogHistoryScreen.kt$authManager: AuthManager</ID>
     <ID>UnusedParameter:LogHistoryScreen.kt$db: AppDatabase</ID>
     <ID>UnusedParameter:NotificationLauncher.kt$NotificationLauncher$context: Context</ID>
+    <ID>UnusedParameter:SqlCipherKeyManager.kt$SqlCipherKeyManager$context: Context</ID>
     <ID>UnusedPrivateProperty:ActiveNotificationsScreen.kt$val totalLazyItemCount by remember { derivedStateOf { var count = 2 sectionOrder.forEach { section -&gt; count += 1 val items = notificationsBySection[section] ?: emptyList() count += if (items.isEmpty()) 1 else items.size } count } }</ID>
     <ID>UnusedPrivateProperty:ActiveNotificationsScreen.kt$var dismissingKeys by remember { mutableStateOf(setOf&lt;String&gt;()) }</ID>
     <ID>UnusedPrivateProperty:BackupSecurityTest.kt$BackupSecurityTest$val encryptedFile = File.createTempFile("backup", ".enc")</ID>
-    <ID>UnusedPrivateProperty:EncryptedBackupManager.kt$EncryptedBackupManager$private const val KEY_SIZE = 256</ID>
     <ID>UnusedPrivateProperty:HighLoadBurstLifecycleTest.kt$HighLoadBurstLifecycleTest$val durationMs = measureTimeMillis { val entities = (1..count).map { i -&gt; NotificationEntity( key = "stress_key_$i", packageName = "com.stress.app_${i % 10}", appName = "Stress App ${i % 10}", title = "Burst Notification $i", content = "High-load stress test payload body $i", postTime = System.currentTimeMillis() + i, isDismissed = i % 2 == 0, isPinned = i % 100 == 0 ) } database.runInTransaction { val db = database.openHelper.writableDatabase val appStmt = db.compileStatement( "INSERT OR IGNORE INTO apps (packageName, appName, firstSeenTime, lastSeenTime, syncStatus, lastSyncedAt) VALUES (?, ?, ?, ?, ?, ?)" ) for (p in 0..10) { appStmt.clearBindings() appStmt.bindString(1, "com.stress.app_$p") appStmt.bindString(2, "Stress App $p") appStmt.bindLong(3, System.currentTimeMillis()) appStmt.bindLong(4, System.currentTimeMillis()) appStmt.bindString(5, "PENDING_UPLOAD") appStmt.bindLong(6, 0L) appStmt.executeInsert() } val stmt = db.compileStatement( "INSERT INTO notifications (key, packageName, appName, title, content, postTime, lastUpdatedTime, updateCount, isDismissed, isPinned, isPersistent, isRead, isGroupSummary, priority, isOngoing, isClearable, actionsCount, smallIconRes, syncStatus, lastSyncedAt) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)" ) for (i in 1..count) { stmt.clearBindings() stmt.bindString(1, "stress_key_$i") stmt.bindString(2, "com.stress.app_${i % 10}") stmt.bindString(3, "Stress App ${i % 10}") stmt.bindString(4, "Burst Notification $i") stmt.bindString(5, "High-load stress test payload body $i") stmt.bindLong(6, System.currentTimeMillis() + i) stmt.bindLong(7, System.currentTimeMillis() + i) stmt.bindLong(8, 1L) stmt.bindLong(9, if (i % 2 == 0) 1L else 0L) stmt.bindLong(10, if (i % 100 == 0) 1L else 0L) stmt.bindLong(11, 0L) stmt.bindLong(12, 0L) stmt.bindLong(13, 0L) stmt.bindLong(14, 0L) stmt.bindLong(15, 0L) stmt.bindLong(16, 1L) stmt.bindLong(17, 0L) stmt.bindLong(18, 0L) stmt.bindString(19, "PENDING_UPLOAD") stmt.bindLong(20, 0L) stmt.executeInsert() } } }</ID>
     <ID>UnusedPrivateProperty:HighLoadBurstLifecycleTest.kt$HighLoadBurstLifecycleTest$val entities = (1..count).map { i -&gt; NotificationEntity( key = "stress_key_$i", packageName = "com.stress.app_${i % 10}", appName = "Stress App ${i % 10}", title = "Burst Notification $i", content = "High-load stress test payload body $i", postTime = System.currentTimeMillis() + i, isDismissed = i % 2 == 0, isPinned = i % 100 == 0 ) }</ID>
     <ID>UnusedPrivateProperty:LogHistoryScreen.kt$var showExportMenu by remember { mutableStateOf(false) }</ID>
     <ID>UnusedPrivateProperty:Navigation.kt$val preferenceManager = remember { com.jeffers.notimindlite.data.local.PreferenceManager(context) }</ID>
     <ID>UnusedPrivateProperty:PersistenceBoundaryTest.kt$PersistenceBoundaryTest$val entities = (1..count).map { i -&gt; NotificationEntity( id = i.toLong(), key = "perf_key_$i", packageName = "com.perf.app_${i % 20}", appName = "Perf App ${i % 20}", title = "Benchmark Notification $i", content = "High-load dataset benchmark payload $i", postTime = 1000000L + i, isDismissed = i % 2 == 0, isPinned = i % 500 == 0 ) }</ID>
-    <ID>UnusedPrivateProperty:RestoredNotificationManager.kt$RestoredNotificationManager$private const val TAG = "RestoredNotifMgr"</ID>
     <ID>UnusedPrivateProperty:SnoozeReminderReceiver.kt$SnoozeReminderReceiver.Companion$private const val TAG = "SnoozeReceiver"</ID>
     <ID>UnusedPrivateProperty:SnoozeReminderScheduler.kt$SnoozeReminderScheduler$private const val CHANNEL_ID = "snooze_reminders"</ID>
     <ID>UseCheckOrError:BackupNotaryClient.kt$BackupNotaryClient$throw IllegalStateException("Active internet connection is required to notarize and create backup")</ID>
@@ -447,9 +457,6 @@
     <ID>WildcardImport:ArchitectureBoundaryTest.kt$import org.junit.Assert.*</ID>
     <ID>WildcardImport:ArchitectureSetupTest.kt$import org.junit.Assert.*</ID>
     <ID>WildcardImport:BackupDao.kt$import androidx.room.*</ID>
-    <ID>WildcardImport:BackupKeyDialog.kt$import androidx.compose.foundation.layout.*</ID>
-    <ID>WildcardImport:BackupKeyDialog.kt$import androidx.compose.material3.*</ID>
-    <ID>WildcardImport:BackupKeyDialog.kt$import androidx.compose.runtime.*</ID>
     <ID>WildcardImport:BackupSecurityTest.kt$import org.junit.Assert.*</ID>
     <ID>WildcardImport:BootReceiverDbPairwiseTest.kt$import org.junit.Assert.*</ID>
     <ID>WildcardImport:ChaosStabilityTest.kt$import io.mockk.*</ID>
@@ -475,10 +482,19 @@
     <ID>WildcardImport:PermissionRevocationLifecycleTest.kt$import org.junit.Assert.*</ID>
     <ID>WildcardImport:PersistenceBoundaryTest.kt$import org.junit.Assert.*</ID>
     <ID>WildcardImport:PersistenceSchemaTest.kt$import org.junit.Assert.*</ID>
+    <ID>WildcardImport:SettingsAdvancedSection.kt$import androidx.compose.foundation.layout.*</ID>
+    <ID>WildcardImport:SettingsAdvancedSection.kt$import androidx.compose.material3.*</ID>
+    <ID>WildcardImport:SettingsAdvancedSection.kt$import androidx.compose.runtime.*</ID>
+    <ID>WildcardImport:SettingsCaptureSection.kt$import androidx.compose.foundation.layout.*</ID>
+    <ID>WildcardImport:SettingsCaptureSection.kt$import androidx.compose.material3.*</ID>
+    <ID>WildcardImport:SettingsCaptureSection.kt$import androidx.compose.runtime.*</ID>
     <ID>WildcardImport:SettingsClearLogPairwiseTest.kt$import org.junit.Assert.*</ID>
     <ID>WildcardImport:SettingsScreen.kt$import androidx.compose.foundation.layout.*</ID>
     <ID>WildcardImport:SettingsScreen.kt$import androidx.compose.material3.*</ID>
     <ID>WildcardImport:SettingsScreen.kt$import androidx.compose.runtime.*</ID>
+    <ID>WildcardImport:SettingsSyncSection.kt$import androidx.compose.foundation.layout.*</ID>
+    <ID>WildcardImport:SettingsSyncSection.kt$import androidx.compose.material3.*</ID>
+    <ID>WildcardImport:SettingsSyncSection.kt$import androidx.compose.runtime.*</ID>
     <ID>WildcardImport:SpeedDialSettingsFab.kt$import androidx.compose.animation.core.*</ID>
     <ID>WildcardImport:SpeedDialSettingsFab.kt$import androidx.compose.foundation.layout.*</ID>
     <ID>WildcardImport:SpeedDialSettingsFab.kt$import androidx.compose.material3.*</ID>
