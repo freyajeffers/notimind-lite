@@ -3,9 +3,7 @@ package com.jeffers.notimindlite.util
 import android.content.Context
 import android.util.Log
 import com.google.firebase.FirebaseApp
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
+import com.jeffers.notimindlite.data.local.PreferencesRepository
 import java.util.concurrent.atomic.AtomicBoolean
 
 /**
@@ -26,17 +24,23 @@ object AppInitializer {
         Log.i(TAG, "AppInitializer: Starting system initialization...")
 
         try {
-            // 1. Firebase Initialization
-            // Guarded to prevent crashes in headless test environments
-            if (FirebaseApp.getApps(context).isEmpty()) {
-                FirebaseApp.initializeApp(context)
-                
-            }
+            val preferences = PreferencesRepository(context)
+            // Apply memory-sensitive settings before any embedding work can start.
+            VectorEmbeddingHelper.configure(
+                lowMemoryMode = preferences.lowMemoryMode.value,
+                cacheSize = preferences.vectorCacheMax.value
+            )
 
-            // 2. Database & Logger Initialization
+            // Firebase Initialization, guarded for headless/test environments.
+            if (FirebaseApp.getApps(context).isEmpty()) FirebaseApp.initializeApp(context)
+            TelemetryManager.configure(
+                context = context,
+                enabled = preferences.enableTelemetry.value,
+                telemetryLevel = preferences.telemetryLevel.value
+            )
+
             setupInternalLogging()
 
-            // 3. Security & App Data Clearance Audit Detection
             kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.Dispatchers.IO).launch {
                 try {
                     AuditLogger.checkAndLogAppDataCleared(context)

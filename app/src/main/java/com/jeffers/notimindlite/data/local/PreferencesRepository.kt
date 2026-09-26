@@ -105,7 +105,11 @@ class PreferencesRepository(context: Context) {
     fun setExportEncryption(value: Boolean) { backing.edit().putBoolean(KEY_EXPORT_ENCRYPTION, value).apply(); _exportEncryption.value = value }
     fun setCaptureNotifications(value: Boolean) { backing.edit().putBoolean(KEY_CAPTURE_NOTIFICATIONS, value).apply(); _captureNotifications.value = value }
     fun setEnableSemanticRanking(value: Boolean) { backing.edit().putBoolean(KEY_ENABLE_SEMANTIC_RANKING, value).apply(); _enableSemanticRanking.value = value }
-    fun setAutoDeleteOnRead(value: Boolean) { backing.edit().putBoolean(KEY_AUTO_DELETE_ON_READ, value).apply(); _autoDeleteOnRead.value = value }
+    fun setAutoDeleteOnRead(value: Boolean) {
+        val safe = value && !BuildConfig.DEBUG
+        backing.edit().putBoolean(KEY_AUTO_DELETE_ON_READ, safe).apply()
+        _autoDeleteOnRead.value = safe
+    }
     fun setBackupIntervalDays(value: Int) { val safe = value.coerceAtLeast(0); backing.edit().putInt(KEY_BACKUP_INTERVAL_DAYS, safe).apply(); _backupIntervalDays.value = safe }
     fun setAnonymizeTitles(value: Boolean) { backing.edit().putBoolean(KEY_ANONYMIZE_TITLES, value).apply(); _anonymizeTitles.value = value }
     fun setMaxCacheSizeMb(value: Int) { val safe = value.coerceIn(1, 1024); backing.edit().putInt(KEY_MAX_CACHE_MB, safe).apply(); _maxCacheSizeMb.value = safe }
@@ -113,8 +117,8 @@ class PreferencesRepository(context: Context) {
     fun setEnableTelemetry(value: Boolean) { backing.edit().putBoolean(KEY_ENABLE_TELEMETRY, value).apply(); _enableTelemetry.value = value }
     fun setTelemetryLevel(value: String) { backing.edit().putString(KEY_TELEMETRY_LEVEL, value).apply(); _telemetryLevel.value = value }
     fun setMaxDbMb(value: Int) { val safe = value.coerceIn(1, 4096); backing.edit().putInt(KEY_MAX_DB_MB, safe).apply(); _maxDbMb.value = safe }
-    fun setLowMemoryMode(value: Boolean) { backing.edit().putBoolean(KEY_LOW_MEMORY_MODE, value).apply(); _lowMemoryMode.value = value }
-    fun setVectorCacheMax(value: Int) { val safe = value.coerceIn(1, 10000); backing.edit().putInt(KEY_VECTOR_CACHE_MAX, safe).apply(); _vectorCacheMax.value = safe }
+    fun setLowMemoryMode(value: Boolean) { backing.edit().putBoolean(KEY_LOW_MEMORY_MODE, value).apply(); _lowMemoryMode.value = value; com.jeffers.notimindlite.util.VectorEmbeddingHelper.setLowMemoryMode(value) }
+    fun setVectorCacheMax(value: Int) { val safe = value.coerceIn(1, 10000); backing.edit().putInt(KEY_VECTOR_CACHE_MAX, safe).apply(); _vectorCacheMax.value = safe; com.jeffers.notimindlite.util.VectorEmbeddingHelper.updateCacheSize(safe) }
 
     companion object {
         private const val DEFAULT_RETENTION_DAYS = 30
