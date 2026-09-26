@@ -2,6 +2,7 @@ package com.jeffers.notimindlite.data.local
 
 import android.content.Context
 import android.os.UserManager
+import androidx.core.content.edit
 
 /** Persistent performance tuning preferences shared by workers and foreground code. */
 class PreferencesRepository(context: Context) {
@@ -29,13 +30,13 @@ class PreferencesRepository(context: Context) {
     }
 
     fun getThreadPoolSize() = prefs.getInt(THREAD_POOL_SIZE, DEFAULT_THREAD_POOL_SIZE).coerceIn(1, 32)
-    fun setThreadPoolSize(value: Int) = prefs.edit().putInt(THREAD_POOL_SIZE, value.coerceIn(1, 32)).apply()
+    fun setThreadPoolSize(value: Int) = prefs.edit { putInt(THREAD_POOL_SIZE, value.coerceIn(1, 32)) }
     fun getEmbeddingRateMs() = prefs.getLong(EMBEDDING_RATE_MS, DEFAULT_EMBEDDING_RATE_MS).coerceAtLeast(0L)
-    fun setEmbeddingRateMs(value: Long) = prefs.edit().putLong(EMBEDDING_RATE_MS, value.coerceAtLeast(0L)).apply()
+    fun setEmbeddingRateMs(value: Long) = prefs.edit { putLong(EMBEDDING_RATE_MS, value.coerceAtLeast(0L)) }
     fun getDbCompactionDays() = prefs.getInt(DB_COMPACTION_DAYS, DEFAULT_DB_COMPACTION_DAYS).coerceAtLeast(1)
-    fun setDbCompactionDays(value: Int) = prefs.edit().putInt(DB_COMPACTION_DAYS, value.coerceAtLeast(1)).apply()
+    fun setDbCompactionDays(value: Int) = prefs.edit { putInt(DB_COMPACTION_DAYS, value.coerceAtLeast(1)) }
     fun getReindexDays() = prefs.getInt(REINDEX_DAYS, DEFAULT_REINDEX_DAYS).coerceAtLeast(1)
-    fun setReindexDays(value: Int) = prefs.edit().putInt(REINDEX_DAYS, value.coerceAtLeast(1)).apply()
+    fun setReindexDays(value: Int) = prefs.edit { putInt(REINDEX_DAYS, value.coerceAtLeast(1)) }
     fun isEmbeddingOffloadEnabled() = prefs.getBoolean(EMBEDDING_OFFLOAD, DEFAULT_EMBEDDING_OFFLOAD)
-    fun setEmbeddingOffloadEnabled(value: Boolean) = prefs.edit().putBoolean(EMBEDDING_OFFLOAD, value).apply()
+    fun setEmbeddingOffloadEnabled(value: Boolean) = prefs.edit { putBoolean(EMBEDDING_OFFLOAD, value) }
 }
