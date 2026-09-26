@@ -31,6 +31,12 @@ class PreferencesRepository(context: Context) {
     private val _anonymizeTitles = MutableStateFlow(backing.getBoolean(KEY_ANONYMIZE_TITLES, false))
     private val _maxCacheSizeMb = MutableStateFlow(backing.getInt(KEY_MAX_CACHE_MB, 50))
     private val _semanticWeight = MutableStateFlow(backing.getInt(KEY_SEMANTIC_WEIGHT, 50))
+    private val _compactMode = MutableStateFlow(backing.getBoolean(KEY_COMPACT_MODE, false))
+    private val _showAppIcons = MutableStateFlow(backing.getBoolean(KEY_SHOW_APP_ICONS, true))
+    private val _sortOrder = MutableStateFlow(backing.getString(KEY_SORT_ORDER, "newest") ?: "newest")
+    private val _groupByApp = MutableStateFlow(backing.getBoolean(KEY_GROUP_BY_APP, true))
+    private val _previewLength = MutableStateFlow(backing.getInt(KEY_PREVIEW_LENGTH, 140))
+    private val _themeAccent = MutableStateFlow(backing.getString(KEY_THEME_ACCENT, "system") ?: "system")
 
     val enableSemanticRanking: StateFlow<Boolean> = _enableSemanticRanking
     val autoDeleteOnRead: StateFlow<Boolean> = _autoDeleteOnRead
@@ -38,6 +44,12 @@ class PreferencesRepository(context: Context) {
     val anonymizeTitles: StateFlow<Boolean> = _anonymizeTitles
     val maxCacheSizeMb: StateFlow<Int> = _maxCacheSizeMb
     val semanticWeight: StateFlow<Int> = _semanticWeight
+    val compactMode: StateFlow<Boolean> = _compactMode
+    val showAppIcons: StateFlow<Boolean> = _showAppIcons
+    val sortOrder: StateFlow<String> = _sortOrder
+    val groupByApp: StateFlow<Boolean> = _groupByApp
+    val previewLength: StateFlow<Int> = _previewLength
+    val themeAccent: StateFlow<String> = _themeAccent
 
     private val _enableTelemetry = MutableStateFlow(backing.getBoolean(KEY_ENABLE_TELEMETRY, true))
     private val _telemetryLevel = MutableStateFlow(backing.getString(KEY_TELEMETRY_LEVEL, "minimal") ?: "minimal")
@@ -114,6 +126,12 @@ class PreferencesRepository(context: Context) {
     fun setAnonymizeTitles(value: Boolean) { backing.edit().putBoolean(KEY_ANONYMIZE_TITLES, value).apply(); _anonymizeTitles.value = value }
     fun setMaxCacheSizeMb(value: Int) { val safe = value.coerceIn(1, 1024); backing.edit().putInt(KEY_MAX_CACHE_MB, safe).apply(); _maxCacheSizeMb.value = safe }
     fun setSemanticWeight(value: Int) { val safe = value.coerceIn(0, 100); backing.edit().putInt(KEY_SEMANTIC_WEIGHT, safe).apply(); _semanticWeight.value = safe }
+    fun setCompactMode(value: Boolean) { backing.edit().putBoolean(KEY_COMPACT_MODE, value).apply(); _compactMode.value = value }
+    fun setShowAppIcons(value: Boolean) { backing.edit().putBoolean(KEY_SHOW_APP_ICONS, value).apply(); _showAppIcons.value = value }
+    fun setSortOrder(value: String) { val safe = if (value in SORT_ORDERS) value else "newest"; backing.edit().putString(KEY_SORT_ORDER, safe).apply(); _sortOrder.value = safe }
+    fun setGroupByApp(value: Boolean) { backing.edit().putBoolean(KEY_GROUP_BY_APP, value).apply(); _groupByApp.value = value }
+    fun setPreviewLength(value: Int) { val safe = value.coerceIn(40, 500); backing.edit().putInt(KEY_PREVIEW_LENGTH, safe).apply(); _previewLength.value = safe }
+    fun setThemeAccent(value: String) { val safe = if (value in THEME_ACCENTS) value else "system"; backing.edit().putString(KEY_THEME_ACCENT, safe).apply(); _themeAccent.value = safe }
     fun setEnableTelemetry(value: Boolean) { backing.edit().putBoolean(KEY_ENABLE_TELEMETRY, value).apply(); _enableTelemetry.value = value }
     fun setTelemetryLevel(value: String) { backing.edit().putString(KEY_TELEMETRY_LEVEL, value).apply(); _telemetryLevel.value = value }
     fun setMaxDbMb(value: Int) { val safe = value.coerceIn(1, 4096); backing.edit().putInt(KEY_MAX_DB_MB, safe).apply(); _maxDbMb.value = safe }
@@ -140,5 +158,13 @@ class PreferencesRepository(context: Context) {
         private const val KEY_MAX_DB_MB = "config_max_db_mb"
         private const val KEY_LOW_MEMORY_MODE = "config_low_memory_mode"
         private const val KEY_VECTOR_CACHE_MAX = "config_vector_cache_max"
+        private const val KEY_COMPACT_MODE = "config_compact_mode"
+        private const val KEY_SHOW_APP_ICONS = "config_show_app_icons"
+        private const val KEY_SORT_ORDER = "config_sort_order"
+        private const val KEY_GROUP_BY_APP = "config_group_by_app"
+        private const val KEY_PREVIEW_LENGTH = "config_preview_length"
+        private const val KEY_THEME_ACCENT = "config_theme_accent"
+        private val SORT_ORDERS = setOf("newest", "oldest", "app")
+        private val THEME_ACCENTS = setOf("system", "blue", "green", "purple", "orange")
     }
 }
