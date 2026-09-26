@@ -259,6 +259,10 @@
     <string name="pref_backup_exported">Settings exported successfully.</string>
     <string name="pref_backup_imported">Settings imported. Reopen affected screens to refresh values.</string>
     <string name="pref_backup_failed">Settings backup failed: %s</string>
+    <string name="pref_export_formats">Allowed export formats (json, csv, ndjson)</string>
+    <string name="pref_export_formats_summary">Only enabled formats can be exported.</string>
+    <string name="pref_export_anonymize">Anonymize exported titles</string>
+    <string name="pref_export_anonymize_summary">Replace notification titles with a redacted marker in exports.</string>
 
     <!-- Backup Key -->
     <string name="backup_key_generated_title">Encryption Key Generated</string>
