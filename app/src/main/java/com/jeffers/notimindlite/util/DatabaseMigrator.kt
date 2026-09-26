@@ -1,6 +1,7 @@
 package com.jeffers.notimindlite.util
 
 import android.content.Context
+import android.database.SQLException
 import android.util.Log
 import androidx.sqlite.db.SupportSQLiteDatabase
 import com.jeffers.notimindlite.data.local.AppDatabase
@@ -123,8 +124,8 @@ object DatabaseMigrator {
             db.endTransaction()
             try {
                 db.execSQL("DETACH DATABASE de_db;")
-            } catch (e: Exception) {
-                
+            } catch (e: SQLException) {
+                Log.w(TAG, "Failed detaching DE staging database", e)
             }
         }
     }

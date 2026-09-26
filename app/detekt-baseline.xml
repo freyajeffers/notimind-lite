@@ -11,8 +11,6 @@
     <ID>CyclomaticComplexMethod:DynamicClusterManager.kt$DynamicClusterManager$private fun inferDomainFromPackageName(pkgName: String, appLabel: String?): String?</ID>
     <ID>CyclomaticComplexMethod:LogHistoryScreen.kt$@OptIn(ExperimentalMaterial3Api::class) @Composable fun LogHistoryScreen(dao: NotificationDao, authManager: AuthManager, db: AppDatabase)</ID>
     <ID>EmptyCatchBlock:ActionableChips.kt${ }</ID>
-    <ID>EmptyCatchBlock:BootReceiver.kt$BootReceiver${ }</ID>
-    <ID>EmptyCatchBlock:DatabaseMigrator.kt$DatabaseMigrator${ }</ID>
     <ID>ExplicitGarbageCollectionCall:NotiMindApp.kt$NotiMindApp$gc()</ID>
     <ID>FunctionNaming:ActionableChips.kt$@Composable fun ActionableChips( text: String, modifier: Modifier = Modifier )</ID>
     <ID>FunctionNaming:ActionableChips.kt$@Composable private fun ActionChip( entity: ActionableEntityExtractor.ActionableEntity )</ID>
@@ -392,8 +390,6 @@
     <ID>SwallowedException:ActiveNotificationsScreen.kt$e: Exception</ID>
     <ID>SwallowedException:AppIconCache.kt$AppIconCache$e: Exception</ID>
     <ID>SwallowedException:BackupSecurityTest.kt$BackupSecurityTest$e: Exception</ID>
-    <ID>SwallowedException:BootReceiver.kt$BootReceiver$e: Exception</ID>
-    <ID>SwallowedException:DatabaseMigrator.kt$DatabaseMigrator$e: Exception</ID>
     <ID>SwallowedException:DynamicClusterManager.kt$DynamicClusterManager$e: Exception</ID>
     <ID>SwallowedException:KeyManager.kt$KeyManager$e: ClassNotFoundException</ID>
     <ID>SwallowedException:PiiRedactionEngine.kt$PiiRedactionEngine$e: Exception</ID>
