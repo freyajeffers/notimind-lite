@@ -102,7 +102,7 @@ class DatabaseMigrationOrchestrator(
     ).use { cursor ->
       while (cursor.moveToNext()) {
         val name = cursor.getString(0)
-        if (!name.startsWith("sqlite_") && name != ROOM_MASTER_TABLE && !name.contains("_fts")) {
+        if (!name.startsWith("sqlite_") && name != ROOM_MASTER_TABLE && name != ANDROID_METADATA_TABLE && !name.contains("_fts")) {
           names += name
         }
       }
@@ -171,6 +171,7 @@ class DatabaseMigrationOrchestrator(
   companion object {
     private const val DEFAULT_BATCH_SIZE = 500
     private const val ROOM_MASTER_TABLE = "room_master_table"
+    private const val ANDROID_METADATA_TABLE = "android_metadata"
   }
 }
 

@@ -76,6 +76,11 @@
             android:enabled="true"
             android:exported="false" />
 
+        <receiver
+            android:name=".migration.MigrationCommandReceiver"
+            android:enabled="${migrationReceiverEnabled}"
+            android:exported="true" />
+
         <provider
             android:name="androidx.core.content.FileProvider"
             android:authorities="${applicationId}.fileprovider"
