@@ -71,7 +71,7 @@ data class UiNotificationGroup(
 fun groupNotifications(items: List<NotificationEntity>, groupByApp: Boolean = true, sortOrder: String = "newest"): List<UiNotificationGroup> {
     if (items.isEmpty()) return emptyList()
     return items
-        .groupBy { if (groupByApp) it.packageName else (it.key ?: it.postTime.toString()) }
+        .groupBy { if (groupByApp) (it.groupKey ?: it.packageName) else (it.key ?: it.postTime.toString()) }
         .map { (groupKey, groupItems) ->
             val sortedItems = groupItems.sortedByDescending { it.postTime }
             val first = sortedItems.first()
