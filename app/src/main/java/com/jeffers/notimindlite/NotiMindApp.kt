@@ -9,6 +9,12 @@ import android.content.res.Configuration
 import android.os.Bundle
 import android.util.Log
 import com.jeffers.notimindlite.util.AppIconCache
+import com.jeffers.notimindlite.data.local.AppDatabase
+import com.jeffers.notimindlite.data.local.PreferencesRepository
+import com.jeffers.notimindlite.util.DatabaseLockManager
+import androidx.lifecycle.DefaultLifecycleObserver
+import androidx.lifecycle.LifecycleOwner
+import androidx.lifecycle.ProcessLifecycleOwner
 
 class NotiMindApp : Application(), android.content.ComponentCallbacks2 {
     companion object {
@@ -18,6 +24,20 @@ class NotiMindApp : Application(), android.content.ComponentCallbacks2 {
     override fun onCreate() {
         super.onCreate()
         com.jeffers.notimindlite.util.AppInitializer.initialize(this)
+        ProcessLifecycleOwner.get().lifecycle.addObserver(object : DefaultLifecycleObserver {
+            override fun onStart(owner: LifecycleOwner) {
+                if (PreferencesRepository(this@NotiMindApp).autoLockDb.value) {
+                    DatabaseLockManager.unlock()
+                }
+            }
+
+            override fun onStop(owner: LifecycleOwner) {
+                if (PreferencesRepository(this@NotiMindApp).autoLockDb.value) {
+                    DatabaseLockManager.lock()
+                    AppDatabase.resetInstance()
+                }
+            }
+        })
         Log.i(TAG, "NotiMind Lite Application Initialized")
     }
 
