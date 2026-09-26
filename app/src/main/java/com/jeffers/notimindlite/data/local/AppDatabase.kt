@@ -3,6 +3,7 @@ package com.jeffers.notimindlite.data.local
 import android.content.Context
 import android.os.UserManager
 import android.util.Log
+import com.jeffers.notimindlite.util.DatabaseLockManager
 import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
@@ -49,6 +50,9 @@ abstract class AppDatabase : RoomDatabase() {
 
         @Volatile
         private var ceInstance: AppDatabase? = null
+
+        @Volatile
+        private var ceProfileId: String? = null
 
         val MIGRATION_1_2 = object : Migration(1, 2) {
             override fun migrate(db: SupportSQLiteDatabase) {
@@ -407,14 +411,19 @@ abstract class AppDatabase : RoomDatabase() {
             synchronized(this) {
                 INSTANCE = db
                 ceInstance = db
+                ceProfileId = PreferencesRepository.DEFAULT_PROFILE_ID
             }
         }
 
         fun resetInstance() {
             synchronized(this) {
+                INSTANCE?.close()
+                deInstance?.close()
+                ceInstance?.close()
                 INSTANCE = null
                 deInstance = null
                 ceInstance = null
+                ceProfileId = null
             }
         }
 
@@ -437,14 +446,23 @@ abstract class AppDatabase : RoomDatabase() {
             val userManager = appContext.getSystemService(Context.USER_SERVICE) as? UserManager
             check(userManager == null || userManager.isUserUnlocked) { "Attempted CE access while device is locked!" }
 
-            return ceInstance ?: synchronized(this) {
+            val profileId = PreferencesRepository.activeProfileId(appContext)
+            return if (ceInstance != null && ceProfileId != profileId) {
+                synchronized(this) {
+                    ceInstance?.close()
+                    ceInstance = null
+                    INSTANCE = null
+                    getCeInstance(appContext)
+                }
+            } else ceInstance ?: synchronized(this) {
                 ceInstance ?: run {
+                    val databaseName = databaseName(CE_DATABASE_NAME, profileId)
                     val instance = Room.databaseBuilder(
                         appContext,
                         AppDatabase::class.java,
-                        CE_DATABASE_NAME
+                        databaseName
                     )
-                    .apply { EncryptedDatabaseFactory.openHelperFactory(appContext, CE_DATABASE_NAME)?.let(::openHelperFactory) }
+                    .apply { EncryptedDatabaseFactory.openHelperFactory(appContext, databaseName)?.let(::openHelperFactory) }
                     .addMigrations(
                         MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7,
                         MIGRATION_7_8, MIGRATION_8_9, MIGRATION_9_10,
@@ -455,14 +473,19 @@ abstract class AppDatabase : RoomDatabase() {
                     .setJournalMode(JournalMode.WRITE_AHEAD_LOGGING)
                     .build()
                     ceInstance = instance
+                    ceProfileId = profileId
                     INSTANCE = instance
                     instance
                 }
             }
         }
 
+        private fun databaseName(base: String, profileId: String): String =
+            if (profileId == PreferencesRepository.DEFAULT_PROFILE_ID) base else "${base}_$profileId"
+
         fun getDatabase(context: Context): AppDatabase {
             val appContext = context.applicationContext
+            DatabaseLockManager.requireUnlocked()
             val userManager = appContext.getSystemService(Context.USER_SERVICE) as? UserManager
             val isUnlocked = userManager?.isUserUnlocked ?: true
             return if (isUnlocked) {

@@ -3,8 +3,7 @@ package com.jeffers.notimindlite.util
 import android.content.Context
 import android.util.Log
 import com.google.firebase.FirebaseApp
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
+import com.jeffers.notimindlite.data.local.PreferencesRepository
 import kotlinx.coroutines.launch
 import java.util.concurrent.atomic.AtomicBoolean
 
@@ -16,6 +15,9 @@ import java.util.concurrent.atomic.AtomicBoolean
 object AppInitializer {
     private const val TAG = "AppInitializer"
     private val isInitialized = AtomicBoolean(false)
+    @Volatile private var activeFeatureFlags: FeatureFlagLoader = FeatureFlagLoader()
+
+    fun featureFlags(): FeatureFlagLoader = activeFeatureFlags
 
     fun initialize(context: Context) {
         if (isInitialized.getAndSet(true)) {
@@ -26,17 +28,32 @@ object AppInitializer {
         Log.i(TAG, "AppInitializer: Starting system initialization...")
 
         try {
-            // 1. Firebase Initialization
-            // Guarded to prevent crashes in headless test environments
-            if (FirebaseApp.getApps(context).isEmpty()) {
-                FirebaseApp.initializeApp(context)
-                
+            val preferences = PreferencesRepository(context)
+            val featureFlags = FeatureFlagLoader().also { loader ->
+                loader.setTestModeFlags(preferences.testModeFlags.value)
+                activeFeatureFlags = loader
             }
+            if (preferences.featureFlagsUrl.value.isNotBlank()) {
+                kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.Dispatchers.IO).launch {
+                    featureFlags.loadFromUrl(preferences.featureFlagsUrl.value)
+                }
+            }
+            // Apply memory-sensitive settings before any embedding work can start.
+            VectorEmbeddingHelper.configure(
+                lowMemoryMode = preferences.lowMemoryMode.value,
+                cacheSize = preferences.vectorCacheMax.value
+            )
 
-            // 2. Database & Logger Initialization
+            // Firebase Initialization, guarded for headless/test environments.
+            if (FirebaseApp.getApps(context).isEmpty()) FirebaseApp.initializeApp(context)
+            TelemetryManager.configure(
+                context = context,
+                enabled = preferences.enableTelemetry.value,
+                telemetryLevel = preferences.telemetryLevel.value
+            )
+
             setupInternalLogging()
 
-            // 3. Security & App Data Clearance Audit Detection
             kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.Dispatchers.IO).launch {
                 try {
                     AuditLogger.checkAndLogAppDataCleared(context)

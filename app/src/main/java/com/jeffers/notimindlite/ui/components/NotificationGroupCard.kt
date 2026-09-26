@@ -68,10 +68,10 @@ data class UiNotificationGroup(
  * Utility function that groups a list of notifications by their groupKey (or packageName)
  * and sorts the resulting groups by latest post time descending (with pinned groups at top).
  */
-fun groupNotifications(items: List<NotificationEntity>): List<UiNotificationGroup> {
+fun groupNotifications(items: List<NotificationEntity>, groupByApp: Boolean = true, sortOrder: String = "newest"): List<UiNotificationGroup> {
     if (items.isEmpty()) return emptyList()
     return items
-        .groupBy { it.groupKey?.ifBlank { null } ?: it.packageName }
+        .groupBy { if (groupByApp) (it.groupKey ?: it.packageName) else (it.key ?: it.postTime.toString()) }
         .map { (groupKey, groupItems) ->
             val sortedItems = groupItems.sortedByDescending { it.postTime }
             val first = sortedItems.first()
@@ -85,10 +85,13 @@ fun groupNotifications(items: List<NotificationEntity>): List<UiNotificationGrou
                 items = sortedItems
             )
         }
-        .sortedWith(
-            compareByDescending<UiNotificationGroup> { it.isPinned }
-                .thenByDescending { it.latestPostTime }
-        )
+        .sortedWith(compareByDescending<UiNotificationGroup> { it.isPinned }.let { comparator ->
+            when (sortOrder) {
+                "oldest" -> comparator.thenBy { it.latestPostTime }
+                "app" -> comparator.thenBy { it.appName.lowercase() }
+                else -> comparator.thenByDescending { it.latestPostTime }
+            }
+        })
 }
 
 /**
@@ -104,6 +107,8 @@ fun NotificationGroupCard(
     isGroupExpanded: Boolean,
     onToggleGroupExpand: () -> Unit,
     renderChildCard: @Composable (NotificationEntity) -> Unit,
+    showAppIcons: Boolean = true,
+    compactMode: Boolean = false,
     modifier: Modifier = Modifier
 ) {
     val scope = rememberCoroutineScope()
@@ -119,7 +124,7 @@ fun NotificationGroupCard(
             containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
         )
     ) {
-        Column(modifier = Modifier.padding(10.dp)) {
+        Column(modifier = Modifier.padding(if (compactMode) 6.dp else 10.dp)) {
             // Group Header
             Row(
                 modifier = Modifier
@@ -133,7 +138,7 @@ fun NotificationGroupCard(
                     verticalAlignment = Alignment.CenterVertically,
                     modifier = Modifier.weight(1f)
                 ) {
-                    AppIconImage(appIconUri = group.appIconUri)
+                    if (showAppIcons) AppIconImage(appIconUri = group.appIconUri)
                     Spacer(modifier = Modifier.width(8.dp))
                     Column(modifier = Modifier.weight(1f)) {
                         Row(verticalAlignment = Alignment.CenterVertically) {

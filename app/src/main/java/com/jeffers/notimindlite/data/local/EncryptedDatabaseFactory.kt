@@ -10,7 +10,10 @@ import net.zetetic.database.sqlcipher.SupportOpenHelperFactory
 object EncryptedDatabaseFactory {
     fun openHelperFactory(context: Context, databaseName: String): SupportSQLiteOpenHelper.Factory? {
         if (Build.FINGERPRINT == "robolectric") return null
-        val passphrase = SqlCipherKeyManager.getOrCreatePassphrase(context, databaseName)
+        val preferences = PreferencesRepository(context.applicationContext)
+        if (!preferences.dbEncrypted.value || preferences.dbEncryptionMode.value == DbEncryptionMode.NONE) return null
+        val useKeystore = preferences.useKeystore.value && preferences.dbEncryptionMode.value == DbEncryptionMode.KEYSTORE
+        val passphrase = SqlCipherKeyManager.getOrCreatePassphrase(context, databaseName, useKeystore)
         return SupportOpenHelperFactory(passphrase).also {
             passphrase.fill(0)
         }

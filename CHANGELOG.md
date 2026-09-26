@@ -4,9 +4,21 @@ All notable changes to NotiMind Lite are documented here. This project adheres t
 
 ---
 
-## [Unreleased] - Ingestion Pipeline Sanitization & Crypto Keystore
+## [Unreleased] - User Preference Integration
 
 ### 🚀 Features
+
+- **feat(prefs)**: Complete runtime preference integration for capture, cloud sync, FTS4 and semantic search, retention, export encryption, privacy/redaction, security, and advanced tuning controls.
+- **feat(settings)**: Expose preference state and actions in the Settings UI, with build-aware safeguards that keep destructive options disabled in debug builds.
+
+### 📝 Release Notes Draft
+
+- Give users direct control over what NotiMind captures, how long notifications are retained, and which search indexes are enabled.
+- Add privacy and security controls for PII redaction, title anonymization, encrypted exports, passphrase protection, and database auto-lock.
+- Add cloud-sync scheduling constraints, cache and database sizing, and clear debug-build behavior for data-preserving defaults.
+- See [`docs/settings-ui.md`](docs/settings-ui.md) for the preference catalog and verification checklist.
+
+### 🚀 Existing Unreleased Features
 
 - **feat(sanitization)**: Implement `PiiRedactionEngine` for deterministic pre-ingestion redaction of OTPs, Luhn-verified cards, phone numbers, emails, and currency values.
 - **feat(sanitization)**: Implement `PackageFilterManager` and fail-closed `SanitizationPipeline` for package filtering and ingestion protection.
@@ -15,6 +27,12 @@ All notable changes to NotiMind Lite are documented here. This project adheres t
 - **feat(crypto)**: Implement `KeyManager` wrapper for AndroidX Security MasterKeys with JVM test fallback.
 - **feat(crypto)**: Wire SQLCipher-backed Room open helpers for both Direct Boot databases, with per-database Keystore-wrapped passphrases.
 - **feat(data)**: Advance the Room baseline to schema v19 with notification-group persistence and explicit `MIGRATION_18_19`.
+
+### ✅ QA & Build Verification
+
+- **build**: `assembleDebug` passes with the debug APK generated successfully.
+- **test**: `testDebugUnitTest` passes with 204 tests executed, 204 passed, 0 failed (1 intentionally skipped historical migration scaffold).
+- **fix**: Corrected JVM-safe feature-flag parsing, notification grouping by persisted group key, and Robolectric coverage for preference/action tests.
 
 ### 🧪 Testing
 

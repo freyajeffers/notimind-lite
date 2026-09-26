@@ -69,6 +69,7 @@ fun SettingsScreen(
     var selectedBackupUri by remember { mutableStateOf<Uri?>(null) }
     var showRestoreDialog by remember { mutableStateOf(false) }
     val snackbarHostState = remember { SnackbarHostState() }
+    val preferencesRepository = remember { com.jeffers.notimindlite.data.local.PreferencesRepository(context) }
     val restoreSuccessMsg = stringResource(id = R.string.settings_restore_success)
     val restoreFailureMsg = stringResource(id = R.string.settings_restore_failure)
 
@@ -168,6 +169,14 @@ fun SettingsScreen(
             }
         }
 
+        SettingsCaptureSection(preferencesRepository = preferencesRepository)
+        ProfileManagerSection(repository = preferencesRepository)
+        SettingsPreferencesSection(preferencesRepository = preferencesRepository)
+        SettingsSyncSection(preferencesRepository = preferencesRepository)
+        SettingsPrivacySection(preferencesRepository = preferencesRepository)
+        SettingsAdvancedSection(preferencesRepository = preferencesRepository)
+        SettingsPreferencesBackupSection()
+
         if (session.isAuthenticated) {
             Card(
                 modifier = Modifier.fillMaxWidth(),
@@ -193,7 +202,7 @@ fun SettingsScreen(
                             session.uid?.let { uid ->
                                 scope.launch {
                                     isSyncing = true
-                                    val repo = FirestoreSyncRepository(db)
+                                    val repo = FirestoreSyncRepository(db, profileId = preferencesRepository.activeProfileId.value)
 
                                     val secretKey: SecretKey = generateBackupKey(context)
 

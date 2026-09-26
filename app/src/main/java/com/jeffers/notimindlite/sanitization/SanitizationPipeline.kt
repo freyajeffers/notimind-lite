@@ -33,7 +33,7 @@ class SanitizationPipeline(
     ): SanitizationResult? {
         // If redaction is disabled through settings, short-circuit and return raw fields (fallback empty strings to avoid nulls)
         val isRedactionEnabled = context?.let {
-            com.jeffers.notimindlite.data.local.PreferenceManager(it).isPiiRedactionEnabled()
+            com.jeffers.notimindlite.data.local.PreferencesRepository(it).redactPii.value
         } ?: true
 
         if (!packageFilterManager.shouldAccept(packageName)) return null
