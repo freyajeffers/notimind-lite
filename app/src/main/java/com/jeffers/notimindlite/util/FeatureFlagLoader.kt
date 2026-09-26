@@ -1,6 +1,5 @@
 package com.jeffers.notimindlite.util
 
-import org.json.JSONObject
 import java.net.HttpURLConnection
 import java.net.URL
 
@@ -72,11 +71,12 @@ class FeatureFlagLoader(private val fetch: (String) -> String? = ::fetchFeatureF
         if (allowList && !trimmed.startsWith("{")) {
             return trimmed.split(',', '\n', ';').map(::normalize).filter(String::isNotBlank).toSet()
         }
-        return runCatching {
-            val root = JSONObject(trimmed)
-            val values = root.optJSONObject("flags") ?: root
-            values.keys().asSequence().filter { values.optBoolean(it, false) }.map(::normalize).toSet()
-        }.getOrDefault(emptySet())
+        // Keep parsing independent of Android's org.json stubs so JVM unit tests and
+        // release builds have identical fail-closed behavior.
+        return Regex("\\\"([^\\\"]+)\\\"\\s*:\\s*true", RegexOption.IGNORE_CASE)
+            .findAll(trimmed)
+            .map { normalize(it.groupValues[1]) }
+            .toSet()
     }
 
     private fun normalize(value: String): String = value.trim().lowercase().replace('-', '_')

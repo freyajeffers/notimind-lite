@@ -28,6 +28,12 @@ All notable changes to NotiMind Lite are documented here. This project adheres t
 - **feat(crypto)**: Wire SQLCipher-backed Room open helpers for both Direct Boot databases, with per-database Keystore-wrapped passphrases.
 - **feat(data)**: Advance the Room baseline to schema v19 with notification-group persistence and explicit `MIGRATION_18_19`.
 
+### ✅ QA & Build Verification
+
+- **build**: `assembleDebug` passes with the debug APK generated successfully.
+- **test**: `testDebugUnitTest` passes with 204 tests executed, 204 passed, 0 failed (1 intentionally skipped historical migration scaffold).
+- **fix**: Corrected JVM-safe feature-flag parsing, notification grouping by persisted group key, and Robolectric coverage for preference/action tests.
+
 ### 🧪 Testing
 
 - **test(crypto)**: Add unit tests for `CryptoUtils` and `KeyManager` covering roundtrip encryption, nonce uniqueness, AAD mismatch, tamper rejection, and RFC HKDF derivation.
