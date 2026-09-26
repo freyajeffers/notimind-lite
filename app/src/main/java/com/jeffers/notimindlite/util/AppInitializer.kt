@@ -2,9 +2,14 @@ package com.jeffers.notimindlite.util
 
 import android.content.Context
 import android.util.Log
+import androidx.work.ExistingPeriodicWorkPolicy
+import androidx.work.PeriodicWorkRequestBuilder
+import androidx.work.WorkManager
 import com.google.firebase.FirebaseApp
 import com.jeffers.notimindlite.data.local.PreferencesRepository
+import com.jeffers.notimindlite.data.local.RetentionCleanupWorker
 import kotlinx.coroutines.launch
+import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
 
 /**
@@ -42,6 +47,12 @@ object AppInitializer {
             VectorEmbeddingHelper.configure(
                 lowMemoryMode = preferences.lowMemoryMode.value,
                 cacheSize = preferences.vectorCacheMax.value
+            )
+            val retentionWork = PeriodicWorkRequestBuilder<RetentionCleanupWorker>(1, TimeUnit.DAYS).build()
+            WorkManager.getInstance(context).enqueueUniquePeriodicWork(
+                "notimind-retention-cleanup",
+                ExistingPeriodicWorkPolicy.UPDATE,
+                retentionWork
             )
 
             // Firebase Initialization, guarded for headless/test environments.
