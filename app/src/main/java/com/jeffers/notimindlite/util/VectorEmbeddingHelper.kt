@@ -1,5 +1,9 @@
 package com.jeffers.notimindlite.util
 
+import android.content.Context
+import com.jeffers.notimindlite.data.local.PreferencesRepository
+import kotlinx.coroutines.asCoroutineDispatcher
+import kotlinx.coroutines.withContext
 import kotlin.math.sqrt
 
 /**
@@ -81,6 +85,19 @@ object VectorEmbeddingHelper {
         return vector
     }
 
+    /** Computes on the configured bounded pool when embedding offload is enabled. */
+    suspend fun computeEmbedding(context: Context, text: String): FloatArray {
+        val preferences = PreferencesRepository(context)
+        return if (preferences.isEmbeddingOffloadEnabled()) {
+            withContext(PerformanceExecutors.embeddingExecutor(context).asCoroutineDispatcher()) { computeEmbedding(text) }
+        } else {
+            computeEmbedding(text)
+        }
+    }
+
+    /** Explicit executor-backed variant for background maintenance jobs. */
+    fun computeEmbeddingOffloaded(context: Context, text: String): java.util.concurrent.Future<FloatArray> =
+        PerformanceExecutors.embeddingExecutor(context).submit<FloatArray> { computeEmbedding(text) }
     /**
      * Calculates the Cosine Similarity between two normalized dense vectors.
      * Returns a float in range [-1.0, 1.0], normalized to [0.0, 1.0].

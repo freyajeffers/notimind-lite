@@ -6,7 +6,9 @@ import android.util.Log
 import androidx.sqlite.db.SupportSQLiteDatabase
 import com.jeffers.notimindlite.data.local.AppDatabase
 import com.jeffers.notimindlite.data.local.NotificationEntity
+import com.jeffers.notimindlite.data.local.PreferencesRepository
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
 
 object DatabaseMigrator {
@@ -26,6 +28,8 @@ object DatabaseMigrator {
 
             Log.i(TAG, "Vectorizing ${needingVectorization.size} notifications...")
             
+            val preferences = PreferencesRepository(context)
+            val rateMs = preferences.getEmbeddingRateMs()
             val embeddingPairs = needingVectorization.map { entity ->
                 val textToEmbed = buildString {
                     append(entity.appName).append(" ")
@@ -36,7 +40,8 @@ object DatabaseMigrator {
                     if (!entity.category.isNullOrEmpty()) append(entity.category).append(" ")
                     append(entity.packageName)
                 }
-                val embedding = VectorEmbeddingHelper.computeEmbedding(textToEmbed)
+                val embedding = VectorEmbeddingHelper.computeEmbedding(context, textToEmbed)
+                if (rateMs > 0L) delay(rateMs)
                 // Room can't bind a FloatArray directly as a query parameter;
                 // convert via the same TypeConverter the entity column uses
                 // so writes and reads round-trip through the same byte order.
