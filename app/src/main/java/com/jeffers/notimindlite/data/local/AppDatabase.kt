@@ -3,6 +3,7 @@ package com.jeffers.notimindlite.data.local
 import android.content.Context
 import android.os.UserManager
 import android.util.Log
+import com.jeffers.notimindlite.util.DatabaseLockManager
 import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
@@ -412,6 +413,9 @@ abstract class AppDatabase : RoomDatabase() {
 
         fun resetInstance() {
             synchronized(this) {
+                INSTANCE?.close()
+                deInstance?.close()
+                ceInstance?.close()
                 INSTANCE = null
                 deInstance = null
                 ceInstance = null
@@ -463,6 +467,7 @@ abstract class AppDatabase : RoomDatabase() {
 
         fun getDatabase(context: Context): AppDatabase {
             val appContext = context.applicationContext
+            DatabaseLockManager.requireUnlocked()
             val userManager = appContext.getSystemService(Context.USER_SERVICE) as? UserManager
             val isUnlocked = userManager?.isUserUnlocked ?: true
             return if (isUnlocked) {

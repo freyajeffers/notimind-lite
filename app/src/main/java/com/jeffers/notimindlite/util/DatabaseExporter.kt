@@ -8,6 +8,8 @@ import androidx.core.content.FileProvider
 import com.jeffers.notimindlite.data.local.AppDatabase
 import com.jeffers.notimindlite.domain.backup.EncryptedBackupManager
 import com.jeffers.notimindlite.data.local.NotificationEntity
+import com.jeffers.notimindlite.data.local.PreferencesRepository
+import com.jeffers.notimindlite.crypto.SqlCipherKeyManager
 import org.json.JSONArray
 import org.json.JSONObject
 import java.io.File
@@ -16,6 +18,7 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 import javax.crypto.SecretKey
+import javax.crypto.spec.SecretKeySpec
 
 object DatabaseExporter {
 
@@ -33,6 +36,10 @@ object DatabaseExporter {
         passphrase: CharArray? = null,
     ): Result<File> {
         return try {
+            val preferences = PreferencesRepository(context.applicationContext)
+            if (preferences.requirePassphrase.value && passphrase.isNullOrEmpty()) {
+                return Result.failure(IllegalArgumentException("A passphrase is required for encrypted exports"))
+            }
             if (!NetworkUtils.isInternetAvailable(context)) {
                 return Result.failure(IllegalStateException("Active internet connection is required to create a backup"))
             }
@@ -216,11 +223,21 @@ object DatabaseExporter {
         }
     }
 
-    fun shareExportFile(context: Context, notifications: List<NotificationEntity>, isJson: Boolean = true) {
+    fun shareExportFile(
+        context: Context,
+        notifications: List<NotificationEntity>,
+        isJson: Boolean = true,
+        passphrase: CharArray? = null,
+    ) {
         try {
+            val preferences = PreferencesRepository(context.applicationContext)
+            if (preferences.requirePassphrase.value && passphrase.isNullOrEmpty()) {
+                throw IllegalArgumentException("A passphrase is required for exports")
+            }
             cleanupExportFiles(context)
 
-            val extension = if (isJson) "json" else "csv"
+            val encrypted = preferences.encryptedExports.value
+            val extension = if (encrypted) "enc" else if (isJson) "json" else "csv"
             val fileName = "notimind_export_${System.currentTimeMillis()}.$extension"
 
             val cacheDir = File(context.cacheDir, "exports")
@@ -229,7 +246,10 @@ object DatabaseExporter {
             val file = File(cacheDir, fileName)
             file.setReadable(true, true)
             file.setWritable(true, true)
-            if (isJson) {
+            if (encrypted) {
+                val plain = if (isJson) exportToJsonString(notifications) else exportToCsvString(notifications)
+                file.writeBytes(encryptExport(plain.toByteArray(Charsets.UTF_8), context, passphrase))
+            } else if (isJson) {
                 exportToJsonFile(file, notifications)
             } else {
                 val fileContent = exportToCsvString(notifications)
@@ -241,7 +261,7 @@ object DatabaseExporter {
             val uri: Uri = getExportFileUri(context, file)
 
             val shareIntent = Intent(Intent.ACTION_SEND).apply {
-                type = if (isJson) "application/json" else "text/csv"
+                type = if (encrypted) "application/octet-stream" else if (isJson) "application/json" else "text/csv"
                 putExtra(Intent.EXTRA_STREAM, uri)
                 addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
                 addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
@@ -253,5 +273,19 @@ object DatabaseExporter {
         } catch (e: Exception) {
             Log.e(TAG, "Failed to export database", e)
         }
+    }
+
+    /** AES-GCM envelope; without a passphrase the AES key is backed by Android Keystore. */
+    internal fun encryptExport(payload: ByteArray, context: Context, passphrase: CharArray?): ByteArray {
+        val salt = if (passphrase != null) BackupKeyWrap.generateSalt() else ByteArray(0)
+        val key = if (passphrase != null) {
+            BackupKeyWrap.deriveKek(passphrase, salt)
+        } else {
+            SecretKeySpec(SqlCipherKeyManager.getOrCreatePassphrase(context, "exports"), "AES")
+        }
+        val cipher = javax.crypto.Cipher.getInstance("AES/GCM/NoPadding")
+        cipher.init(javax.crypto.Cipher.ENCRYPT_MODE, key)
+        return byteArrayOf('N'.code.toByte(), 'M'.code.toByte(), 'E'.code.toByte(), '1'.code.toByte(), salt.size.toByte()) +
+            salt + cipher.iv + cipher.doFinal(payload)
     }
 }
