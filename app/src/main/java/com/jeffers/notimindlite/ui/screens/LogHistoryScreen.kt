@@ -60,7 +60,7 @@ import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.util.*
 
-private const val PREFETCH_AHEAD = 12
+private const val PREFETCH_AHEAD = 24
 private const val PREFETCH_BEHIND = 2
 
 enum class SortMode(val label: String) {

@@ -154,7 +154,7 @@ enum class NotificationSection(val keyName: String, val title: String, val subti
     LOST("LOST", "Lost Notifications", "App cancelled or package changed notifications (sorted by time dismissed)")
 }
 
-private const val PREFETCH_AHEAD = 12
+private const val PREFETCH_AHEAD = 24
 private const val PREFETCH_BEHIND = 2
 
 @Composable
