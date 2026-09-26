@@ -68,20 +68,20 @@ fun SettingsPreferencesSection(preferencesRepository: PreferencesRepository) {
             PreferenceSwitchRow(stringResource(R.string.pref_auto_act_title), stringResource(R.string.pref_auto_act_summary), autoActOnNotification, preferencesRepository::setAutoActOnNotification)
             PreferenceSelectRow(stringResource(R.string.pref_default_reply_title), defaultReplyMethod, listOf("inline" to stringResource(R.string.pref_reply_inline), "open_app" to stringResource(R.string.pref_reply_open_app), "copy" to stringResource(R.string.pref_reply_copy)), preferencesRepository::setDefaultReplyMethod)
             PreferenceSelectRow(stringResource(R.string.pref_long_press_title), longPressAction, listOf("open" to stringResource(R.string.pref_action_open), "reply" to stringResource(R.string.pref_action_reply), "dismiss" to stringResource(R.string.pref_action_dismiss)), preferencesRepository::setLongPressAction)
-            Text("Auto-execute rules", style = MaterialTheme.typography.bodyLarge)
+            Text(stringResource(R.string.pref_auto_rules_title), style = MaterialTheme.typography.bodyLarge)
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
-                OutlinedTextField(rulePackage, { rulePackage = it }, Modifier.weight(1f), singleLine = true, label = { Text("Package (optional)") })
-                OutlinedTextField(ruleTitle, { ruleTitle = it }, Modifier.weight(1f), singleLine = true, label = { Text("Title contains") })
-                OutlinedTextField(ruleAction, { ruleAction = it }, Modifier.width(72.dp), singleLine = true, label = { Text("Action") }, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number))
+                OutlinedTextField(rulePackage, { rulePackage = it }, Modifier.weight(1f).semantics { contentDescription = stringResource(R.string.pref_auto_rule_package) }, singleLine = true, label = { Text(stringResource(R.string.pref_auto_rule_package)) })
+                OutlinedTextField(ruleTitle, { ruleTitle = it }, Modifier.weight(1f).semantics { contentDescription = stringResource(R.string.pref_auto_rule_title) }, singleLine = true, label = { Text(stringResource(R.string.pref_auto_rule_title)) })
+                OutlinedTextField(ruleAction, { ruleAction = it }, Modifier.width(72.dp).semantics { contentDescription = stringResource(R.string.pref_auto_rule_action) }, singleLine = true, label = { Text(stringResource(R.string.pref_auto_rule_action)) }, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number))
             }
             Button(onClick = {
                 preferencesRepository.addAutoExecuteRule(AutoExecuteRule(packageName = rulePackage.trim(), titleContains = ruleTitle.trim(), actionIndex = ruleAction.toIntOrNull()?.coerceAtLeast(0) ?: 0))
                 rulePackage = ""; ruleTitle = ""; ruleAction = "0"
-            }) { Text("Add rule") }
+            }, modifier = Modifier.semantics { contentDescription = stringResource(R.string.pref_auto_rule_add) }) { Text(stringResource(R.string.pref_auto_rule_add)) }
             autoExecuteRules.forEach { rule ->
                 Row(verticalAlignment = androidx.compose.ui.Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
-                    Text("${rule.packageName.ifBlank { "any app" }} · ${rule.titleContains.ifBlank { "any title" }} · action ${rule.actionIndex}", Modifier.weight(1f), style = MaterialTheme.typography.bodySmall)
-                    TextButton(onClick = { preferencesRepository.removeAutoExecuteRule(rule.id) }) { Text("Remove") }
+                    Text("${rule.packageName.ifBlank { stringResource(R.string.pref_auto_rule_any_app) }} · ${rule.titleContains.ifBlank { stringResource(R.string.pref_auto_rule_any_title) }} · ${stringResource(R.string.pref_auto_rule_action).lowercase()} ${rule.actionIndex}", Modifier.weight(1f), style = MaterialTheme.typography.bodySmall)
+                    TextButton(onClick = { preferencesRepository.removeAutoExecuteRule(rule.id) }, modifier = Modifier.semantics { contentDescription = stringResource(R.string.pref_auto_rule_remove) }) { Text(stringResource(R.string.pref_auto_rule_remove)) }
                 }
             }
 
@@ -96,7 +96,7 @@ fun SettingsPreferencesSection(preferencesRepository: PreferencesRepository) {
                     Text(stringResource(R.string.pref_preview_length_title), style = MaterialTheme.typography.bodyLarge)
                     Text(stringResource(R.string.pref_preview_length_summary), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
-                OutlinedTextField(value = previewLength.toString(), onValueChange = { it.toIntOrNull()?.let(preferencesRepository::setPreviewLength) }, modifier = Modifier.width(110.dp).semantics { contentDescription = stringResource(R.string.pref_preview_length_title) }, singleLine = true, label = { Text(stringResource(R.string.pref_preview_length_label)) }, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number))
+                OutlinedTextField(value = previewLength.toString(), onValueChange = { it.toIntOrNull()?.let(preferencesRepository::setPreviewLength) }, modifier = Modifier.width(110.dp), singleLine = true, label = { Text(stringResource(R.string.pref_preview_length_label)) }, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number))
             }
 
             Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
@@ -104,7 +104,7 @@ fun SettingsPreferencesSection(preferencesRepository: PreferencesRepository) {
                     Text(stringResource(R.string.pref_enable_sync_title), style = MaterialTheme.typography.bodyLarge)
                     Text(stringResource(R.string.pref_enable_sync_summary), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
-                Switch(checked = enableSync, onCheckedChange = preferencesRepository::setEnableSync, modifier = Modifier.semantics { contentDescription = stringResource(R.string.pref_enable_sync_title) })
+                Switch(checked = enableSync, onCheckedChange = preferencesRepository::setEnableSync)
             }
 
             Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
@@ -112,7 +112,7 @@ fun SettingsPreferencesSection(preferencesRepository: PreferencesRepository) {
                     Text(stringResource(R.string.pref_enable_vector_title), style = MaterialTheme.typography.bodyLarge)
                     Text(stringResource(R.string.pref_enable_vector_summary), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
-                Switch(checked = enableVector, onCheckedChange = preferencesRepository::setEnableVector, modifier = Modifier.semantics { contentDescription = stringResource(R.string.pref_enable_vector_title) })
+                Switch(checked = enableVector, onCheckedChange = preferencesRepository::setEnableVector)
             }
 
             Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
@@ -120,7 +120,7 @@ fun SettingsPreferencesSection(preferencesRepository: PreferencesRepository) {
                     Text(stringResource(R.string.pref_enable_fts4_title), style = MaterialTheme.typography.bodyLarge)
                     Text(stringResource(R.string.pref_enable_fts4_summary), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
-                Switch(checked = enableFts4, onCheckedChange = preferencesRepository::setEnableFts4, modifier = Modifier.semantics { contentDescription = stringResource(R.string.pref_enable_fts4_title) })
+                Switch(checked = enableFts4, onCheckedChange = preferencesRepository::setEnableFts4)
             }
 
             Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
@@ -128,7 +128,7 @@ fun SettingsPreferencesSection(preferencesRepository: PreferencesRepository) {
                     Text(stringResource(R.string.pref_semantic_ranking_title), style = MaterialTheme.typography.bodyLarge)
                     Text(stringResource(R.string.pref_semantic_ranking_summary), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
-                Switch(checked = enableSemanticRanking, onCheckedChange = preferencesRepository::setEnableSemanticRanking, modifier = Modifier.semantics { contentDescription = stringResource(R.string.pref_semantic_ranking_title) })
+                Switch(checked = enableSemanticRanking, onCheckedChange = preferencesRepository::setEnableSemanticRanking)
             }
 
             if (BuildConfig.DEBUG) {
@@ -154,7 +154,7 @@ fun SettingsPreferencesSection(preferencesRepository: PreferencesRepository) {
                     OutlinedTextField(
                         value = retentionDays.toString(),
                         onValueChange = { /* disabled in debug */ },
-                        modifier = Modifier.width(120.dp).semantics { contentDescription = stringResource(R.string.pref_retention_days_title) },
+                        modifier = Modifier.width(120.dp),
                         singleLine = true,
                         enabled = false,
                         label = { Text(stringResource(R.string.pref_retention_days_unit)) }
@@ -165,7 +165,7 @@ fun SettingsPreferencesSection(preferencesRepository: PreferencesRepository) {
                         Text(stringResource(R.string.pref_capture_notifications_title), style = MaterialTheme.typography.bodyLarge)
                         Text(stringResource(R.string.pref_capture_notifications_summary), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
-                    Switch(checked = true, onCheckedChange = { /* disabled in debug */ }, enabled = false, modifier = Modifier.semantics { contentDescription = stringResource(R.string.pref_capture_notifications_title) })
+                    Switch(checked = true, onCheckedChange = { /* disabled in debug */ }, enabled = false)
                 }
             } else {
                 PreferenceSwitchRow(
@@ -197,7 +197,7 @@ fun SettingsPreferencesSection(preferencesRepository: PreferencesRepository) {
                     OutlinedTextField(
                         value = retentionDays.toString(),
                         onValueChange = { new -> new.toIntOrNull()?.let(preferencesRepository::setRetentionDays) },
-                        modifier = Modifier.width(120.dp).semantics { contentDescription = stringResource(R.string.pref_retention_days_title) },
+                        modifier = Modifier.width(120.dp),
                         singleLine = true,
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                         label = { Text(stringResource(R.string.pref_retention_days_unit)) },
@@ -210,7 +210,7 @@ fun SettingsPreferencesSection(preferencesRepository: PreferencesRepository) {
                         Text(stringResource(R.string.pref_export_encryption_title), style = MaterialTheme.typography.bodyLarge)
                         Text(stringResource(R.string.pref_export_encryption_summary), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
-                    Switch(checked = exportEncryption, onCheckedChange = preferencesRepository::setExportEncryption, modifier = Modifier.semantics { contentDescription = stringResource(R.string.pref_export_encryption_title) })
+                    Switch(checked = exportEncryption, onCheckedChange = preferencesRepository::setExportEncryption)
                 }
 
                 Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
@@ -218,7 +218,7 @@ fun SettingsPreferencesSection(preferencesRepository: PreferencesRepository) {
                         Text(stringResource(R.string.pref_capture_notifications_title), style = MaterialTheme.typography.bodyLarge)
                         Text(stringResource(R.string.pref_capture_notifications_summary), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
-                    Switch(checked = captureNotifications, onCheckedChange = preferencesRepository::setCaptureNotifications, modifier = Modifier.semantics { contentDescription = stringResource(R.string.pref_capture_notifications_title) })
+                    Switch(checked = captureNotifications, onCheckedChange = preferencesRepository::setCaptureNotifications)
                 }
             }
         }
