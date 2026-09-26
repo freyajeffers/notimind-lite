@@ -82,6 +82,20 @@ class DatabaseExporterTest {
     }
 
     @Test
+    fun testExportAppliesPrivacyPreferences() {
+        val preferences = com.jeffers.notimindlite.data.local.PreferencesRepository(context)
+        preferences.setAnonymizeTitles(true)
+        preferences.setRedactPii(true)
+        val entity = NotificationEntity(key = "privacy", packageName = "p", appName = "App", title = "Secret title", content = "Email me at user@example.com")
+
+        val obj = JSONArray(DatabaseExporter.exportToJsonString(listOf(entity), context)).getJSONObject(0)
+        assertEquals("[REDACTED-TITLE]", obj.getString("title"))
+        assertTrue(obj.getString("content").contains("[REDACTED-EMAIL]"))
+
+        preferences.setAnonymizeTitles(false)
+    }
+
+    @Test
     fun testFileProviderUriGeneration() {
         val exportsDir = File(context.cacheDir, "exports")
         if (!exportsDir.exists()) exportsDir.mkdirs()
