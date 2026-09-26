@@ -8,6 +8,14 @@ import kotlinx.coroutines.flow.asStateFlow
 import org.json.JSONArray
 import org.json.JSONObject
 
+data class AutoExecuteRule(
+    val id: String = java.util.UUID.randomUUID().toString(),
+    val packageName: String = "",
+    val titleContains: String = "",
+    val actionIndex: Int = 0,
+    val enabled: Boolean = true
+)
+
 /** User-facing runtime options persisted in the existing direct-boot-safe preference store. */
 class PreferencesRepository(context: Context) {
     private val appContext = context.applicationContext
@@ -135,6 +143,15 @@ class PreferencesRepository(context: Context) {
     val syncChargingOnly: StateFlow<Boolean> = _syncChargingOnly
     val lastSyncTs: StateFlow<Long> = _lastSyncTs
 
+    private val _autoActOnNotification = MutableStateFlow(backing.getBoolean(KEY_AUTO_ACT_ON_NOTIFICATION, false))
+    private val _defaultReplyMethod = MutableStateFlow(backing.getString(KEY_DEFAULT_REPLY_METHOD, "inline") ?: "inline")
+    private val _longPressAction = MutableStateFlow(backing.getString(KEY_LONG_PRESS_ACTION, "open") ?: "open")
+    private val _autoExecuteRules = MutableStateFlow(readAutoExecuteRules())
+    val autoActOnNotification: StateFlow<Boolean> = _autoActOnNotification
+    val defaultReplyMethod: StateFlow<String> = _defaultReplyMethod
+    val longPressAction: StateFlow<String> = _longPressAction
+    val autoExecuteRules: StateFlow<List<AutoExecuteRule>> = _autoExecuteRules
+
     /** Creates a profile without copying another account's notification database. */
     fun createProfile(name: String): Profile {
         val clean = name.trim().take(80).ifBlank { "Profile ${_profiles.value.size + 1}" }
@@ -208,6 +225,17 @@ class PreferencesRepository(context: Context) {
     private fun readProfiles(): List<Profile> {
         val raw = profileStore.getString(KEY_PROFILES, null)
         if (raw == null) {
+            val legacy = appContext.getSharedPreferences("notimind_lite_prefs", Context.MODE_PRIVATE)
+            if (legacy.all.isNotEmpty() && !backing.contains(KEY_ENABLE_SYNC)) {
+                val editor = backing.edit()
+                legacy.all.forEach { (key, value) -> when (value) {
+                    is Boolean -> editor.putBoolean(key, value)
+                    is Int -> editor.putInt(key, value)
+                    is Long -> editor.putLong(key, value)
+                    is String -> editor.putString(key, value)
+                } }
+                editor.apply()
+            }
             val default = Profile(DEFAULT_PROFILE_ID, "Default", System.currentTimeMillis())
             profileStore.edit().putString(KEY_PROFILES, JSONArray().put(JSONObject().put("id", default.id).put("name", default.name).put("createdAt", default.createdAt)).toString()).apply()
             return listOf(default)
@@ -245,6 +273,10 @@ class PreferencesRepository(context: Context) {
         _dbEncrypted.value = backing.getBoolean(KEY_DB_ENCRYPTED, true)
         _dbEncryptionMode.value = DbEncryptionMode.fromPersisted(backing.getString(KEY_DB_ENCRYPTION_MODE, DbEncryptionMode.KEYSTORE.persisted))
         _syncInterval.value = backing.getInt("config_sync_interval_min", 360); _syncWifiOnly.value = backing.getBoolean("config_sync_wifi_only", true); _syncChargingOnly.value = backing.getBoolean("config_sync_charging_only", true); _lastSyncTs.value = backing.getLong("config_last_sync_ts", 0L)
+        _autoActOnNotification.value = backing.getBoolean(KEY_AUTO_ACT_ON_NOTIFICATION, false)
+        _defaultReplyMethod.value = backing.getString(KEY_DEFAULT_REPLY_METHOD, "inline") ?: "inline"
+        _longPressAction.value = backing.getString(KEY_LONG_PRESS_ACTION, "open") ?: "open"
+        _autoExecuteRules.value = readAutoExecuteRules()
     }
 
     fun setCaptureForegroundOnly(v: Boolean) { backing.edit().putBoolean("config_capture_foreground_only", v).apply(); _captureForegroundOnly.value = v }
@@ -303,6 +335,27 @@ class PreferencesRepository(context: Context) {
     fun setOffloadEmbeddings(value: Boolean) { backing.edit().putBoolean(KEY_OFFLOAD_EMBEDDINGS, value).apply(); _offloadEmbeddings.value = value }
     fun setUseFts5(value: Boolean) { backing.edit().putBoolean(KEY_USE_FTS5, value).apply(); _useFts5.value = value }
     fun setVectorGpu(value: Boolean) { backing.edit().putBoolean(KEY_VECTOR_GPU, value).apply(); _vectorGpu.value = value }
+    fun setAutoActOnNotification(value: Boolean) { backing.edit().putBoolean(KEY_AUTO_ACT_ON_NOTIFICATION, value).apply(); _autoActOnNotification.value = value }
+    fun setDefaultReplyMethod(value: String) { val safe = if (value in REPLY_METHODS) value else "inline"; backing.edit().putString(KEY_DEFAULT_REPLY_METHOD, safe).apply(); _defaultReplyMethod.value = safe }
+    fun setLongPressAction(value: String) { val safe = if (value in LONG_PRESS_ACTIONS) value else "open"; backing.edit().putString(KEY_LONG_PRESS_ACTION, safe).apply(); _longPressAction.value = safe }
+    fun addAutoExecuteRule(rule: AutoExecuteRule) { setAutoExecuteRules(_autoExecuteRules.value + rule) }
+    fun removeAutoExecuteRule(id: String) { setAutoExecuteRules(_autoExecuteRules.value.filterNot { it.id == id }) }
+    fun setAutoExecuteRules(rules: List<AutoExecuteRule>) {
+        val safe = rules.distinctBy { it.id }
+        backing.edit().putString(KEY_AUTO_EXECUTE_RULES, encodeAutoExecuteRules(safe)).apply(); _autoExecuteRules.value = safe
+    }
+
+    private fun readAutoExecuteRules(): List<AutoExecuteRule> = runCatching {
+        val array = JSONArray(backing.getString(KEY_AUTO_EXECUTE_RULES, "[]"))
+        (0 until array.length()).map { index ->
+            val value = array.getJSONObject(index)
+            AutoExecuteRule(value.optString("id"), value.optString("packageName"), value.optString("titleContains"), value.optInt("actionIndex", 0).coerceAtLeast(0), value.optBoolean("enabled", true))
+        }
+    }.getOrDefault(emptyList())
+
+    private fun encodeAutoExecuteRules(rules: List<AutoExecuteRule>): String = JSONArray(rules.map { rule ->
+        JSONObject().put("id", rule.id).put("packageName", rule.packageName).put("titleContains", rule.titleContains).put("actionIndex", rule.actionIndex).put("enabled", rule.enabled)
+    }).toString()
 
     companion object {
         private const val DEFAULT_RETENTION_DAYS = 30
@@ -341,8 +394,14 @@ class PreferencesRepository(context: Context) {
         private const val KEY_GROUP_BY_APP = "config_group_by_app"
         private const val KEY_PREVIEW_LENGTH = "config_preview_length"
         private const val KEY_THEME_ACCENT = "config_theme_accent"
+        private const val KEY_AUTO_ACT_ON_NOTIFICATION = "config_auto_act_on_notification"
+        private const val KEY_DEFAULT_REPLY_METHOD = "config_default_reply_method"
+        private const val KEY_LONG_PRESS_ACTION = "config_long_press_action"
+        private const val KEY_AUTO_EXECUTE_RULES = "config_auto_execute_rules"
         private val SORT_ORDERS = setOf("newest", "oldest", "app")
         private val THEME_ACCENTS = setOf("system", "blue", "green", "purple", "orange")
+        val REPLY_METHODS = setOf("inline", "open_app", "copy")
+        val LONG_PRESS_ACTIONS = setOf("open", "reply", "dismiss")
         private const val PROFILE_STORE = "notimind_profiles"
         private const val KEY_PROFILES = "profiles"
         private const val KEY_ACTIVE_PROFILE = "active_profile"
