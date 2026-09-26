@@ -9,6 +9,7 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.res.stringResource
 import com.jeffers.notimindlite.data.local.PreferencesRepository
+import com.jeffers.notimindlite.data.local.DbEncryptionMode
 import com.jeffers.notimindlite.R
 import com.jeffers.notimindlite.BuildConfig
 
@@ -33,6 +34,11 @@ fun SettingsPreferencesSection(preferencesRepository: PreferencesRepository) {
     val sortOrder by preferencesRepository.sortOrder.collectAsState(initial = "newest")
     val previewLength by preferencesRepository.previewLength.collectAsState(initial = 140)
     val themeAccent by preferencesRepository.themeAccent.collectAsState(initial = "system")
+    val exportRequiresBiometric by preferencesRepository.exportRequiresBiometric.collectAsState(initial = false)
+    val appLockEnabled by preferencesRepository.appLockEnabled.collectAsState(initial = false)
+    val useKeystore by preferencesRepository.useKeystore.collectAsState(initial = true)
+    val dbEncrypted by preferencesRepository.dbEncrypted.collectAsState(initial = true)
+    val dbEncryptionMode by preferencesRepository.dbEncryptionMode.collectAsState(initial = DbEncryptionMode.KEYSTORE)
 
     Card(
         modifier = Modifier.fillMaxWidth(),
@@ -47,6 +53,13 @@ fun SettingsPreferencesSection(preferencesRepository: PreferencesRepository) {
             PreferenceSwitchRow("Group by app", "Combine notifications from the same application.", groupByApp, preferencesRepository::setGroupByApp)
             PreferenceSelectRow("Sort order", sortOrder, listOf("newest", "oldest", "app"), preferencesRepository::setSortOrder)
             PreferenceSelectRow("Theme accent", themeAccent, listOf("system", "blue", "green", "purple", "orange"), preferencesRepository::setThemeAccent)
+
+            Text("Security", style = MaterialTheme.typography.titleMedium)
+            PreferenceSwitchRow("Require biometric for exports", "Authenticate before creating an encrypted export.", exportRequiresBiometric, preferencesRepository::setExportRequiresBiometric)
+            PreferenceSwitchRow("App lock", "Lock database access when the app leaves the foreground.", appLockEnabled, preferencesRepository::setAppLockEnabled)
+            PreferenceSwitchRow("Encrypt database", "Protect the local Room database with SQLCipher.", dbEncrypted, preferencesRepository::setDbEncrypted)
+            PreferenceSelectRow("Database key mode", dbEncryptionMode.persisted, DbEncryptionMode.entries.map { it.persisted }, { preferencesRepository.setDbEncryptionMode(DbEncryptionMode.fromPersisted(it)) })
+            PreferenceSwitchRow("Use Android Keystore", "Keep the database key protected by the device Keystore.", useKeystore, preferencesRepository::setUseKeystore, enabled = dbEncrypted)
             Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
                 Column(modifier = Modifier.weight(1f)) {
                     Text("Preview length", style = MaterialTheme.typography.bodyLarge)

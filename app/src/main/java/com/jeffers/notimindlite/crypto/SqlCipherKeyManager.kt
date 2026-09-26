@@ -24,16 +24,17 @@ object SqlCipherKeyManager {
     private const val VALUE = "encrypted_passphrase"
     private val robolectricKeys = ConcurrentHashMap<String, SecretKey>()
 
-    fun getOrCreatePassphrase(context: Context, databaseName: String): ByteArray {
+    fun getOrCreatePassphrase(context: Context, databaseName: String, useKeystore: Boolean = true): ByteArray {
         val appContext = context.applicationContext
         val prefs = appContext.getSharedPreferences(PREFS_PREFIX + databaseName, Context.MODE_PRIVATE)
         val encoded = prefs.getString(VALUE, null)
         if (encoded != null) {
-            return decrypt(appContext, databaseName, Base64.decode(encoded, Base64.NO_WRAP))
+            val payload = Base64.decode(encoded, Base64.NO_WRAP)
+            return if (useKeystore) decrypt(appContext, databaseName, payload) else payload
         }
 
         val passphrase = ByteArray(PASSPHRASE_BYTES).also { java.security.SecureRandom().nextBytes(it) }
-        val encrypted = encrypt(appContext, databaseName, passphrase)
+        val encrypted = if (useKeystore) encrypt(appContext, databaseName, passphrase) else passphrase
         check(prefs.edit().putString(VALUE, Base64.encodeToString(encrypted, Base64.NO_WRAP)).commit()) {
             "Unable to persist SQLCipher passphrase"
         }

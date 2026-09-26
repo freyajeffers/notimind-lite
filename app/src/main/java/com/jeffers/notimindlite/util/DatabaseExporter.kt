@@ -272,9 +272,13 @@ object DatabaseExporter {
         notifications: List<NotificationEntity>,
         isJson: Boolean = true,
         passphrase: CharArray? = null,
+        biometricAuthenticated: Boolean = false,
     ) {
         try {
             val preferences = PreferencesRepository(context.applicationContext)
+            check(!preferences.exportRequiresBiometric.value || biometricAuthenticated) {
+                "Biometric authentication is required before exporting"
+            }
             if (preferences.requirePassphrase.value && (passphrase == null || passphrase.isEmpty())) {
                 throw IllegalArgumentException("A passphrase is required for exports")
             }
