@@ -222,6 +222,7 @@ val ensureDebugKeystore = tasks.register<Exec>("ensureDebugKeystore") {
   group = "build setup"
   // Keep the task configuration-cache compatible: use only serializable
   // command-line arguments and make the idempotence check part of the command.
+  outputs.file(debugKeystorePath)
   commandLine(
     "sh", "-c",
     "test -f \"$debugKeystorePath\" || exec keytool -genkeypair -keystore \"$debugKeystorePath\" -storepass android -keypass android -alias androiddebugkey -keyalg RSA -keysize 2048 -validity 10000 -dname 'CN=Android Debug,O=Android,C=US'"
