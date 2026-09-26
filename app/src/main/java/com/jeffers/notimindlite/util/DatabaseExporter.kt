@@ -38,7 +38,7 @@ object DatabaseExporter {
     ): Result<File> {
         return try {
             val preferences = PreferencesRepository(context.applicationContext)
-            if (preferences.requirePassphrase.value && passphrase.isNullOrEmpty()) {
+            if (preferences.requirePassphrase.value && (passphrase == null || passphrase.isEmpty())) {
                 return Result.failure(IllegalArgumentException("A passphrase is required for encrypted exports"))
             }
             if (!NetworkUtils.isInternetAvailable(context)) {
@@ -244,7 +244,7 @@ object DatabaseExporter {
     ) {
         try {
             val preferences = PreferencesRepository(context.applicationContext)
-            if (preferences.requirePassphrase.value && passphrase.isNullOrEmpty()) {
+            if (preferences.requirePassphrase.value && (passphrase == null || passphrase.isEmpty())) {
                 throw IllegalArgumentException("A passphrase is required for exports")
             }
             cleanupExportFiles(context)
