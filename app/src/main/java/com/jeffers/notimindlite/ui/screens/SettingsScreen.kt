@@ -7,6 +7,8 @@ import android.provider.Settings
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CloudSync
 import androidx.compose.material.icons.filled.Notifications
@@ -60,8 +62,12 @@ fun SettingsScreen(
     val session by authManager.session.collectAsState()
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
+    val prefMgr = remember(context) { PreferenceManager(context) }
     var isSyncing by remember { mutableStateOf(false) }
     var syncMessage by remember { mutableStateOf<String?>(null) }
+    var strictPrivacyEnabled by remember { mutableStateOf(prefMgr.isStrictPrivacyEnabled()) }
+    var piiRedactionEnabled by remember { mutableStateOf(prefMgr.isPiiRedactionEnabled()) }
+    var restoreOnBootEnabled by remember { mutableStateOf(prefMgr.isRestoreOnBootEnabled()) }
 
     // H1: file picker + restore dialog plumbing. The picker runs on the UI thread but
     // copies the URI to a local cache File on Dispatchers.IO before invoking performRestore.
@@ -71,6 +77,8 @@ fun SettingsScreen(
     val snackbarHostState = remember { SnackbarHostState() }
     val restoreSuccessMsg = stringResource(id = R.string.settings_restore_success)
     val restoreFailureMsg = stringResource(id = R.string.settings_restore_failure)
+    val lifecycleOwner = LocalLifecycleOwner.current
+    var listenerGranted by remember { mutableStateOf(checkNotificationPermission(context)) }
 
     val pickBackupLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.OpenDocument()
@@ -83,13 +91,16 @@ fun SettingsScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
+            .verticalScroll(rememberScrollState())
+            .padding(horizontal = 16.dp, vertical = 24.dp)
+            .imePadding(),
+        verticalArrangement = Arrangement.spacedBy(20.dp)
     ) {
         Text(
-            text = "Settings & Cloud Backup",
+            text = stringResource(id = R.string.settings_title),
             style = MaterialTheme.typography.headlineMedium,
-            fontWeight = FontWeight.Bold
+            fontWeight = FontWeight.Bold,
+            modifier = Modifier.padding(horizontal = 4.dp)
         )
 
         Card(
@@ -101,7 +112,7 @@ fun SettingsScreen(
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 Text(
-                    text = "Account",
+                    text = stringResource(id = R.string.settings_section_account),
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.SemiBold
                 )
@@ -111,7 +122,10 @@ fun SettingsScreen(
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
-                        Icon(Icons.Default.Person, contentDescription = "Profile")
+                        Icon(
+                            Icons.Default.Person,
+                            contentDescription = stringResource(id = R.string.settings_profile_cd)
+                        )
                         Column {
                             Text(
                                 text = session.displayName ?: stringResource(id = R.string.settings_default_display_name),
@@ -131,15 +145,16 @@ fun SettingsScreen(
                             authManager.signOut()
                             SyncWorker.cancelPeriodicSync(context)
                         },
-                        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
+                        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error),
+                        modifier = Modifier.fillMaxWidth()
                     ) {
                         Icon(Icons.AutoMirrored.Filled.Logout, contentDescription = null)
                         Spacer(Modifier.width(8.dp))
-                        Text("Sign Out")
+                        Text(stringResource(id = R.string.settings_sign_out))
                     }
                 } else {
                     Text(
-                        text = "Sign in with Google to enable cloud backup & multi-device sync.",
+                        text = stringResource(id = R.string.settings_sign_in_prompt),
                         style = MaterialTheme.typography.bodyMedium
                     )
 
@@ -158,7 +173,13 @@ fun SettingsScreen(
                     ) {
                         Icon(Icons.AutoMirrored.Filled.Login, contentDescription = null)
                         Spacer(Modifier.width(8.dp))
-                        Text(if (session.isAuthenticating) "Signing In..." else "Sign in with Google")
+                        Text(
+                            if (session.isAuthenticating) {
+                                stringResource(id = R.string.settings_sign_in_loading)
+                            } else {
+                                stringResource(id = R.string.settings_sign_in_idle)
+                            }
+                        )
                     }
 
                     session.error?.let { err ->
@@ -178,13 +199,13 @@ fun SettingsScreen(
                     verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
                     Text(
-                        text = "Cloud Sync & Backup",
+                        text = stringResource(id = R.string.settings_section_sync),
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.SemiBold
                     )
 
                     Text(
-                        text = "Automatic sync is active. You can also trigger an instant sync manually.",
+                        text = stringResource(id = R.string.settings_sync_idle),
                         style = MaterialTheme.typography.bodyMedium
                     )
 
@@ -207,11 +228,18 @@ fun SettingsScreen(
                                 }
                             }
                         },
-                        enabled = !isSyncing
+                        enabled = !isSyncing,
+                        modifier = Modifier.fillMaxWidth()
                     ) {
                         Icon(Icons.Default.CloudSync, contentDescription = null)
                         Spacer(Modifier.width(8.dp))
-                        Text(if (isSyncing) "Syncing..." else "Sync Now")
+                        Text(
+                            if (isSyncing) {
+                                stringResource(id = R.string.settings_sync_now_loading)
+                            } else {
+                                stringResource(id = R.string.settings_sync_now_idle)
+                            }
+                        )
                     }
 
                     syncMessage?.let { msg ->
@@ -230,7 +258,7 @@ fun SettingsScreen(
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 Text(
-                    text = "Privacy & Telemetry",
+                    text = stringResource(id = R.string.settings_section_privacy),
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.SemiBold
                 )
@@ -239,17 +267,21 @@ fun SettingsScreen(
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Column(modifier = Modifier.weight(1f)) {
-                        Text("Strict Privacy Mode", style = MaterialTheme.typography.bodyLarge)
                         Text(
-                            "Disable all crash reporting and anonymous usage telemetry.",
+                            stringResource(id = R.string.settings_strict_privacy_title),
+                            style = MaterialTheme.typography.bodyLarge
+                        )
+                        Text(
+                            stringResource(id = R.string.settings_strict_privacy_desc),
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
                     Switch(
-                        checked = remember { PreferenceManager(context).isStrictPrivacyEnabled() },
+                        checked = strictPrivacyEnabled,
                         onCheckedChange = { enabled ->
-                            PreferenceManager(context).setStrictPrivacyEnabled(enabled)
+                            strictPrivacyEnabled = enabled
+                            prefMgr.setStrictPrivacyEnabled(enabled)
                         }
                     )
                 }
@@ -265,12 +297,11 @@ fun SettingsScreen(
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
-                    var piiRedactionChecked by remember { mutableStateOf(PreferenceManager(context).isPiiRedactionEnabled()) }
                     Switch(
-                        checked = piiRedactionChecked,
+                        checked = piiRedactionEnabled,
                         onCheckedChange = { enabled ->
-                            piiRedactionChecked = enabled
-                            PreferenceManager(context).setPiiRedactionEnabled(enabled)
+                            piiRedactionEnabled = enabled
+                            prefMgr.setPiiRedactionEnabled(enabled)
                         }
                     )
                 }
@@ -281,11 +312,7 @@ fun SettingsScreen(
         // jump straight to the system permission screen without leaving Settings. This
         // is the single highest-impact onboarding surface: without listener access the
         // app captures nothing, so making the path to granting it obvious is critical.
-        val prefMgr = remember { PreferenceManager(context) }
-        val lifecycleOwner = LocalLifecycleOwner.current
-        var listenerGranted by remember {
-            mutableStateOf(checkNotificationPermission(context))
-        }
+
         // Refresh when the user returns to this screen (e.g., after toggling the
         // system permission switch and pressing Back).
         androidx.compose.runtime.DisposableEffect(lifecycleOwner) {
@@ -342,7 +369,8 @@ fun SettingsScreen(
                     colors = ButtonDefaults.buttonColors(
                         containerColor = if (listenerGranted) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.error,
                         contentColor = if (listenerGranted) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onError
-                    )
+                    ),
+                    modifier = Modifier.fillMaxWidth()
                 ) {
                     Text(
                         stringResource(
@@ -386,9 +414,12 @@ fun SettingsScreen(
                         )
                     }
                     Switch(
-                        checked = prefMgr.isRestoreOnBootEnabled() && listenerGranted,
+                        checked = restoreOnBootEnabled && listenerGranted,
                         enabled = listenerGranted,
-                        onCheckedChange = { prefMgr.setRestoreOnBootEnabled(it) }
+                        onCheckedChange = {
+                            restoreOnBootEnabled = it
+                            prefMgr.setRestoreOnBootEnabled(it)
+                        }
                     )
                 }
                 

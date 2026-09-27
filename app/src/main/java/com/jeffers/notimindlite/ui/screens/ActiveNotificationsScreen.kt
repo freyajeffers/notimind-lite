@@ -138,23 +138,27 @@ fun getReasonLabel(reason: Int?): Int {
     }
 }
 
-fun getPriorityLabel(priority: Int): String {
+fun getPriorityLabel(priority: Int): Int {
     return when (priority) {
-        -2 -> "Min"
-        -1 -> "Low"
-        0 -> "Default"
-        1 -> "High"
-        2 -> "Max"
-        else -> "Unknown ($priority)"
+        -2 -> R.string.priority_min
+        -1 -> R.string.priority_low
+        0 -> R.string.priority_default
+        1 -> R.string.priority_high
+        2 -> R.string.priority_max
+        else -> R.string.priority_unknown
     }
 }
 
-enum class NotificationSection(val keyName: String, val title: String, val subtitle: String) {
-    PINNED("PINNED", "Pinned Notifications", "Flagged & saved notifications for later reference"),
-    ACTIVE("ACTIVE", "Active Notifications", "Currently active status bar notifications (sorted by time received)"),
-    FILTERED("FILTERED", "Filtered Notifications", "System, clutter, spam, and auto-filtered notifications"),
-    DISMISSED("DISMISSED", "Recently Dismissed", "User swiped, clicked, or cleared notifications (sorted by time dismissed)"),
-    LOST("LOST", "Lost Notifications", "App cancelled or package changed notifications (sorted by time dismissed)")
+enum class NotificationSection(
+    val keyName: String,
+    val titleRes: Int,
+    val subtitleRes: Int
+) {
+    PINNED("PINNED", R.string.section_pinned_title, R.string.section_pinned_subtitle),
+    ACTIVE("ACTIVE", R.string.section_active_title, R.string.section_active_subtitle),
+    FILTERED("FILTERED", R.string.section_filtered_title, R.string.section_filtered_subtitle),
+    DISMISSED("DISMISSED", R.string.section_dismissed_title, R.string.section_dismissed_subtitle),
+    LOST("LOST", R.string.section_lost_title, R.string.section_lost_subtitle)
 }
 
 private const val PREFETCH_AHEAD = 24
@@ -162,7 +166,7 @@ private const val PREFETCH_BEHIND = 2
 
 @Composable
 @Suppress("FunctionNaming") // Composable PascalCase required by Compose API.
-fun AppIconImage(appIconUri: String?, modifier: Modifier = Modifier) {
+fun AppIconImage(appIconUri: String?, modifier: Modifier = Modifier.size(20.dp)) {
     val context = LocalContext.current
     val imageBitmap by produceState<Bitmap?>(initialValue = null, appIconUri) {
         value = withContext(Dispatchers.IO) {
@@ -173,7 +177,7 @@ fun AppIconImage(appIconUri: String?, modifier: Modifier = Modifier) {
     if (imageBitmap != null) {
         Image(
             bitmap = imageBitmap!!.asImageBitmap(),
-            contentDescription = "App Icon",
+            contentDescription = stringResource(id = R.string.active_notifications_app_icon_desc),
             modifier = modifier.size(20.dp)
         )
     }
@@ -260,9 +264,16 @@ fun ActiveNotificationsScreen(dao: NotificationDao, authManager: AuthManager, db
         }
     }
 
-    val notificationsBySection by remember {
-        derivedStateOf {
-            NotificationSection.entries.associateWith { section ->
+    val notificationsBySection = remember(
+        pinnedNotifs,
+        activeNotifs,
+        filteredNotifs,
+        recentlyDismissed,
+        lostNotifs,
+        selectedPackages,
+        debouncedSearchQuery
+    ) {
+        NotificationSection.entries.associateWith { section ->
                 val rawList = when (section) {
                     NotificationSection.PINNED -> pinnedNotifs
                     NotificationSection.ACTIVE -> activeNotifs
@@ -285,12 +296,10 @@ fun ActiveNotificationsScreen(dao: NotificationDao, authManager: AuthManager, db
                     // HybridSearchEngine (FTS4 + semantic vector, RRF-fused).
                     HybridSearchEngine.searchAndRankBlocking(filtered, debouncedSearchQuery)
                 }
-            }
         }
     }
 
-    val totalLazyItemCount by remember {
-        derivedStateOf {
+    val totalLazyItemCount = remember(sectionOrder, notificationsBySection) {
             var count = 2
             sectionOrder.forEach { section ->
                 count += 1
@@ -298,7 +307,6 @@ fun ActiveNotificationsScreen(dao: NotificationDao, authManager: AuthManager, db
                 count += if (items.isEmpty()) 1 else items.size
             }
             count
-        }
     }
 
     val listState = rememberLazyListState()
@@ -432,6 +440,8 @@ fun ActiveNotificationsScreen(dao: NotificationDao, authManager: AuthManager, db
                 state = listState,
                 modifier = Modifier
                     .fillMaxSize()
+                    .widthIn(max = 760.dp)
+                    .align(Alignment.Center)
                     .padding(innerPadding)
                     .padding(horizontal = 16.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp),
@@ -468,12 +478,12 @@ fun ActiveNotificationsScreen(dao: NotificationDao, authManager: AuthManager, db
                                     .padding(bottom = 6.dp)
                                     .focusRequester(searchFocusRequester)
                                     .onFocusChanged { isSearchFocused = it.isFocused },
-                                placeholder = { Text("Search") },
-                                leadingIcon = { Icon(Icons.Default.Search, contentDescription = "Search") },
+                                placeholder = { Text(stringResource(id = R.string.active_notifications_search_placeholder)) },
+                                leadingIcon = { Icon(Icons.Default.Search, contentDescription = stringResource(id = R.string.common_search)) },
                                 trailingIcon = {
                                     if (searchQuery.isNotEmpty()) {
                                         IconButton(onClick = { searchQuery = "" }) {
-                                            Icon(Icons.Default.Close, contentDescription = "Clear Search")
+                                            Icon(Icons.Default.Close, contentDescription = stringResource(id = R.string.common_clear_search))
                                         }
                                     }
                                 },
@@ -520,13 +530,16 @@ fun ActiveNotificationsScreen(dao: NotificationDao, authManager: AuthManager, db
                         ) {
                             Column(modifier = Modifier.weight(1f)) {
                                 Text(
-                                    text = "Notification Listener Service",
+                                    text = stringResource(id = R.string.active_notifications_service_title),
                                     style = MaterialTheme.typography.titleMedium,
                                     fontWeight = FontWeight.Bold,
                                     color = if (isGranted) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.onErrorContainer
                                 )
                                 Text(
-                                    text = if (isGranted) "Status: Active & Listening" else "Status: Permission Required",
+                                    text = stringResource(
+                                        id = if (isGranted) R.string.active_notifications_service_status_active
+                                        else R.string.active_notifications_service_status_required
+                                    ),
                                     fontSize = 12.sp,
                                     color = if (isGranted) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error
                                 )
@@ -543,7 +556,7 @@ fun ActiveNotificationsScreen(dao: NotificationDao, authManager: AuthManager, db
                                     contentColor = if (isGranted) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onErrorContainer
                                 )
                             ) {
-                                Text(if (isGranted) "Settings" else "Grant")
+                                Text(stringResource(id = if (isGranted) R.string.active_notifications_settings else R.string.active_notifications_grant))
                             }
                         }
                     }
@@ -643,7 +656,18 @@ fun ActiveNotificationsScreen(dao: NotificationDao, authManager: AuthManager, db
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .padding(vertical = 4.dp)
+                                    .heightIn(min = 48.dp)
                                     .clickable { toggleSection(section.keyName) }
+                                    .semantics {
+                                        contentDescription = stringResource(
+                                            id = R.string.active_notifications_section_toggle_desc,
+                                            stringResource(id = section.titleRes),
+                                            stringResource(
+                                                id = if (isExpanded) R.string.active_notifications_expanded
+                                                else R.string.active_notifications_collapsed
+                                            )
+                                        )
+                                    }
                             ) {
                                 Row(
                                     modifier = Modifier.padding(14.dp),
@@ -652,12 +676,12 @@ fun ActiveNotificationsScreen(dao: NotificationDao, authManager: AuthManager, db
                                 ) {
                                     Column(modifier = Modifier.weight(1f)) {
                                         Text(
-                                            text = section.title,
+                                            text = stringResource(id = section.titleRes),
                                             style = MaterialTheme.typography.titleMedium,
                                             fontWeight = FontWeight.Bold
                                         )
                                         Text(
-                                            text = section.subtitle,
+                                            text = stringResource(id = section.subtitleRes),
                                             style = MaterialTheme.typography.bodySmall,
                                             color = MaterialTheme.colorScheme.onSurfaceVariant
                                         )
@@ -676,7 +700,10 @@ fun ActiveNotificationsScreen(dao: NotificationDao, authManager: AuthManager, db
                                     Spacer(modifier = Modifier.width(8.dp))
                                     Icon(
                                         imageVector = if (isExpanded) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
-                                        contentDescription = null
+                                        contentDescription = stringResource(
+                                            id = if (isExpanded) R.string.log_history_collapse_tooltip
+                                            else R.string.log_history_expand_tooltip
+                                        )
                                     )
                                 }
                             }
@@ -841,7 +868,10 @@ fun LogNotificationCard(
                         text = item.appName,
                         fontWeight = FontWeight.Bold,
                         fontSize = 13.sp,
-                        color = MaterialTheme.colorScheme.primary
+                        color = MaterialTheme.colorScheme.primary,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.weight(1f)
                     )
                 }
 
@@ -856,8 +886,7 @@ fun LogNotificationCard(
                                 scope.launch {
                                     dao.updatePinnedStatus(item.key, !item.isPinned)
                                 }
-                            },
-                            modifier = Modifier.size(24.dp)
+                            }
                         ) {
                             Icon(
                                 imageVector = if (item.isPinned) Icons.Default.Bookmark else Icons.Outlined.BookmarkBorder,
@@ -897,8 +926,7 @@ fun LogNotificationCard(
                                     item.key,
                                     item.intentUri
                                 )
-                            },
-                            modifier = Modifier.size(24.dp)
+                            }
                         ) {
                             Icon(
                                 imageVector = Icons.Default.OpenInNew,
@@ -1061,7 +1089,10 @@ fun NotificationExpandedAttributes(
             if (!item.category.isNullOrEmpty()) {
                 AttributeRow(label = "Category", value = item.category)
             }
-            AttributeRow(label = "Priority", value = getPriorityLabel(item.priority))
+            AttributeRow(
+                label = "Priority",
+                value = stringResource(id = getPriorityLabel(item.priority), item.priority)
+            )
             AttributeRow(label = "Time Received", value = dateTimeFormatter.format(Instant.ofEpochMilli(item.postTime)))
             if (item.lastUpdatedTime > 0 && item.lastUpdatedTime != item.postTime) {
                 AttributeRow(
