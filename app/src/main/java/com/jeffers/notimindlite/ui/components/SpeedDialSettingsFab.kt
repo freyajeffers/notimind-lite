@@ -1,7 +1,7 @@
 package com.jeffers.notimindlite.ui.components
 
 import androidx.compose.animation.core.*
-import androidx.compose.foundation.clickable
+
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
@@ -17,6 +17,8 @@ import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.semantics.stateDescription
+import androidx.compose.ui.semantics.semantics
 
 /**
  * SpeedDialSettingsFab provides a primary action button that expands into
@@ -82,9 +84,17 @@ fun SpeedDialSettingsFab(
             contentColor = MaterialTheme.colorScheme.onPrimary
         ) {
             if (expanded) {
-                Icon(Icons.Default.Close, contentDescription = "Close Menu")
+                Icon(
+                    Icons.Default.Close,
+                    contentDescription = "Close quick actions",
+                    modifier = Modifier.semantics { stateDescription = "Expanded" }
+                )
             } else {
-                Icon(Icons.Default.Settings, contentDescription = "Quick Actions")
+                Icon(
+                    Icons.Default.Settings,
+                    contentDescription = "Open quick actions",
+                    modifier = Modifier.semantics { stateDescription = "Collapsed" }
+                )
             }
         }
     }
@@ -99,8 +109,7 @@ private fun SpeedDialItem(
 ) {
     Box(
         modifier = Modifier
-            .scale(scale)
-            .clickable { onClick() },
+            .scale(scale),
         contentAlignment = Alignment.Center
     ) {
         SmallFloatingActionButton(

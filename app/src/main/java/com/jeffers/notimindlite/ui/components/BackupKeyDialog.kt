@@ -39,6 +39,10 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.semantics
+import com.jeffers.notimindlite.R
 
 @Composable
 @Suppress("LongMethod", "FunctionNaming")
@@ -54,17 +58,22 @@ fun BackupKeyDialog(
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Backup Encryption") },
+        title = {
+            Text(
+                stringResource(R.string.backup_dialog_title),
+                modifier = Modifier.semantics { heading() }
+            )
+        },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 Text(
-                    "Optional passphrase for cross-device or post-reinstall restore:",
+                    stringResource(R.string.backup_dialog_passphrase_description),
                     style = MaterialTheme.typography.bodyMedium,
                 )
                 OutlinedTextField(
                     value = passphrase,
                     onValueChange = { passphrase = it },
-                    label = { Text("Passphrase (optional)") },
+                    label = { Text(stringResource(R.string.backup_dialog_passphrase_label)) },
                     visualTransformation = if (showPassword) {
                         VisualTransformation.None
                     } else {
@@ -75,7 +84,9 @@ fun BackupKeyDialog(
                         IconButton(onClick = { showPassword = !showPassword }) {
                             Icon(
                                 if (showPassword) Icons.Default.VisibilityOff else Icons.Default.Visibility,
-                                contentDescription = if (showPassword) "Hide" else "Show",
+                                contentDescription = stringResource(
+                                    if (showPassword) R.string.common_hide_passphrase else R.string.common_show_passphrase
+                                ),
                             )
                         }
                     },
@@ -83,7 +94,7 @@ fun BackupKeyDialog(
                     singleLine = true,
                 )
                 Text(
-                    "If left blank, this backup can only be restored on this device while the app remains installed.",
+                    stringResource(R.string.backup_dialog_local_only_hint),
                     style = MaterialTheme.typography.bodySmall,
                 )
                 Surface(
@@ -106,7 +117,7 @@ fun BackupKeyDialog(
                         }) {
                             Icon(
                                 Icons.Default.ContentCopy,
-                                contentDescription = "Copy Key",
+                                contentDescription = stringResource(R.string.backup_dialog_copy_key),
                                 modifier = Modifier.size(18.dp),
                             )
                         }
@@ -125,7 +136,7 @@ fun BackupKeyDialog(
                 ) {
                     Icon(Icons.Default.Share, contentDescription = null, modifier = Modifier.size(16.dp))
                     Spacer(Modifier.width(4.dp))
-                    Text("Share Key")
+                    Text(stringResource(R.string.backup_key_share))
                 }
             }
         },
@@ -136,12 +147,12 @@ fun BackupKeyDialog(
                     onConfirm(pass)
                 },
             ) {
-                Text("Create Backup")
+                Text(stringResource(R.string.backup_dialog_create))
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text("Cancel")
+                Text(stringResource(R.string.common_cancel))
             }
         },
     )
