@@ -302,12 +302,16 @@ class NotificationLoggerService : NotificationListenerService() {
                 else -> ""
             }
 
-            val textLines = extras?.getCharSequenceArray(Notification.EXTRA_TEXT_LINES)
-            val inboxLinesJson: String? = if (!textLines.isNullOrEmpty()) {
-                val linesList = textLines.map { it.toString() }
-                JSONArray(linesList).toString()
-            } else {
-                null
+            val inboxLinesJson: String? = try {
+                val textLines = extras?.getCharSequenceArray(Notification.EXTRA_TEXT_LINES)
+                if (!textLines.isNullOrEmpty()) {
+                    val linesList = textLines.map { it.toString() }
+                    JSONArray(linesList).toString()
+                } else null
+            } catch (e: ClassCastException) {
+                // Some devices put a String[] into the bundle instead of CharSequence[]
+                val stringLines = extras?.getStringArray(Notification.EXTRA_TEXT_LINES)
+                if (!stringLines.isNullOrEmpty()) JSONArray(stringLines.toList()).toString() else null
             }
 
             val category = notification.category
@@ -352,7 +356,12 @@ class NotificationLoggerService : NotificationListenerService() {
             }
             val appName = rawAppName ?: packageName
             val isGroupSummary = (notification.flags and Notification.FLAG_GROUP_SUMMARY) != 0
-            val smallIconRes = notification.smallIcon?.resId ?: 0
+            val smallIconRes = try {
+                notification.smallIcon?.resId ?: 0
+            } catch (e: IllegalStateException) {
+                // Some OEMs return BITMAP icons where getResId() throws; treat as no resource
+                0
+            }
             val appIconUri = getOrSaveAppIconUri(packageName)
             val channelId = notification.channelId
             val groupKey = sbn.groupKey
