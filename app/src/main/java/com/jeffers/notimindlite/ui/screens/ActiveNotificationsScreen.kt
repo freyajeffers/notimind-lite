@@ -647,6 +647,12 @@ fun ActiveNotificationsScreen(dao: NotificationDao, authManager: AuthManager, db
                     val isExpanded = expandedSection == section.keyName
                     val itemsList = notificationsBySection[section].orEmpty()
 
+                    // Precompute accessible strings in composable scope (stringResource is @Composable)
+                    val headerTitle = stringResource(id = section.titleRes)
+                    val headerStateText = if (isExpanded) stringResource(id = R.string.active_notifications_expanded) else stringResource(id = R.string.active_notifications_collapsed)
+                    val toggleDescText = stringResource(id = R.string.active_notifications_section_toggle_desc, headerTitle, headerStateText)
+                    val headerStateShort = if (isExpanded) stringResource(id = R.string.state_expanded) else stringResource(id = R.string.state_collapsed)
+
                     stickyHeader(key = "sticky_header_${section.keyName}") {
                         Surface(
                             modifier = Modifier.fillMaxWidth(),
@@ -660,16 +666,9 @@ fun ActiveNotificationsScreen(dao: NotificationDao, authManager: AuthManager, db
                                     .heightIn(min = 48.dp)
                                     .clickable { toggleSection(section.keyName) }
                                     .semantics {
-                                        // Compose semantics: precompute string resources to avoid @Composable calls inside lambda
-                                        val headerTitle = stringResource(id = section.titleRes)
-                                        val headerStateText = stringResource(id = if (isExpanded) R.string.active_notifications_expanded else R.string.active_notifications_collapsed)
-                                        contentDescription = stringResource(
-                                            id = R.string.active_notifications_section_toggle_desc,
-                                            headerTitle,
-                                            headerStateText
-                                        )
-                                        // stateDescription must be a simple string, supply short stable tokens
-                                        stateDescription = if (isExpanded) stringResource(id = R.string.state_expanded) else stringResource(id = R.string.state_collapsed)
+                                        contentDescription = toggleDescText
+                                        // stateDescription must be a short stable token
+                                        stateDescription = headerStateShort
                                     }
                             ) {
                                 Row(
