@@ -8,7 +8,9 @@ import android.service.notification.StatusBarNotification
 import androidx.test.core.app.ApplicationProvider
 import com.jeffers.notimindlite.service.NotificationLoggerService
 import com.notimind.lite.base.BaseRobolectricTest
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withTimeout
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Test
@@ -64,7 +66,9 @@ class NotificationLoggerServiceTest : BaseRobolectricTest() {
                 text = "External App Content"
             )
             service.onNotificationPosted(externalSbn)
-            Thread.sleep(100)
+            withTimeout(2_000) {
+                while (dao.getAllNotificationsList().size < 1) delay(10)
+            }
 
             val list = dao.getAllNotificationsList()
             assertEquals("External package notification must be saved", 1, list.size)

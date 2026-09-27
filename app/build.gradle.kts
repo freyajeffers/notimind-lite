@@ -1,6 +1,5 @@
 plugins {
   alias(libs.plugins.android.application)
-  alias(libs.plugins.kotlin.android)
   alias(libs.plugins.kotlin.compose)
   alias(libs.plugins.google.devtools.ksp)
   alias(libs.plugins.google.services)
@@ -22,6 +21,7 @@ android {
     targetSdk = 36
     versionCode = 1
     versionName = "1.0-lite"
+    manifestPlaceholders["migrationReceiverEnabled"] = "false"
 
     testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
@@ -69,7 +69,10 @@ android {
       proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
       signingConfig = signingConfigs.findByName("releaseConfig") ?: signingConfigs.getByName("debugConfig")
     }
-    debug { signingConfig = signingConfigs.getByName("debugConfig") }
+    debug {
+      signingConfig = signingConfigs.getByName("debugConfig")
+      manifestPlaceholders["migrationReceiverEnabled"] = "true"
+    }
   }
   compileOptions {
     sourceCompatibility = JavaVersion.VERSION_17

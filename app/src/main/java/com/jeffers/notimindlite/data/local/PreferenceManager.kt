@@ -2,7 +2,9 @@ package com.jeffers.notimindlite.data.local
 
 import android.content.Context
 import android.os.UserManager
+import androidx.core.content.edit
 
+@Suppress("TooManyFunctions") // Compatibility facade preserves the established preference API.
 class PreferenceManager(context: Context) {
 
     private val effectiveContext: Context = run {
@@ -21,7 +23,7 @@ class PreferenceManager(context: Context) {
     }
 
     fun setExpandedSection(section: String) {
-        prefs.edit().putString("expanded_section", section).apply()
+        prefs.edit { putString("expanded_section", section) }
     }
 
     fun isRestoreOnBootEnabled(): Boolean {
@@ -29,7 +31,7 @@ class PreferenceManager(context: Context) {
     }
 
     fun setRestoreOnBootEnabled(enabled: Boolean) {
-        prefs.edit().putBoolean("restore_on_boot", enabled).apply()
+        prefs.edit { putBoolean("restore_on_boot", enabled) }
     }
 
     fun isStrictPrivacyEnabled(): Boolean {
@@ -37,13 +39,13 @@ class PreferenceManager(context: Context) {
     }
 
     fun setStrictPrivacyEnabled(enabled: Boolean) {
-        prefs.edit().putBoolean("strict_privacy", enabled).apply()
+        prefs.edit { putBoolean("strict_privacy", enabled) }
     }
 
     private val PREF_LAST_UPDATE_TIME = "pref_last_update_time"
 
     fun setLastUpdateTime(time: Long) {
-        prefs.edit().putLong(PREF_LAST_UPDATE_TIME, time).apply()
+        prefs.edit { putLong(PREF_LAST_UPDATE_TIME, time) }
     }
 
     // Toggle for PII redaction (disabled by default)
@@ -52,6 +54,18 @@ class PreferenceManager(context: Context) {
     }
 
     fun setPiiRedactionEnabled(enabled: Boolean) {
-        prefs.edit().putBoolean("pii_redaction_enabled", enabled).apply()
+        prefs.edit { putBoolean("pii_redaction_enabled", enabled) }
     }
+
+    fun getThreadPoolSize() = PreferencesRepository(effectiveContext).getThreadPoolSize()
+    fun setThreadPoolSize(value: Int) = PreferencesRepository(effectiveContext).setThreadPoolSize(value)
+    fun getEmbeddingRateMs() = PreferencesRepository(effectiveContext).getEmbeddingRateMs()
+    fun setEmbeddingRateMs(value: Long) = PreferencesRepository(effectiveContext).setEmbeddingRateMs(value)
+    fun getDbCompactionDays() = PreferencesRepository(effectiveContext).getDbCompactionDays()
+    fun setDbCompactionDays(value: Int) = PreferencesRepository(effectiveContext).setDbCompactionDays(value)
+    fun getReindexDays() = PreferencesRepository(effectiveContext).getReindexDays()
+    fun setReindexDays(value: Int) = PreferencesRepository(effectiveContext).setReindexDays(value)
+    fun isEmbeddingOffloadEnabled() = PreferencesRepository(effectiveContext).isEmbeddingOffloadEnabled()
+    fun setEmbeddingOffloadEnabled(value: Boolean) =
+        PreferencesRepository(effectiveContext).setEmbeddingOffloadEnabled(value)
 }
