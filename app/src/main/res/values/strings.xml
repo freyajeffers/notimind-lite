@@ -8,6 +8,28 @@
     <string name="common_scroll_top">Scroll to Top</string>
     <string name="common_scroll_bottom">Scroll to Bottom</string>
     <string name="common_clear_search">Clear Search</string>
+    <string name="common_error_title">Something went wrong</string>
+    <string name="common_retry">Retry</string>
+    <string name="common_cancel">Cancel</string>
+    <string name="common_show_passphrase">Show passphrase</string>
+    <string name="common_hide_passphrase">Hide passphrase</string>
+
+    <!-- Dialogs and error states -->
+    <string name="global_error_title">Something went wrong</string>
+    <string name="backup_dialog_title">Backup Encryption</string>
+    <string name="backup_dialog_passphrase_description">Optional passphrase for cross-device or post-reinstall restore:</string>
+    <string name="backup_dialog_passphrase_label">Passphrase (optional)</string>
+    <string name="backup_dialog_local_only_hint">If left blank, this backup can only be restored on this device while the app remains installed.</string>
+    <string name="backup_dialog_copy_key">Copy backup key</string>
+    <string name="backup_dialog_create">Create Backup</string>
+    <string name="restore_dialog_title">Restore Encrypted Backup</string>
+    <string name="restore_dialog_file">Restoring from: %1$s</string>
+    <string name="restore_dialog_passphrase_description">If this backup was created with a passphrase (cross-device or post-reinstall), enter it below. If created on this device, leave blank.</string>
+    <string name="restore_dialog_confirm">Restore</string>
+    <string name="package_filter_title">Filter by Application</string>
+    <string name="package_filter_search_label">Search applications</string>
+    <string name="package_filter_search_hint">Search apps…</string>
+    <string name="package_filter_apply">Apply</string>
 
     <!-- Main -->
     <string name="main_listener_required_title">Notification Listener Required</string>
@@ -32,6 +54,12 @@
     <string name="log_history_sort_received">Dismissed Only (Recent Post) %s</string>
     <string name="log_history_empty_initial">No notifications found</string>
     <string name="log_history_empty_search">No matching notifications found</string>
+    <string name="log_history_empty_filter_desc">No notifications match your current filters.</string>
+    <string name="log_history_clear_filters">Clear All Filters</string>
+    <string name="log_history_sort_newest">Newest First</string>
+    <string name="log_history_sort_oldest">Oldest First</string>
+    <string name="log_history_sort_app">App Name</string>
+    <string name="log_history_open_desc">Open notification</string>
     <string name="log_history_unpin_tooltip">Unpin notification</string>
     <string name="log_history_pin_tooltip">Pin notification</string>
     <string name="log_history_unpin_desc">Unpin</string>

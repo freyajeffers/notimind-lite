@@ -57,15 +57,24 @@ class MainActivity : ComponentActivity() {
             try {
                 com.jeffers.notimindlite.util.DatabaseMigrator
                     .executeRawDbMergeAndRebuildFts(applicationContext, database)
-            } catch (e: android.database.SQLException) {
+            } catch (e: Exception) {
                 android.util.Log.e("MainActivity", "Failed merging staging DB", e)
             }
-            DynamicClusterManager.initialize(applicationContext)
+            try {
+                DynamicClusterManager.initialize(applicationContext)
+            } catch (e: Exception) {
+                // Startup helpers are best-effort so a stale cache cannot block the UI.
+                android.util.Log.e("MainActivity", "Failed initializing notification clusters", e)
+            }
             // H2: purge stale cache backups >1h so the cacheDir doesn't fill up
             // between launches. Cleanup runs at startup because the encryption
             // path only invokes it post-export; users who skip export entirely
             // would otherwise accumulate files forever.
-            com.jeffers.notimindlite.util.DatabaseExporter.cleanupExportFiles(applicationContext)
+            try {
+                com.jeffers.notimindlite.util.DatabaseExporter.cleanupExportFiles(applicationContext)
+            } catch (e: Exception) {
+                android.util.Log.e("MainActivity", "Failed cleaning export cache", e)
+            }
         }
 
         setContent {

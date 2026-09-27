@@ -1,5 +1,7 @@
 package com.jeffers.notimindlite.ui.components
 
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.padding
@@ -36,7 +38,9 @@ fun ActiveFilterChipsRow(
     modifier: Modifier = Modifier
 ) {
     Row(
-        modifier = modifier.padding(horizontal = CHIPS_ROW_H_PADDING_DP.dp, vertical = CHIPS_ROW_V_PADDING_DP.dp),
+        modifier = modifier
+            .horizontalScroll(rememberScrollState())
+            .padding(horizontal = CHIPS_ROW_H_PADDING_DP.dp, vertical = CHIPS_ROW_V_PADDING_DP.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(CHIP_GAP_DP.dp)
     ) {
@@ -47,7 +51,7 @@ fun ActiveFilterChipsRow(
         )
         chips.forEach { chip ->
             AssistChip(
-                onClick = { onClearAll(); chip.onClear() },
+                onClick = chip.onClear,
                 label = { Text(chip.text) },
                 trailingIcon = {
                     Icon(

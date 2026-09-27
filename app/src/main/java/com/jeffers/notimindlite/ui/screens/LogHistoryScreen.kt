@@ -34,10 +34,14 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.role
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.annotation.StringRes
 import com.jeffers.notimindlite.R
 import androidx.compose.foundation.background
 import com.jeffers.notimindlite.data.local.NotificationDao
@@ -65,14 +69,14 @@ private const val PREFETCH_AHEAD = 24
 private const val PREFETCH_BEHIND = 2
 private const val BASE_SORT_MODE_COUNT = 3
 
-enum class SortMode(val label: String) {
-    DISMISSED("Time Dismissed"),
-    RECEIVED("Time Received"),
-    ALL("All Notifications"),
-    NEWEST("Newest First"),
-    OLDEST("Oldest First"),
-    APP_NAME("App Name"),
-    TITLE("Title")
+enum class SortMode(@StringRes val labelRes: Int) {
+    DISMISSED(R.string.log_history_sort_dismissed),
+    RECEIVED(R.string.log_history_sort_received),
+    ALL(R.string.log_history_sort_all),
+    NEWEST(R.string.log_history_sort_newest),
+    OLDEST(R.string.log_history_sort_oldest),
+    APP_NAME(R.string.log_history_sort_app),
+    TITLE(R.string.log_history_sort_title)
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -128,29 +132,28 @@ fun LogHistoryScreen(dao: NotificationDao, authManager: AuthManager, db: AppData
         activeList.map { it.packageName to it.appName }.distinctBy { it.first }
     }
 
-    val filteredNotifs by remember(activeList, selectedReasonFilter, selectedPackages, debouncedSearchQuery, sortMode) {
-        derivedStateOf {
-            var list = activeList.distinctBy { "${it.packageName}_${it.title}_${it.content}" }
+    val selectedPackageSet = remember(selectedPackages) { selectedPackages?.toSet().orEmpty() }
+    val filteredNotifs = remember(activeList, selectedReasonFilter, selectedPackageSet, debouncedSearchQuery, sortMode) {
+        var list = activeList.distinctBy { "${it.packageName}_${it.title}_${it.content}" }
 
-            if (selectedReasonFilter != null) {
-                list = list.filter { it.dismissReason == selectedReasonFilter }
-            }
+        if (selectedReasonFilter != null) {
+            list = list.filter { it.dismissReason == selectedReasonFilter }
+        }
 
-            if (!selectedPackages.isNullOrEmpty()) {
-                list = list.filter { selectedPackages!!.contains(it.packageName) }
-            }
+        if (selectedPackageSet.isNotEmpty()) {
+            list = list.filter { it.packageName in selectedPackageSet }
+        }
 
-            if (debouncedSearchQuery.isNotBlank()) {
-                list = HybridSearchEngine.searchAndRankBlocking(list, debouncedSearchQuery)
-            }
+        if (debouncedSearchQuery.isNotBlank()) {
+            list = HybridSearchEngine.searchAndRankBlocking(list, debouncedSearchQuery)
+        }
 
-            when (sortMode) {
-                SortMode.NEWEST -> list.sortedByDescending { it.postTime }
-                SortMode.OLDEST -> list.sortedBy { it.postTime }
-                SortMode.APP_NAME -> list.sortedWith(compareBy(String.CASE_INSENSITIVE_ORDER) { it.appName })
-                SortMode.TITLE -> list.sortedWith(compareBy(String.CASE_INSENSITIVE_ORDER) { it.title })
-                else -> list
-            }
+        when (sortMode) {
+            SortMode.NEWEST -> list.sortedByDescending { it.postTime }
+            SortMode.OLDEST -> list.sortedBy { it.postTime }
+            SortMode.APP_NAME -> list.sortedWith(compareBy(String.CASE_INSENSITIVE_ORDER) { it.appName })
+            SortMode.TITLE -> list.sortedWith(compareBy(String.CASE_INSENSITIVE_ORDER) { it.title })
+            else -> list
         }
     }
 
@@ -291,7 +294,7 @@ fun LogHistoryScreen(dao: NotificationDao, authManager: AuthManager, db: AppData
                             )
                             SortMode.entries.drop(BASE_SORT_MODE_COUNT).forEach { option ->
                                 DropdownMenuItem(
-                                    text = { Text("${option.label} ${if (sortMode == option) "✓" else ""}") },
+                                    text = { Text(stringResource(option.labelRes) + if (sortMode == option) " ✓" else "") },
                                     onClick = {
                                         sortMode = option
                                         showSortMenu = false
@@ -335,7 +338,7 @@ fun LogHistoryScreen(dao: NotificationDao, authManager: AuthManager, db: AppData
                         SmallFloatingActionButton(
                             onClick = {
                                 scope.launch {
-                                    listState.animateScrollToItem(filteredNotifs.size - 1)
+                                    listState.animateScrollToItem(notificationGroups.lastIndex.coerceAtLeast(0))
                                 }
                             },
                             containerColor = MaterialTheme.colorScheme.primaryContainer,
@@ -371,18 +374,20 @@ fun LogHistoryScreen(dao: NotificationDao, authManager: AuthManager, db: AppData
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
+                    .widthIn(max = 760.dp)
+                    .align(Alignment.CenterHorizontally)
                     .padding(horizontal = 16.dp, vertical = 8.dp)
             ) {
                 OutlinedTextField(
                     value = searchQuery,
                     onValueChange = { searchQuery = it },
                     modifier = Modifier.fillMaxWidth(),
-                    placeholder = { Text("Search") },
-                    leadingIcon = { Icon(Icons.Default.Search, contentDescription = "Search") },
+                    placeholder = { Text(stringResource(R.string.common_search)) },
+                    leadingIcon = { Icon(Icons.Default.Search, contentDescription = stringResource(R.string.common_search)) },
                     trailingIcon = {
                         if (searchQuery.isNotEmpty()) {
                             IconButton(onClick = { searchQuery = "" }) {
-                                Icon(Icons.Default.Close, contentDescription = "Clear Search")
+                                Icon(Icons.Default.Close, contentDescription = stringResource(R.string.common_clear_search))
                             }
                         }
                     },
@@ -414,8 +419,8 @@ fun LogHistoryScreen(dao: NotificationDao, authManager: AuthManager, db: AppData
                         stringResource(R.string.log_history_empty_initial)
                     else
                         stringResource(R.string.log_history_empty_search),
-                    description = "No notifications match your current filters.",
-                    clearButtonText = "Clear All Filters",
+                    description = stringResource(R.string.log_history_empty_filter_desc),
+                    clearButtonText = stringResource(R.string.log_history_clear_filters),
                     onClearClick = {
                         searchQuery = ""
                         selectedReasonFilter = null
@@ -425,7 +430,10 @@ fun LogHistoryScreen(dao: NotificationDao, authManager: AuthManager, db: AppData
             } else {
                 LazyColumn(
                     state = listState,
-                    modifier = Modifier.fillMaxSize(),
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .widthIn(max = 760.dp)
+                        .align(Alignment.CenterHorizontally),
                     contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
@@ -551,6 +559,7 @@ fun LogHistoryCard(
     Card(
         modifier = Modifier
             .fillMaxWidth()
+            .semantics { role = Role.Button }
             .clickable(onClick = onToggleExpand),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surface
@@ -574,7 +583,10 @@ fun LogHistoryCard(
                         text = item.appName,
                         fontWeight = FontWeight.Bold,
                         fontSize = 13.sp,
-                        color = MaterialTheme.colorScheme.primary
+                        color = MaterialTheme.colorScheme.primary,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.weight(1f)
                     )
                 }
 
@@ -589,12 +601,13 @@ fun LogHistoryCard(
                                 scope.launch {
                                     dao.updatePinnedStatus(item.key, !item.isPinned)
                                 }
-                            },
-                            modifier = Modifier.size(24.dp)
+                            }
                         ) {
                             Icon(
                                 imageVector = if (item.isPinned) Icons.Default.Bookmark else Icons.Outlined.BookmarkBorder,
-                                contentDescription = if (item.isPinned) "Unpin" else "Pin",
+                                contentDescription = stringResource(
+                                    if (item.isPinned) R.string.log_history_unpin_desc else R.string.log_history_pin_desc
+                                ),
                                 tint = if (item.isPinned) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
                             )
                         }
@@ -616,12 +629,11 @@ fun LogHistoryCard(
                                     item.key,
                                     item.intentUri
                                 )
-                            },
-                            modifier = Modifier.size(24.dp)
+                            }
                         ) {
                             Icon(
                                 imageVector = Icons.Default.OpenInNew,
-                                contentDescription = "Open notification"
+                                contentDescription = stringResource(R.string.log_history_open_desc)
                             )
                         }
                     }

@@ -1,6 +1,10 @@
 package com.jeffers.notimindlite.ui
 
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.NotificationsActive
@@ -10,6 +14,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.stringResource
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.compose.NavHost
@@ -57,16 +62,17 @@ fun MainNavigation(
     db: AppDatabase
 ) {
     val navController = rememberNavController()
-    val items = listOf(Screen.Active, Screen.History)
+    val items = remember { listOf(Screen.Active, Screen.History) }
     val context = androidx.compose.ui.platform.LocalContext.current
+    val isWideScreen = LocalConfiguration.current.screenWidthDp >= 600
+    val currentRoute = navController.currentBackStackEntryAsState().value?.destination?.route
     val preferenceManager = remember { com.jeffers.notimindlite.data.local.PreferenceManager(context) }
 
     Scaffold(
+        contentWindowInsets = WindowInsets.safeDrawing,
         topBar = {
             TopAppBar(
                 title = {
-                    val navBackStackEntry by navController.currentBackStackEntryAsState()
-                    val currentRoute = navBackStackEntry?.destination?.route
                     val titleRes = when (currentRoute) {
                         Screen.History.route -> Screen.History.title
                         Screen.Settings.route -> Screen.Settings.title
@@ -75,8 +81,6 @@ fun MainNavigation(
                     Text(stringResource(id = titleRes))
                 },
                 actions = {
-                    val navBackStackEntry by navController.currentBackStackEntryAsState()
-                    val currentRoute = navBackStackEntry?.destination?.route
                     if (currentRoute != Screen.Settings.route) {
                         IconButton(onClick = {
                             navController.navigate(Screen.Settings.route) {
@@ -95,6 +99,7 @@ fun MainNavigation(
             )
         },
         bottomBar = {
+            if (!isWideScreen) {
             NavigationBar {
                 val navBackStackEntry by navController.currentBackStackEntryAsState()
                 val currentRoute = navBackStackEntry?.destination?.route
@@ -113,13 +118,37 @@ fun MainNavigation(
                     )
                 }
             }
+            }
         }
     ) { innerPadding ->
-        NavHost(
-            navController = navController,
-            startDestination = "splash",
-            modifier = modifier.padding(innerPadding)
+        Row(
+            modifier = modifier
+                .fillMaxSize()
+                .padding(innerPadding)
         ) {
+                if (isWideScreen) {
+                    NavigationRail {
+                        items.forEach { screen ->
+                            NavigationRailItem(
+                                icon = screen.icon,
+                                label = { Text(stringResource(id = screen.title)) },
+                                selected = currentRoute == screen.route,
+                                onClick = {
+                                    navController.navigate(screen.route) {
+                                        popUpTo(navController.graph.findStartDestination().id) { saveState = true }
+                                        launchSingleTop = true
+                                        restoreState = true
+                                    }
+                                }
+                            )
+                        }
+                    }
+                }
+                NavHost(
+                    navController = navController,
+                    startDestination = "splash",
+                    modifier = Modifier.weight(1f)
+                ) {
             composable("splash") {
                 SplashScreen(onTimeout = {
                     navController.navigate(Screen.Active.route) {
@@ -136,6 +165,7 @@ fun MainNavigation(
             composable(Screen.Settings.route) {
                 SettingsScreen(authManager = authManager, db = db)
             }
+                }
         }
     }
 }
