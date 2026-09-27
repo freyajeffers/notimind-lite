@@ -20,6 +20,7 @@ import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
@@ -97,8 +98,9 @@ private fun ActionChip(
                 labelColor = config.onColor,
                 leadingIconContentColor = config.onColor
             ),
-            modifier = Modifier.semantics { 
-                contentDescription = "${config.label} action: ${entity.value}" 
+            modifier = Modifier.semantics {
+                contentDescription = "${config.label} action: ${entity.value}"
+                stateDescription = if (expanded) "Actions menu open" else "Actions menu closed"
             }
         )
 

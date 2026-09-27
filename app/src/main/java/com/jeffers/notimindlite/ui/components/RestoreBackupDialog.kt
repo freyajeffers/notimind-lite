@@ -24,6 +24,10 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.semantics
+import com.jeffers.notimindlite.R
 
 @Composable
 @Suppress("LongMethod", "FunctionNaming")
@@ -37,22 +41,26 @@ fun RestoreBackupDialog(
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Restore Encrypted Backup") },
+        title = {
+            Text(
+                stringResource(R.string.restore_dialog_title),
+                modifier = Modifier.semantics { heading() }
+            )
+        },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 Text(
-                    "Restoring from: $fileName",
+                    stringResource(R.string.restore_dialog_file, fileName),
                     style = MaterialTheme.typography.bodyMedium,
                 )
                 Text(
-                    "If this backup was created with a passphrase (cross-device or post-reinstall), " +
-                        "enter it below. If created on this device, leave blank.",
+                    stringResource(R.string.restore_dialog_passphrase_description),
                     style = MaterialTheme.typography.bodySmall,
                 )
                 OutlinedTextField(
                     value = passphrase,
                     onValueChange = { passphrase = it },
-                    label = { Text("Passphrase (optional)") },
+                    label = { Text(stringResource(R.string.backup_dialog_passphrase_label)) },
                     visualTransformation = if (showPassword) {
                         VisualTransformation.None
                     } else {
@@ -63,7 +71,9 @@ fun RestoreBackupDialog(
                         IconButton(onClick = { showPassword = !showPassword }) {
                             Icon(
                                 if (showPassword) Icons.Default.VisibilityOff else Icons.Default.Visibility,
-                                contentDescription = if (showPassword) "Hide" else "Show",
+                                contentDescription = stringResource(
+                                    if (showPassword) R.string.common_hide_passphrase else R.string.common_show_passphrase
+                                ),
                             )
                         }
                     },
@@ -79,12 +89,12 @@ fun RestoreBackupDialog(
                     onConfirm(pass)
                 },
             ) {
-                Text("Restore")
+                Text(stringResource(R.string.restore_dialog_confirm))
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text("Cancel")
+                Text(stringResource(R.string.common_cancel))
             }
         },
     )
