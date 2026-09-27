@@ -659,14 +659,16 @@ fun ActiveNotificationsScreen(dao: NotificationDao, authManager: AuthManager, db
                                     .heightIn(min = 48.dp)
                                     .clickable { toggleSection(section.keyName) }
                                     .semantics {
+                                        // Compose semantics: precompute string resources to avoid @Composable calls inside lambda
+                                        val headerTitle = stringResource(id = section.titleRes)
+                                        val headerStateText = stringResource(id = if (isExpanded) R.string.active_notifications_expanded else R.string.active_notifications_collapsed)
                                         contentDescription = stringResource(
                                             id = R.string.active_notifications_section_toggle_desc,
-                                            stringResource(id = section.titleRes),
-                                            stringResource(
-                                                id = if (isExpanded) R.string.active_notifications_expanded
-                                                else R.string.active_notifications_collapsed
-                                            )
+                                            headerTitle,
+                                            headerStateText
                                         )
+                                        // stateDescription must be a simple string, supply short stable tokens
+                                        stateDescription = if (isExpanded) stringResource(id = R.string.state_expanded) else stringResource(id = R.string.state_collapsed)
                                     }
                             ) {
                                 Row(
