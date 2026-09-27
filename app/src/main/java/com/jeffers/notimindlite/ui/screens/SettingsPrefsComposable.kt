@@ -65,23 +65,23 @@ fun SettingsPreferencesSection(preferencesRepository: PreferencesRepository) {
             PreferenceSelectRow(stringResource(R.string.pref_theme_accent_title), themeAccent, listOf("system" to stringResource(R.string.pref_theme_system), "blue" to stringResource(R.string.pref_theme_blue), "green" to stringResource(R.string.pref_theme_green), "purple" to stringResource(R.string.pref_theme_purple), "orange" to stringResource(R.string.pref_theme_orange)), preferencesRepository::setThemeAccent)
 
             Text(stringResource(R.string.pref_automation_title), style = MaterialTheme.typography.titleMedium)
-            PreferenceSwitchRow(stringResource(R.string.pref_auto_act_title), stringResource(R.string.pref_auto_act_summary), autoActOnNotification, preferencesRepository::setAutoActOnNotification)
-            PreferenceSelectRow(stringResource(R.string.pref_default_reply_title), defaultReplyMethod, listOf("inline" to stringResource(R.string.pref_reply_inline), "open_app" to stringResource(R.string.pref_reply_open_app), "copy" to stringResource(R.string.pref_reply_copy)), preferencesRepository::setDefaultReplyMethod)
-            PreferenceSelectRow(stringResource(R.string.pref_long_press_title), longPressAction, listOf("open" to stringResource(R.string.pref_action_open), "reply" to stringResource(R.string.pref_action_reply), "dismiss" to stringResource(R.string.pref_action_dismiss)), preferencesRepository::setLongPressAction)
+            PreferenceSwitchRow(stringResource(R.string.pref_auto_act_title), stringResource(R.string.pref_auto_act_summary), autoActOnNotification, preferencesRepository::setAutoActOnNotification, enabled = !BuildConfig.DEBUG)
+            PreferenceSelectRow(stringResource(R.string.pref_default_reply_title), defaultReplyMethod, listOf("inline" to stringResource(R.string.pref_reply_inline), "open_app" to stringResource(R.string.pref_reply_open_app), "copy" to stringResource(R.string.pref_reply_copy)), preferencesRepository::setDefaultReplyMethod, enabled = !BuildConfig.DEBUG)
+            PreferenceSelectRow(stringResource(R.string.pref_long_press_title), longPressAction, listOf("open" to stringResource(R.string.pref_action_open), "reply" to stringResource(R.string.pref_action_reply), "dismiss" to stringResource(R.string.pref_action_dismiss)), preferencesRepository::setLongPressAction, enabled = !BuildConfig.DEBUG)
             Text(stringResource(R.string.pref_auto_rules_title), style = MaterialTheme.typography.bodyLarge)
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
-                OutlinedTextField(rulePackage, { rulePackage = it }, Modifier.weight(1f), singleLine = true, label = { Text(stringResource(R.string.pref_auto_rule_package)) })
-                OutlinedTextField(ruleTitle, { ruleTitle = it }, Modifier.weight(1f), singleLine = true, label = { Text(stringResource(R.string.pref_auto_rule_title)) })
-                OutlinedTextField(ruleAction, { ruleAction = it }, Modifier.width(72.dp), singleLine = true, label = { Text(stringResource(R.string.pref_auto_rule_action)) }, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number))
+                OutlinedTextField(rulePackage, { rulePackage = it }, Modifier.weight(1f), singleLine = true, enabled = !BuildConfig.DEBUG, label = { Text(stringResource(R.string.pref_auto_rule_package)) })
+                OutlinedTextField(ruleTitle, { ruleTitle = it }, Modifier.weight(1f), singleLine = true, enabled = !BuildConfig.DEBUG, label = { Text(stringResource(R.string.pref_auto_rule_title)) })
+                OutlinedTextField(ruleAction, { ruleAction = it }, Modifier.width(72.dp), singleLine = true, enabled = !BuildConfig.DEBUG, label = { Text(stringResource(R.string.pref_auto_rule_action)) }, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number))
             }
             Button(onClick = {
                 preferencesRepository.addAutoExecuteRule(AutoExecuteRule(packageName = rulePackage.trim(), titleContains = ruleTitle.trim(), actionIndex = ruleAction.toIntOrNull()?.coerceAtLeast(0) ?: 0))
                 rulePackage = ""; ruleTitle = ""; ruleAction = "0"
-            }) { Text(stringResource(R.string.pref_auto_rule_add)) }
+            }, enabled = !BuildConfig.DEBUG) { Text(stringResource(R.string.pref_auto_rule_add)) }
             autoExecuteRules.forEach { rule ->
                 Row(verticalAlignment = androidx.compose.ui.Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
                     Text("${rule.packageName.ifBlank { stringResource(R.string.pref_auto_rule_any_app) }} · ${rule.titleContains.ifBlank { stringResource(R.string.pref_auto_rule_any_title) }} · ${stringResource(R.string.pref_auto_rule_action).lowercase()} ${rule.actionIndex}", Modifier.weight(1f), style = MaterialTheme.typography.bodySmall)
-                    TextButton(onClick = { preferencesRepository.removeAutoExecuteRule(rule.id) }) { Text(stringResource(R.string.pref_auto_rule_remove)) }
+                    TextButton(onClick = { preferencesRepository.removeAutoExecuteRule(rule.id) }, enabled = !BuildConfig.DEBUG) { Text(stringResource(R.string.pref_auto_rule_remove)) }
                 }
             }
 
@@ -249,15 +249,15 @@ private fun PreferenceSwitchRow(
 }
 
 @Composable
-private fun PreferenceSelectRow(title: String, selected: String, options: List<Pair<String, String>>, onSelected: (String) -> Unit) {
+private fun PreferenceSelectRow(title: String, selected: String, options: List<Pair<String, String>>, onSelected: (String) -> Unit, enabled: Boolean = true) {
     var expanded by remember { mutableStateOf(false) }
     Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
         Text(title, style = MaterialTheme.typography.bodyLarge, modifier = Modifier.weight(1f))
         Box {
-            OutlinedButton(onClick = { expanded = true }, modifier = Modifier.semantics { contentDescription = title }) { Text(options.firstOrNull { it.first == selected }?.second ?: selected) }
+            OutlinedButton(onClick = { expanded = true }, enabled = enabled, modifier = Modifier.semantics { contentDescription = title }) { Text(options.firstOrNull { it.first == selected }?.second ?: selected) }
             DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
                 options.forEach { (key, label) ->
-                    DropdownMenuItem(text = { Text(label) }, onClick = { onSelected(key); expanded = false })
+                    DropdownMenuItem(text = { Text(label) }, enabled = enabled, onClick = { onSelected(key); expanded = false })
                 }
             }
         }

@@ -45,7 +45,7 @@ fun SettingsCaptureSection(preferencesRepository: PreferencesRepository) {
                     Text(stringResource(R.string.pref_capture_foreground_title), style = MaterialTheme.typography.bodyLarge)
                     Text(stringResource(R.string.pref_capture_foreground_summary), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
-                Switch(checked = foregroundOnly, onCheckedChange = { scope.launch { preferencesRepository.setCaptureForegroundOnly(it) } })
+                Switch(checked = foregroundOnly, onCheckedChange = { scope.launch { preferencesRepository.setCaptureForegroundOnly(it) } }, enabled = !BuildConfig.DEBUG)
             }
 
             Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
@@ -53,7 +53,7 @@ fun SettingsCaptureSection(preferencesRepository: PreferencesRepository) {
                     Text(stringResource(R.string.pref_capture_attachments_title), style = MaterialTheme.typography.bodyLarge)
                     Text(stringResource(R.string.pref_capture_attachments_summary), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
-                Switch(checked = attachments, onCheckedChange = { scope.launch { preferencesRepository.setCaptureAttachments(it) } })
+                Switch(checked = attachments, onCheckedChange = { scope.launch { preferencesRepository.setCaptureAttachments(it) } }, enabled = !BuildConfig.DEBUG)
             }
 
             Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
@@ -61,7 +61,7 @@ fun SettingsCaptureSection(preferencesRepository: PreferencesRepository) {
                     Text(stringResource(R.string.pref_capture_ongoing_title), style = MaterialTheme.typography.bodyLarge)
                     Text(stringResource(R.string.pref_capture_ongoing_summary), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
-                Switch(checked = ongoing, onCheckedChange = { scope.launch { preferencesRepository.setCaptureOngoing(it) } })
+                Switch(checked = ongoing, onCheckedChange = { scope.launch { preferencesRepository.setCaptureOngoing(it) } }, enabled = !BuildConfig.DEBUG)
             }
 
             Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
@@ -69,7 +69,7 @@ fun SettingsCaptureSection(preferencesRepository: PreferencesRepository) {
                     Text(stringResource(R.string.pref_capture_allowlist_title), style = MaterialTheme.typography.bodyLarge)
                     Text(stringResource(R.string.pref_capture_allowlist_summary), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
-                OutlinedTextField(value = allowlist, onValueChange = { scope.launch { preferencesRepository.setCapturePackageAllowlist(it) } }, modifier = Modifier.width(200.dp), singleLine = true)
+                OutlinedTextField(value = allowlist, onValueChange = { scope.launch { preferencesRepository.setCapturePackageAllowlist(it) } }, modifier = Modifier.width(200.dp), singleLine = true, enabled = !BuildConfig.DEBUG)
             }
 
             Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
@@ -77,7 +77,7 @@ fun SettingsCaptureSection(preferencesRepository: PreferencesRepository) {
                     Text(stringResource(R.string.pref_capture_blocklist_title), style = MaterialTheme.typography.bodyLarge)
                     Text(stringResource(R.string.pref_capture_blocklist_summary), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
-                OutlinedTextField(value = blocklist, onValueChange = { scope.launch { preferencesRepository.setCapturePackageBlocklist(it) } }, modifier = Modifier.width(200.dp), singleLine = true)
+                OutlinedTextField(value = blocklist, onValueChange = { scope.launch { preferencesRepository.setCapturePackageBlocklist(it) } }, modifier = Modifier.width(200.dp), singleLine = true, enabled = !BuildConfig.DEBUG)
             }
 
             Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
@@ -85,7 +85,7 @@ fun SettingsCaptureSection(preferencesRepository: PreferencesRepository) {
                     Text(stringResource(R.string.pref_capture_min_importance_title), style = MaterialTheme.typography.bodyLarge)
                     Text(stringResource(R.string.pref_capture_min_importance_summary), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
-                OutlinedTextField(value = minImportance.toString(), onValueChange = { it.toIntOrNull()?.let { v -> scope.launch { preferencesRepository.setMinImportance(v) } } }, modifier = Modifier.width(120.dp), singleLine = true)
+                OutlinedTextField(value = minImportance.toString(), onValueChange = { it.toIntOrNull()?.let { v -> scope.launch { preferencesRepository.setMinImportance(v) } } }, modifier = Modifier.width(120.dp), singleLine = true, enabled = !BuildConfig.DEBUG)
             }
 
             Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
@@ -93,7 +93,7 @@ fun SettingsCaptureSection(preferencesRepository: PreferencesRepository) {
                     Text(stringResource(R.string.pref_capture_actions_only_title), style = MaterialTheme.typography.bodyLarge)
                     Text(stringResource(R.string.pref_capture_actions_only_summary), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
-                Switch(checked = actionsOnly, onCheckedChange = { scope.launch { preferencesRepository.setCaptureActionsOnly(it) } })
+                Switch(checked = actionsOnly, onCheckedChange = { scope.launch { preferencesRepository.setCaptureActionsOnly(it) } }, enabled = !BuildConfig.DEBUG)
             }
 
         }

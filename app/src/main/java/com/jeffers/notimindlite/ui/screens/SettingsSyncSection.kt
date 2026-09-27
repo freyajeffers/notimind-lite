@@ -9,6 +9,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import com.jeffers.notimindlite.data.local.PreferencesRepository
+import com.jeffers.notimindlite.BuildConfig
 import com.jeffers.notimindlite.R
 import kotlinx.coroutines.launch
 
@@ -32,7 +33,7 @@ fun SettingsSyncSection(preferencesRepository: PreferencesRepository) {
                     Text(stringResource(R.string.pref_sync_interval_title), style = MaterialTheme.typography.bodyLarge)
                     Text(stringResource(R.string.pref_sync_interval_summary), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
-                OutlinedTextField(value = syncInterval.toString(), onValueChange = { it.toIntOrNull()?.let { v -> scope.launch { preferencesRepository.setSyncInterval(v) } } }, modifier = Modifier.width(120.dp), singleLine = true)
+                OutlinedTextField(value = syncInterval.toString(), onValueChange = { it.toIntOrNull()?.let { v -> scope.launch { preferencesRepository.setSyncInterval(v) } } }, modifier = Modifier.width(120.dp), singleLine = true, enabled = !BuildConfig.DEBUG)
             }
 
             Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
@@ -40,7 +41,7 @@ fun SettingsSyncSection(preferencesRepository: PreferencesRepository) {
                     Text(stringResource(R.string.pref_sync_wifi_title), style = MaterialTheme.typography.bodyLarge)
                     Text(stringResource(R.string.pref_sync_wifi_summary), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
-                Switch(checked = syncWifiOnly, onCheckedChange = { scope.launch { preferencesRepository.setSyncWifiOnly(it) } })
+                Switch(checked = syncWifiOnly, onCheckedChange = { scope.launch { preferencesRepository.setSyncWifiOnly(it) } }, enabled = !BuildConfig.DEBUG)
             }
 
             Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
@@ -48,12 +49,12 @@ fun SettingsSyncSection(preferencesRepository: PreferencesRepository) {
                     Text(stringResource(R.string.pref_sync_charging_title), style = MaterialTheme.typography.bodyLarge)
                     Text(stringResource(R.string.pref_sync_charging_summary), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
-                Switch(checked = syncChargingOnly, onCheckedChange = { scope.launch { preferencesRepository.setSyncChargingOnly(it) } })
+                Switch(checked = syncChargingOnly, onCheckedChange = { scope.launch { preferencesRepository.setSyncChargingOnly(it) } }, enabled = !BuildConfig.DEBUG)
             }
 
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
                 Text(text = stringResource(R.string.pref_sync_last, if (lastSyncTs == 0L) stringResource(R.string.pref_sync_never) else java.text.DateFormat.getDateTimeInstance().format(java.util.Date(lastSyncTs))), style = MaterialTheme.typography.bodySmall)
-                Button(onClick = { scope.launch { preferencesRepository.setLastSyncTs(System.currentTimeMillis()) /* placeholder: trigger SyncWorker externally */ } }) {
+                Button(onClick = { scope.launch { preferencesRepository.setLastSyncTs(System.currentTimeMillis()) /* placeholder: trigger SyncWorker externally */ } }, enabled = !BuildConfig.DEBUG) {
                     Text(stringResource(R.string.pref_sync_now))
                 }
             }

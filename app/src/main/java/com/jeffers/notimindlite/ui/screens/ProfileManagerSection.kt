@@ -16,6 +16,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import com.jeffers.notimindlite.data.local.PreferencesRepository
+import com.jeffers.notimindlite.BuildConfig
 
 /** Compose-only profile manager. Each profile has independent settings and Room storage. */
 @Composable
@@ -44,8 +45,8 @@ fun ProfileManagerSection(repository: PreferencesRepository) {
                 Button(onClick = { repository.createProfile(newName); newName = "" }, enabled = newName.isNotBlank()) { Text("Add") }
             }
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                OutlinedButton(onClick = { exportLauncher.launch("notimind-profile.json") }) { Text("Export") }
-                OutlinedButton(onClick = { importLauncher.launch(arrayOf("application/json", "text/plain")) }) { Text("Import") }
+                OutlinedButton(onClick = { exportLauncher.launch("notimind-profile.json") }, enabled = !BuildConfig.DEBUG) { Text("Export") }
+                OutlinedButton(onClick = { importLauncher.launch(arrayOf("application/json", "text/plain")) }, enabled = !BuildConfig.DEBUG) { Text("Import") }
             }
         }
     }
