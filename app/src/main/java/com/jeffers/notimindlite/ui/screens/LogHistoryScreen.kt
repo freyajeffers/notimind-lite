@@ -34,6 +34,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -96,10 +98,10 @@ fun LogHistoryScreen(dao: NotificationDao, authManager: AuthManager, db: AppData
     var expandedCards by remember { mutableStateOf(setOf<String>()) }
     var collapsedGroups by remember { mutableStateOf(setOf<String>()) }
 
-    val allNotifsDismissed by dao.getDismissedNotificationsSortedByDismissed().collectAsState(initial = emptyList())
-    val allNotifsReceived by dao.getDismissedNotificationsSortedByReceived().collectAsState(initial = emptyList())
-    val allNotifsEver by dao.getAllNotificationsSortedByDismissed().collectAsState(initial = emptyList())
-    val totalCount by dao.getTotalNotificationCountFlow().collectAsState(initial = 0)
+    val allNotifsDismissed by remember(dao) { dao.getDismissedNotificationsSortedByDismissed() }.collectAsState(initial = emptyList())
+    val allNotifsReceived by remember(dao) { dao.getDismissedNotificationsSortedByReceived() }.collectAsState(initial = emptyList())
+    val allNotifsEver by remember(dao) { dao.getAllNotificationsSortedByDismissed() }.collectAsState(initial = emptyList())
+    val totalCount by remember(dao) { dao.getTotalNotificationCountFlow() }.collectAsState(initial = 0)
 
     val activeList = when (sortMode) {
         SortMode.DISMISSED -> allNotifsDismissed
@@ -223,7 +225,7 @@ fun LogHistoryScreen(dao: NotificationDao, authManager: AuthManager, db: AppData
                             )
                             availableReasons.forEach { reasonCode ->
                                 DropdownMenuItem(
-                                    text = { Text(stringResource(id = R.string.log_history_filter_reason_item, getReasonLabel(reasonCode), reasonCode, if (selectedReasonFilter == reasonCode) "✓" else "")) },
+                                    text = { Text(stringResource(id = R.string.log_history_filter_reason_item, stringResource(getReasonLabel(reasonCode)), reasonCode, if (selectedReasonFilter == reasonCode) "✓" else "")) },
                                     onClick = {
                                         selectedReasonFilter = reasonCode
                                         showFilterMenu = false
@@ -315,6 +317,7 @@ fun LogHistoryScreen(dao: NotificationDao, authManager: AuthManager, db: AppData
                         state = rememberTooltipState()
                     ) {
                         SmallFloatingActionButton(
+                            modifier = Modifier.sizeIn(minWidth = 48.dp, minHeight = 48.dp),
                             onClick = {
                                 scope.launch {
                                     listState.animateScrollToItem(0)
@@ -333,9 +336,10 @@ fun LogHistoryScreen(dao: NotificationDao, authManager: AuthManager, db: AppData
                         state = rememberTooltipState()
                     ) {
                         SmallFloatingActionButton(
+                            modifier = Modifier.sizeIn(minWidth = 48.dp, minHeight = 48.dp),
                             onClick = {
                                 scope.launch {
-                                    listState.animateScrollToItem(filteredNotifs.size - 1)
+                                    listState.animateScrollToItem(notificationGroups.lastIndex.coerceAtLeast(0))
                                 }
                             },
                             containerColor = MaterialTheme.colorScheme.primaryContainer,
@@ -377,12 +381,12 @@ fun LogHistoryScreen(dao: NotificationDao, authManager: AuthManager, db: AppData
                     value = searchQuery,
                     onValueChange = { searchQuery = it },
                     modifier = Modifier.fillMaxWidth(),
-                    placeholder = { Text("Search") },
-                    leadingIcon = { Icon(Icons.Default.Search, contentDescription = "Search") },
+                    label = { Text(stringResource(R.string.common_search)) },
+                    leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
                     trailingIcon = {
                         if (searchQuery.isNotEmpty()) {
                             IconButton(onClick = { searchQuery = "" }) {
-                                Icon(Icons.Default.Close, contentDescription = "Clear Search")
+                                Icon(Icons.Default.Close, contentDescription = stringResource(R.string.common_clear_search))
                             }
                         }
                     },
@@ -507,28 +511,28 @@ private fun DismissStatusBadge(item: NotificationEntity) {
     if (item.isDismissed && item.dismissReason != null) {
         Spacer(modifier = Modifier.width(6.dp))
         Surface(
-            color = MaterialTheme.colorScheme.secondary.copy(alpha = 0.2f),
+            color = MaterialTheme.colorScheme.secondaryContainer,
             shape = MaterialTheme.shapes.extraSmall
         ) {
             Text(
                 text = stringResource(id = getReasonLabel(item.dismissReason)),
                 fontSize = 10.sp,
                 fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.secondary,
+                color = MaterialTheme.colorScheme.onSecondaryContainer,
                 modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
             )
         }
     } else if (!item.isDismissed) {
         Spacer(modifier = Modifier.width(6.dp))
         Surface(
-            color = MaterialTheme.colorScheme.primary.copy(alpha = 0.2f),
+            color = MaterialTheme.colorScheme.primaryContainer,
             shape = MaterialTheme.shapes.extraSmall
         ) {
             Text(
-                text = "Active",
+                text = stringResource(R.string.nav_active_title),
                 fontSize = 10.sp,
                 fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.primary,
+                color = MaterialTheme.colorScheme.onPrimaryContainer,
                 modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
             )
         }
@@ -548,10 +552,18 @@ fun LogHistoryCard(
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
 
+    val toggleLabel = stringResource(
+        if (isExpanded) R.string.log_history_collapse_tooltip else R.string.log_history_expand_tooltip
+    )
+    val expansionState = stringResource(
+        if (isExpanded) R.string.active_notifications_expanded else R.string.active_notifications_collapsed
+    )
+
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable(onClick = onToggleExpand),
+            .semantics { stateDescription = expansionState }
+            .clickable(onClickLabel = toggleLabel, onClick = onToggleExpand),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surface
         )
@@ -572,6 +584,9 @@ fun LogHistoryCard(
                     }
                     Text(
                         text = item.appName,
+                        maxLines = 2,
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.weight(1f),
                         fontWeight = FontWeight.Bold,
                         fontSize = 13.sp,
                         color = MaterialTheme.colorScheme.primary
@@ -581,7 +596,7 @@ fun LogHistoryCard(
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     TooltipBox(
                         positionProvider = TooltipDefaults.rememberPlainTooltipPositionProvider(),
-                        tooltip = { PlainTooltip { Text(if (item.isPinned) "Unpin notification" else "Pin notification") } },
+                        tooltip = { PlainTooltip { Text(stringResource(if (item.isPinned) R.string.log_history_unpin_tooltip else R.string.log_history_pin_tooltip)) } },
                         state = rememberTooltipState()
                     ) {
                         IconButton(
@@ -590,11 +605,13 @@ fun LogHistoryCard(
                                     dao.updatePinnedStatus(item.key, !item.isPinned)
                                 }
                             },
-                            modifier = Modifier.size(24.dp)
+                            modifier = Modifier.size(48.dp)
                         ) {
                             Icon(
                                 imageVector = if (item.isPinned) Icons.Default.Bookmark else Icons.Outlined.BookmarkBorder,
-                                contentDescription = if (item.isPinned) "Unpin" else "Pin",
+                                contentDescription = stringResource(
+                                    if (item.isPinned) R.string.log_history_unpin_tooltip else R.string.log_history_pin_tooltip
+                                ),
                                 tint = if (item.isPinned) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
                             )
                         }
@@ -617,7 +634,7 @@ fun LogHistoryCard(
                                     item.intentUri
                                 )
                             },
-                            modifier = Modifier.size(24.dp)
+                            modifier = Modifier.size(48.dp)
                         ) {
                             Icon(
                                 imageVector = Icons.Default.OpenInNew,
@@ -650,7 +667,7 @@ fun LogHistoryCard(
                         Text(
                             text = item.subText,
                             style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.75f)
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
                     if (!item.bigText.isNullOrEmpty() && item.bigText != item.content) {
@@ -658,7 +675,7 @@ fun LogHistoryCard(
                         Text(
                             text = item.bigText,
                             style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.85f)
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
                     @Suppress("SwallowedException")
