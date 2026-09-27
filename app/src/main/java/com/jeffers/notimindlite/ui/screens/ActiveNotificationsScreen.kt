@@ -178,8 +178,8 @@ fun AppIconImage(appIconUri: String?, modifier: Modifier = Modifier.size(20.dp))
         Image(
             bitmap = imageBitmap!!.asImageBitmap(),
             contentDescription = stringResource(id = R.string.active_notifications_app_icon_desc),
-            modifier = modifier.size(20.dp)
-        )
+            modifier = modifier.size(40.dp)
+            )
     }
 }
 
