@@ -40,7 +40,7 @@ object DatabaseMigrator {
                     if (!entity.category.isNullOrEmpty()) append(entity.category).append(" ")
                     append(entity.packageName)
                 }
-                val embedding = VectorEmbeddingHelper.computeEmbedding(context, textToEmbed)
+                val embedding = VectorEmbeddingHelper.computeEmbedding(textToEmbed)
                 if (rateMs > 0L) delay(rateMs)
                 // Room can't bind a FloatArray directly as a query parameter;
                 // convert via the same TypeConverter the entity column uses
