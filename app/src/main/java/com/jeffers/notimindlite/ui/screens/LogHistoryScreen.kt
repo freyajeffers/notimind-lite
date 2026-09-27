@@ -63,11 +63,16 @@ import java.util.*
 
 private const val PREFETCH_AHEAD = 24
 private const val PREFETCH_BEHIND = 2
+private const val BASE_SORT_MODE_COUNT = 3
 
 enum class SortMode(val label: String) {
     DISMISSED("Time Dismissed"),
     RECEIVED("Time Received"),
-    ALL("All Notifications")
+    ALL("All Notifications"),
+    NEWEST("Newest First"),
+    OLDEST("Oldest First"),
+    APP_NAME("App Name"),
+    TITLE("Title")
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -99,7 +104,7 @@ fun LogHistoryScreen(dao: NotificationDao, authManager: AuthManager, db: AppData
     val activeList = when (sortMode) {
         SortMode.DISMISSED -> allNotifsDismissed
         SortMode.RECEIVED -> allNotifsReceived
-        SortMode.ALL -> allNotifsEver
+        SortMode.ALL, SortMode.NEWEST, SortMode.OLDEST, SortMode.APP_NAME, SortMode.TITLE -> allNotifsEver
     }
     // F-K fix: persist search text across process death.
     var searchQuery by rememberSaveable { mutableStateOf("") }
@@ -123,7 +128,7 @@ fun LogHistoryScreen(dao: NotificationDao, authManager: AuthManager, db: AppData
         activeList.map { it.packageName to it.appName }.distinctBy { it.first }
     }
 
-    val filteredNotifs by remember(activeList, selectedReasonFilter, selectedPackages, debouncedSearchQuery) {
+    val filteredNotifs by remember(activeList, selectedReasonFilter, selectedPackages, debouncedSearchQuery, sortMode) {
         derivedStateOf {
             var list = activeList.distinctBy { "${it.packageName}_${it.title}_${it.content}" }
 
@@ -135,10 +140,16 @@ fun LogHistoryScreen(dao: NotificationDao, authManager: AuthManager, db: AppData
                 list = list.filter { selectedPackages!!.contains(it.packageName) }
             }
 
-            if (debouncedSearchQuery.isBlank()) {
-                list
-            } else {
-                HybridSearchEngine.searchAndRankBlocking(list, debouncedSearchQuery)
+            if (debouncedSearchQuery.isNotBlank()) {
+                list = HybridSearchEngine.searchAndRankBlocking(list, debouncedSearchQuery)
+            }
+
+            when (sortMode) {
+                SortMode.NEWEST -> list.sortedByDescending { it.postTime }
+                SortMode.OLDEST -> list.sortedBy { it.postTime }
+                SortMode.APP_NAME -> list.sortedWith(compareBy(String.CASE_INSENSITIVE_ORDER) { it.appName })
+                SortMode.TITLE -> list.sortedWith(compareBy(String.CASE_INSENSITIVE_ORDER) { it.title })
+                else -> list
             }
         }
     }
@@ -278,6 +289,15 @@ fun LogHistoryScreen(dao: NotificationDao, authManager: AuthManager, db: AppData
                                     showSortMenu = false
                                 }
                             )
+                            SortMode.entries.drop(BASE_SORT_MODE_COUNT).forEach { option ->
+                                DropdownMenuItem(
+                                    text = { Text("${option.label} ${if (sortMode == option) "✓" else ""}") },
+                                    onClick = {
+                                        sortMode = option
+                                        showSortMenu = false
+                                    }
+                                )
+                            }
                         }
                     }
                 }
