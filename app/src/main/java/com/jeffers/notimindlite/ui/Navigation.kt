@@ -30,6 +30,8 @@ import com.jeffers.notimindlite.ui.screens.LogHistoryScreen
 import com.jeffers.notimindlite.ui.screens.SettingsScreen
 import com.jeffers.notimindlite.ui.screens.SplashScreen
 
+private const val WIDE_SCREEN_MIN_WIDTH_DP = 600
+
 sealed class Screen(val route: String, val title: Int, val icon: @Composable () -> Unit) {
     object Active : Screen(
         route = "active",
@@ -64,7 +66,7 @@ fun MainNavigation(
     val navController = rememberNavController()
     val items = remember { listOf(Screen.Active, Screen.History) }
     val context = androidx.compose.ui.platform.LocalContext.current
-    val isWideScreen = LocalConfiguration.current.screenWidthDp >= 600
+    val isWideScreen = LocalConfiguration.current.screenWidthDp >= WIDE_SCREEN_MIN_WIDTH_DP
     val currentRoute = navController.currentBackStackEntryAsState().value?.destination?.route
     val preferenceManager = remember { com.jeffers.notimindlite.data.local.PreferenceManager(context) }
 

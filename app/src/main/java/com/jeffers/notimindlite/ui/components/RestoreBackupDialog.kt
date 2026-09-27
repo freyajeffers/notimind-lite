@@ -72,7 +72,11 @@ fun RestoreBackupDialog(
                             Icon(
                                 if (showPassword) Icons.Default.VisibilityOff else Icons.Default.Visibility,
                                 contentDescription = stringResource(
-                                    if (showPassword) R.string.common_hide_passphrase else R.string.common_show_passphrase
+                                    if (showPassword) {
+                                        R.string.common_hide_passphrase
+                                    } else {
+                                        R.string.common_show_passphrase
+                                    }
                                 ),
                             )
                         }

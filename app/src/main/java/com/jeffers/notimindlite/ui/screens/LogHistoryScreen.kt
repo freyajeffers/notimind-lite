@@ -133,7 +133,13 @@ fun LogHistoryScreen(dao: NotificationDao, authManager: AuthManager, db: AppData
     }
 
     val selectedPackageSet = remember(selectedPackages) { selectedPackages?.toSet().orEmpty() }
-    val filteredNotifs = remember(activeList, selectedReasonFilter, selectedPackageSet, debouncedSearchQuery, sortMode) {
+    val filteredNotifs = remember(
+        activeList,
+        selectedReasonFilter,
+        selectedPackageSet,
+        debouncedSearchQuery,
+        sortMode
+    ) {
         var list = activeList.distinctBy { "${it.packageName}_${it.title}_${it.content}" }
 
         if (selectedReasonFilter != null) {
@@ -294,7 +300,12 @@ fun LogHistoryScreen(dao: NotificationDao, authManager: AuthManager, db: AppData
                             )
                             SortMode.entries.drop(BASE_SORT_MODE_COUNT).forEach { option ->
                                 DropdownMenuItem(
-                                    text = { Text(stringResource(option.labelRes) + if (sortMode == option) " ✓" else "") },
+                                    text = {
+                                        Text(
+                                            stringResource(option.labelRes) +
+                                                if (sortMode == option) " ✓" else ""
+                                        )
+                                    },
                                     onClick = {
                                         sortMode = option
                                         showSortMenu = false
@@ -383,11 +394,19 @@ fun LogHistoryScreen(dao: NotificationDao, authManager: AuthManager, db: AppData
                     onValueChange = { searchQuery = it },
                     modifier = Modifier.fillMaxWidth(),
                     placeholder = { Text(stringResource(R.string.common_search)) },
-                    leadingIcon = { Icon(Icons.Default.Search, contentDescription = stringResource(R.string.common_search)) },
+                    leadingIcon = {
+                        Icon(
+                            Icons.Default.Search,
+                            contentDescription = stringResource(R.string.common_search)
+                        )
+                    },
                     trailingIcon = {
                         if (searchQuery.isNotEmpty()) {
                             IconButton(onClick = { searchQuery = "" }) {
-                                Icon(Icons.Default.Close, contentDescription = stringResource(R.string.common_clear_search))
+                                Icon(
+                                    Icons.Default.Close,
+                                    contentDescription = stringResource(R.string.common_clear_search)
+                                )
                             }
                         }
                     },
@@ -606,7 +625,11 @@ fun LogHistoryCard(
                             Icon(
                                 imageVector = if (item.isPinned) Icons.Default.Bookmark else Icons.Outlined.BookmarkBorder,
                                 contentDescription = stringResource(
-                                    if (item.isPinned) R.string.log_history_unpin_desc else R.string.log_history_pin_desc
+                                    if (item.isPinned) {
+                                        R.string.log_history_unpin_desc
+                                    } else {
+                                        R.string.log_history_pin_desc
+                                    }
                                 ),
                                 tint = if (item.isPinned) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
                             )
