@@ -8,7 +8,6 @@
     <string name="common_scroll_top">Scroll to Top</string>
     <string name="common_scroll_bottom">Scroll to Bottom</string>
     <string name="common_clear_search">Clear Search</string>
-    <string name="common_error_title">Something went wrong</string>
     <string name="common_retry">Retry</string>
     <string name="common_cancel">Cancel</string>
     <string name="common_show_passphrase">Show passphrase</string>
@@ -185,6 +184,4 @@
     <string name="backup_key_generated_title">Encryption Key Generated</string>
     <string name="backup_key_share">Share Key</string>
     <string name="backup_key_saved_confirm">I\'ve saved it</string>
-    <string name="state_expanded">expanded</string>
-    <string name="state_collapsed">collapsed</string>
 </resources>

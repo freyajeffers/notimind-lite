@@ -14,8 +14,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalWindowInfo
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.dp
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -66,7 +68,10 @@ fun MainNavigation(
     val navController = rememberNavController()
     val items = remember { listOf(Screen.Active, Screen.History) }
     val context = androidx.compose.ui.platform.LocalContext.current
-    val isWideScreen = LocalConfiguration.current.screenWidthDp >= WIDE_SCREEN_MIN_WIDTH_DP
+    val windowWidthDp = with(LocalDensity.current) {
+        LocalWindowInfo.current.containerSize.width.toDp()
+    }
+    val isWideScreen = windowWidthDp >= WIDE_SCREEN_MIN_WIDTH_DP.dp
     val currentRoute = navController.currentBackStackEntryAsState().value?.destination?.route
     val preferenceManager = remember { com.jeffers.notimindlite.data.local.PreferenceManager(context) }
 
