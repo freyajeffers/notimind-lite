@@ -208,36 +208,22 @@ dependencies {
 // that never created one (e.g. fresh GH Actions images) will have
 // the keystore materialized before signing validation runs.
 //
-// Configuration-cache note: this task opts OUT of the configuration
-// cache via `notCompatibleWithConfigurationCache(...)` because the
-// `Exec` task type's lambdas capture the enclosing build script
-// (`this$0`), which is a script-object reference that Gradle 9.7+
-// configuration cache refuses to serialize. The keystore check is
-// idempotent and cheap (~1 ms on every project load), so we trade
-// the small overhead of a no-op Exec invocation against the larger
-// cost of reworking the entire build script for the cache. The
-// Gradle documentation explicitly endorses this opt-out for tasks
-// that fundamentally need closures over build-script state.
+// The existence check is performed inside the Exec command so this task
+// remains compatible with Gradle's configuration cache.
 val debugKeystorePath: String = file("${rootDir}/debug.keystore").absolutePath
 
 val ensureDebugKeystore = tasks.register<Exec>("ensureDebugKeystore") {
   description = "Materialize the standard Android debug keystore if absent."
   group = "build setup"
-  notCompatibleWithConfigurationCache("Keystore generation needs script state; see comment above.")
-  // `onlyIf` evaluates at task-graph time and bypasses the action
-  // when the keystore is already present, so this is a no-op on
-  // dev machines and a one-shot generator on fresh CI runners.
-  onlyIf { !File(debugKeystorePath).exists() }
+  // Keep the task configuration-cache compatible by performing the existence
+  // check inside the process rather than capturing build-script state.
   commandLine(
-    "keytool", "-genkeypair",
-    "-keystore", debugKeystorePath,
-    "-storepass", "android",
-    "-keypass", "android",
-    "-alias", "androiddebugkey",
-    "-keyalg", "RSA",
-    "-keysize", "2048",
-    "-validity", "10000",
-    "-dname", "CN=Android Debug,O=Android,C=US"
+    "sh", "-c",
+    "if [ ! -f \"$debugKeystorePath\" ]; then " +
+        "keytool -genkeypair -keystore \"$debugKeystorePath\" " +
+        "-storepass android -keypass android -alias androiddebugkey " +
+        "-keyalg RSA -keysize 2048 -validity 10000 " +
+        "-dname 'CN=Android Debug,O=Android,C=US'; fi"
   )
 }
 
