@@ -185,4 +185,6 @@
     <string name="backup_key_generated_title">Encryption Key Generated</string>
     <string name="backup_key_share">Share Key</string>
     <string name="backup_key_saved_confirm">I\'ve saved it</string>
+    <string name="state_expanded">expanded</string>
+    <string name="state_collapsed">collapsed</string>
 </resources>
