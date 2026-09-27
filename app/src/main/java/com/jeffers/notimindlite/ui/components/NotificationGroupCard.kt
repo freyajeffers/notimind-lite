@@ -37,6 +37,7 @@ import androidx.compose.material3.TooltipDefaults
 import androidx.compose.material3.rememberTooltipState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.key
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -258,7 +259,9 @@ fun NotificationGroupCard(
                     verticalArrangement = Arrangement.spacedBy(6.dp)
                 ) {
                     group.items.forEach { childItem ->
-                        renderChildCard(childItem)
+                        key(childItem.key) {
+                            renderChildCard(childItem)
+                        }
                     }
                 }
             }
