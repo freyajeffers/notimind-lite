@@ -62,8 +62,8 @@ class BootReceiver : BroadcastReceiver() {
                             ComponentName(context, NotificationLoggerService::class.java)
                         )
                         
-                    } catch (e: Exception) {
-                        
+                    } catch (e: SecurityException) {
+                        Log.w("BootReceiverLite", "Notification listener rebind was denied", e)
                     }
 
                     // Check preferences

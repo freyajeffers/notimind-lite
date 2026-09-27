@@ -16,8 +16,7 @@ import androidx.compose.material.icons.automirrored.filled.Sort
 import androidx.compose.material.icons.filled.Bookmark
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Download
-import androidx.compose.material.icons.filled.ExpandLess
-import androidx.compose.material.icons.filled.ExpandMore
+import androidx.compose.material.icons.filled.OpenInNew
 import androidx.compose.material.icons.filled.FilterList
 import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.KeyboardArrowDown
@@ -30,6 +29,7 @@ import androidx.compose.material.icons.outlined.BookmarkBorder
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -48,18 +48,31 @@ import com.jeffers.notimindlite.domain.search.HybridSearchEngine
 import com.jeffers.notimindlite.util.NotificationLauncher
 import com.jeffers.notimindlite.data.auth.AuthManager
 import com.jeffers.notimindlite.data.local.AppDatabase
+import com.jeffers.notimindlite.util.AppIconCache
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.time.Instant
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.util.*
 
+private const val PREFETCH_AHEAD = 24
+private const val PREFETCH_BEHIND = 2
+private const val BASE_SORT_MODE_COUNT = 3
+
 enum class SortMode(val label: String) {
     DISMISSED("Time Dismissed"),
     RECEIVED("Time Received"),
-    ALL("All Notifications")
+    ALL("All Notifications"),
+    NEWEST("Newest First"),
+    OLDEST("Oldest First"),
+    APP_NAME("App Name"),
+    TITLE("Title")
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -91,7 +104,7 @@ fun LogHistoryScreen(dao: NotificationDao, authManager: AuthManager, db: AppData
     val activeList = when (sortMode) {
         SortMode.DISMISSED -> allNotifsDismissed
         SortMode.RECEIVED -> allNotifsReceived
-        SortMode.ALL -> allNotifsEver
+        SortMode.ALL, SortMode.NEWEST, SortMode.OLDEST, SortMode.APP_NAME, SortMode.TITLE -> allNotifsEver
     }
     // F-K fix: persist search text across process death.
     var searchQuery by rememberSaveable { mutableStateOf("") }
@@ -115,7 +128,7 @@ fun LogHistoryScreen(dao: NotificationDao, authManager: AuthManager, db: AppData
         activeList.map { it.packageName to it.appName }.distinctBy { it.first }
     }
 
-    val filteredNotifs by remember(activeList, selectedReasonFilter, selectedPackages, debouncedSearchQuery) {
+    val filteredNotifs by remember(activeList, selectedReasonFilter, selectedPackages, debouncedSearchQuery, sortMode) {
         derivedStateOf {
             var list = activeList.distinctBy { "${it.packageName}_${it.title}_${it.content}" }
 
@@ -127,12 +140,41 @@ fun LogHistoryScreen(dao: NotificationDao, authManager: AuthManager, db: AppData
                 list = list.filter { selectedPackages!!.contains(it.packageName) }
             }
 
-            if (debouncedSearchQuery.isBlank()) {
-                list
-            } else {
-                HybridSearchEngine.searchAndRankBlocking(list, debouncedSearchQuery)
+            if (debouncedSearchQuery.isNotBlank()) {
+                list = HybridSearchEngine.searchAndRankBlocking(list, debouncedSearchQuery)
+            }
+
+            when (sortMode) {
+                SortMode.NEWEST -> list.sortedByDescending { it.postTime }
+                SortMode.OLDEST -> list.sortedBy { it.postTime }
+                SortMode.APP_NAME -> list.sortedWith(compareBy(String.CASE_INSENSITIVE_ORDER) { it.appName })
+                SortMode.TITLE -> list.sortedWith(compareBy(String.CASE_INSENSITIVE_ORDER) { it.title })
+                else -> list
             }
         }
+    }
+
+    val notificationGroups = remember(filteredNotifs) {
+        groupNotifications(filteredNotifs)
+    }
+
+    LaunchedEffect(notificationGroups, listState) {
+        snapshotFlow { listState.layoutInfo.visibleItemsInfo.map { it.index } }
+            .distinctUntilChanged()
+            .collect { visibleIndexes ->
+                if (visibleIndexes.isEmpty() || notificationGroups.isEmpty()) return@collect
+                val first = ((visibleIndexes.minOrNull() ?: 0) - PREFETCH_BEHIND).coerceAtLeast(0)
+                val last = ((visibleIndexes.maxOrNull() ?: 0) + PREFETCH_AHEAD)
+                    .coerceAtMost(notificationGroups.lastIndex)
+                val candidates = notificationGroups
+                    .subList(first, last + 1)
+                    .flatMap { it.items }
+                    .mapNotNull { it.appIconUri }
+                    .distinct()
+                withContext(Dispatchers.IO) {
+                    candidates.distinct().map { uri -> async { AppIconCache.getIcon(context, uri) } }.awaitAll()
+                }
+            }
     }
 
     Scaffold(
@@ -247,6 +289,15 @@ fun LogHistoryScreen(dao: NotificationDao, authManager: AuthManager, db: AppData
                                     showSortMenu = false
                                 }
                             )
+                            SortMode.entries.drop(BASE_SORT_MODE_COUNT).forEach { option ->
+                                DropdownMenuItem(
+                                    text = { Text("${option.label} ${if (sortMode == option) "✓" else ""}") },
+                                    onClick = {
+                                        sortMode = option
+                                        showSortMenu = false
+                                    }
+                                )
+                            }
                         }
                     }
                 }
@@ -372,7 +423,6 @@ fun LogHistoryScreen(dao: NotificationDao, authManager: AuthManager, db: AppData
                     }
                 )
             } else {
-                val notificationGroups = groupNotifications(filteredNotifs)
                 LazyColumn(
                     state = listState,
                     modifier = Modifier.fillMaxSize(),
@@ -381,7 +431,8 @@ fun LogHistoryScreen(dao: NotificationDao, authManager: AuthManager, db: AppData
                 ) {
                     items(
                         items = notificationGroups,
-                        key = { group -> "history_group_${group.groupKey}" }
+                        key = { group -> "history_group_${group.groupKey}" },
+                        contentType = { group -> if (group.items.size == 1) "notification" else "group" }
                     ) { group ->
                         val isGroupExpanded = !collapsedGroups.contains(group.groupKey)
                         if (group.items.size == 1) {
@@ -500,9 +551,7 @@ fun LogHistoryCard(
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable {
-                NotificationLauncher.launchNotification(context, item.packageName, item.key, item.intentUri)
-            },
+            .clickable(onClick = onToggleExpand),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surface
         )
@@ -556,16 +605,23 @@ fun LogHistoryCard(
                     Spacer(modifier = Modifier.width(6.dp))
                     TooltipBox(
                         positionProvider = TooltipDefaults.rememberPlainTooltipPositionProvider(),
-                        tooltip = { PlainTooltip { Text(if (isExpanded) "Collapse details" else "Expand details") } },
+                        tooltip = { PlainTooltip { Text("Open notification") } },
                         state = rememberTooltipState()
                     ) {
                         IconButton(
-                            onClick = onToggleExpand,
+                            onClick = {
+                                NotificationLauncher.launchNotification(
+                                    context,
+                                    item.packageName,
+                                    item.key,
+                                    item.intentUri
+                                )
+                            },
                             modifier = Modifier.size(24.dp)
                         ) {
                             Icon(
-                                imageVector = if (isExpanded) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
-                                contentDescription = null
+                                imageVector = Icons.Default.OpenInNew,
+                                contentDescription = "Open notification"
                             )
                         }
                     }
