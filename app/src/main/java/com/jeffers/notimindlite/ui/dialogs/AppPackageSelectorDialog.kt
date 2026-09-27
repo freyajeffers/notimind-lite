@@ -44,7 +44,12 @@ fun AppPackageSelectorDialog(
                     modifier = Modifier.fillMaxWidth(),
                     label = { Text(stringResource(R.string.package_filter_search_label)) },
                     placeholder = { Text(stringResource(R.string.package_filter_search_hint)) },
-                    leadingIcon = { Icon(Icons.Default.Search, contentDescription = stringResource(R.string.common_search)) },
+                    leadingIcon = {
+                        Icon(
+                            Icons.Default.Search,
+                            contentDescription = stringResource(R.string.common_search)
+                        )
+                    },
                     singleLine = true
                 )
                 Spacer(modifier = Modifier.height(8.dp))
