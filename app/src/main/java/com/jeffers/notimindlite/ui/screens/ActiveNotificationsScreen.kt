@@ -312,6 +312,12 @@ fun ActiveNotificationsScreen(dao: NotificationDao, authManager: AuthManager, db
             }
     }
 
+    val groupedNotificationsBySection = remember(sectionOrder, notificationsBySection) {
+        sectionOrder.associateWith { section ->
+            groupNotifications(notificationsBySection[section].orEmpty())
+        }
+    }
+
     LaunchedEffect(prefetchCandidates) {
         snapshotFlow { listState.firstVisibleItemIndex }
             .distinctUntilChanged()
@@ -625,28 +631,7 @@ fun ActiveNotificationsScreen(dao: NotificationDao, authManager: AuthManager, db
 
                 sectionOrder.forEach { section ->
                     val isExpanded = expandedSection == section.keyName
-                    val rawItemsList = when (section) {
-                        NotificationSection.PINNED -> pinnedNotifs
-                        NotificationSection.ACTIVE -> activeNotifs
-                        NotificationSection.FILTERED -> filteredNotifs
-                        NotificationSection.DISMISSED ->
-                            recentlyDismissed.sortedByDescending { it.dismissTime ?: it.postTime }
-                        NotificationSection.LOST -> lostNotifs
-                    }.distinctBy { "${it.packageName}_${it.title}_${it.content}" }
-
-                    val filteredList = if (!selectedPackages.isNullOrEmpty()) {
-                        rawItemsList.filter { selectedPackages!!.contains(it.packageName) }
-                    } else {
-                        rawItemsList
-                    }
-
-                    val itemsList = if (debouncedSearchQuery.isBlank()) filteredList
-                    else {
-                        // F-G read-side [2026-09-02 audit]: HybridSearchEngine
-                        // composes FTS4 keyword scoring with semantic-vector
-                        // cosine scoring via Reciprocal Rank Fusion.
-                        HybridSearchEngine.searchAndRankBlocking(filteredList, debouncedSearchQuery)
-                    }
+                    val itemsList = notificationsBySection[section].orEmpty()
 
                     stickyHeader(key = "sticky_header_${section.keyName}") {
                         Surface(
@@ -699,10 +684,11 @@ fun ActiveNotificationsScreen(dao: NotificationDao, authManager: AuthManager, db
                     }
 
                     if (isExpanded) {
-                        val notificationGroups = groupNotifications(itemsList)
+                        val notificationGroups = groupedNotificationsBySection[section].orEmpty()
                         items(
                             items = notificationGroups,
-                            key = { group -> "group_${section.keyName}_${group.groupKey}" }
+                            key = { group -> "group_${section.keyName}_${group.groupKey}" },
+                            contentType = { group -> if (group.items.size == 1) "notification" else "group" }
                         ) { group ->
                             val isGroupExpanded = !collapsedGroups.contains(group.groupKey)
                             if (group.items.size == 1) {
