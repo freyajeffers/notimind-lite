@@ -58,7 +58,7 @@ fun SettingsPrivacySection(preferencesRepository: PreferencesRepository) {
                     Text(stringResource(R.string.pref_redact_pii_title), style = MaterialTheme.typography.bodyLarge)
                     Text(stringResource(R.string.pref_redact_pii_summary), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
-                Switch(checked = redactPii, onCheckedChange = { scope.launch { preferencesRepository.setRedactPii(it) } })
+                Switch(checked = redactPii, onCheckedChange = { scope.launch { preferencesRepository.setRedactPii(it) } }, enabled = !BuildConfig.DEBUG)
             }
         }
     }

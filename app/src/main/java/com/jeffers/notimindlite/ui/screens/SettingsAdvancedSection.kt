@@ -9,6 +9,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import com.jeffers.notimindlite.data.local.PreferencesRepository
+import com.jeffers.notimindlite.BuildConfig
 import com.jeffers.notimindlite.R
 
 @Composable
@@ -31,7 +32,7 @@ fun SettingsAdvancedSection(preferencesRepository: PreferencesRepository) {
                     Text(stringResource(R.string.pref_enable_telemetry_title), style = MaterialTheme.typography.bodyLarge)
                     Text(stringResource(R.string.pref_enable_telemetry_summary), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
-                Switch(checked = enableTelemetry, onCheckedChange = preferencesRepository::setEnableTelemetry)
+                Switch(checked = enableTelemetry, onCheckedChange = preferencesRepository::setEnableTelemetry, enabled = !BuildConfig.DEBUG)
             }
 
             Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
