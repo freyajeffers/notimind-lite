@@ -8,14 +8,36 @@ import net.zetetic.database.sqlcipher.SupportOpenHelperFactory
 
 /** Creates Room's SQLCipher open-helper factory for one database identity. */
 object EncryptedDatabaseFactory {
+    @Volatile
+    private var sqlCipherLoaded = false
+
     fun openHelperFactory(context: Context, databaseName: String): SupportSQLiteOpenHelper.Factory? {
-        if (Build.FINGERPRINT == "robolectric") return null
+        if (Build.FINGERPRINT == "robolectric" || isRobolectricRuntime() || !isAndroidRuntime()) return null
         val preferences = PreferencesRepository(context.applicationContext)
         if (!preferences.dbEncrypted.value || preferences.dbEncryptionMode.value == DbEncryptionMode.NONE) return null
+        ensureSqlCipherLoaded()
         val useKeystore = preferences.useKeystore.value && preferences.dbEncryptionMode.value == DbEncryptionMode.KEYSTORE
         val passphrase = SqlCipherKeyManager.getOrCreatePassphrase(context, databaseName, useKeystore)
         return SupportOpenHelperFactory(passphrase).also {
             passphrase.fill(0)
         }
+    }
+
+    @Synchronized
+    private fun ensureSqlCipherLoaded() {
+        if (!sqlCipherLoaded) {
+            System.loadLibrary("sqlcipher")
+            sqlCipherLoaded = true
+        }
+    }
+
+    private fun isAndroidRuntime(): Boolean =
+        System.getProperty("java.vm.name")?.contains("Dalvik", ignoreCase = true) == true
+
+    private fun isRobolectricRuntime(): Boolean = try {
+        Class.forName("org.robolectric.RuntimeEnvironment")
+        true
+    } catch (_: ClassNotFoundException) {
+        false
     }
 }
