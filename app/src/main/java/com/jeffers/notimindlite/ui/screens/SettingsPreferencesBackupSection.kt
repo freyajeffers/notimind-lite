@@ -11,6 +11,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.jeffers.notimindlite.R
 import com.jeffers.notimindlite.data.local.PreferencesRepository
+import com.jeffers.notimindlite.BuildConfig
 import com.jeffers.notimindlite.util.PreferencesBackup
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -64,18 +65,19 @@ fun SettingsPreferencesBackupSection() {
                 label = { Text(stringResource(R.string.pref_export_formats)) },
                 supportingText = { Text(stringResource(R.string.pref_export_formats_summary)) },
                 singleLine = true,
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth(),
+                enabled = !BuildConfig.DEBUG
             )
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                 Column(Modifier.weight(1f)) {
                     Text(stringResource(R.string.pref_export_anonymize), style = MaterialTheme.typography.bodyLarge)
                     Text(stringResource(R.string.pref_export_anonymize_summary), style = MaterialTheme.typography.bodySmall)
                 }
-                Switch(checked = exportAnonymize, onCheckedChange = preferences::setExportAnonymize)
+                Switch(checked = exportAnonymize, onCheckedChange = preferences::setExportAnonymize, enabled = !BuildConfig.DEBUG)
             }
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                Button(onClick = { exportLauncher.launch("notimind-preferences.json") }) { Text(stringResource(R.string.pref_backup_export)) }
-                OutlinedButton(onClick = { importLauncher.launch(arrayOf("application/json", "text/json", "*/*")) }) { Text(stringResource(R.string.pref_backup_import)) }
+                Button(onClick = { exportLauncher.launch("notimind-preferences.json") }, enabled = !BuildConfig.DEBUG) { Text(stringResource(R.string.pref_backup_export)) }
+                OutlinedButton(onClick = { importLauncher.launch(arrayOf("application/json", "text/json", "*/*")) }, enabled = !BuildConfig.DEBUG) { Text(stringResource(R.string.pref_backup_import)) }
             }
             message?.let { Text(it, style = MaterialTheme.typography.bodySmall) }
         }
