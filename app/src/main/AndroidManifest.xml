@@ -79,7 +79,7 @@
         <receiver
             android:name=".migration.MigrationCommandReceiver"
             android:enabled="${migrationReceiverEnabled}"
-            android:exported="true" />
+            android:exported="false" />
 
         <provider
             android:name="androidx.core.content.FileProvider"
