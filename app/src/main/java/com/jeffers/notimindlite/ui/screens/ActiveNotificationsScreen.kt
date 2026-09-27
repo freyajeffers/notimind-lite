@@ -643,7 +643,7 @@ fun ActiveNotificationsScreen(dao: NotificationDao, authManager: AuthManager, db
                     }
                 }
 
-                sectionOrder.forEach { section ->
+                for (section in sectionOrder) {
                     val isExpanded = expandedSection == section.keyName
                     val itemsList = notificationsBySection[section].orEmpty()
 
