@@ -24,6 +24,7 @@ import androidx.compose.ui.semantics.semantics
  * SpeedDialSettingsFab provides a primary action button that expands into
  * a set of quick-action sub-buttons (Sync, Backup, Settings).
  */
+@Suppress("LongMethod", "FunctionNaming")
 @Composable
 fun SpeedDialSettingsFab(
     onSyncClick: () -> Unit,

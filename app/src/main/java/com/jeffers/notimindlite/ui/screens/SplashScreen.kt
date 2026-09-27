@@ -17,19 +17,23 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.delay
 
+private const val INITIAL_SPLASH_SCALE = 0.88f
+private const val SPLASH_SCALE_UP_DELAY_MS = 650L
+private const val SPLASH_HANDOFF_DELAY_MS = 450L
+
 /**
  * SplashScreen provides a branded entry point for the application.
  * It handles initial resource loading and transitions to the main navigation.
  */
 @Composable
 fun SplashScreen(onTimeout: () -> Unit) {
-    var scale by remember { mutableFloatStateOf(0.88f) }
+    var scale by remember { mutableFloatStateOf(INITIAL_SPLASH_SCALE) }
 
     LaunchedEffect(Unit) {
         // Keep the hand-off short; startup work runs in parallel in MainActivity.
-        delay(650)
+        delay(SPLASH_SCALE_UP_DELAY_MS)
         scale = 1.0f
-        delay(450)
+        delay(SPLASH_HANDOFF_DELAY_MS)
         onTimeout()
     }
 

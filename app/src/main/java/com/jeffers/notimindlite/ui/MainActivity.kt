@@ -43,6 +43,7 @@ class MainActivity : ComponentActivity() {
             }
         }
 
+    @Suppress("TooGenericExceptionCaught", "LongMethod")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
