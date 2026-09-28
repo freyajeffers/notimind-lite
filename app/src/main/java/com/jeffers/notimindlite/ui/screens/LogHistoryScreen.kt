@@ -219,7 +219,15 @@ fun LogHistoryScreen(dao: NotificationDao, authManager: AuthManager, db: AppData
                             onDismissRequest = { showFilterMenu = false }
                         ) {
                             DropdownMenuItem(
-                                text = { Text(stringResource(id = R.string.log_history_filter_app_count, selectedPackages?.size?.toString() ?: "All")) },
+                                text = {
+                                    Text(
+                                        stringResource(
+                                            id = R.string.log_history_filter_app_count,
+                                            selectedPackages?.size?.toString()
+                                                ?: stringResource(R.string.common_all)
+                                        )
+                                    )
+                                },
                                 onClick = {
                                     showFilterMenu = false
                                     showPackagePicker = true
