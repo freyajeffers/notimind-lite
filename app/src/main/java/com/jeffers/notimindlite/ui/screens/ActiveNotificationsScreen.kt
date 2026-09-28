@@ -347,7 +347,7 @@ fun ActiveNotificationsScreen(dao: NotificationDao, authManager: AuthManager, db
                         }
                     }
                     TooltipBox(
-                        positionProvider = TooltipDefaults.rememberPlainTooltipPositionProvider(),
+                        positionProvider = TooltipDefaults.rememberTooltipPositionProvider(),
                         tooltip = { PlainTooltip { Text(stringResource(id = R.string.active_notifications_filter_apps)) } },
                         state = rememberTooltipState()
                     ) {
@@ -360,7 +360,7 @@ fun ActiveNotificationsScreen(dao: NotificationDao, authManager: AuthManager, db
                         }
                     }
                     TooltipBox(
-                        positionProvider = TooltipDefaults.rememberPlainTooltipPositionProvider(),
+                        positionProvider = TooltipDefaults.rememberTooltipPositionProvider(),
                         tooltip = { PlainTooltip { Text(stringResource(id = R.string.common_search)) } },
                         state = rememberTooltipState()
                     ) {
@@ -812,7 +812,7 @@ fun LogNotificationCard(
 
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     TooltipBox(
-                        positionProvider = TooltipDefaults.rememberPlainTooltipPositionProvider(),
+                        positionProvider = TooltipDefaults.rememberTooltipPositionProvider(),
                         tooltip = { PlainTooltip { Text(if (item.isPinned) "Unpin notification" else "Pin notification") } },
                         state = rememberTooltipState()
                     ) {
@@ -850,7 +850,7 @@ fun LogNotificationCard(
                     }
 
                     TooltipBox(
-                        positionProvider = TooltipDefaults.rememberPlainTooltipPositionProvider(),
+                        positionProvider = TooltipDefaults.rememberTooltipPositionProvider(),
                         tooltip = { PlainTooltip { Text(if (isExpanded) "Collapse details" else "Expand details") } },
                         state = rememberTooltipState()
                     ) {
