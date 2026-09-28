@@ -330,6 +330,9 @@ fun LogHistoryScreen(dao: NotificationDao, authManager: AuthManager, db: AppData
                             focusManager.clearFocus(force = true)
                             keyboardController?.hide()
                         }) { Text("Clear filters") }
+                        if (recentSearches.isNotEmpty()) {
+                            TextButton(onClick = { recentSearches = emptyList() }) { Text("Reset searches") }
+                        }
                     }
                 }
             )
