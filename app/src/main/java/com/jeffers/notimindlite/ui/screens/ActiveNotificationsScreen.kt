@@ -331,44 +331,54 @@ fun ActiveNotificationsScreen(dao: NotificationDao, authManager: AuthManager, db
 
     Scaffold(
         topBar = {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(40.dp)
-                    .background(MaterialTheme.colorScheme.background)
-                    .padding(horizontal = 4.dp),
-                horizontalArrangement = Arrangement.End,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                if (!selectedPackages.isNullOrEmpty() || searchQuery.isNotBlank()) {
-                    IconButton(
-                        modifier = Modifier.size(32.dp),
-                        onClick = {
+            TopAppBar(
+                title = {},
+                actions = {
+                    if (!selectedPackages.isNullOrEmpty() || searchQuery.isNotBlank()) {
+                        IconButton(onClick = {
                             selectedPackages = null
                             searchQuery = ""
                             isSearchFocused = false
                             isSearchExplicitlyOpened = false
                             focusManager.clearFocus(force = true)
                             keyboardController?.hide()
+                        }) {
+                            Icon(Icons.Default.FilterAltOff, contentDescription = "Clear filters")
                         }
-                    ) { Icon(Icons.Default.FilterAltOff, contentDescription = "Clear filters", modifier = Modifier.size(18.dp)) }
-                }
-                IconButton(modifier = Modifier.size(32.dp), onClick = { showPackagePicker = true }) {
-                    Icon(Icons.Default.FilterList, contentDescription = stringResource(id = R.string.active_notifications_filter_apps), modifier = Modifier.size(18.dp), tint = if (!selectedPackages.isNullOrEmpty()) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface)
-                }
-                IconButton(modifier = Modifier.size(32.dp), onClick = {
-                    if (isSearchExplicitlyOpened || searchQuery.isNotEmpty() || isSearchFocused) {
-                        isSearchExplicitlyOpened = false
-                        isSearchFocused = false
-                        searchQuery = ""
-                    } else {
-                        isSearchExplicitlyOpened = true
-                        scope.launch { listState.animateScrollToItem(0); searchFocusRequester.requestFocus() }
                     }
-                }) {
-                    Icon(Icons.Default.Search, contentDescription = stringResource(id = R.string.common_search), modifier = Modifier.size(18.dp))
+                    TooltipBox(
+                        positionProvider = TooltipDefaults.rememberPlainTooltipPositionProvider(),
+                        tooltip = { PlainTooltip { Text(stringResource(id = R.string.active_notifications_filter_apps)) } },
+                        state = rememberTooltipState()
+                    ) {
+                        IconButton(onClick = { showPackagePicker = true }) {
+                            Icon(
+                                Icons.Default.FilterList,
+                                contentDescription = stringResource(id = R.string.active_notifications_filter_apps),
+                                tint = if (!selectedPackages.isNullOrEmpty()) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
+                            )
+                        }
+                    }
+                    TooltipBox(
+                        positionProvider = TooltipDefaults.rememberPlainTooltipPositionProvider(),
+                        tooltip = { PlainTooltip { Text(stringResource(id = R.string.common_search)) } },
+                        state = rememberTooltipState()
+                    ) {
+                        IconButton(onClick = {
+                            if (isSearchExplicitlyOpened || searchQuery.isNotEmpty() || isSearchFocused) {
+                                isSearchExplicitlyOpened = false
+                                isSearchFocused = false
+                                searchQuery = ""
+                            } else {
+                                isSearchExplicitlyOpened = true
+                                scope.launch { listState.animateScrollToItem(0); searchFocusRequester.requestFocus() }
+                            }
+                        }) {
+                            Icon(Icons.Default.Search, contentDescription = stringResource(id = R.string.common_search))
+                        }
+                    }
                 }
-            }
+            )
         },
         floatingActionButton = {
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
