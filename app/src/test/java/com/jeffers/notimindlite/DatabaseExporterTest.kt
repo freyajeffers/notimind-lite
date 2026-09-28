@@ -82,6 +82,20 @@ class DatabaseExporterTest {
     }
 
     @Test
+    fun testExportAppliesPrivacyPreferences() {
+        val preferences = com.jeffers.notimindlite.data.local.PreferencesRepository(context)
+        preferences.setAnonymizeTitles(true)
+        preferences.setRedactPii(true)
+        val entity = NotificationEntity(key = "privacy", packageName = "p", appName = "App", title = "Secret title", content = "Email me at user@example.com")
+
+        val obj = JSONArray(DatabaseExporter.exportToJsonString(listOf(entity), context)).getJSONObject(0)
+        assertEquals("[REDACTED-TITLE]", obj.getString("title"))
+        assertTrue(obj.getString("content").contains("[REDACTED-EMAIL]"))
+
+        preferences.setAnonymizeTitles(false)
+    }
+
+    @Test
     fun testFileProviderUriGeneration() {
         val exportsDir = File(context.cacheDir, "exports")
         if (!exportsDir.exists()) exportsDir.mkdirs()
@@ -113,5 +127,17 @@ class DatabaseExporterTest {
 
         assertFalse("Old export file should be deleted", oldFile.exists())
         assertTrue("Recent export file should be retained", recentFile.exists())
+    }
+
+    @Test
+    fun testNdjsonExportProducesOneJsonPerLine() {
+        val entity1 = NotificationEntity(key = "n1", packageName = "p", appName = "A", title = "T1", content = "C1")
+        val entity2 = NotificationEntity(key = "n2", packageName = "p", appName = "A", title = "T2", content = "C2")
+        val ndjson = DatabaseExporter.exportToNdjsonString(listOf(entity1, entity2))
+        assertNotNull(ndjson)
+        val lines = ndjson.lines().filter { it.isNotBlank() }
+        assertEquals(2, lines.size)
+        assertTrue(lines[0].contains("\"key\":\"n1\""))
+        assertTrue(lines[1].contains("\"key\":\"n2\""))
     }
 }

@@ -15,7 +15,8 @@ import javax.crypto.SecretKey
  */
 class FirestoreSyncRepository(
     private val db: AppDatabase,
-    private val firestore: FirebaseFirestore = FirebaseFirestore.getInstance()
+    private val firestore: FirebaseFirestore = FirebaseFirestore.getInstance(),
+    private val profileId: String = "default"
 ) {
     private val TAG = "FirestoreSyncRepo"
 
@@ -39,7 +40,12 @@ class FirestoreSyncRepository(
     suspend fun sync(userId: String, secretKey: SecretKey): Result<Int> {
         return try {
             val dao = db.notificationDao()
-            val userCol = firestore.collection("users").document(userId).collection("notifications")
+            val userCol = if (profileId == "default") {
+                firestore.collection("users").document(userId).collection("notifications")
+            } else {
+                firestore.collection("users").document(userId)
+                    .collection("profiles").document(profileId).collection("notifications")
+            }
 
             // 1. Upload unsynced local changes in batches
             val unsynced = dao.getUnsyncedNotifications()

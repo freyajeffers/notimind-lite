@@ -3,6 +3,7 @@ package com.jeffers.notimindlite.data.local
 import android.content.Context
 import android.os.UserManager
 import androidx.core.content.edit
+import com.jeffers.notimindlite.data.local.PreferencesRepository
 
 @Suppress("TooManyFunctions") // Compatibility facade preserves the established preference API.
 class PreferenceManager(context: Context) {

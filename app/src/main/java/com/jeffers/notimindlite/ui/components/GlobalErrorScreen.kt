@@ -18,20 +18,15 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.semantics.heading
-import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import com.jeffers.notimindlite.ui.theme.Dimens
-import com.jeffers.notimindlite.R
 
 @Composable
 @Suppress("FunctionNaming") // Composable PascalCase is required by the Compose API;
 // detekt's FunctionNaming rule does not exempt Composables.
 fun GlobalErrorScreen(
     message: String,
-    actionLabel: String? = null,
+    actionLabel: String = "Retry",
     onActionClick: () -> Unit,
     icon: ImageVector = Icons.Default.ErrorOutline
 ) {
@@ -40,22 +35,21 @@ fun GlobalErrorScreen(
         contentAlignment = Alignment.Center
     ) {
         Column(
-            modifier = Modifier.padding(Dimens.ExtraLarge),
+            modifier = Modifier.padding(24.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
             Icon(
                 imageVector = icon,
-                contentDescription = null,
-                modifier = Modifier.size(Dimens.IconExtraLarge),
+                contentDescription = "Error icon",
+                modifier = Modifier.size(64.dp),
                 tint = MaterialTheme.colorScheme.error
             )
-            Spacer(modifier = Modifier.height(Dimens.Large))
+            Spacer(modifier = Modifier.height(16.dp))
             Text(
-                text = stringResource(R.string.global_error_title),
+                text = "Something went wrong",
                 style = MaterialTheme.typography.headlineSmall,
-                textAlign = TextAlign.Center,
-                modifier = Modifier.semantics { heading() }
+                textAlign = TextAlign.Center
             )
             Spacer(modifier = Modifier.height(8.dp))
             Text(
@@ -66,7 +60,7 @@ fun GlobalErrorScreen(
             )
             Spacer(modifier = Modifier.height(24.dp))
             Button(onClick = onActionClick) {
-                Text(text = actionLabel ?: stringResource(R.string.common_retry))
+                Text(text = actionLabel)
             }
         }
     }

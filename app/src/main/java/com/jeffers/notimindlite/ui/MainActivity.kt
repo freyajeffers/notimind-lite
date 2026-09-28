@@ -27,6 +27,7 @@ import com.jeffers.notimindlite.BuildConfig
 import androidx.lifecycle.lifecycleScope
 import com.jeffers.notimindlite.R
 import com.jeffers.notimindlite.data.local.AppDatabase
+import com.jeffers.notimindlite.data.local.PreferencesRepository
 import com.jeffers.notimindlite.service.NotificationLoggerService
 import com.jeffers.notimindlite.ui.screens.checkNotificationPermission
 import com.jeffers.notimindlite.domain.clustering.DynamicClusterManager
@@ -47,10 +48,13 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+        window.statusBarColor = android.graphics.Color.BLACK
+        window.navigationBarColor = android.graphics.Color.BLACK
 
         val database = AppDatabase.getDatabase(applicationContext)
         val dao = database.notificationDao()
         val authManager = com.jeffers.notimindlite.data.auth.AuthManager(applicationContext)
+        val preferencesRepository = PreferencesRepository(applicationContext)
 
         checkPostNotificationsPermission()
 
@@ -79,7 +83,11 @@ class MainActivity : ComponentActivity() {
         }
 
         setContent {
-            com.jeffers.notimindlite.ui.theme.NotiMindLiteTheme {
+            val themeAccent by preferencesRepository.themeAccent.collectAsState()
+            com.jeffers.notimindlite.ui.theme.NotiMindLiteTheme(
+                amoledTheme = themeAccent == "amoled",
+                dynamicColor = themeAccent == "system"
+            ) {
                 Surface(
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
@@ -117,7 +125,7 @@ class MainActivity : ComponentActivity() {
                         }
                     }
 
-                    MainNavigation(notificationDao = dao, authManager = authManager, db = database)
+                    MainNavigation(notificationDao = dao, authManager = authManager, db = database, preferencesRepository = preferencesRepository)
 
                     if (showPermissionDialog && !hasPermission) {
                         AlertDialog(
