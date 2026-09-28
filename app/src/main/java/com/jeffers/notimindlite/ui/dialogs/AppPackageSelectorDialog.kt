@@ -39,7 +39,7 @@ fun AppPackageSelectorDialog(
                     onValueChange = { searchQuery = it },
                     modifier = Modifier.fillMaxWidth(),
                     placeholder = { Text("Search apps...") },
-                    leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
+                    leadingIcon = { Icon(Icons.Default.Search, contentDescription = "Search apps") },
                     singleLine = true
                 )
                 Spacer(modifier = Modifier.height(8.dp))
