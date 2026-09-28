@@ -334,6 +334,16 @@ fun ActiveNotificationsScreen(dao: NotificationDao, authManager: AuthManager, db
             TopAppBar(
                 title = {},
                 actions = {
+                    if (!selectedPackages.isNullOrEmpty() || searchQuery.isNotBlank()) {
+                        IconButton(onClick = {
+                            selectedPackages = null
+                            searchQuery = ""
+                            isSearchFocused = false
+                            isSearchExplicitlyOpened = false
+                            focusManager.clearFocus(force = true)
+                            keyboardController?.hide()
+                        }) { Icon(Icons.Default.FilterAltOff, contentDescription = "Clear filters") }
+                    }
                     IconButton(onClick = { showPackagePicker = true }) {
                         Icon(Icons.Default.FilterList, contentDescription = stringResource(id = R.string.active_notifications_filter_apps), tint = if (!selectedPackages.isNullOrEmpty()) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface)
                     }
@@ -348,19 +358,6 @@ fun ActiveNotificationsScreen(dao: NotificationDao, authManager: AuthManager, db
                         }
                     }) {
                         Icon(Icons.Default.Search, contentDescription = stringResource(id = R.string.common_search))
-                    }
-                    if (!selectedPackages.isNullOrEmpty() || searchQuery.isNotBlank() || recentSearches.isNotEmpty()) {
-                        IconButton(onClick = {
-                                selectedPackages = null
-                                searchQuery = ""
-                                preferences.resetRecentSearches()
-                                isSearchFocused = false
-                                isSearchExplicitlyOpened = false
-                                focusManager.clearFocus(force = true)
-                                keyboardController?.hide()
-                        }) {
-                            Icon(Icons.Default.FilterAltOff, contentDescription = "Clear filters")
-                        }
                     }
                 }
             )
@@ -451,7 +448,17 @@ fun ActiveNotificationsScreen(dao: NotificationDao, authManager: AuthManager, db
                                     else recentSearches.filter { it.contains(searchQuery, ignoreCase = true) }
                                 }
                                 matchingRecent.forEach { recent ->
-                                    DropdownMenuItem(text = { Text(recent) }, onClick = { searchQuery = recent; expandedDropdown = false })
+                                    DropdownMenuItem(
+                                        text = { Text(recent) },
+                                        trailingIcon = { IconButton(onClick = { preferences.removeRecentSearch(recent) }) { Icon(Icons.Default.Close, contentDescription = "Remove recent search") } },
+                                        onClick = { searchQuery = recent; expandedDropdown = false }
+                                    )
+                                }
+                                if (matchingRecent.isNotEmpty()) {
+                                    DropdownMenuItem(
+                                        text = { Text("Clear recent searches") },
+                                        onClick = { preferences.resetRecentSearches(); expandedDropdown = false }
+                                    )
                                 }
 
                                 // Suggestions from notification content (de-duplicated)
