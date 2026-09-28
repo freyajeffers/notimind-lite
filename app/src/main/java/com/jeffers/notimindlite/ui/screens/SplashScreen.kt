@@ -13,11 +13,15 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
+import com.jeffers.notimindlite.R
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.delay
+
+private const val INITIAL_SPLASH_SCALE = 0.88f
+private const val SPLASH_SCALE_UP_DELAY_MS = 650L
+private const val SPLASH_HANDOFF_DELAY_MS = 450L
 
 /**
  * SplashScreen provides a branded entry point for the application.
@@ -25,12 +29,13 @@ import kotlinx.coroutines.delay
  */
 @Composable
 fun SplashScreen(onTimeout: () -> Unit) {
-    var scale by remember { mutableFloatStateOf(0.8f) }
-    
+    var scale by remember { mutableFloatStateOf(INITIAL_SPLASH_SCALE) }
+
     LaunchedEffect(Unit) {
-        delay(1500) // Branded delay
+        // Keep the hand-off short; startup work runs in parallel in MainActivity.
+        delay(SPLASH_SCALE_UP_DELAY_MS)
         scale = 1.0f
-        delay(500)
+        delay(SPLASH_HANDOFF_DELAY_MS)
         onTimeout()
     }
 
@@ -53,10 +58,9 @@ fun SplashScreen(onTimeout: () -> Unit) {
                 .clip(MaterialTheme.shapes.medium)
                 .background(MaterialTheme.colorScheme.onPrimary)
         ) {
-            // Note: Using a system icon as a placeholder until branded assets are added
             Image(
-                painter = painterResource(id = android.R.drawable.ic_menu_info_details),
-                contentDescription = "NotiMind Logo",
+                painter = painterResource(id = R.mipmap.ic_launcher),
+                contentDescription = stringResource(R.string.splash_logo_description),
                 modifier = Modifier.fillMaxSize()
             )
         }
