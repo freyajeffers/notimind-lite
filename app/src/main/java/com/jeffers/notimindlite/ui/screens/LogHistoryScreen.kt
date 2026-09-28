@@ -252,7 +252,10 @@ fun LogHistoryScreen(dao: NotificationDao, authManager: AuthManager, db: AppData
                             state = rememberTooltipState()
                         ) {
                             IconButton(onClick = { showSortMenu = true }) {
-                                Icon(Icons.AutoMirrored.Filled.Sort, contentDescription = "Sort Log History")
+                                Icon(
+                                    Icons.AutoMirrored.Filled.Sort,
+                                    contentDescription = stringResource(R.string.notification_action_sort_history)
+                                )
                             }
                         }
                         DropdownMenu(
@@ -340,7 +343,10 @@ fun LogHistoryScreen(dao: NotificationDao, authManager: AuthManager, db: AppData
                             containerColor = MaterialTheme.colorScheme.primaryContainer,
                             contentColor = MaterialTheme.colorScheme.onPrimaryContainer
                         ) {
-                            Icon(Icons.Default.KeyboardArrowUp, contentDescription = "Scroll to Top")
+                            Icon(
+                                Icons.Default.KeyboardArrowUp,
+                                contentDescription = stringResource(R.string.notification_action_scroll_top)
+                            )
                         }
                     }
 
@@ -358,7 +364,10 @@ fun LogHistoryScreen(dao: NotificationDao, authManager: AuthManager, db: AppData
                             containerColor = MaterialTheme.colorScheme.primaryContainer,
                             contentColor = MaterialTheme.colorScheme.onPrimaryContainer
                         ) {
-                            Icon(Icons.Default.KeyboardArrowDown, contentDescription = "Scroll to Bottom")
+                            Icon(
+                                Icons.Default.KeyboardArrowDown,
+                                contentDescription = stringResource(R.string.notification_action_scroll_bottom)
+                            )
                         }
                     }
                 }
