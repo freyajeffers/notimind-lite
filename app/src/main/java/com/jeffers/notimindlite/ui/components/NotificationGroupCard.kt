@@ -33,10 +33,12 @@ import androidx.compose.material3.PlainTooltip
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TooltipBox
+import androidx.compose.material3.TooltipAnchorPosition
 import androidx.compose.material3.TooltipDefaults
 import androidx.compose.material3.rememberTooltipState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.key
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -195,7 +197,7 @@ fun NotificationGroupCard(
 
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     TooltipBox(
-                        positionProvider = TooltipDefaults.rememberPlainTooltipPositionProvider(),
+                        positionProvider = TooltipDefaults.rememberTooltipPositionProvider(TooltipAnchorPosition.Above),
                         tooltip = {
                             PlainTooltip {
                                 Text(if (group.isPinned) "Unpin all in group" else "Pin all in group")
@@ -228,7 +230,7 @@ fun NotificationGroupCard(
 
                     Spacer(modifier = Modifier.width(4.dp))
                     TooltipBox(
-                        positionProvider = TooltipDefaults.rememberPlainTooltipPositionProvider(),
+                        positionProvider = TooltipDefaults.rememberTooltipPositionProvider(TooltipAnchorPosition.Above),
                         tooltip = {
                             PlainTooltip {
                                 Text(if (isGroupExpanded) "Collapse group" else "Expand group")
@@ -263,7 +265,9 @@ fun NotificationGroupCard(
                     verticalArrangement = Arrangement.spacedBy(6.dp)
                 ) {
                     group.items.forEach { childItem ->
-                        renderChildCard(childItem)
+                        key(childItem.key) {
+                            renderChildCard(childItem)
+                        }
                     }
                 }
             }
