@@ -537,13 +537,19 @@ fun ActiveNotificationsScreen(dao: NotificationDao, authManager: AuthManager, db
                         ) {
                             Column(modifier = Modifier.weight(1f)) {
                                 Text(
-                                    text = "Notification Listener Service",
+                                    text = stringResource(R.string.active_notifications_service_title),
                                     style = MaterialTheme.typography.titleMedium,
                                     fontWeight = FontWeight.Bold,
                                     color = if (isGranted) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.onErrorContainer
                                 )
                                 Text(
-                                    text = if (isGranted) "Status: Active & Listening" else "Status: Permission Required",
+                                    text = stringResource(
+                                        if (isGranted) {
+                                            R.string.active_notifications_service_status_active
+                                        } else {
+                                            R.string.active_notifications_service_status_required
+                                        }
+                                    ),
                                     fontSize = 12.sp,
                                     color = if (isGranted) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error
                                 )
@@ -1055,7 +1061,7 @@ fun LogNotificationCard(
 }
 
 @Composable
-@Suppress("FunctionNaming", "LongMethod", "CyclomaticComplexMethod")
+@Suppress("FunctionNaming", "LongMethod", "CyclomaticComplexMethod", "MaxLineLength")
 fun NotificationExpandedAttributes(
     item: NotificationEntity,
     dateTimeFormatter: DateTimeFormatter,
@@ -1101,57 +1107,57 @@ fun NotificationExpandedAttributes(
                 )
             }
             if (item.updateCount > 1) {
-                AttributeRow(label = "Update Count", value = "${item.updateCount}")
+                AttributeRow(label = stringResource(R.string.notification_attribute_update_count), value = "${item.updateCount}")
             }
             if (item.dismissTime != null && item.dismissTime > 0) {
                 AttributeRow(
-                    label = "Time Dismissed",
+                    label = stringResource(R.string.notification_attribute_time_dismissed),
                     value = dateTimeFormatter.format(Instant.ofEpochMilli(item.dismissTime))
                 )
             }
             if (item.dismissReason != null) {
-                AttributeRow(label = "Dismiss Reason", value = stringResource(id = getReasonLabel(item.dismissReason)))
+                AttributeRow(label = stringResource(R.string.notification_attribute_dismiss_reason), value = stringResource(id = getReasonLabel(item.dismissReason)))
             }
             if (item.isOngoing) {
-                AttributeRow(label = "Ongoing", value = "Yes")
+                AttributeRow(label = stringResource(R.string.notification_attribute_ongoing), value = stringResource(R.string.notification_value_yes))
             }
             if (item.isPersistent) {
-                AttributeRow(label = "Persistent", value = "Yes")
+                AttributeRow(label = stringResource(R.string.notification_attribute_persistent), value = stringResource(R.string.notification_value_yes))
             }
             if (!item.isClearable) {
-                AttributeRow(label = "Clearable", value = "No")
+                AttributeRow(label = stringResource(R.string.notification_attribute_clearable), value = stringResource(R.string.notification_value_no))
             }
             if (item.isPinned) {
-                AttributeRow(label = "Pinned", value = "Yes")
+                AttributeRow(label = stringResource(R.string.notification_attribute_pinned), value = stringResource(R.string.notification_value_yes))
             }
             if (item.isRead) {
-                AttributeRow(label = "Read Status", value = "Read")
+                AttributeRow(label = stringResource(R.string.notification_attribute_read_status), value = stringResource(R.string.notification_value_read))
             }
             if (item.isGroupSummary) {
-                AttributeRow(label = "Group Summary", value = "Yes")
+                AttributeRow(label = stringResource(R.string.notification_attribute_group_summary), value = stringResource(R.string.notification_value_yes))
             }
             if (!item.groupKey.isNullOrEmpty()) {
-                AttributeRow(label = "Group Key", value = item.groupKey)
+                AttributeRow(label = stringResource(R.string.notification_attribute_group_key), value = item.groupKey)
             }
             if (item.actionsCount > 0) {
-                AttributeRow(label = "Actions Count", value = "${item.actionsCount}")
+                AttributeRow(label = stringResource(R.string.notification_attribute_actions_count), value = "${item.actionsCount}")
             }
             if (!item.actionLabels.isNullOrEmpty()) {
-                AttributeRow(label = "Action Labels", value = item.actionLabels)
+                AttributeRow(label = stringResource(R.string.notification_attribute_action_labels), value = item.actionLabels)
             }
             if (!item.intentUri.isNullOrEmpty()) {
-                AttributeRow(label = "Intent URI", value = item.intentUri)
+                AttributeRow(label = stringResource(R.string.notification_attribute_intent_uri), value = item.intentUri)
             }
             if (item.smallIconRes != 0) {
-                AttributeRow(label = "Small Icon Res", value = "0x${item.smallIconRes.toString(16).uppercase()}")
+                AttributeRow(label = stringResource(R.string.notification_attribute_small_icon_res), value = "0x${item.smallIconRes.toString(16).uppercase()}")
             }
             if (!item.appIconUri.isNullOrEmpty()) {
-                AttributeRow(label = "App Icon URI", value = item.appIconUri)
+                AttributeRow(label = stringResource(R.string.notification_attribute_app_icon_uri), value = item.appIconUri)
             }
-            AttributeRow(label = "Sync Status", value = item.syncStatus.name)
+            AttributeRow(label = stringResource(R.string.notification_attribute_sync_status), value = item.syncStatus.name)
             if (item.lastSyncedAt > 0) {
                 AttributeRow(
-                    label = "Last Synced",
+                    label = stringResource(R.string.notification_attribute_last_synced),
                     value = dateTimeFormatter.format(Instant.ofEpochMilli(item.lastSyncedAt))
                 )
             }
