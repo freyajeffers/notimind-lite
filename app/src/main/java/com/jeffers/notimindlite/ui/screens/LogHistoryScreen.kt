@@ -10,6 +10,8 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Sort
@@ -32,9 +34,14 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
+
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.text.style.TextOverflow
@@ -110,10 +117,19 @@ fun LogHistoryScreen(dao: NotificationDao, authManager: AuthManager, db: AppData
     var searchQuery by rememberSaveable { mutableStateOf("") }
     // debouncedSearchQuery is a derived value, not user input; do not save.
     var debouncedSearchQuery by remember { mutableStateOf("") }
+    var isSearchVisible by rememberSaveable { mutableStateOf(false) }
+    var isSearchFocused by remember { mutableStateOf(false) }
+    var recentSearches by rememberSaveable { mutableStateOf(emptyList<String>()) }
+    val focusManager = LocalFocusManager.current
+    val keyboardController = LocalSoftwareKeyboardController.current
 
     LaunchedEffect(searchQuery) {
         delay(100L)
         debouncedSearchQuery = searchQuery
+    }
+
+    LaunchedEffect(isSearchFocused, searchQuery) {
+        if (!isSearchFocused && searchQuery.isBlank()) isSearchVisible = false
     }
 
     val dateTimeFormatter = remember {
@@ -300,6 +316,21 @@ fun LogHistoryScreen(dao: NotificationDao, authManager: AuthManager, db: AppData
                             }
                         }
                     }
+                    IconButton(onClick = { isSearchVisible = true }) {
+                        Icon(Icons.Default.Search, contentDescription = "Search")
+                    }
+                    if (!selectedPackages.isNullOrEmpty() || selectedReasonFilter != null || searchQuery.isNotBlank() || recentSearches.isNotEmpty()) {
+                        TextButton(onClick = {
+                            selectedPackages = null
+                            selectedReasonFilter = null
+                            searchQuery = ""
+                            recentSearches = emptyList()
+                            isSearchFocused = false
+                            isSearchVisible = false
+                            focusManager.clearFocus(force = true)
+                            keyboardController?.hide()
+                        }) { Text("Clear filters") }
+                    }
                 }
             )
         },
@@ -368,7 +399,7 @@ fun LogHistoryScreen(dao: NotificationDao, authManager: AuthManager, db: AppData
                 expandedDropdown = searchSuggestions.isNotEmpty()
             }
 
-            Box(
+            if (isSearchVisible || searchQuery.isNotBlank()) Box(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 16.dp, vertical = 8.dp)
@@ -376,7 +407,9 @@ fun LogHistoryScreen(dao: NotificationDao, authManager: AuthManager, db: AppData
                 OutlinedTextField(
                     value = searchQuery,
                     onValueChange = { searchQuery = it },
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .onFocusChanged { isSearchFocused = it.isFocused },
                     placeholder = { Text("Search") },
                     leadingIcon = { Icon(Icons.Default.Search, contentDescription = "Search") },
                     trailingIcon = {
@@ -387,6 +420,13 @@ fun LogHistoryScreen(dao: NotificationDao, authManager: AuthManager, db: AppData
                         }
                     },
                     singleLine = true,
+                    keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+                    keyboardActions = KeyboardActions(onDone = {
+                        val query = searchQuery.trim()
+                        if (query.isNotEmpty()) recentSearches = listOf(query) + recentSearches.filterNot { it == query }.take(9)
+                        focusManager.clearFocus(force = true)
+                        keyboardController?.hide()
+                    }),
                     shape = RoundedCornerShape(12.dp)
                 )
 
