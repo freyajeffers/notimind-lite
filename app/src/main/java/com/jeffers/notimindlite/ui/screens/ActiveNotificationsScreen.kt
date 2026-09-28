@@ -139,23 +139,29 @@ fun getReasonLabel(reason: Int?): Int {
     }
 }
 
+@Composable
 fun getPriorityLabel(priority: Int): String {
-    return when (priority) {
-        -2 -> "Min"
-        -1 -> "Low"
-        0 -> "Default"
-        1 -> "High"
-        2 -> "Max"
-        else -> "Unknown ($priority)"
+    val resId = when (priority) {
+        -2 -> R.string.notification_priority_min
+        -1 -> R.string.notification_priority_low
+        0 -> R.string.notification_priority_default
+        1 -> R.string.notification_priority_high
+        2 -> R.string.notification_priority_max
+        else -> R.string.notification_priority_unknown
     }
+    return if (priority in -2..2) stringResource(resId) else stringResource(resId, priority)
 }
 
-enum class NotificationSection(val keyName: String, val title: String, val subtitle: String) {
-    PINNED("PINNED", "Pinned Notifications", "Flagged & saved notifications for later reference"),
-    ACTIVE("ACTIVE", "Active Notifications", "Currently active status bar notifications (sorted by time received)"),
-    FILTERED("FILTERED", "Filtered Notifications", "System, clutter, spam, and auto-filtered notifications"),
-    DISMISSED("DISMISSED", "Recently Dismissed", "User swiped, clicked, or cleared notifications (sorted by time dismissed)"),
-    LOST("LOST", "Lost Notifications", "App cancelled or package changed notifications (sorted by time dismissed)")
+enum class NotificationSection(
+    val keyName: String,
+    val titleRes: Int,
+    val subtitleRes: Int
+) {
+    PINNED("PINNED", R.string.notification_group_pinned_title, R.string.notification_group_pinned_desc),
+    ACTIVE("ACTIVE", R.string.notification_group_active_title, R.string.notification_group_active_desc),
+    FILTERED("FILTERED", R.string.notification_group_filtered_title, R.string.notification_group_filtered_desc),
+    DISMISSED("DISMISSED", R.string.notification_group_dismissed_title, R.string.notification_group_dismissed_desc),
+    LOST("LOST", R.string.notification_group_lost_title, R.string.notification_group_lost_desc)
 }
 
 private const val PREFETCH_AHEAD = 24
@@ -668,12 +674,12 @@ fun ActiveNotificationsScreen(dao: NotificationDao, authManager: AuthManager, db
                                 ) {
                                     Column(modifier = Modifier.weight(1f)) {
                                         Text(
-                                            text = section.title,
+                                            text = stringResource(section.titleRes),
                                             style = MaterialTheme.typography.titleMedium,
                                             fontWeight = FontWeight.Bold
                                         )
                                         Text(
-                                            text = section.subtitle,
+                                            text = stringResource(section.subtitleRes),
                                             style = MaterialTheme.typography.bodySmall,
                                             color = MaterialTheme.colorScheme.onSurfaceVariant
                                         )
@@ -1067,21 +1073,27 @@ fun NotificationExpandedAttributes(
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.primary
             )
-            AttributeRow(label = "Package", value = item.packageName)
+            AttributeRow(label = stringResource(R.string.notification_detail_package), value = item.packageName)
             if (item.appName.isNotBlank() && item.appName != item.packageName) {
-                AttributeRow(label = "App Name", value = item.appName)
+                AttributeRow(label = stringResource(R.string.notification_detail_app_name), value = item.appName)
             }
             if (!item.channelId.isNullOrEmpty()) {
-                AttributeRow(label = "Channel ID", value = item.channelId)
+                AttributeRow(label = stringResource(R.string.notification_detail_channel_id), value = item.channelId)
             }
             if (!item.category.isNullOrEmpty()) {
-                AttributeRow(label = "Category", value = item.category)
+                AttributeRow(label = stringResource(R.string.notification_attribute_category), value = item.category)
             }
-            AttributeRow(label = "Priority", value = getPriorityLabel(item.priority))
-            AttributeRow(label = "Time Received", value = dateTimeFormatter.format(Instant.ofEpochMilli(item.postTime)))
+            AttributeRow(
+                label = stringResource(R.string.notification_detail_priority),
+                value = getPriorityLabel(item.priority)
+            )
+            AttributeRow(
+                label = stringResource(R.string.notification_attribute_time_received),
+                value = dateTimeFormatter.format(Instant.ofEpochMilli(item.postTime))
+            )
             if (item.lastUpdatedTime > 0 && item.lastUpdatedTime != item.postTime) {
                 AttributeRow(
-                    label = "Last Updated",
+                    label = stringResource(R.string.notification_attribute_last_updated),
                     value = dateTimeFormatter.format(Instant.ofEpochMilli(item.lastUpdatedTime))
                 )
             }
