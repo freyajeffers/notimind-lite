@@ -84,7 +84,7 @@ enum class SortMode(val label: String) {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun LogHistoryScreen(dao: NotificationDao, authManager: AuthManager, db: AppDatabase) {
+fun LogHistoryScreen(dao: NotificationDao, authManager: AuthManager, db: AppDatabase, preferences: com.jeffers.notimindlite.data.local.PreferencesRepository) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     val listState = rememberLazyListState()
@@ -93,8 +93,8 @@ fun LogHistoryScreen(dao: NotificationDao, authManager: AuthManager, db: AppData
     // Transient UI state (showSortMenu etc.) stays on `remember` — only durable
     // user input (sort/filter/search) survives.
     var sortMode by rememberSaveable { mutableStateOf(SortMode.DISMISSED) }
-    var selectedReasonFilter by rememberSaveable { mutableStateOf<Int?>(null) }
-    var selectedPackages by rememberSaveable { mutableStateOf<List<String>?>(null) }
+    var selectedReasonFilter by rememberSaveable { mutableStateOf(preferences.sharedSelectedReason.value) }
+    var selectedPackages by rememberSaveable { mutableStateOf(preferences.sharedSelectedPackages.value) }
 
     var showSortMenu by remember { mutableStateOf(false) }
     var showFilterMenu by remember { mutableStateOf(false) }
@@ -114,14 +114,17 @@ fun LogHistoryScreen(dao: NotificationDao, authManager: AuthManager, db: AppData
         SortMode.ALL, SortMode.NEWEST, SortMode.OLDEST, SortMode.APP_NAME, SortMode.TITLE -> allNotifsEver
     }
     // F-K fix: persist search text across process death.
-    var searchQuery by rememberSaveable { mutableStateOf("") }
+    var searchQuery by rememberSaveable { mutableStateOf(preferences.sharedSearchQuery.value) }
     // debouncedSearchQuery is a derived value, not user input; do not save.
     var debouncedSearchQuery by remember { mutableStateOf("") }
     var isSearchVisible by rememberSaveable { mutableStateOf(false) }
     var isSearchFocused by remember { mutableStateOf(false) }
-    var recentSearches by rememberSaveable { mutableStateOf(emptyList<String>()) }
+    var recentSearches by rememberSaveable { mutableStateOf(preferences.recentSearches.value) }
     val focusManager = LocalFocusManager.current
     val keyboardController = LocalSoftwareKeyboardController.current
+    LaunchedEffect(searchQuery) { preferences.setSharedSearchQuery(searchQuery) }
+    LaunchedEffect(selectedPackages) { preferences.setSharedSelectedPackages(selectedPackages) }
+    LaunchedEffect(selectedReasonFilter) { preferences.setSharedSelectedReason(selectedReasonFilter) }
 
     LaunchedEffect(searchQuery) {
         delay(100L)
@@ -325,13 +328,15 @@ fun LogHistoryScreen(dao: NotificationDao, authManager: AuthManager, db: AppData
                             selectedReasonFilter = null
                             searchQuery = ""
                             recentSearches = emptyList()
+                            preferences.resetRecentSearches()
                             isSearchFocused = false
                             isSearchVisible = false
                             focusManager.clearFocus(force = true)
                             keyboardController?.hide()
                         }) { Text("Clear filters") }
                         if (recentSearches.isNotEmpty()) {
-                            TextButton(onClick = { recentSearches = emptyList() }) { Text("Reset searches") }
+                            TextButton(onClick = { recentSearches = emptyList()
+                            preferences.resetRecentSearches() }) { Text("Reset searches") }
                         }
                     }
                 }
@@ -426,7 +431,10 @@ fun LogHistoryScreen(dao: NotificationDao, authManager: AuthManager, db: AppData
                     keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
                     keyboardActions = KeyboardActions(onDone = {
                         val query = searchQuery.trim()
-                        if (query.isNotEmpty()) recentSearches = listOf(query) + recentSearches.filterNot { it == query }.take(9)
+                        if (query.isNotEmpty()) {
+                            recentSearches = listOf(query) + recentSearches.filterNot { it == query }.take(9)
+                            preferences.addRecentSearch(query)
+                        }
                         focusManager.clearFocus(force = true)
                         keyboardController?.hide()
                     }),
