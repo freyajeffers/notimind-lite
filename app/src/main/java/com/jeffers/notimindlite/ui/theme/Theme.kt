@@ -2,17 +2,13 @@ package com.jeffers.notimindlite.ui.theme
 
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Shapes
-import androidx.compose.material3.Typography
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.dynamicDarkColorScheme
 import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.ui.unit.dp
+import androidx.compose.ui.graphics.Color
 import com.jeffers.notimindlite.BuildConfig
 
 private val DarkColorScheme = darkColorScheme(
@@ -63,24 +59,29 @@ private val LightColorScheme = lightColorScheme(
     scrim = Color(0x80000000)
 )
 
-private val AppShapes = Shapes(
-    extraSmall = RoundedCornerShape(4.dp),
-    small = RoundedCornerShape(8.dp),
-    medium = RoundedCornerShape(12.dp),
-    large = RoundedCornerShape(16.dp),
-    extraLarge = RoundedCornerShape(28.dp)
+private val AmoledColorScheme = DarkColorScheme.copy(
+    background = Color.Black,
+    surface = Color.Black,
+    surfaceVariant = Color.Black,
+    surfaceTint = Color.Black,
+    surfaceContainer = Color.Black,
+    surfaceContainerLow = Color.Black,
+    surfaceContainerHigh = Color.Black,
+    surfaceContainerHighest = Color.Black,
+    outlineVariant = Color.Black,
+    scrim = Color.Black
 )
-
-private val AppTypography = Typography()
 
 @Composable
 fun NotiMindLiteTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
     dynamicColor: Boolean = true,
+    amoledTheme: Boolean = false,
     content: @Composable () -> Unit
 ) {
     val context = LocalContext.current
     val colorScheme = when {
+        amoledTheme -> AmoledColorScheme
         dynamicColor && BuildConfig.SUPPORTS_DYNAMIC_COLOR -> {
             if (darkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
         }
@@ -90,8 +91,6 @@ fun NotiMindLiteTheme(
 
     MaterialTheme(
         colorScheme = colorScheme,
-        typography = AppTypography,
-        shapes = AppShapes,
         content = content
     )
 }

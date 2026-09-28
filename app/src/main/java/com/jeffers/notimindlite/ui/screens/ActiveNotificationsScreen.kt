@@ -2,7 +2,7 @@ package com.jeffers.notimindlite.ui.screens
 
 import android.content.Context
 import android.content.Intent
-import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import android.provider.Settings
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateColorAsState
@@ -19,6 +19,8 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
@@ -29,20 +31,19 @@ import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.ExpandLess
 import androidx.compose.material.icons.filled.ExpandMore
-import androidx.compose.material.icons.automirrored.filled.OpenInNew
+import androidx.compose.material.icons.filled.FilterAltOff
 import androidx.compose.material.icons.filled.FilterList
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material.icons.filled.PushPin
+import androidx.compose.material.icons.automirrored.filled.OpenInNew
 import com.jeffers.notimindlite.ui.components.NotificationGroupCard
 import com.jeffers.notimindlite.ui.components.groupNotifications
 import org.json.JSONArray
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.outlined.BookmarkBorder
 import androidx.compose.material3.*
-import androidx.compose.material3.TooltipAnchorPosition
 import androidx.compose.runtime.*
-import androidx.compose.runtime.produceState
 import androidx.compose.runtime.saveable.rememberSaveable
 import android.util.Log
 import androidx.compose.ui.Alignment
@@ -55,7 +56,13 @@ import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+import androidx.compose.foundation.layout.isImeVisible
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.input.ImeAction
+
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
@@ -69,6 +76,7 @@ import com.jeffers.notimindlite.R
 import com.jeffers.notimindlite.data.local.NotificationDao
 import com.jeffers.notimindlite.data.local.NotificationEntity
 import com.jeffers.notimindlite.data.local.PreferenceManager
+import com.jeffers.notimindlite.data.local.PreferencesRepository
 import com.jeffers.notimindlite.service.NotificationLoggerService
 import com.jeffers.notimindlite.ui.dialogs.AppPackageSelectorDialog
 import com.jeffers.notimindlite.ui.components.ActiveFilterChip
@@ -77,12 +85,7 @@ import com.jeffers.notimindlite.ui.components.ActiveFirstRunEmptyState
 import com.jeffers.notimindlite.ui.components.ActivePermissionEmptyState
 import com.jeffers.notimindlite.ui.components.ActiveSearchEmptyState
 import com.jeffers.notimindlite.ui.components.ActionableChips
-import com.jeffers.notimindlite.ui.components.SpeedDialSettingsFab
-import com.jeffers.notimindlite.ui.components.BackupKeyDialog
-import com.jeffers.notimindlite.domain.backup.generateBackupKey
-import com.jeffers.notimindlite.util.DatabaseExporter
-import com.jeffers.notimindlite.util.NetworkUtils
-import com.jeffers.notimindlite.util.AppIconCache
+
 import com.jeffers.notimindlite.domain.search.HybridSearchEngine
 import com.jeffers.notimindlite.util.NotificationLauncher
 import com.jeffers.notimindlite.data.auth.AuthManager
@@ -90,17 +93,12 @@ import com.jeffers.notimindlite.data.local.AppDatabase
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.withContext
-import kotlinx.coroutines.async
-import kotlinx.coroutines.awaitAll
 import java.time.Instant
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
-import java.time.format.FormatStyle
 import java.util.*
-import javax.crypto.SecretKey
+
 
 fun checkNotificationPermission(context: Context): Boolean {
     val flat = Settings.Secure.getString(
@@ -140,62 +138,59 @@ fun getReasonLabel(reason: Int?): Int {
     }
 }
 
-@Composable
 fun getPriorityLabel(priority: Int): String {
-    val resId = when (priority) {
-        -2 -> R.string.notification_priority_min
-        -1 -> R.string.notification_priority_low
-        0 -> R.string.notification_priority_default
-        1 -> R.string.notification_priority_high
-        2 -> R.string.notification_priority_max
-        else -> R.string.notification_priority_unknown
+    return when (priority) {
+        -2 -> "Min"
+        -1 -> "Low"
+        0 -> "Default"
+        1 -> "High"
+        2 -> "Max"
+        else -> "Unknown ($priority)"
     }
-    return if (priority in -2..2) stringResource(resId) else stringResource(resId, priority)
 }
 
-enum class NotificationSection(
-    val keyName: String,
-    val titleRes: Int,
-    val subtitleRes: Int
-) {
-    PINNED("PINNED", R.string.notification_group_pinned_title, R.string.notification_group_pinned_desc),
-    ACTIVE("ACTIVE", R.string.notification_group_active_title, R.string.notification_group_active_desc),
-    FILTERED("FILTERED", R.string.notification_group_filtered_title, R.string.notification_group_filtered_desc),
-    DISMISSED("DISMISSED", R.string.notification_group_dismissed_title, R.string.notification_group_dismissed_desc),
-    LOST("LOST", R.string.notification_group_lost_title, R.string.notification_group_lost_desc)
+enum class NotificationSection(val keyName: String, val title: String, val subtitle: String) {
+    PINNED("PINNED", "Pinned Notifications", "Flagged & saved notifications for later reference"),
+    ACTIVE("ACTIVE", "Active Notifications", "Currently active status bar notifications (sorted by time received)"),
+    FILTERED("FILTERED", "Filtered Notifications", "System, clutter, spam, and auto-filtered notifications"),
+    DISMISSED("DISMISSED", "Recently Dismissed", "User swiped, clicked, or cleared notifications (sorted by time dismissed)"),
+    LOST("LOST", "Lost Notifications", "App cancelled or package changed notifications (sorted by time dismissed)")
 }
-
-private const val PREFETCH_AHEAD = 24
-private const val PREFETCH_BEHIND = 2
 
 @Composable
-@Suppress("FunctionNaming") // Composable PascalCase required by Compose API.
-fun AppIconImage(appIconUri: String?, modifier: Modifier = Modifier) {
-    val context = LocalContext.current
-    val imageBitmap by produceState<Bitmap?>(initialValue = null, appIconUri) {
-        value = withContext(Dispatchers.IO) {
-            AppIconCache.getIcon(context, appIconUri)
+fun AppIconImage(appIconUri: String?, modifier: Modifier = Modifier.size(20.dp)) {
+    val imageBitmap = remember(appIconUri) {
+        if (!appIconUri.isNullOrEmpty()) {
+            try {
+                BitmapFactory.decodeFile(appIconUri)?.asImageBitmap()
+            } catch (e: Exception) {
+                null
+            }
+        } else {
+            null
         }
     }
 
     if (imageBitmap != null) {
         Image(
-            bitmap = imageBitmap!!.asImageBitmap(),
-            contentDescription = stringResource(R.string.active_notifications_app_icon_desc),
-            modifier = modifier.size(20.dp)
+            bitmap = imageBitmap,
+            contentDescription = "App Icon",
+            modifier = modifier
         )
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class, ExperimentalLayoutApi::class)
 @Composable
-fun ActiveNotificationsScreen(dao: NotificationDao, authManager: AuthManager, db: AppDatabase) {
+fun ActiveNotificationsScreen(dao: NotificationDao, authManager: AuthManager, db: AppDatabase, preferences: PreferencesRepository) {
     val context = LocalContext.current
-    val backupNetworkRequired = stringResource(R.string.backup_network_required)
-    val backupCreatedSuccessfully = stringResource(R.string.backup_created_successfully)
-    val backupFailed = stringResource(R.string.backup_failed)
     val lifecycleOwner = LocalLifecycleOwner.current
     val prefManager = remember { PreferenceManager(context) }
+    val compactMode by preferences.compactMode.collectAsState()
+    val showAppIcons by preferences.showAppIcons.collectAsState()
+    val groupByApp by preferences.groupByApp.collectAsState()
+    val sortOrder by preferences.sortOrder.collectAsState()
+    val previewLength by preferences.previewLength.collectAsState()
 
     // F-K fix: persist user-meaningful state across process death / rotation.
     // - expandedSection: user's last-toggled section (was lost; PrefManager was only
@@ -208,22 +203,26 @@ fun ActiveNotificationsScreen(dao: NotificationDao, authManager: AuthManager, db
     var expandedCards by remember { mutableStateOf(setOf<String>()) }
     var collapsedGroups by remember { mutableStateOf(setOf<String>()) }
     var isGranted by remember { mutableStateOf(checkNotificationPermission(context)) }
-    var searchQuery by rememberSaveable { mutableStateOf("") }
+    var searchQuery by rememberSaveable { mutableStateOf(preferences.sharedSearchQuery.value) }
     var debouncedSearchQuery by remember { mutableStateOf("") }
     var isSearchExplicitlyOpened by rememberSaveable { mutableStateOf(false) }
+    val recentSearches by preferences.recentSearches.collectAsState()
+    val focusManager = LocalFocusManager.current
+    val keyboardController = LocalSoftwareKeyboardController.current
+    LaunchedEffect(searchQuery) { preferences.setSharedSearchQuery(searchQuery) }
 
-    var showBackupKeyDialog by remember { mutableStateOf(false) }
-    var currentBackupKey by remember { mutableStateOf("") }
-    var currentPendingSecretKey by remember { mutableStateOf<SecretKey?>(null) }
+
 
     LaunchedEffect(searchQuery) {
         delay(100L)
         debouncedSearchQuery = searchQuery
     }
 
+
     // F-K fix: selectedPackages is user filter state — persist across process death.
-    var selectedPackages by rememberSaveable { mutableStateOf<List<String>?>(null) }
+    var selectedPackages by remember { mutableStateOf(preferences.sharedSelectedPackages.value) }
     var showPackagePicker by remember { mutableStateOf(false) }
+    LaunchedEffect(selectedPackages) { preferences.setSharedSelectedPackages(selectedPackages) }
 
     DisposableEffect(lifecycleOwner) {
         val observer = LifecycleEventObserver { _, event ->
@@ -243,7 +242,7 @@ fun ActiveNotificationsScreen(dao: NotificationDao, authManager: AuthManager, db
     val recentlyDismissed by dao.getRecentlyDismissedFlow().collectAsState(initial = emptyList())
     val lostNotifs by dao.getLostNotificationsFlow().collectAsState(initial = emptyList())
     val dateTimeFormatter = remember {
-        DateTimeFormatter.ofLocalizedDateTime(FormatStyle.MEDIUM).withZone(ZoneId.systemDefault())
+        DateTimeFormatter.ofPattern("MMM dd, HH:mm:ss", Locale.getDefault()).withZone(ZoneId.systemDefault())
     }
 
     val allActiveList = remember(pinnedNotifs, activeNotifs, filteredNotifs, recentlyDismissed, lostNotifs) {
@@ -314,39 +313,6 @@ fun ActiveNotificationsScreen(dao: NotificationDao, authManager: AuthManager, db
 
     val listState = rememberLazyListState()
 
-    val prefetchCandidates = remember(sectionOrder, notificationsBySection, expandedSection) {
-        sectionOrder
-            .filter { it.keyName == expandedSection }
-            .flatMap { section ->
-                groupNotifications(notificationsBySection[section].orEmpty())
-                    .flatMap { it.items }
-            }
-    }
-
-    val groupedNotificationsBySection = remember(sectionOrder, notificationsBySection) {
-        sectionOrder.associateWith { section ->
-            groupNotifications(notificationsBySection[section].orEmpty())
-        }
-    }
-
-    LaunchedEffect(prefetchCandidates) {
-        snapshotFlow { listState.firstVisibleItemIndex }
-            .distinctUntilChanged()
-            .collectLatest { firstVisibleIndex ->
-                val start = (firstVisibleIndex - PREFETCH_BEHIND).coerceAtLeast(0)
-                val end = (start + PREFETCH_AHEAD).coerceAtMost(prefetchCandidates.size)
-                if (start < end) {
-                    withContext(Dispatchers.IO) {
-                        prefetchCandidates.subList(start, end)
-                            .mapNotNull { it.appIconUri }
-                            .distinct()
-                            .map { uri -> async { AppIconCache.getIcon(context, uri) } }
-                            .awaitAll()
-                    }
-                }
-            }
-    }
-
     fun toggleSection(sectionKey: String) {
         val newExpanded = if (expandedSection == sectionKey) "NONE" else sectionKey
         expandedSection = newExpanded
@@ -355,12 +321,32 @@ fun ActiveNotificationsScreen(dao: NotificationDao, authManager: AuthManager, db
 
     val searchFocusRequester = remember { FocusRequester() }
     var isSearchFocused by remember { mutableStateOf(false) }
+    val imeVisible = WindowInsets.isImeVisible
+
+    // Auto-hide when keyboard is dismissed (IME no longer visible) AND the field lost focus
+    LaunchedEffect(isSearchFocused, imeVisible, searchQuery) {
+        if (!imeVisible && !isSearchFocused && searchQuery.isBlank()) {
+            isSearchExplicitlyOpened = false
+        }
+    }
 
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(stringResource(id = R.string.active_notifications_title), fontWeight = FontWeight.Bold) },
+                title = {},
                 actions = {
+                    if (!selectedPackages.isNullOrEmpty() || searchQuery.isNotBlank()) {
+                        IconButton(onClick = {
+                            selectedPackages = null
+                            searchQuery = ""
+                            isSearchFocused = false
+                            isSearchExplicitlyOpened = false
+                            focusManager.clearFocus(force = true)
+                            keyboardController?.hide()
+                        }) {
+                            Icon(Icons.Default.FilterAltOff, contentDescription = "Clear filters")
+                        }
+                    }
                     TooltipBox(
                         positionProvider = TooltipDefaults.rememberTooltipPositionProvider(TooltipAnchorPosition.Above),
                         tooltip = { PlainTooltip { Text(stringResource(id = R.string.active_notifications_filter_apps)) } },
@@ -368,7 +354,7 @@ fun ActiveNotificationsScreen(dao: NotificationDao, authManager: AuthManager, db
                     ) {
                         IconButton(onClick = { showPackagePicker = true }) {
                             Icon(
-                                imageVector = Icons.Default.FilterList,
+                                Icons.Default.FilterList,
                                 contentDescription = stringResource(id = R.string.active_notifications_filter_apps),
                                 tint = if (!selectedPackages.isNullOrEmpty()) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
                             )
@@ -376,7 +362,7 @@ fun ActiveNotificationsScreen(dao: NotificationDao, authManager: AuthManager, db
                     }
                     TooltipBox(
                         positionProvider = TooltipDefaults.rememberTooltipPositionProvider(TooltipAnchorPosition.Above),
-                        tooltip = { PlainTooltip { Text(stringResource(id = R.string.active_notifications_search_placeholder)) } },
+                        tooltip = { PlainTooltip { Text(stringResource(id = R.string.common_search)) } },
                         state = rememberTooltipState()
                     ) {
                         IconButton(onClick = {
@@ -386,56 +372,38 @@ fun ActiveNotificationsScreen(dao: NotificationDao, authManager: AuthManager, db
                                 searchQuery = ""
                             } else {
                                 isSearchExplicitlyOpened = true
-                                scope.launch {
-                                    listState.animateScrollToItem(0)
-                                    searchFocusRequester.requestFocus()
-                                }
+                                scope.launch { listState.animateScrollToItem(0); searchFocusRequester.requestFocus() }
                             }
                         }) {
-                            Icon(
-                                imageVector = Icons.Default.Search,
-                                contentDescription = stringResource(id = R.string.common_search),
-                                tint = if (isSearchExplicitlyOpened ||
-                                    searchQuery.isNotEmpty() ||
-                                    isSearchFocused
-                                ) {
-                                    MaterialTheme.colorScheme.primary
-                                } else {
-                                    MaterialTheme.colorScheme.onSurface
-                                }
-                            )
+                            Icon(Icons.Default.Search, contentDescription = stringResource(id = R.string.common_search))
                         }
                     }
                 }
             )
         },
         floatingActionButton = {
-            SpeedDialSettingsFab(
-                onSyncClick = { },
-                onBackupClick = {
-                    if (!NetworkUtils.isInternetAvailable(context)) {
-                        android.widget.Toast.makeText(
-                            context,
-                            backupNetworkRequired,
-                            android.widget.Toast.LENGTH_LONG
-                        ).show()
-                        return@SpeedDialSettingsFab
-                    }
-                    scope.launch {
-                        try {
-                            val secretKey = generateBackupKey(context)
-                            val keyBase64 = com.jeffers.notimindlite.data.local.BackupKeyCodec.encode(secretKey)
-                            
-                            showBackupKeyDialog = true
-                            currentBackupKey = keyBase64
-                            currentPendingSecretKey = secretKey
-                        } catch (e: Exception) {
-                            Log.e("ActiveNotifications", "Backup key generation failed", e)
-                        }
-                    }
-                },
-                onSettingsClick = { }
-            )
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                SmallFloatingActionButton(
+                    modifier = Modifier.semantics { contentDescription = "PageUpButton" },
+                    onClick = {
+                        val first = listState.layoutInfo.visibleItemsInfo.firstOrNull()?.index ?: 0
+                        val page = listState.layoutInfo.visibleItemsInfo.size.coerceAtLeast(1)
+                        scope.launch { listState.animateScrollToItem((first - page).coerceAtLeast(0)) }
+                    },
+                ) {
+                    Icon(Icons.Default.KeyboardArrowUp, contentDescription = "Page up")
+                }
+                SmallFloatingActionButton(
+                    modifier = Modifier.semantics { contentDescription = "PageDownButton" },
+                    onClick = {
+                        val first = listState.layoutInfo.visibleItemsInfo.firstOrNull()?.index ?: 0
+                        val page = listState.layoutInfo.visibleItemsInfo.size.coerceAtLeast(1)
+                        scope.launch { listState.animateScrollToItem(first + page) }
+                    },
+                ) {
+                    Icon(Icons.Default.KeyboardArrowDown, contentDescription = "Page down")
+                }
+            }
         }
     ) { innerPadding ->
         Box(modifier = Modifier.fillMaxSize()) {
@@ -454,10 +422,10 @@ fun ActiveNotificationsScreen(dao: NotificationDao, authManager: AuthManager, db
                         enter = fadeIn() + expandVertically(),
                         exit = fadeOut() + shrinkVertically()
                     ) {
-                        val searchSuggestions = remember(searchQuery, pinnedNotifs, activeNotifs, recentlyDismissed, lostNotifs) {
+                        val searchSuggestions = remember(searchQuery, pinnedNotifs, activeNotifs, filteredNotifs, recentlyDismissed, lostNotifs) {
                             if (searchQuery.length < 2) emptyList()
                             else {
-                                val allNotifs = pinnedNotifs + activeNotifs + recentlyDismissed + lostNotifs
+                                val allNotifs = pinnedNotifs + activeNotifs + filteredNotifs + recentlyDismissed + lostNotifs
                                 (allNotifs.map { it.appName } + allNotifs.map { it.title })
                                     .filter { it.contains(searchQuery, ignoreCase = true) }
                                     .distinct()
@@ -466,8 +434,18 @@ fun ActiveNotificationsScreen(dao: NotificationDao, authManager: AuthManager, db
                         }
                         var expandedDropdown by remember { mutableStateOf(false) }
 
-                        LaunchedEffect(searchSuggestions) {
-                            expandedDropdown = searchSuggestions.isNotEmpty()
+                        LaunchedEffect(searchSuggestions, recentSearches) {
+                            expandedDropdown = searchSuggestions.isNotEmpty() || recentSearches.isNotEmpty()
+                        }
+
+                        // Ensure dropdown appears promptly when the user types — sometimes
+                        // recomposition ordering delays the searchSuggestions-driven effect.
+                        LaunchedEffect(searchQuery) {
+                            if (searchQuery.length >= 2) {
+                                expandedDropdown = searchSuggestions.isNotEmpty()
+                            } else if (searchQuery.isBlank()) {
+                                expandedDropdown = recentSearches.isNotEmpty()
+                            }
                         }
 
                         Box(modifier = Modifier.fillMaxWidth()) {
@@ -478,36 +456,56 @@ fun ActiveNotificationsScreen(dao: NotificationDao, authManager: AuthManager, db
                                     .fillMaxWidth()
                                     .padding(bottom = 6.dp)
                                     .focusRequester(searchFocusRequester)
-                                    .onFocusChanged { isSearchFocused = it.isFocused },
-                                placeholder = {
-                                    Text(stringResource(R.string.active_notifications_search_placeholder))
-                                },
-                                leadingIcon = {
-                                    Icon(
-                                        Icons.Default.Search,
-                                        contentDescription = stringResource(R.string.common_search)
-                                    )
-                                },
+                                    .onFocusChanged { isSearchFocused = it.isFocused }
+                                    .semantics { contentDescription = "ActiveSearchField" },
+                                placeholder = { Text("Search") },
+                                leadingIcon = { Icon(Icons.Default.Search, contentDescription = "Search") },
                                 trailingIcon = {
                                     if (searchQuery.isNotEmpty()) {
                                         IconButton(onClick = { searchQuery = "" }) {
-                                            Icon(
-                                                Icons.Default.Close,
-                                                contentDescription = stringResource(R.string.active_empty_search_clear)
-                                            )
+                                            Icon(Icons.Default.Close, contentDescription = "Clear Search")
                                         }
                                     }
                                 },
                                 singleLine = true,
+                                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+                                keyboardActions = KeyboardActions(onDone = {
+                                    val query = searchQuery.trim()
+                                    if (query.isNotEmpty()) {
+                                        preferences.addRecentSearch(query)
+                                    }
+                                    focusManager.clearFocus(force = true)
+                                    keyboardController?.hide()
+                                }),
                                 shape = RoundedCornerShape(12.dp)
                             )
 
                             DropdownMenu(
-                                expanded = expandedDropdown && searchSuggestions.isNotEmpty(),
+                                expanded = expandedDropdown && (searchSuggestions.isNotEmpty() || (searchQuery.isBlank() && recentSearches.isNotEmpty())),
                                 onDismissRequest = { expandedDropdown = false },
                                 properties = androidx.compose.ui.window.PopupProperties(focusable = false),
                                 modifier = Modifier.fillMaxWidth(0.9f)
                             ) {
+                                // Show recent searches that match the current query (or all recent when blank)
+                                val matchingRecent = remember(searchQuery, recentSearches) {
+                                    if (searchQuery.isBlank()) recentSearches
+                                    else recentSearches.filter { it.contains(searchQuery, ignoreCase = true) }
+                                }
+                                matchingRecent.forEach { recent ->
+                                    DropdownMenuItem(
+                                        text = { Text(recent) },
+                                        trailingIcon = { IconButton(onClick = { preferences.removeRecentSearch(recent) }) { Icon(Icons.Default.Close, contentDescription = "Remove recent search") } },
+                                        onClick = { searchQuery = recent; expandedDropdown = false }
+                                    )
+                                }
+                                if (matchingRecent.isNotEmpty()) {
+                                    DropdownMenuItem(
+                                        text = { Text("Clear recent searches") },
+                                        onClick = { preferences.resetRecentSearches(); expandedDropdown = false }
+                                    )
+                                }
+
+                                // Suggestions from notification content (de-duplicated)
                                 searchSuggestions.forEach { suggestion ->
                                     DropdownMenuItem(
                                         text = { Text(suggestion, fontSize = 14.sp) },
@@ -522,67 +520,6 @@ fun ActiveNotificationsScreen(dao: NotificationDao, authManager: AuthManager, db
                     }
                 }
 
-                item(key = "service_status_card") {
-                    Card(
-                        modifier = Modifier.fillMaxWidth(),
-                        colors = CardDefaults.cardColors(
-                            containerColor = if (isGranted)
-                                MaterialTheme.colorScheme.surfaceVariant
-                            else
-                                MaterialTheme.colorScheme.errorContainer
-                        )
-                    ) {
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(14.dp),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Column(modifier = Modifier.weight(1f)) {
-                                Text(
-                                    text = stringResource(R.string.active_notifications_service_title),
-                                    style = MaterialTheme.typography.titleMedium,
-                                    fontWeight = FontWeight.Bold,
-                                    color = if (isGranted) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.onErrorContainer
-                                )
-                                Text(
-                                    text = stringResource(
-                                        if (isGranted) {
-                                            R.string.active_notifications_service_status_active
-                                        } else {
-                                            R.string.active_notifications_service_status_required
-                                        }
-                                    ),
-                                    fontSize = 12.sp,
-                                    color = if (isGranted) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error
-                                )
-                            }
-
-                            Button(
-                                onClick = {
-                                    val intent = Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS)
-                                    intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                                    context.startActivity(intent)
-                                },
-                                colors = ButtonDefaults.buttonColors(
-                                    containerColor = if (isGranted) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.errorContainer,
-                                    contentColor = if (isGranted) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onErrorContainer
-                                )
-                            ) {
-                                Text(
-                                    stringResource(
-                                        if (isGranted) {
-                                            R.string.active_notifications_settings
-                                        } else {
-                                            R.string.active_notifications_grant
-                                        }
-                                    )
-                                )
-                            }
-                        }
-                    }
-                }
 
                 // F-N usability [2026-09-06]: surface empty-state Composables when the
                 // entire DB is empty or a query returned no matches. Distinguishes three
@@ -666,7 +603,28 @@ fun ActiveNotificationsScreen(dao: NotificationDao, authManager: AuthManager, db
 
                 sectionOrder.forEach { section ->
                     val isExpanded = expandedSection == section.keyName
-                    val itemsList = notificationsBySection[section].orEmpty()
+                    val rawItemsList = when (section) {
+                        NotificationSection.PINNED -> pinnedNotifs
+                        NotificationSection.ACTIVE -> activeNotifs
+                        NotificationSection.FILTERED -> filteredNotifs
+                        NotificationSection.DISMISSED ->
+                            recentlyDismissed.sortedByDescending { it.dismissTime ?: it.postTime }
+                        NotificationSection.LOST -> lostNotifs
+                    }.distinctBy { "${it.packageName}_${it.title}_${it.content}" }
+
+                    val filteredList = if (!selectedPackages.isNullOrEmpty()) {
+                        rawItemsList.filter { selectedPackages!!.contains(it.packageName) }
+                    } else {
+                        rawItemsList
+                    }
+
+                    val itemsList = if (debouncedSearchQuery.isBlank()) filteredList
+                    else {
+                        // F-G read-side [2026-09-02 audit]: HybridSearchEngine
+                        // composes FTS4 keyword scoring with semantic-vector
+                        // cosine scoring via Reciprocal Rank Fusion.
+                        HybridSearchEngine.searchAndRankBlocking(filteredList, debouncedSearchQuery)
+                    }
 
                     stickyHeader(key = "sticky_header_${section.keyName}") {
                         Surface(
@@ -687,12 +645,12 @@ fun ActiveNotificationsScreen(dao: NotificationDao, authManager: AuthManager, db
                                 ) {
                                     Column(modifier = Modifier.weight(1f)) {
                                         Text(
-                                            text = stringResource(section.titleRes),
+                                            text = section.title,
                                             style = MaterialTheme.typography.titleMedium,
                                             fontWeight = FontWeight.Bold
                                         )
                                         Text(
-                                            text = stringResource(section.subtitleRes),
+                                            text = section.subtitle,
                                             style = MaterialTheme.typography.bodySmall,
                                             color = MaterialTheme.colorScheme.onSurfaceVariant
                                         )
@@ -719,11 +677,10 @@ fun ActiveNotificationsScreen(dao: NotificationDao, authManager: AuthManager, db
                     }
 
                     if (isExpanded) {
-                        val notificationGroups = groupedNotificationsBySection[section].orEmpty()
+                        val notificationGroups = groupNotifications(itemsList, groupByApp, sortOrder)
                         items(
                             items = notificationGroups,
-                            key = { group -> "group_${section.keyName}_${group.groupKey}" },
-                            contentType = { group -> if (group.items.size == 1) "notification" else "group" }
+                            key = { group -> "group_${section.keyName}_${group.groupKey}" }
                         ) { group ->
                             val isGroupExpanded = !collapsedGroups.contains(group.groupKey)
                             if (group.items.size == 1) {
@@ -734,6 +691,10 @@ fun ActiveNotificationsScreen(dao: NotificationDao, authManager: AuthManager, db
                                     dateTimeFormatter = dateTimeFormatter,
                                     dao = dao,
                                     isExpanded = cardExpanded,
+                                            highlightQuery = debouncedSearchQuery,
+                                    showAppIcon = showAppIcons,
+                                    compactMode = compactMode,
+                                    previewLength = previewLength,
                                     onToggleExpand = {
                                         expandedCards = if (cardExpanded) expandedCards - item.key else expandedCards + item.key
                                     }
@@ -758,6 +719,10 @@ fun ActiveNotificationsScreen(dao: NotificationDao, authManager: AuthManager, db
                                             dateTimeFormatter = dateTimeFormatter,
                                             dao = dao,
                                             isExpanded = cardExpanded,
+                                            highlightQuery = debouncedSearchQuery,
+                                    showAppIcon = showAppIcons,
+                                    compactMode = compactMode,
+                                    previewLength = previewLength,
                                             onToggleExpand = {
                                                 expandedCards = if (cardExpanded) {
                                                     expandedCards - childItem.key
@@ -788,46 +753,6 @@ fun ActiveNotificationsScreen(dao: NotificationDao, authManager: AuthManager, db
         )
     }
 
-    if (showBackupKeyDialog && currentPendingSecretKey != null) {
-        BackupKeyDialog(
-            keyBase64 = currentBackupKey,
-            onDismiss = {
-                showBackupKeyDialog = false
-                currentPendingSecretKey = null
-            },
-            onConfirm = { passphrase ->
-                showBackupKeyDialog = false
-                val secretKey = currentPendingSecretKey
-                currentPendingSecretKey = null
-                if (secretKey != null) {
-                    if (!NetworkUtils.isInternetAvailable(context)) {
-                        android.widget.Toast.makeText(
-                            context,
-                            backupNetworkRequired,
-                            android.widget.Toast.LENGTH_LONG
-                        ).show()
-                        return@BackupKeyDialog
-                    }
-                    scope.launch {
-                        val result = DatabaseExporter.performEncryptedBackup(context, secretKey, passphrase)
-                        if (result.isSuccess) {
-                            android.widget.Toast.makeText(
-                                context,
-                                backupCreatedSuccessfully,
-                                android.widget.Toast.LENGTH_SHORT
-                            ).show()
-                        } else {
-                            android.widget.Toast.makeText(
-                                context,
-                                backupFailed,
-                                android.widget.Toast.LENGTH_LONG
-                            ).show()
-                        }
-                    }
-                }
-            }
-        )
-    }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -845,7 +770,11 @@ fun LogNotificationCard(
     dateTimeFormatter: DateTimeFormatter,
     dao: NotificationDao,
     isExpanded: Boolean,
-    onToggleExpand: () -> Unit
+    highlightQuery: String = "",
+    onToggleExpand: () -> Unit,
+    showAppIcon: Boolean = true,
+    compactMode: Boolean = false,
+    previewLength: Int = 140
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
@@ -858,7 +787,7 @@ fun LogNotificationCard(
             containerColor = MaterialTheme.colorScheme.surface
         )
     ) {
-        Column(modifier = Modifier.padding(14.dp)) {
+        Column(modifier = Modifier.padding(if (compactMode) 8.dp else 14.dp)) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -868,8 +797,8 @@ fun LogNotificationCard(
                     verticalAlignment = Alignment.CenterVertically,
                     modifier = Modifier.weight(1f)
                 ) {
-                    AppIconImage(appIconUri = item.appIconUri)
-                    if (!item.appIconUri.isNullOrEmpty()) {
+                    if (showAppIcon) AppIconImage(appIconUri = item.appIconUri)
+                    if (showAppIcon && !item.appIconUri.isNullOrEmpty()) {
                         Spacer(modifier = Modifier.width(6.dp))
                     }
                     Text(
@@ -883,15 +812,7 @@ fun LogNotificationCard(
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     TooltipBox(
                         positionProvider = TooltipDefaults.rememberTooltipPositionProvider(TooltipAnchorPosition.Above),
-                        tooltip = {
-                            PlainTooltip {
-                                Text(
-                                    stringResource(
-                                        if (item.isPinned) R.string.notification_unpin else R.string.notification_pin
-                                    )
-                                )
-                            }
-                        },
+                        tooltip = { PlainTooltip { Text(if (item.isPinned) "Unpin notification" else "Pin notification") } },
                         state = rememberTooltipState()
                     ) {
                         IconButton(
@@ -904,10 +825,7 @@ fun LogNotificationCard(
                         ) {
                             Icon(
                                 imageVector = if (item.isPinned) Icons.Default.Bookmark else Icons.Outlined.BookmarkBorder,
-                                contentDescription = stringResource(
-                                    if (item.isPinned) R.string.notification_unpin_short
-                                    else R.string.notification_pin_short
-                                ),
+                                contentDescription = if (item.isPinned) "Unpin" else "Pin",
                                 tint = if (item.isPinned) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
                             )
                         }
@@ -932,23 +850,18 @@ fun LogNotificationCard(
 
                     TooltipBox(
                         positionProvider = TooltipDefaults.rememberTooltipPositionProvider(TooltipAnchorPosition.Above),
-                        tooltip = { PlainTooltip { Text(stringResource(R.string.notification_open_tooltip)) } },
+                        tooltip = { PlainTooltip { Text("Open notification") } },
                         state = rememberTooltipState()
                     ) {
                         IconButton(
                             onClick = {
-                                NotificationLauncher.launchNotification(
-                                    context,
-                                    item.packageName,
-                                    item.key,
-                                    item.intentUri
-                                )
+                                NotificationLauncher.launchNotification(context, item.packageName, item.key, item.intentUri)
                             },
                             modifier = Modifier.size(24.dp)
                         ) {
                             Icon(
                                 imageVector = Icons.AutoMirrored.Filled.OpenInNew,
-                                contentDescription = stringResource(R.string.notification_detail_open)
+                                contentDescription = "Open notification"
                             )
                         }
                     }
@@ -958,7 +871,7 @@ fun LogNotificationCard(
             if (!isExpanded) {
                 if (item.title.isNotEmpty()) {
                     Text(
-                        text = item.title,
+                        text = highlightSearchText(item.title, highlightQuery),
                         style = MaterialTheme.typography.bodyMedium,
                         fontWeight = FontWeight.SemiBold,
                         maxLines = 1,
@@ -968,7 +881,7 @@ fun LogNotificationCard(
                 }
                 if (item.content.isNotEmpty()) {
                     Text(
-                        text = item.content,
+                        text = highlightSearchText(item.content.take(previewLength), highlightQuery),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         maxLines = 2,
@@ -981,7 +894,7 @@ fun LogNotificationCard(
             if (isExpanded) {
                 Column(modifier = Modifier.padding(top = 8.dp)) {
                     Text(
-                        text = item.title,
+                        text = highlightSearchText(item.title, highlightQuery),
                         style = MaterialTheme.typography.bodyLarge,
                         fontWeight = FontWeight.SemiBold,
                         maxLines = 3,
@@ -1039,7 +952,7 @@ fun LogNotificationCard(
                                 verticalArrangement = Arrangement.spacedBy(2.dp)
                             ) {
                                 Text(
-                                    text = stringResource(R.string.notification_inbox_lines, inboxLines.size),
+                                    text = "Inbox Lines (${inboxLines.size})",
                                     style = MaterialTheme.typography.labelSmall,
                                     fontWeight = FontWeight.Bold,
                                     color = MaterialTheme.colorScheme.primary
@@ -1076,7 +989,7 @@ fun LogNotificationCard(
 }
 
 @Composable
-@Suppress("FunctionNaming", "LongMethod", "CyclomaticComplexMethod", "MaxLineLength")
+@Suppress("FunctionNaming", "LongMethod", "CyclomaticComplexMethod")
 fun NotificationExpandedAttributes(
     item: NotificationEntity,
     dateTimeFormatter: DateTimeFormatter,
@@ -1092,97 +1005,91 @@ fun NotificationExpandedAttributes(
             verticalArrangement = Arrangement.spacedBy(4.dp)
         ) {
             Text(
-                text = stringResource(R.string.notification_attributes_title),
+                text = "Notification Attributes",
                 style = MaterialTheme.typography.labelMedium,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.primary
             )
-            AttributeRow(label = stringResource(R.string.notification_detail_package), value = item.packageName)
+            AttributeRow(label = "Package", value = item.packageName)
             if (item.appName.isNotBlank() && item.appName != item.packageName) {
-                AttributeRow(label = stringResource(R.string.notification_detail_app_name), value = item.appName)
+                AttributeRow(label = "App Name", value = item.appName)
             }
             if (!item.channelId.isNullOrEmpty()) {
-                AttributeRow(label = stringResource(R.string.notification_detail_channel_id), value = item.channelId)
+                AttributeRow(label = "Channel ID", value = item.channelId)
             }
             if (!item.category.isNullOrEmpty()) {
-                AttributeRow(label = stringResource(R.string.notification_attribute_category), value = item.category)
+                AttributeRow(label = "Category", value = item.category)
             }
-            AttributeRow(
-                label = stringResource(R.string.notification_detail_priority),
-                value = getPriorityLabel(item.priority)
-            )
-            AttributeRow(
-                label = stringResource(R.string.notification_attribute_time_received),
-                value = dateTimeFormatter.format(Instant.ofEpochMilli(item.postTime))
-            )
+            AttributeRow(label = "Priority", value = getPriorityLabel(item.priority))
+            AttributeRow(label = "Time Received", value = dateTimeFormatter.format(Instant.ofEpochMilli(item.postTime)))
             if (item.lastUpdatedTime > 0 && item.lastUpdatedTime != item.postTime) {
                 AttributeRow(
-                    label = stringResource(R.string.notification_attribute_last_updated),
+                    label = "Last Updated",
                     value = dateTimeFormatter.format(Instant.ofEpochMilli(item.lastUpdatedTime))
                 )
             }
             if (item.updateCount > 1) {
-                AttributeRow(label = stringResource(R.string.notification_attribute_update_count), value = "${item.updateCount}")
+                AttributeRow(label = "Update Count", value = "${item.updateCount}")
             }
             if (item.dismissTime != null && item.dismissTime > 0) {
                 AttributeRow(
-                    label = stringResource(R.string.notification_attribute_time_dismissed),
+                    label = "Time Dismissed",
                     value = dateTimeFormatter.format(Instant.ofEpochMilli(item.dismissTime))
                 )
             }
             if (item.dismissReason != null) {
-                AttributeRow(label = stringResource(R.string.notification_attribute_dismiss_reason), value = stringResource(id = getReasonLabel(item.dismissReason)))
+                AttributeRow(label = "Dismiss Reason", value = stringResource(id = getReasonLabel(item.dismissReason)))
             }
             if (item.isOngoing) {
-                AttributeRow(label = stringResource(R.string.notification_attribute_ongoing), value = stringResource(R.string.notification_value_yes))
+                AttributeRow(label = "Ongoing", value = "Yes")
             }
             if (item.isPersistent) {
-                AttributeRow(label = stringResource(R.string.notification_attribute_persistent), value = stringResource(R.string.notification_value_yes))
+                AttributeRow(label = "Persistent", value = "Yes")
             }
             if (!item.isClearable) {
-                AttributeRow(label = stringResource(R.string.notification_attribute_clearable), value = stringResource(R.string.notification_value_no))
+                AttributeRow(label = "Clearable", value = "No")
             }
             if (item.isPinned) {
-                AttributeRow(label = stringResource(R.string.notification_attribute_pinned), value = stringResource(R.string.notification_value_yes))
+                AttributeRow(label = "Pinned", value = "Yes")
             }
             if (item.isRead) {
-                AttributeRow(label = stringResource(R.string.notification_attribute_read_status), value = stringResource(R.string.notification_value_read))
+                AttributeRow(label = "Read Status", value = "Read")
             }
             if (item.isGroupSummary) {
-                AttributeRow(label = stringResource(R.string.notification_attribute_group_summary), value = stringResource(R.string.notification_value_yes))
+                AttributeRow(label = "Group Summary", value = "Yes")
             }
             if (!item.groupKey.isNullOrEmpty()) {
-                AttributeRow(label = stringResource(R.string.notification_attribute_group_key), value = item.groupKey)
+                AttributeRow(label = "Group Key", value = item.groupKey)
             }
             if (item.actionsCount > 0) {
-                AttributeRow(label = stringResource(R.string.notification_attribute_actions_count), value = "${item.actionsCount}")
+                AttributeRow(label = "Actions Count", value = "${item.actionsCount}")
             }
             if (!item.actionLabels.isNullOrEmpty()) {
-                AttributeRow(label = stringResource(R.string.notification_attribute_action_labels), value = item.actionLabels)
+                AttributeRow(label = "Action Labels", value = item.actionLabels)
             }
             if (!item.intentUri.isNullOrEmpty()) {
-                AttributeRow(label = stringResource(R.string.notification_attribute_intent_uri), value = item.intentUri)
+                AttributeRow(label = "Intent URI", value = item.intentUri)
             }
             if (item.smallIconRes != 0) {
-                AttributeRow(label = stringResource(R.string.notification_attribute_small_icon_res), value = "0x${item.smallIconRes.toString(16).uppercase()}")
+                AttributeRow(label = "Small Icon Res", value = "0x${item.smallIconRes.toString(16).uppercase()}")
             }
             if (!item.appIconUri.isNullOrEmpty()) {
-                AttributeRow(label = stringResource(R.string.notification_attribute_app_icon_uri), value = item.appIconUri)
+                AttributeRow(label = "App Icon URI", value = item.appIconUri)
             }
-            AttributeRow(label = stringResource(R.string.notification_attribute_sync_status), value = item.syncStatus.name)
+            AttributeRow(label = "Sync Status", value = item.syncStatus.name)
             if (item.lastSyncedAt > 0) {
                 AttributeRow(
-                    label = stringResource(R.string.notification_attribute_last_synced),
+                    label = "Last Synced",
                     value = dateTimeFormatter.format(Instant.ofEpochMilli(item.lastSyncedAt))
                 )
             }
             if (item.embedding != null) {
-                AttributeRow(label = stringResource(R.string.notification_attribute_vector_embedding), value = stringResource(R.string.notification_attribute_vector_indexed))
+                AttributeRow(label = "Vector Embedding", value = "128-dim Indexed")
             }
             if (item.id > 0) {
-                AttributeRow(label = stringResource(R.string.notification_attribute_database_id), value = stringResource(R.string.notification_attribute_database_id_value, item.id))
+                AttributeRow(label = "Database ID", value = "#${item.id}")
             }
-            AttributeRow(label = stringResource(R.string.notification_attribute_key), value = item.key)
+            AttributeRow(label = "Key", value = item.key)
         }
     }
 }

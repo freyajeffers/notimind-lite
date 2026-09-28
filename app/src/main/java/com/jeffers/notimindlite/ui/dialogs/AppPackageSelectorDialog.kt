@@ -11,8 +11,6 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.res.stringResource
-import com.jeffers.notimindlite.R
 
 @Composable
 fun AppPackageSelectorDialog(
@@ -22,9 +20,7 @@ fun AppPackageSelectorDialog(
     onPackagesSelected: (List<String>?) -> Unit
 ) {
     var searchQuery by remember { mutableStateOf("") }
-    val currentSelected = remember(selectedPackages) {
-        mutableStateListOf<String>().apply { addAll(selectedPackages) }
-    }
+    val currentSelected = remember { mutableStateListOf<String>().apply { addAll(selectedPackages) } }
 
     val filteredApps = remember(searchQuery, availableApps) {
         if (searchQuery.isBlank()) availableApps
@@ -35,21 +31,15 @@ fun AppPackageSelectorDialog(
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text(stringResource(R.string.package_filter_title)) },
+        title = { Text("Filter by Application") },
         text = {
             Column(modifier = Modifier.fillMaxWidth()) {
                 OutlinedTextField(
                     value = searchQuery,
                     onValueChange = { searchQuery = it },
                     modifier = Modifier.fillMaxWidth(),
-                    label = { Text(stringResource(R.string.package_filter_search_label)) },
-                    placeholder = { Text(stringResource(R.string.package_filter_search_hint)) },
-                    leadingIcon = {
-                        Icon(
-                            Icons.Default.Search,
-                            contentDescription = stringResource(R.string.common_search)
-                        )
-                    },
+                    placeholder = { Text("Search apps...") },
+                    leadingIcon = { Icon(Icons.Default.Search, contentDescription = "Search apps") },
                     singleLine = true
                 )
                 Spacer(modifier = Modifier.height(8.dp))
@@ -59,7 +49,6 @@ fun AppPackageSelectorDialog(
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .heightIn(min = 48.dp)
                                 .clickable {
                                     if (isChecked) currentSelected.remove(pkg)
                                     else currentSelected.add(pkg)
@@ -85,12 +74,12 @@ fun AppPackageSelectorDialog(
         },
         confirmButton = {
             Button(onClick = { onPackagesSelected(if (currentSelected.isEmpty()) null else currentSelected.toList()) }) {
-                Text(stringResource(R.string.package_filter_apply))
+                Text("Apply")
             }
         },
         dismissButton = {
-            TextButton(onClick = onDismiss) {
-                Text(stringResource(R.string.common_cancel))
+            TextButton(onClick = { onPackagesSelected(null) }) {
+                Text("Clear All")
             }
         }
     )

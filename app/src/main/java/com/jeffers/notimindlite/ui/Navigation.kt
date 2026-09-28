@@ -1,10 +1,6 @@
 package com.jeffers.notimindlite.ui
 
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.NotificationsActive
@@ -14,10 +10,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalWindowInfo
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.unit.dp
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -27,12 +20,11 @@ import com.jeffers.notimindlite.R
 import com.jeffers.notimindlite.data.auth.AuthManager
 import com.jeffers.notimindlite.data.local.AppDatabase
 import com.jeffers.notimindlite.data.local.NotificationDao
+import com.jeffers.notimindlite.data.local.PreferencesRepository
 import com.jeffers.notimindlite.ui.screens.ActiveNotificationsScreen
 import com.jeffers.notimindlite.ui.screens.LogHistoryScreen
 import com.jeffers.notimindlite.ui.screens.SettingsScreen
 import com.jeffers.notimindlite.ui.screens.SplashScreen
-
-private const val WIDE_SCREEN_MIN_WIDTH_DP = 600
 
 sealed class Screen(val route: String, val title: Int, val icon: @Composable () -> Unit) {
     object Active : Screen(
@@ -63,50 +55,16 @@ fun MainNavigation(
     modifier: Modifier = Modifier,
     notificationDao: NotificationDao,
     authManager: AuthManager,
-    db: AppDatabase
+    db: AppDatabase,
+    preferencesRepository: com.jeffers.notimindlite.data.local.PreferencesRepository
 ) {
     val navController = rememberNavController()
-    val items = remember { listOf(Screen.Active, Screen.History) }
+    val items = listOf(Screen.Active, Screen.History, Screen.Settings)
     val context = androidx.compose.ui.platform.LocalContext.current
-    val windowWidthDp = with(LocalDensity.current) {
-        LocalWindowInfo.current.containerSize.width.toDp()
-    }
-    val isWideScreen = windowWidthDp >= WIDE_SCREEN_MIN_WIDTH_DP.dp
-    val currentRoute = navController.currentBackStackEntryAsState().value?.destination?.route
     val preferenceManager = remember { com.jeffers.notimindlite.data.local.PreferenceManager(context) }
 
     Scaffold(
-        contentWindowInsets = WindowInsets.safeDrawing,
-        topBar = {
-            TopAppBar(
-                title = {
-                    val titleRes = when (currentRoute) {
-                        Screen.History.route -> Screen.History.title
-                        Screen.Settings.route -> Screen.Settings.title
-                        else -> Screen.Active.title
-                    }
-                    Text(stringResource(id = titleRes))
-                },
-                actions = {
-                    if (currentRoute != Screen.Settings.route) {
-                        IconButton(onClick = {
-                            navController.navigate(Screen.Settings.route) {
-                                popUpTo(navController.graph.findStartDestination().id) { saveState = true }
-                                launchSingleTop = true
-                                restoreState = true
-                            }
-                        }) {
-                            Icon(
-                                imageVector = Icons.Default.Settings,
-                                contentDescription = stringResource(id = R.string.nav_settings_action_cd)
-                            )
-                        }
-                    }
-                }
-            )
-        },
         bottomBar = {
-            if (!isWideScreen) {
             NavigationBar {
                 val navBackStackEntry by navController.currentBackStackEntryAsState()
                 val currentRoute = navBackStackEntry?.destination?.route
@@ -125,37 +83,13 @@ fun MainNavigation(
                     )
                 }
             }
-            }
         }
     ) { innerPadding ->
-        Row(
-            modifier = modifier
-                .fillMaxSize()
-                .padding(innerPadding)
+        NavHost(
+            navController = navController,
+            startDestination = "splash",
+            modifier = modifier.padding(innerPadding)
         ) {
-                if (isWideScreen) {
-                    NavigationRail {
-                        items.forEach { screen ->
-                            NavigationRailItem(
-                                icon = screen.icon,
-                                label = { Text(stringResource(id = screen.title)) },
-                                selected = currentRoute == screen.route,
-                                onClick = {
-                                    navController.navigate(screen.route) {
-                                        popUpTo(navController.graph.findStartDestination().id) { saveState = true }
-                                        launchSingleTop = true
-                                        restoreState = true
-                                    }
-                                }
-                            )
-                        }
-                    }
-                }
-                NavHost(
-                    navController = navController,
-                    startDestination = "splash",
-                    modifier = Modifier.weight(1f)
-                ) {
             composable("splash") {
                 SplashScreen(onTimeout = {
                     navController.navigate(Screen.Active.route) {
@@ -164,15 +98,14 @@ fun MainNavigation(
                 })
             }
             composable(Screen.Active.route) {
-                ActiveNotificationsScreen(notificationDao, authManager, db)
+                ActiveNotificationsScreen(notificationDao, authManager, db, preferencesRepository)
             }
             composable(Screen.History.route) {
-                LogHistoryScreen(notificationDao, authManager, db)
+                LogHistoryScreen(notificationDao, authManager, db, preferencesRepository)
             }
             composable(Screen.Settings.route) {
-                SettingsScreen(authManager = authManager, db = db)
+                SettingsScreen(authManager = authManager, db = db, preferencesRepository = preferencesRepository)
             }
-                }
         }
     }
 }
