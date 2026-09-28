@@ -178,11 +178,10 @@ fun AppIconImage(appIconUri: String?, modifier: Modifier = Modifier.size(20.dp))
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
-fun ActiveNotificationsScreen(dao: NotificationDao, authManager: AuthManager, db: AppDatabase) {
+fun ActiveNotificationsScreen(dao: NotificationDao, authManager: AuthManager, db: AppDatabase, preferences: PreferencesRepository) {
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
     val prefManager = remember { PreferenceManager(context) }
-    val preferences = remember { PreferencesRepository(context) }
     val compactMode by preferences.compactMode.collectAsState()
     val showAppIcons by preferences.showAppIcons.collectAsState()
     val groupByApp by preferences.groupByApp.collectAsState()
@@ -200,12 +199,13 @@ fun ActiveNotificationsScreen(dao: NotificationDao, authManager: AuthManager, db
     var expandedCards by remember { mutableStateOf(setOf<String>()) }
     var collapsedGroups by remember { mutableStateOf(setOf<String>()) }
     var isGranted by remember { mutableStateOf(checkNotificationPermission(context)) }
-    var searchQuery by rememberSaveable { mutableStateOf("") }
+    var searchQuery by rememberSaveable { mutableStateOf(preferences.sharedSearchQuery.value) }
     var debouncedSearchQuery by remember { mutableStateOf("") }
     var isSearchExplicitlyOpened by rememberSaveable { mutableStateOf(false) }
     var recentSearches by rememberSaveable { mutableStateOf(emptyList<String>()) }
     val focusManager = LocalFocusManager.current
     val keyboardController = LocalSoftwareKeyboardController.current
+    LaunchedEffect(searchQuery) { preferences.setSharedSearchQuery(searchQuery) }
 
 
 
@@ -216,8 +216,9 @@ fun ActiveNotificationsScreen(dao: NotificationDao, authManager: AuthManager, db
 
 
     // F-K fix: selectedPackages is user filter state — persist across process death.
-    var selectedPackages by rememberSaveable { mutableStateOf<List<String>?>(null) }
+    var selectedPackages by rememberSaveable { mutableStateOf(preferences.sharedSelectedPackages.value) }
     var showPackagePicker by remember { mutableStateOf(false) }
+    LaunchedEffect(selectedPackages) { preferences.setSharedSelectedPackages(selectedPackages) }
 
     DisposableEffect(lifecycleOwner) {
         val observer = LifecycleEventObserver { _, event ->
@@ -375,13 +376,15 @@ fun ActiveNotificationsScreen(dao: NotificationDao, authManager: AuthManager, db
                             selectedPackages = null
                             searchQuery = ""
                             recentSearches = emptyList()
+                            preferences.resetRecentSearches()
                             isSearchFocused = false
                             isSearchExplicitlyOpened = false
                             focusManager.clearFocus(force = true)
                             keyboardController?.hide()
                         }) { Text("Clear filters") }
                         if (recentSearches.isNotEmpty()) {
-                            TextButton(onClick = { recentSearches = emptyList() }) { Text("Reset searches") }
+                            TextButton(onClick = { recentSearches = emptyList()
+                            preferences.resetRecentSearches() }) { Text("Reset searches") }
                         }
                     }
                 }
@@ -442,7 +445,10 @@ fun ActiveNotificationsScreen(dao: NotificationDao, authManager: AuthManager, db
                                 keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
                                 keyboardActions = KeyboardActions(onDone = {
                                     val query = searchQuery.trim()
-                                    if (query.isNotEmpty()) recentSearches = listOf(query) + recentSearches.filterNot { it == query }.take(9)
+                                    if (query.isNotEmpty()) {
+                                        recentSearches = listOf(query) + recentSearches.filterNot { it == query }.take(9)
+                                        preferences.addRecentSearch(query)
+                                    }
                                     focusManager.clearFocus(force = true)
                                     keyboardController?.hide()
                                 }),

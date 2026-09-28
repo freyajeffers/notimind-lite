@@ -172,6 +172,21 @@ class PreferencesRepository(context: Context) {
     val syncChargingOnly: StateFlow<Boolean> = _syncChargingOnly
     val lastSyncTs: StateFlow<Long> = _lastSyncTs
 
+    // Shared UI search & filter state across Active and History screens
+    private val _sharedSearchQuery = MutableStateFlow(backing.getString("ui_shared_search_query", "") ?: "")
+    private val _sharedSelectedPackages = MutableStateFlow<List<String>?>(backing.getString("ui_shared_selected_packages", null)?.split(',')?.filter { it.isNotBlank() }?.ifEmpty { null })
+    private val _sharedSelectedReason = MutableStateFlow(backing.getInt("ui_shared_selected_reason", -1).let { if (it >= 0) it else null })
+    private val _recentSearches = MutableStateFlow(backing.getString("ui_recent_searches", "")?.let { s ->
+        runCatching { JSONArray(s) }.getOrNull()?.let { arr ->
+            (0 until arr.length()).map { arr.getString(it) }
+        } ?: emptyList()
+    } ?: emptyList())
+
+    val sharedSearchQuery: StateFlow<String> = _sharedSearchQuery
+    val sharedSelectedPackages: StateFlow<List<String>?> = _sharedSelectedPackages
+    val sharedSelectedReason: StateFlow<Int?> = _sharedSelectedReason
+    val recentSearches: StateFlow<List<String>> = _recentSearches
+
     private val _autoActOnNotification = MutableStateFlow(backing.getBoolean(KEY_AUTO_ACT_ON_NOTIFICATION, false))
     private val _defaultReplyMethod = MutableStateFlow(backing.getString(KEY_DEFAULT_REPLY_METHOD, "inline") ?: "inline")
     private val _longPressAction = MutableStateFlow(backing.getString(KEY_LONG_PRESS_ACTION, "open") ?: "open")
@@ -394,6 +409,18 @@ class PreferencesRepository(context: Context) {
     fun setThreadPoolSize(value: Int) {
         backing.edit().putInt(KEY_THREAD_POOL_SIZE, value.coerceIn(MIN_THREAD_POOL_SIZE, MAX_THREAD_POOL_SIZE)).apply()
     }
+
+    // Shared UI setters
+    fun setSharedSearchQuery(q: String) { backing.edit().putString("ui_shared_search_query", q).apply(); _sharedSearchQuery.value = q }
+    fun setSharedSelectedPackages(pkgs: List<String>?) { backing.edit().putString("ui_shared_selected_packages", pkgs?.joinToString(",")).apply(); _sharedSelectedPackages.value = pkgs }
+    fun setSharedSelectedReason(reason: Int?) { backing.edit().putInt("ui_shared_selected_reason", reason ?: -1).apply(); _sharedSelectedReason.value = reason }
+    fun addRecentSearch(q: String) {
+        val current = _recentSearches.value.filterNot { it == q }
+        val updated = (listOf(q) + current).take(10)
+        _recentSearches.value = updated
+        backing.edit().putString("ui_recent_searches", JSONArray(updated).toString()).apply()
+    }
+    fun resetRecentSearches() { _recentSearches.value = emptyList(); backing.edit().putString("ui_recent_searches", "").apply() }
 
     fun getEmbeddingRateMs() = backing.getLong(KEY_EMBEDDING_RATE_MS, DEFAULT_EMBEDDING_RATE_MS).coerceAtLeast(0L)
 
