@@ -419,8 +419,8 @@ fun ActiveNotificationsScreen(dao: NotificationDao, authManager: AuthManager, db
                         }
                         var expandedDropdown by remember { mutableStateOf(false) }
 
-                        LaunchedEffect(searchSuggestions) {
-                            expandedDropdown = searchSuggestions.isNotEmpty()
+                        LaunchedEffect(searchSuggestions, recentSearches) {
+                            expandedDropdown = searchSuggestions.isNotEmpty() || recentSearches.isNotEmpty()
                         }
 
                         Box(modifier = Modifier.fillMaxWidth()) {
@@ -456,11 +456,16 @@ fun ActiveNotificationsScreen(dao: NotificationDao, authManager: AuthManager, db
                             )
 
                             DropdownMenu(
-                                expanded = expandedDropdown && searchSuggestions.isNotEmpty(),
+                                expanded = expandedDropdown && (searchSuggestions.isNotEmpty() || (searchQuery.isBlank() && recentSearches.isNotEmpty())),
                                 onDismissRequest = { expandedDropdown = false },
                                 properties = androidx.compose.ui.window.PopupProperties(focusable = false),
                                 modifier = Modifier.fillMaxWidth(0.9f)
                             ) {
+                                if (searchQuery.isBlank()) {
+                                    recentSearches.forEach { recent ->
+                                        DropdownMenuItem(text = { Text(recent) }, onClick = { searchQuery = recent; expandedDropdown = false })
+                                    }
+                                }
                                 searchSuggestions.forEach { suggestion ->
                                     DropdownMenuItem(
                                         text = { Text(suggestion, fontSize = 14.sp) },
