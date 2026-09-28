@@ -59,14 +59,26 @@ private val LightColorScheme = lightColorScheme(
     scrim = Color(0x80000000)
 )
 
+private val AmoledColorScheme = DarkColorScheme.copy(
+    background = Color.Black,
+    surface = Color.Black,
+    surfaceVariant = Color(0xFF121212),
+    surfaceContainer = Color(0xFF080808),
+    surfaceContainerLow = Color(0xFF050505),
+    surfaceContainerHigh = Color(0xFF161616),
+    surfaceContainerHighest = Color(0xFF1D1D1D)
+)
+
 @Composable
 fun NotiMindLiteTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
     dynamicColor: Boolean = true,
+    amoledTheme: Boolean = false,
     content: @Composable () -> Unit
 ) {
     val context = LocalContext.current
     val colorScheme = when {
+        amoledTheme -> AmoledColorScheme
         dynamicColor && BuildConfig.SUPPORTS_DYNAMIC_COLOR -> {
             if (darkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
         }

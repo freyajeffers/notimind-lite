@@ -331,36 +331,66 @@ fun ActiveNotificationsScreen(dao: NotificationDao, authManager: AuthManager, db
 
     Scaffold(
         topBar = {
-            TopAppBar(
-                title = {},
-                actions = {
-                    if (!selectedPackages.isNullOrEmpty() || searchQuery.isNotBlank()) {
-                        IconButton(onClick = {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(40.dp)
+                    .background(MaterialTheme.colorScheme.background)
+                    .padding(horizontal = 4.dp),
+                horizontalArrangement = Arrangement.End,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                if (!selectedPackages.isNullOrEmpty() || searchQuery.isNotBlank()) {
+                    IconButton(
+                        modifier = Modifier.size(32.dp),
+                        onClick = {
                             selectedPackages = null
                             searchQuery = ""
                             isSearchFocused = false
                             isSearchExplicitlyOpened = false
                             focusManager.clearFocus(force = true)
                             keyboardController?.hide()
-                        }) { Icon(Icons.Default.FilterAltOff, contentDescription = "Clear filters") }
-                    }
-                    IconButton(onClick = { showPackagePicker = true }) {
-                        Icon(Icons.Default.FilterList, contentDescription = stringResource(id = R.string.active_notifications_filter_apps), tint = if (!selectedPackages.isNullOrEmpty()) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface)
-                    }
-                    IconButton(onClick = {
-                        if (isSearchExplicitlyOpened || searchQuery.isNotEmpty() || isSearchFocused) {
-                            isSearchExplicitlyOpened = false
-                            isSearchFocused = false
-                            searchQuery = ""
-                        } else {
-                            isSearchExplicitlyOpened = true
-                            scope.launch { listState.animateScrollToItem(0); searchFocusRequester.requestFocus() }
                         }
-                    }) {
-                        Icon(Icons.Default.Search, contentDescription = stringResource(id = R.string.common_search))
-                    }
+                    ) { Icon(Icons.Default.FilterAltOff, contentDescription = "Clear filters", modifier = Modifier.size(18.dp)) }
                 }
-            )
+                IconButton(modifier = Modifier.size(32.dp), onClick = { showPackagePicker = true }) {
+                    Icon(Icons.Default.FilterList, contentDescription = stringResource(id = R.string.active_notifications_filter_apps), modifier = Modifier.size(18.dp), tint = if (!selectedPackages.isNullOrEmpty()) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface)
+                }
+                IconButton(modifier = Modifier.size(32.dp), onClick = {
+                    if (isSearchExplicitlyOpened || searchQuery.isNotEmpty() || isSearchFocused) {
+                        isSearchExplicitlyOpened = false
+                        isSearchFocused = false
+                        searchQuery = ""
+                    } else {
+                        isSearchExplicitlyOpened = true
+                        scope.launch { listState.animateScrollToItem(0); searchFocusRequester.requestFocus() }
+                    }
+                }) {
+                    Icon(Icons.Default.Search, contentDescription = stringResource(id = R.string.common_search), modifier = Modifier.size(18.dp))
+                }
+            }
+        },
+        floatingActionButton = {
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                SmallFloatingActionButton(
+                    onClick = {
+                        val first = listState.layoutInfo.visibleItemsInfo.firstOrNull()?.index ?: 0
+                        val page = listState.layoutInfo.visibleItemsInfo.size.coerceAtLeast(1)
+                        scope.launch { listState.animateScrollToItem((first - page).coerceAtLeast(0)) }
+                    },
+                ) {
+                    Icon(Icons.Default.KeyboardArrowUp, contentDescription = "Page up")
+                }
+                SmallFloatingActionButton(
+                    onClick = {
+                        val last = listState.layoutInfo.visibleItemsInfo.lastOrNull()?.index ?: 0
+                        val page = listState.layoutInfo.visibleItemsInfo.size.coerceAtLeast(1)
+                        scope.launch { listState.animateScrollToItem(last + page) }
+                    },
+                ) {
+                    Icon(Icons.Default.KeyboardArrowDown, contentDescription = "Page down")
+                }
+            }
         }
     ) { innerPadding ->
         Box(modifier = Modifier.fillMaxSize()) {
@@ -647,6 +677,7 @@ fun ActiveNotificationsScreen(dao: NotificationDao, authManager: AuthManager, db
                                     dateTimeFormatter = dateTimeFormatter,
                                     dao = dao,
                                     isExpanded = cardExpanded,
+                                            highlightQuery = debouncedSearchQuery,
                                     showAppIcon = showAppIcons,
                                     compactMode = compactMode,
                                     previewLength = previewLength,
@@ -674,6 +705,7 @@ fun ActiveNotificationsScreen(dao: NotificationDao, authManager: AuthManager, db
                                             dateTimeFormatter = dateTimeFormatter,
                                             dao = dao,
                                             isExpanded = cardExpanded,
+                                            highlightQuery = debouncedSearchQuery,
                                     showAppIcon = showAppIcons,
                                     compactMode = compactMode,
                                     previewLength = previewLength,
@@ -724,6 +756,7 @@ fun LogNotificationCard(
     dateTimeFormatter: DateTimeFormatter,
     dao: NotificationDao,
     isExpanded: Boolean,
+    highlightQuery: String = "",
     onToggleExpand: () -> Unit,
     showAppIcon: Boolean = true,
     compactMode: Boolean = false,
@@ -824,7 +857,7 @@ fun LogNotificationCard(
             if (!isExpanded) {
                 if (item.title.isNotEmpty()) {
                     Text(
-                        text = item.title,
+                        text = highlightSearchText(item.title, highlightQuery),
                         style = MaterialTheme.typography.bodyMedium,
                         fontWeight = FontWeight.SemiBold,
                         maxLines = 1,
@@ -834,7 +867,7 @@ fun LogNotificationCard(
                 }
                 if (item.content.isNotEmpty()) {
                     Text(
-                        text = item.content.take(previewLength),
+                        text = highlightSearchText(item.content.take(previewLength), highlightQuery),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         maxLines = 2,
@@ -847,7 +880,7 @@ fun LogNotificationCard(
             if (isExpanded) {
                 Column(modifier = Modifier.padding(top = 8.dp)) {
                     Text(
-                        text = item.title,
+                        text = highlightSearchText(item.title, highlightQuery),
                         style = MaterialTheme.typography.bodyLarge,
                         fontWeight = FontWeight.SemiBold,
                         maxLines = 3,

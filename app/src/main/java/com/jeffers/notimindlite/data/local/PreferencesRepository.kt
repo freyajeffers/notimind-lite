@@ -505,7 +505,7 @@ class PreferencesRepository(context: Context) {
         private const val KEY_LONG_PRESS_ACTION = "config_long_press_action"
         private const val KEY_AUTO_EXECUTE_RULES = "config_auto_execute_rules"
         private val SORT_ORDERS = setOf("newest", "oldest", "app")
-        private val THEME_ACCENTS = setOf("system", "blue", "green", "purple", "orange")
+        private val THEME_ACCENTS = setOf("system", "blue", "green", "purple", "orange", "amoled")
         val REPLY_METHODS = setOf("inline", "open_app", "copy")
         val LONG_PRESS_ACTIONS = setOf("open", "reply", "dismiss")
         private const val PROFILE_STORE = "notimind_profiles"
