@@ -8,7 +8,7 @@ import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import android.app.NotificationChannel
 import android.app.NotificationManager
-
+import com.jeffers.notimindlite.R
 /**
  * SnoozeReminderReceiver handles the trigger of the snooze alarm.
  * It creates a local notification to remind the user of the snoozed item.
@@ -30,7 +30,7 @@ class SnoozeReminderReceiver : BroadcastReceiver() {
 
         val notification = NotificationCompat.Builder(context, CHANNEL_ID)
             .setSmallIcon(android.R.drawable.ic_dialog_info)
-            .setContentTitle("Snooze Reminder")
+            .setContentTitle(context.getString(R.string.snooze_reminder_title))
             .setContentText("$title: $content")
             .setPriority(NotificationCompat.PRIORITY_HIGH)
             .setAutoCancel(true)
