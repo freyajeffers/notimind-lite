@@ -202,7 +202,7 @@ fun ActiveNotificationsScreen(dao: NotificationDao, authManager: AuthManager, db
     var searchQuery by rememberSaveable { mutableStateOf(preferences.sharedSearchQuery.value) }
     var debouncedSearchQuery by remember { mutableStateOf("") }
     var isSearchExplicitlyOpened by rememberSaveable { mutableStateOf(false) }
-    var recentSearches by rememberSaveable { mutableStateOf(emptyList<String>()) }
+    val recentSearches by preferences.recentSearches.collectAsState()
     val focusManager = LocalFocusManager.current
     val keyboardController = LocalSoftwareKeyboardController.current
     LaunchedEffect(searchQuery) { preferences.setSharedSearchQuery(searchQuery) }
@@ -375,7 +375,6 @@ fun ActiveNotificationsScreen(dao: NotificationDao, authManager: AuthManager, db
                         TextButton(onClick = {
                             selectedPackages = null
                             searchQuery = ""
-                            recentSearches = emptyList()
                             preferences.resetRecentSearches()
                             isSearchFocused = false
                             isSearchExplicitlyOpened = false
@@ -456,7 +455,6 @@ fun ActiveNotificationsScreen(dao: NotificationDao, authManager: AuthManager, db
                                 keyboardActions = KeyboardActions(onDone = {
                                     val query = searchQuery.trim()
                                     if (query.isNotEmpty()) {
-                                        recentSearches = listOf(query) + recentSearches.filterNot { it == query }.take(9)
                                         preferences.addRecentSearch(query)
                                     }
                                     focusManager.clearFocus(force = true)
