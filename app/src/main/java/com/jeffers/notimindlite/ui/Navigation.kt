@@ -20,6 +20,7 @@ import com.jeffers.notimindlite.R
 import com.jeffers.notimindlite.data.auth.AuthManager
 import com.jeffers.notimindlite.data.local.AppDatabase
 import com.jeffers.notimindlite.data.local.NotificationDao
+import com.jeffers.notimindlite.data.local.PreferencesRepository
 import com.jeffers.notimindlite.ui.screens.ActiveNotificationsScreen
 import com.jeffers.notimindlite.ui.screens.LogHistoryScreen
 import com.jeffers.notimindlite.ui.screens.SettingsScreen
@@ -57,9 +58,10 @@ fun MainNavigation(
     db: AppDatabase
 ) {
     val navController = rememberNavController()
-    val items = listOf(Screen.Active, Screen.History, Screen.Settings)
+    val items = listOf(Screen.Active, Screen.History)
     val context = androidx.compose.ui.platform.LocalContext.current
     val preferenceManager = remember { com.jeffers.notimindlite.data.local.PreferenceManager(context) }
+    val preferencesRepository = remember { PreferencesRepository(context) }
 
     Scaffold(
         topBar = {
@@ -114,10 +116,10 @@ fun MainNavigation(
                 })
             }
             composable(Screen.Active.route) {
-                ActiveNotificationsScreen(notificationDao, authManager, db)
+                ActiveNotificationsScreen(notificationDao, authManager, db, preferencesRepository)
             }
             composable(Screen.History.route) {
-                LogHistoryScreen(notificationDao, authManager, db)
+                LogHistoryScreen(notificationDao, authManager, db, preferencesRepository)
             }
             composable(Screen.Settings.route) {
                 SettingsScreen(authManager = authManager, db = db)
