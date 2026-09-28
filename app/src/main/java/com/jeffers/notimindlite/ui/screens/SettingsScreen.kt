@@ -177,6 +177,62 @@ fun SettingsScreen(
             }
         }
 
+        // Notification Access card moved to top for discoverability
+        val prefMgrTop = remember { PreferenceManager(context) }
+        val lifecycleOwnerTop = LocalLifecycleOwner.current
+        var listenerGrantedTop by remember { mutableStateOf(checkNotificationPermission(context)) }
+        DisposableEffect(lifecycleOwnerTop) {
+            val observer = androidx.lifecycle.LifecycleEventObserver { _, event ->
+                if (event == androidx.lifecycle.Lifecycle.Event.ON_RESUME) {
+                    listenerGrantedTop = checkNotificationPermission(context)
+                }
+            }
+            lifecycleOwnerTop.lifecycle.addObserver(observer)
+            onDispose { lifecycleOwnerTop.lifecycle.removeObserver(observer) }
+        }
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            colors = CardDefaults.cardColors(
+                containerColor = if (listenerGrantedTop)
+                    MaterialTheme.colorScheme.surfaceVariant
+                else
+                    MaterialTheme.colorScheme.errorContainer
+            )
+        ) {
+            Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                Text(text = stringResource(id = R.string.settings_section_listener), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                    Icon(imageVector = if (listenerGrantedTop) Icons.Default.Notifications else Icons.Default.NotificationsOff, contentDescription = null, tint = if (listenerGrantedTop) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error)
+                    Text(text = stringResource(id = if (listenerGrantedTop) R.string.settings_listener_granted_desc else R.string.settings_listener_missing_desc), style = MaterialTheme.typography.bodyMedium, modifier = Modifier.weight(1f))
+                }
+                Button(onClick = { val intent = Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS); intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK); context.startActivity(intent) }, colors = ButtonDefaults.buttonColors(containerColor = if (listenerGrantedTop) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.error, contentColor = if (listenerGrantedTop) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onError)) {
+                    Text(stringResource(id = if (listenerGrantedTop) R.string.settings_listener_open else R.string.settings_listener_grant))
+                }
+            }
+        }
+
+        // Boot & Restore card placed near top for quick opt-in/out.
+        Card(modifier = Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)) {
+            Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                Text(text = stringResource(id = R.string.settings_section_restore), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(Icons.Default.Restore, contentDescription = null)
+                    Spacer(Modifier.width(8.dp))
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(text = stringResource(id = R.string.settings_restore_on_boot_title), style = MaterialTheme.typography.bodyLarge)
+                        Text(text = stringResource(id = R.string.settings_restore_on_boot_desc), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    }
+                    Switch(checked = prefMgrTop.isRestoreOnBootEnabled() && listenerGrantedTop, enabled = listenerGrantedTop && !BuildConfig.DEBUG, onCheckedChange = { prefMgrTop.setRestoreOnBootEnabled(it) })
+                }
+                OutlinedButton(onClick = { pickBackupLauncher.launch(arrayOf("application/octet-stream", "*/*")) }, modifier = Modifier.fillMaxWidth(), colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.primary)) {
+                    Icon(Icons.Default.Restore, contentDescription = null)
+                    Spacer(Modifier.width(8.dp))
+                    Text("Restore Backup Manually")
+                }
+            }
+        }
+
+        // Continue with other sections
         SettingsCaptureSection(preferencesRepository = preferencesRepository)
         ProfileManagerSection(repository = preferencesRepository)
         SettingsPreferencesSection(preferencesRepository = preferencesRepository)
