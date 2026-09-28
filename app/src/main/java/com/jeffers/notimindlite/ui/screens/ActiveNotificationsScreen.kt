@@ -385,9 +385,9 @@ fun ActiveNotificationsScreen(dao: NotificationDao, authManager: AuthManager, db
                 SmallFloatingActionButton(
                     modifier = Modifier.semantics { contentDescription = "PageDownButton" },
                     onClick = {
-                        val last = listState.layoutInfo.visibleItemsInfo.lastOrNull()?.index ?: 0
+                        val first = listState.layoutInfo.visibleItemsInfo.firstOrNull()?.index ?: 0
                         val page = listState.layoutInfo.visibleItemsInfo.size.coerceAtLeast(1)
-                        scope.launch { listState.animateScrollToItem(last + page) }
+                        scope.launch { listState.animateScrollToItem(first + page) }
                     },
                 ) {
                     Icon(Icons.Default.KeyboardArrowDown, contentDescription = "Page down")
