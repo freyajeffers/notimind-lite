@@ -59,6 +59,7 @@ import javax.crypto.SecretKey
 fun SettingsScreen(
     authManager: AuthManager,
     db: AppDatabase,
+    preferencesRepository: com.jeffers.notimindlite.data.local.PreferencesRepository,
     webClientId: String = ""
 ) {
     val session by authManager.session.collectAsState()
@@ -76,7 +77,7 @@ fun SettingsScreen(
     var backupKeyBase64 by remember { mutableStateOf("") }
     var pendingBackupKey by remember { mutableStateOf<SecretKey?>(null) }
     val snackbarHostState = remember { SnackbarHostState() }
-    val preferencesRepository = remember { com.jeffers.notimindlite.data.local.PreferencesRepository(context) }
+
     val restoreSuccessMsg = stringResource(id = R.string.settings_restore_success)
     val restoreFailureMsg = stringResource(id = R.string.settings_restore_failure)
 
