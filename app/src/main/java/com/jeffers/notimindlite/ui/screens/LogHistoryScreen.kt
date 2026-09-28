@@ -661,7 +661,7 @@ fun LogHistoryCard(
                     Spacer(modifier = Modifier.width(6.dp))
                     TooltipBox(
                         positionProvider = TooltipDefaults.rememberTooltipPositionProvider(TooltipAnchorPosition.Above),
-                        tooltip = { PlainTooltip { Text("Open notification") } },
+                        tooltip = { PlainTooltip { Text(stringResource(R.string.notification_open_tooltip)) } },
                         state = rememberTooltipState()
                     ) {
                         IconButton(
