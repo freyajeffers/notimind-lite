@@ -373,6 +373,7 @@ fun ActiveNotificationsScreen(dao: NotificationDao, authManager: AuthManager, db
         floatingActionButton = {
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 SmallFloatingActionButton(
+                    modifier = Modifier.semantics { contentDescription = "PageUpButton" },
                     onClick = {
                         val first = listState.layoutInfo.visibleItemsInfo.firstOrNull()?.index ?: 0
                         val page = listState.layoutInfo.visibleItemsInfo.size.coerceAtLeast(1)
@@ -382,6 +383,7 @@ fun ActiveNotificationsScreen(dao: NotificationDao, authManager: AuthManager, db
                     Icon(Icons.Default.KeyboardArrowUp, contentDescription = "Page up")
                 }
                 SmallFloatingActionButton(
+                    modifier = Modifier.semantics { contentDescription = "PageDownButton" },
                     onClick = {
                         val last = listState.layoutInfo.visibleItemsInfo.lastOrNull()?.index ?: 0
                         val page = listState.layoutInfo.visibleItemsInfo.size.coerceAtLeast(1)
@@ -443,7 +445,8 @@ fun ActiveNotificationsScreen(dao: NotificationDao, authManager: AuthManager, db
                                     .fillMaxWidth()
                                     .padding(bottom = 6.dp)
                                     .focusRequester(searchFocusRequester)
-                                    .onFocusChanged { isSearchFocused = it.isFocused },
+                                    .onFocusChanged { isSearchFocused = it.isFocused }
+                                    .semantics { contentDescription = "ActiveSearchField" },
                                 placeholder = { Text("Search") },
                                 leadingIcon = { Icon(Icons.Default.Search, contentDescription = "Search") },
                                 trailingIcon = {
