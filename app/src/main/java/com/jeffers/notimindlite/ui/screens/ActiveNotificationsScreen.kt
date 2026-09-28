@@ -469,8 +469,15 @@ fun ActiveNotificationsScreen(dao: NotificationDao, authManager: AuthManager, db
                                     .padding(bottom = 6.dp)
                                     .focusRequester(searchFocusRequester)
                                     .onFocusChanged { isSearchFocused = it.isFocused },
-                                placeholder = { Text("Search") },
-                                leadingIcon = { Icon(Icons.Default.Search, contentDescription = "Search") },
+                                placeholder = {
+                                    Text(stringResource(R.string.active_notifications_search_placeholder))
+                                },
+                                leadingIcon = {
+                                    Icon(
+                                        Icons.Default.Search,
+                                        contentDescription = stringResource(R.string.common_search)
+                                    )
+                                },
                                 trailingIcon = {
                                     if (searchQuery.isNotEmpty()) {
                                         IconButton(onClick = { searchQuery = "" }) {
@@ -544,7 +551,15 @@ fun ActiveNotificationsScreen(dao: NotificationDao, authManager: AuthManager, db
                                     contentColor = if (isGranted) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onErrorContainer
                                 )
                             ) {
-                                Text(if (isGranted) "Settings" else "Grant")
+                                Text(
+                                    stringResource(
+                                        if (isGranted) {
+                                            R.string.active_notifications_settings
+                                        } else {
+                                            R.string.active_notifications_grant
+                                        }
+                                    )
+                                )
                             }
                         }
                     }
