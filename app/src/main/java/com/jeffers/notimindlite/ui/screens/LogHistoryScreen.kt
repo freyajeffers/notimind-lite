@@ -18,7 +18,7 @@ import androidx.compose.material.icons.automirrored.filled.Sort
 import androidx.compose.material.icons.filled.Bookmark
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Download
-import androidx.compose.material.icons.filled.OpenInNew
+import androidx.compose.material.icons.automirrored.filled.OpenInNew
 import androidx.compose.material.icons.filled.FilterAltOff
 import androidx.compose.material.icons.filled.FilterList
 import androidx.compose.material.icons.filled.History
@@ -233,7 +233,7 @@ fun LogHistoryScreen(dao: NotificationDao, authManager: AuthManager, db: AppData
                     Box {
                         val hasActiveFilters = !selectedPackages.isNullOrEmpty() || selectedReasonFilter != null
                         TooltipBox(
-                            positionProvider = TooltipDefaults.rememberPlainTooltipPositionProvider(),
+                            positionProvider = TooltipDefaults.rememberTooltipPositionProvider(),
                             tooltip = { PlainTooltip { Text(stringResource(id = R.string.log_history_filter_title)) } },
                             state = rememberTooltipState()
                         ) {
@@ -278,7 +278,7 @@ fun LogHistoryScreen(dao: NotificationDao, authManager: AuthManager, db: AppData
 
                     Box {
                         TooltipBox(
-                            positionProvider = TooltipDefaults.rememberPlainTooltipPositionProvider(),
+                            positionProvider = TooltipDefaults.rememberTooltipPositionProvider(),
                             tooltip = { PlainTooltip { Text("Sort Logs") } },
                             state = rememberTooltipState()
                         ) {
@@ -360,7 +360,7 @@ fun LogHistoryScreen(dao: NotificationDao, authManager: AuthManager, db: AppData
                     horizontalAlignment = Alignment.End
                 ) {
                     TooltipBox(
-                        positionProvider = TooltipDefaults.rememberPlainTooltipPositionProvider(),
+                        positionProvider = TooltipDefaults.rememberTooltipPositionProvider(),
                         tooltip = { PlainTooltip { Text("Scroll to Top") } },
                         state = rememberTooltipState()
                     ) {
@@ -378,7 +378,7 @@ fun LogHistoryScreen(dao: NotificationDao, authManager: AuthManager, db: AppData
                     }
 
                     TooltipBox(
-                        positionProvider = TooltipDefaults.rememberPlainTooltipPositionProvider(),
+                        positionProvider = TooltipDefaults.rememberTooltipPositionProvider(),
                         tooltip = { PlainTooltip { Text("Scroll to Bottom") } },
                         state = rememberTooltipState()
                     ) {
@@ -663,7 +663,7 @@ fun LogHistoryCard(
 
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     TooltipBox(
-                        positionProvider = TooltipDefaults.rememberPlainTooltipPositionProvider(),
+                        positionProvider = TooltipDefaults.rememberTooltipPositionProvider(),
                         tooltip = { PlainTooltip { Text(if (item.isPinned) "Unpin notification" else "Pin notification") } },
                         state = rememberTooltipState()
                     ) {
@@ -687,7 +687,7 @@ fun LogHistoryCard(
 
                     Spacer(modifier = Modifier.width(6.dp))
                     TooltipBox(
-                        positionProvider = TooltipDefaults.rememberPlainTooltipPositionProvider(),
+                        positionProvider = TooltipDefaults.rememberTooltipPositionProvider(),
                         tooltip = { PlainTooltip { Text("Open notification") } },
                         state = rememberTooltipState()
                     ) {
@@ -703,7 +703,7 @@ fun LogHistoryCard(
                             modifier = Modifier.size(24.dp)
                         ) {
                             Icon(
-                                imageVector = Icons.Default.OpenInNew,
+                                imageVector = Icons.AutoMirrored.Filled.OpenInNew,
                                 contentDescription = "Open notification"
                             )
                         }
