@@ -233,7 +233,7 @@ fun LogHistoryScreen(dao: NotificationDao, authManager: AuthManager, db: AppData
                     Box {
                         val hasActiveFilters = !selectedPackages.isNullOrEmpty() || selectedReasonFilter != null
                         TooltipBox(
-                            positionProvider = TooltipDefaults.rememberTooltipPositionProvider(),
+                            positionProvider = TooltipDefaults.rememberTooltipPositionProvider(TooltipAnchorPosition.Above),
                             tooltip = { PlainTooltip { Text(stringResource(id = R.string.log_history_filter_title)) } },
                             state = rememberTooltipState()
                         ) {
@@ -278,7 +278,7 @@ fun LogHistoryScreen(dao: NotificationDao, authManager: AuthManager, db: AppData
 
                     Box {
                         TooltipBox(
-                            positionProvider = TooltipDefaults.rememberTooltipPositionProvider(),
+                            positionProvider = TooltipDefaults.rememberTooltipPositionProvider(TooltipAnchorPosition.Above),
                             tooltip = { PlainTooltip { Text("Sort Logs") } },
                             state = rememberTooltipState()
                         ) {
@@ -360,7 +360,7 @@ fun LogHistoryScreen(dao: NotificationDao, authManager: AuthManager, db: AppData
                     horizontalAlignment = Alignment.End
                 ) {
                     TooltipBox(
-                        positionProvider = TooltipDefaults.rememberTooltipPositionProvider(),
+                        positionProvider = TooltipDefaults.rememberTooltipPositionProvider(TooltipAnchorPosition.Above),
                         tooltip = { PlainTooltip { Text("Scroll to Top") } },
                         state = rememberTooltipState()
                     ) {
@@ -378,7 +378,7 @@ fun LogHistoryScreen(dao: NotificationDao, authManager: AuthManager, db: AppData
                     }
 
                     TooltipBox(
-                        positionProvider = TooltipDefaults.rememberTooltipPositionProvider(),
+                        positionProvider = TooltipDefaults.rememberTooltipPositionProvider(TooltipAnchorPosition.Above),
                         tooltip = { PlainTooltip { Text("Scroll to Bottom") } },
                         state = rememberTooltipState()
                     ) {
@@ -663,7 +663,7 @@ fun LogHistoryCard(
 
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     TooltipBox(
-                        positionProvider = TooltipDefaults.rememberTooltipPositionProvider(),
+                        positionProvider = TooltipDefaults.rememberTooltipPositionProvider(TooltipAnchorPosition.Above),
                         tooltip = { PlainTooltip { Text(if (item.isPinned) "Unpin notification" else "Pin notification") } },
                         state = rememberTooltipState()
                     ) {
@@ -687,7 +687,7 @@ fun LogHistoryCard(
 
                     Spacer(modifier = Modifier.width(6.dp))
                     TooltipBox(
-                        positionProvider = TooltipDefaults.rememberTooltipPositionProvider(),
+                        positionProvider = TooltipDefaults.rememberTooltipPositionProvider(TooltipAnchorPosition.Above),
                         tooltip = { PlainTooltip { Text("Open notification") } },
                         state = rememberTooltipState()
                     ) {
