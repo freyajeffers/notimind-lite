@@ -55,13 +55,13 @@ fun MainNavigation(
     modifier: Modifier = Modifier,
     notificationDao: NotificationDao,
     authManager: AuthManager,
-    db: AppDatabase
+    db: AppDatabase,
+    preferencesRepository: com.jeffers.notimindlite.data.local.PreferencesRepository
 ) {
     val navController = rememberNavController()
     val items = listOf(Screen.Active, Screen.History, Screen.Settings)
     val context = androidx.compose.ui.platform.LocalContext.current
     val preferenceManager = remember { com.jeffers.notimindlite.data.local.PreferenceManager(context) }
-    val preferencesRepository = remember { PreferencesRepository(context) }
 
     Scaffold(
         bottomBar = {
