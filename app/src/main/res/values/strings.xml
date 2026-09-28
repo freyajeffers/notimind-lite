@@ -12,6 +12,7 @@
     <string name="common_cancel">Cancel</string>
     <string name="common_show_passphrase">Show passphrase</string>
     <string name="common_hide_passphrase">Hide passphrase</string>
+    <string name="common_all">All</string>
     <string name="filter_remove_template">Remove %1$s</string>
     <string name="filter_chip_template">Filter: %1$s. Tap to remove.</string>
 
