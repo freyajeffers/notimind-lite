@@ -216,7 +216,7 @@ fun ActiveNotificationsScreen(dao: NotificationDao, authManager: AuthManager, db
 
 
     // F-K fix: selectedPackages is user filter state — persist across process death.
-    var selectedPackages by rememberSaveable { mutableStateOf(preferences.sharedSelectedPackages.value) }
+    var selectedPackages by remember { mutableStateOf(preferences.sharedSelectedPackages.value) }
     var showPackagePicker by remember { mutableStateOf(false) }
     LaunchedEffect(selectedPackages) { preferences.setSharedSelectedPackages(selectedPackages) }
 

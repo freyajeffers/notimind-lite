@@ -94,7 +94,7 @@ fun LogHistoryScreen(dao: NotificationDao, authManager: AuthManager, db: AppData
     // user input (sort/filter/search) survives.
     var sortMode by rememberSaveable { mutableStateOf(SortMode.DISMISSED) }
     var selectedReasonFilter by rememberSaveable { mutableStateOf(preferences.sharedSelectedReason.value) }
-    var selectedPackages by rememberSaveable { mutableStateOf(preferences.sharedSelectedPackages.value) }
+    var selectedPackages by remember { mutableStateOf(preferences.sharedSelectedPackages.value) }
 
     var showSortMenu by remember { mutableStateOf(false) }
     var showFilterMenu by remember { mutableStateOf(false) }
