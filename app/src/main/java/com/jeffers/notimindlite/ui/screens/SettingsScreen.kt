@@ -95,11 +95,7 @@ fun SettingsScreen(
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        Text(
-            text = "Settings & Cloud Backup",
-            style = MaterialTheme.typography.headlineMedium,
-            fontWeight = FontWeight.Bold
-        )
+        Spacer(modifier = Modifier.height(0.dp))
 
         Card(
             modifier = Modifier.fillMaxWidth(),
