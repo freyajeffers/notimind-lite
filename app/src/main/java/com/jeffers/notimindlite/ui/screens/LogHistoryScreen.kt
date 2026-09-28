@@ -117,6 +117,9 @@ fun LogHistoryScreen(dao: NotificationDao, authManager: AuthManager, db: AppData
     }
 
     var sortMode by rememberSaveable { mutableStateOf(prefToSortMode(prefSort)) }
+    LaunchedEffect(sortMode) {
+        preferences.setSortOrder(sortModeToPref(sortMode))
+    }
     var selectedReasonFilter by rememberSaveable { mutableStateOf(preferences.sharedSelectedReason.value) }
     var selectedPackages by remember { mutableStateOf(preferences.sharedSelectedPackages.value) }
 
