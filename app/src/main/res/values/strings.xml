@@ -289,4 +289,18 @@
     <string name="snooze_reminder_title">Snooze Reminder</string>
     <string name="restored_after_reboot">Restored after Reboot</string>
     <string name="notification_open_tooltip">Open notification</string>
+    <string name="notification_pin">Pin notification</string>
+    <string name="notification_unpin">Unpin notification</string>
+    <string name="notification_pin_short">Pin</string>
+    <string name="notification_unpin_short">Unpin</string>
+    <string name="notification_attributes_title">Notification Attributes</string>
+    <string name="notification_active_filter">Active</string>
+    <string name="notification_group_pin_all">Pin all in group</string>
+    <string name="notification_group_unpin_all">Unpin all in group</string>
+    <string name="notification_group_pin">Pin Group</string>
+    <string name="notification_group_unpin">Unpin Group</string>
+    <string name="notification_group_collapse">Collapse group</string>
+    <string name="notification_group_expand">Expand group</string>
+    <string name="notification_group_collapse_short">Collapse</string>
+    <string name="notification_group_expand_short">Expand</string>
 </resources>

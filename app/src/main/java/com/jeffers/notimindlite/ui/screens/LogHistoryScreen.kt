@@ -564,7 +564,7 @@ private fun DismissStatusBadge(item: NotificationEntity) {
             shape = MaterialTheme.shapes.extraSmall
         ) {
             Text(
-                text = "Active",
+                text = stringResource(R.string.notification_active_filter),
                 fontSize = 10.sp,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.primary,

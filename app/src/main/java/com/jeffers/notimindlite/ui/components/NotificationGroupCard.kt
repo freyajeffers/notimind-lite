@@ -42,10 +42,12 @@ import androidx.compose.runtime.key
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.jeffers.notimindlite.R
 import com.jeffers.notimindlite.data.local.NotificationDao
 import com.jeffers.notimindlite.data.local.NotificationEntity
 import com.jeffers.notimindlite.ui.screens.AppIconImage
@@ -195,7 +197,7 @@ fun NotificationGroupCard(
                         positionProvider = TooltipDefaults.rememberTooltipPositionProvider(TooltipAnchorPosition.Above),
                         tooltip = {
                             PlainTooltip {
-                                Text(if (group.isPinned) "Unpin all in group" else "Pin all in group")
+                                Text(stringResource(if (group.isPinned) R.string.notification_group_unpin_all else R.string.notification_group_pin_all))
                             }
                         },
                         state = rememberTooltipState()
@@ -212,7 +214,7 @@ fun NotificationGroupCard(
                         ) {
                             Icon(
                                 imageVector = if (group.isPinned) Icons.Default.Bookmark else Icons.Outlined.BookmarkBorder,
-                                contentDescription = if (group.isPinned) "Unpin Group" else "Pin Group",
+                                contentDescription = stringResource(if (group.isPinned) R.string.notification_group_unpin else R.string.notification_group_pin),
                                 tint = if (group.isPinned) {
                                     MaterialTheme.colorScheme.primary
                                 } else {
@@ -228,7 +230,7 @@ fun NotificationGroupCard(
                         positionProvider = TooltipDefaults.rememberTooltipPositionProvider(TooltipAnchorPosition.Above),
                         tooltip = {
                             PlainTooltip {
-                                Text(if (isGroupExpanded) "Collapse group" else "Expand group")
+                                Text(stringResource(if (isGroupExpanded) R.string.notification_group_collapse else R.string.notification_group_expand))
                             }
                         },
                         state = rememberTooltipState()
@@ -239,7 +241,7 @@ fun NotificationGroupCard(
                         ) {
                             Icon(
                                 imageVector = if (isGroupExpanded) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
-                                contentDescription = if (isGroupExpanded) "Collapse" else "Expand",
+                                contentDescription = stringResource(if (isGroupExpanded) R.string.notification_group_collapse_short else R.string.notification_group_expand_short),
                                 modifier = Modifier.size(20.dp)
                             )
                         }
