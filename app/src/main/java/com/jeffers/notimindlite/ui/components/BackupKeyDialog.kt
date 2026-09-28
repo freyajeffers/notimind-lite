@@ -55,6 +55,7 @@ fun BackupKeyDialog(
     val clipboardManager = LocalClipboardManager.current
     var passphrase by remember { mutableStateOf("") }
     var showPassword by remember { mutableStateOf(false) }
+    val shareKeyPayload = stringResource(R.string.backup_share_key_payload, keyBase64)
     val shareKeyChooser = stringResource(R.string.backup_share_key_chooser)
 
     AlertDialog(
@@ -132,7 +133,7 @@ fun BackupKeyDialog(
                     onClick = {
                         val shareIntent = Intent(Intent.ACTION_SEND).apply {
                             type = "text/plain"
-                            putExtra(Intent.EXTRA_TEXT, "My NotiMind Backup Key: $keyBase64")
+                            putExtra(Intent.EXTRA_TEXT, shareKeyPayload)
                             addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
                         }
                         context.startActivity(
