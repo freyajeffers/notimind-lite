@@ -18,7 +18,9 @@ import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.semantics.stateDescription
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.semantics
+import com.jeffers.notimindlite.R
 
 /**
  * SpeedDialSettingsFab provides a primary action button that expands into
@@ -38,6 +40,10 @@ fun SpeedDialSettingsFab(
     val scale by animateFloatAsState(targetValue = if (expanded) 1f else 0f, animationSpec = animationSpec, label = "fabScale")
     val rotation by animateFloatAsState(targetValue = if (expanded) 45f else 0f, animationSpec = animationSpec, label = "fabRotation")
 
+    val quickActionStateDescription = stringResource(
+        if (expanded) R.string.quick_actions_expanded else R.string.quick_actions_collapsed
+    )
+
     Box(
         modifier = modifier,
         contentAlignment = Alignment.BottomEnd
@@ -50,7 +56,7 @@ fun SpeedDialSettingsFab(
             ) {
                 SpeedDialItem(
                     icon = Icons.Default.Sync,
-                    label = "Sync Now",
+                    label = stringResource(R.string.quick_actions_sync),
                     scale = scale,
                     onClick = {
                         expanded = false
@@ -59,7 +65,7 @@ fun SpeedDialSettingsFab(
                 )
                 SpeedDialItem(
                     icon = Icons.Default.Backup,
-                    label = "Backup",
+                    label = stringResource(R.string.quick_actions_backup),
                     scale = scale,
                     onClick = {
                         expanded = false
@@ -68,7 +74,7 @@ fun SpeedDialSettingsFab(
                 )
                 SpeedDialItem(
                     icon = Icons.Default.Settings,
-                    label = "Settings",
+                    label = stringResource(R.string.quick_actions_settings),
                     scale = scale,
                     onClick = {
                         expanded = false
@@ -87,14 +93,14 @@ fun SpeedDialSettingsFab(
             if (expanded) {
                 Icon(
                     Icons.Default.Close,
-                    contentDescription = "Close quick actions",
-                    modifier = Modifier.semantics { stateDescription = "Expanded" }
+                    contentDescription = stringResource(R.string.quick_actions_close),
+                    modifier = Modifier.semantics { stateDescription = quickActionStateDescription }
                 )
             } else {
                 Icon(
                     Icons.Default.Settings,
-                    contentDescription = "Open quick actions",
-                    modifier = Modifier.semantics { stateDescription = "Collapsed" }
+                    contentDescription = stringResource(R.string.quick_actions_open),
+                    modifier = Modifier.semantics { stateDescription = quickActionStateDescription }
                 )
             }
         }
