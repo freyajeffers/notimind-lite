@@ -248,7 +248,7 @@ fun LogHistoryScreen(dao: NotificationDao, authManager: AuthManager, db: AppData
                         TooltipBox(
                             positionProvider = TooltipDefaults
                                 .rememberTooltipPositionProvider(TooltipAnchorPosition.Above),
-                            tooltip = { PlainTooltip { Text("Sort Logs") } },
+                            tooltip = { PlainTooltip { Text(stringResource(R.string.log_history_sort_title)) } },
                             state = rememberTooltipState()
                         ) {
                             IconButton(onClick = { showSortMenu = true }) {
@@ -328,7 +328,7 @@ fun LogHistoryScreen(dao: NotificationDao, authManager: AuthManager, db: AppData
                 ) {
                     TooltipBox(
                         positionProvider = TooltipDefaults.rememberTooltipPositionProvider(TooltipAnchorPosition.Above),
-                        tooltip = { PlainTooltip { Text("Scroll to Top") } },
+                        tooltip = { PlainTooltip { Text(stringResource(R.string.common_scroll_top)) } },
                         state = rememberTooltipState()
                     ) {
                         SmallFloatingActionButton(
@@ -346,7 +346,7 @@ fun LogHistoryScreen(dao: NotificationDao, authManager: AuthManager, db: AppData
 
                     TooltipBox(
                         positionProvider = TooltipDefaults.rememberTooltipPositionProvider(TooltipAnchorPosition.Above),
-                        tooltip = { PlainTooltip { Text("Scroll to Bottom") } },
+                        tooltip = { PlainTooltip { Text(stringResource(R.string.common_scroll_bottom)) } },
                         state = rememberTooltipState()
                     ) {
                         SmallFloatingActionButton(
@@ -615,7 +615,15 @@ fun LogHistoryCard(
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     TooltipBox(
                         positionProvider = TooltipDefaults.rememberTooltipPositionProvider(TooltipAnchorPosition.Above),
-                        tooltip = { PlainTooltip { Text(if (item.isPinned) "Unpin notification" else "Pin notification") } },
+                        tooltip = { PlainTooltip { Text(
+                            stringResource(
+                                if (item.isPinned) {
+                                    R.string.log_history_unpin_tooltip
+                                } else {
+                                    R.string.log_history_pin_tooltip
+                                }
+                            )
+                        ) } },
                         state = rememberTooltipState()
                     ) {
                         IconButton(
