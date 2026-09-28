@@ -917,7 +917,7 @@ fun LogNotificationCard(
 
                     TooltipBox(
                         positionProvider = TooltipDefaults.rememberTooltipPositionProvider(TooltipAnchorPosition.Above),
-                        tooltip = { PlainTooltip { Text("Open notification") } },
+                        tooltip = { PlainTooltip { Text(stringResource(R.string.notification_open_tooltip)) } },
                         state = rememberTooltipState()
                     ) {
                         IconButton(
@@ -1162,12 +1162,12 @@ fun NotificationExpandedAttributes(
                 )
             }
             if (item.embedding != null) {
-                AttributeRow(label = "Vector Embedding", value = "128-dim Indexed")
+                AttributeRow(label = stringResource(R.string.notification_attribute_vector_embedding), value = stringResource(R.string.notification_attribute_vector_indexed))
             }
             if (item.id > 0) {
-                AttributeRow(label = "Database ID", value = "#${item.id}")
+                AttributeRow(label = stringResource(R.string.notification_attribute_database_id), value = stringResource(R.string.notification_attribute_database_id_value, item.id))
             }
-            AttributeRow(label = "Key", value = item.key)
+            AttributeRow(label = stringResource(R.string.notification_attribute_key), value = item.key)
         }
     }
 }
