@@ -104,7 +104,7 @@ fun MainNavigation(
                 LogHistoryScreen(notificationDao, authManager, db, preferencesRepository)
             }
             composable(Screen.Settings.route) {
-                SettingsScreen(authManager = authManager, db = db)
+                SettingsScreen(authManager = authManager, db = db, preferencesRepository = preferencesRepository)
             }
         }
     }
