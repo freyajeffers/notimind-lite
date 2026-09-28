@@ -26,6 +26,7 @@ import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.jeffers.notimindlite.R
 import com.jeffers.notimindlite.domain.entity.ActionableEntityExtractor
 
 @Composable
@@ -51,6 +52,7 @@ fun ActionableChips(
 }
 
 @Composable
+@Suppress("CyclomaticComplexMethod", "LongMethod", "FunctionNaming")
 private fun ActionChip(
     entity: ActionableEntityExtractor.ActionableEntity
 ) {
@@ -60,17 +62,37 @@ private fun ActionChip(
 
     val config = when (entity.type) {
         ActionableEntityExtractor.EntityType.OTP -> 
-            ActionChipConfig(Icons.Default.ContentCopy, "OTP", MaterialTheme.colorScheme.primaryContainer, MaterialTheme.colorScheme.onPrimaryContainer)
+            ActionChipConfig(
+                Icons.Default.ContentCopy,
+                stringResource(R.string.actionable_entity_otp),
+                MaterialTheme.colorScheme.primaryContainer,
+                MaterialTheme.colorScheme.onPrimaryContainer
+            )
         ActionableEntityExtractor.EntityType.URL ->
             ActionChipConfig(
                 icon = Icons.AutoMirrored.Filled.OpenInNew,
-                label = "Link",
+                label = stringResource(R.string.actionable_entity_link),
                 containerColor = MaterialTheme.colorScheme.secondaryContainer,
                 onColor = MaterialTheme.colorScheme.onSecondaryContainer
             )
         ActionableEntityExtractor.EntityType.LOCATION -> 
-            ActionChipConfig(Icons.Default.Place, "Place", MaterialTheme.colorScheme.tertiaryContainer, MaterialTheme.colorScheme.onTertiaryContainer)
+            ActionChipConfig(
+                Icons.Default.Place,
+                stringResource(R.string.actionable_entity_place),
+                MaterialTheme.colorScheme.tertiaryContainer,
+                MaterialTheme.colorScheme.onTertiaryContainer
+            )
     }
+
+    val actionDescription = stringResource(
+        R.string.actionable_action_suffix,
+        config.label,
+        entity.value
+    )
+    val menuStateDescription = stringResource(
+        if (expanded) R.string.actionable_menu_open else R.string.actionable_menu_closed
+    )
+    val shareViaLabel = stringResource(R.string.actionable_share_via)
 
     Box {
         AssistChip(
@@ -99,8 +121,8 @@ private fun ActionChip(
                 leadingIconContentColor = config.onColor
             ),
             modifier = Modifier.semantics {
-                contentDescription = "${config.label} action: ${entity.value}"
-                stateDescription = if (expanded) "Actions menu open" else "Actions menu closed"
+                contentDescription = actionDescription
+                stateDescription = menuStateDescription
             }
         )
 
@@ -109,7 +131,16 @@ private fun ActionChip(
             onDismissRequest = { expanded = false }
         ) {
             DropdownMenuItem(
-                text = { Text("Copy ${if (entity.type == ActionableEntityExtractor.EntityType.OTP) "Code" else if (entity.type == ActionableEntityExtractor.EntityType.URL) "Link" else "Address"}") },
+                text = {
+                    Text(
+                        when (entity.type) {
+                            ActionableEntityExtractor.EntityType.OTP -> stringResource(R.string.actionable_copy_code)
+                            ActionableEntityExtractor.EntityType.URL -> stringResource(R.string.actionable_copy_link)
+                            ActionableEntityExtractor.EntityType.LOCATION ->
+                                stringResource(R.string.actionable_copy_address)
+                        }
+                    )
+                },
                 onClick = {
                     clipboardManager.setText(AnnotatedString(entity.value))
                     expanded = false
@@ -119,10 +150,22 @@ private fun ActionChip(
 
             if (entity.type == ActionableEntityExtractor.EntityType.URL || entity.type == ActionableEntityExtractor.EntityType.LOCATION) {
                 DropdownMenuItem(
-                    text = { Text(if (entity.type == ActionableEntityExtractor.EntityType.URL) "Open in Browser" else "Open in Maps") },
+                    text = {
+                        Text(
+                            if (entity.type == ActionableEntityExtractor.EntityType.URL) {
+                                stringResource(R.string.actionable_open_browser)
+                            } else {
+                                stringResource(R.string.actionable_open_maps)
+                            }
+                        )
+                    },
                     onClick = {
                         try {
-                            val uriString = if (entity.type == ActionableEntityExtractor.EntityType.URL) entity.value else "geo:0,0?q=${Uri.encode(entity.value)}"
+                            val uriString = if (entity.type == ActionableEntityExtractor.EntityType.URL) {
+                                entity.value
+                            } else {
+                                "geo:0,0?q=${Uri.encode(entity.value)}"
+                            }
                             val intent = Intent(Intent.ACTION_VIEW, Uri.parse(uriString)).apply {
                                 addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
                             }
@@ -141,13 +184,15 @@ private fun ActionChip(
             }
 
             DropdownMenuItem(
-                text = { Text("Share") },
+                text = { Text(stringResource(R.string.actionable_share)) },
                 onClick = {
                     val shareIntent = Intent(Intent.ACTION_SEND).apply {
                         type = "text/plain"
                         putExtra(Intent.EXTRA_TEXT, entity.value)
                     }
-                    context.startActivity(Intent.createChooser(shareIntent, "Share via"))
+                    context.startActivity(
+                        Intent.createChooser(shareIntent, shareViaLabel)
+                    )
                     expanded = false
                 },
                 leadingIcon = { Icon(Icons.Default.Share, contentDescription = null, modifier = Modifier.size(18.dp)) }
