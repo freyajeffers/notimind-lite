@@ -407,10 +407,10 @@ fun ActiveNotificationsScreen(dao: NotificationDao, authManager: AuthManager, db
                         enter = fadeIn() + expandVertically(),
                         exit = fadeOut() + shrinkVertically()
                     ) {
-                        val searchSuggestions = remember(searchQuery, pinnedNotifs, activeNotifs, recentlyDismissed, lostNotifs) {
+                        val searchSuggestions = remember(searchQuery, pinnedNotifs, activeNotifs, filteredNotifs, recentlyDismissed, lostNotifs) {
                             if (searchQuery.length < 2) emptyList()
                             else {
-                                val allNotifs = pinnedNotifs + activeNotifs + recentlyDismissed + lostNotifs
+                                val allNotifs = pinnedNotifs + activeNotifs + filteredNotifs + recentlyDismissed + lostNotifs
                                 (allNotifs.map { it.appName } + allNotifs.map { it.title })
                                     .filter { it.contains(searchQuery, ignoreCase = true) }
                                     .distinct()
@@ -421,6 +421,16 @@ fun ActiveNotificationsScreen(dao: NotificationDao, authManager: AuthManager, db
 
                         LaunchedEffect(searchSuggestions, recentSearches) {
                             expandedDropdown = searchSuggestions.isNotEmpty() || recentSearches.isNotEmpty()
+                        }
+
+                        // Ensure dropdown appears promptly when the user types — sometimes
+                        // recomposition ordering delays the searchSuggestions-driven effect.
+                        LaunchedEffect(searchQuery) {
+                            if (searchQuery.length >= 2) {
+                                expandedDropdown = searchSuggestions.isNotEmpty()
+                            } else if (searchQuery.isBlank()) {
+                                expandedDropdown = recentSearches.isNotEmpty()
+                            }
                         }
 
                         Box(modifier = Modifier.fillMaxWidth()) {
