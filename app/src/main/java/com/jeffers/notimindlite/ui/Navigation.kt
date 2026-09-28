@@ -57,7 +57,7 @@ fun MainNavigation(
     db: AppDatabase
 ) {
     val navController = rememberNavController()
-    val items = listOf(Screen.Active, Screen.History)
+    val items = listOf(Screen.Active, Screen.History, Screen.Settings)
     val context = androidx.compose.ui.platform.LocalContext.current
     val preferenceManager = remember { com.jeffers.notimindlite.data.local.PreferenceManager(context) }
 
@@ -77,20 +77,6 @@ fun MainNavigation(
                 actions = {
                     val navBackStackEntry by navController.currentBackStackEntryAsState()
                     val currentRoute = navBackStackEntry?.destination?.route
-                    if (currentRoute != Screen.Settings.route) {
-                        IconButton(onClick = {
-                            navController.navigate(Screen.Settings.route) {
-                                popUpTo(navController.graph.findStartDestination().id) { saveState = true }
-                                launchSingleTop = true
-                                restoreState = true
-                            }
-                        }) {
-                            Icon(
-                                imageVector = Icons.Default.Settings,
-                                contentDescription = stringResource(id = R.string.nav_settings_action_cd)
-                            )
-                        }
-                    }
                 }
             )
         },
