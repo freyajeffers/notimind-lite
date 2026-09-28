@@ -180,7 +180,7 @@ fun AppIconImage(appIconUri: String?, modifier: Modifier = Modifier) {
     if (imageBitmap != null) {
         Image(
             bitmap = imageBitmap!!.asImageBitmap(),
-            contentDescription = "App Icon",
+            contentDescription = stringResource(R.string.active_notifications_app_icon_desc),
             modifier = modifier.size(20.dp)
         )
     }
@@ -487,7 +487,10 @@ fun ActiveNotificationsScreen(dao: NotificationDao, authManager: AuthManager, db
                                 trailingIcon = {
                                     if (searchQuery.isNotEmpty()) {
                                         IconButton(onClick = { searchQuery = "" }) {
-                                            Icon(Icons.Default.Close, contentDescription = "Clear Search")
+                                            Icon(
+                                                Icons.Default.Close,
+                                                contentDescription = stringResource(R.string.active_empty_search_clear)
+                                            )
                                         }
                                     }
                                 },
@@ -924,7 +927,7 @@ fun LogNotificationCard(
                         ) {
                             Icon(
                                 imageVector = Icons.AutoMirrored.Filled.OpenInNew,
-                                contentDescription = "Open notification"
+                                contentDescription = stringResource(R.string.notification_detail_open)
                             )
                         }
                     }
