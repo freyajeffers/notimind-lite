@@ -19,6 +19,8 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
@@ -52,7 +54,11 @@ import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.input.ImeAction
+
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
@@ -197,6 +203,9 @@ fun ActiveNotificationsScreen(dao: NotificationDao, authManager: AuthManager, db
     var searchQuery by rememberSaveable { mutableStateOf("") }
     var debouncedSearchQuery by remember { mutableStateOf("") }
     var isSearchExplicitlyOpened by rememberSaveable { mutableStateOf(false) }
+    var recentSearches by rememberSaveable { mutableStateOf(emptyList<String>()) }
+    val focusManager = LocalFocusManager.current
+    val keyboardController = LocalSoftwareKeyboardController.current
 
 
 
@@ -204,6 +213,7 @@ fun ActiveNotificationsScreen(dao: NotificationDao, authManager: AuthManager, db
         delay(100L)
         debouncedSearchQuery = searchQuery
     }
+
 
     // F-K fix: selectedPackages is user filter state — persist across process death.
     var selectedPackages by rememberSaveable { mutableStateOf<List<String>?>(null) }
@@ -306,6 +316,9 @@ fun ActiveNotificationsScreen(dao: NotificationDao, authManager: AuthManager, db
 
     val searchFocusRequester = remember { FocusRequester() }
     var isSearchFocused by remember { mutableStateOf(false) }
+    LaunchedEffect(isSearchFocused, searchQuery) {
+        if (!isSearchFocused && searchQuery.isBlank()) isSearchExplicitlyOpened = false
+    }
 
     Scaffold(
         topBar = {
@@ -356,6 +369,17 @@ fun ActiveNotificationsScreen(dao: NotificationDao, authManager: AuthManager, db
                                 }
                             )
                         }
+                    }
+                    if (!selectedPackages.isNullOrEmpty() || searchQuery.isNotBlank() || recentSearches.isNotEmpty()) {
+                        TextButton(onClick = {
+                            selectedPackages = null
+                            searchQuery = ""
+                            recentSearches = emptyList()
+                            isSearchFocused = false
+                            isSearchExplicitlyOpened = false
+                            focusManager.clearFocus(force = true)
+                            keyboardController?.hide()
+                        }) { Text("Clear filters") }
                     }
                 }
             )
@@ -412,6 +436,13 @@ fun ActiveNotificationsScreen(dao: NotificationDao, authManager: AuthManager, db
                                     }
                                 },
                                 singleLine = true,
+                                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+                                keyboardActions = KeyboardActions(onDone = {
+                                    val query = searchQuery.trim()
+                                    if (query.isNotEmpty()) recentSearches = listOf(query) + recentSearches.filterNot { it == query }.take(9)
+                                    focusManager.clearFocus(force = true)
+                                    keyboardController?.hide()
+                                }),
                                 shape = RoundedCornerShape(12.dp)
                             )
 
