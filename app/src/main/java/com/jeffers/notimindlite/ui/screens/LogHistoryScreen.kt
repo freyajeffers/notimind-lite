@@ -19,6 +19,7 @@ import androidx.compose.material.icons.filled.Bookmark
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Download
 import androidx.compose.material.icons.filled.OpenInNew
+import androidx.compose.material.icons.filled.FilterAltOff
 import androidx.compose.material.icons.filled.FilterList
 import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.KeyboardArrowDown
@@ -200,12 +201,7 @@ fun LogHistoryScreen(dao: NotificationDao, authManager: AuthManager, db: AppData
     Scaffold(
         topBar = {
             TopAppBar(
-                title = {
-                    Text(
-                        text = stringResource(id = R.string.log_history_title, filteredNotifs.size, totalCount),
-                        fontWeight = FontWeight.Bold
-                    )
-                },
+                title = {},
                 actions = {
                     Box {
                         val hasActiveFilters = !selectedPackages.isNullOrEmpty() || selectedReasonFilter != null
@@ -324,17 +320,18 @@ fun LogHistoryScreen(dao: NotificationDao, authManager: AuthManager, db: AppData
                         Icon(Icons.Default.Search, contentDescription = "Search")
                     }
                     if (!selectedPackages.isNullOrEmpty() || selectedReasonFilter != null || searchQuery.isNotBlank() || recentSearches.isNotEmpty()) {
-                        TextButton(onClick = {
+                        IconButton(onClick = {
                             selectedPackages = null
                             selectedReasonFilter = null
                             searchQuery = ""
-                            recentSearches = emptyList()
                             preferences.resetRecentSearches()
                             isSearchFocused = false
                             isSearchVisible = false
                             focusManager.clearFocus(force = true)
                             keyboardController?.hide()
-                        }) { Text("Clear filters") }
+                        }) {
+                            Icon(Icons.Default.FilterAltOff, contentDescription = "Clear filters")
+                        }
                         if (recentSearches.isNotEmpty()) {
                             TextButton(onClick = { recentSearches = emptyList()
                             preferences.resetRecentSearches() }) { Text("Reset searches") }

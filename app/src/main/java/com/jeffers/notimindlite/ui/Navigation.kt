@@ -58,30 +58,12 @@ fun MainNavigation(
     db: AppDatabase
 ) {
     val navController = rememberNavController()
-    val items = listOf(Screen.Active, Screen.History)
+    val items = listOf(Screen.Active, Screen.History, Screen.Settings)
     val context = androidx.compose.ui.platform.LocalContext.current
     val preferenceManager = remember { com.jeffers.notimindlite.data.local.PreferenceManager(context) }
     val preferencesRepository = remember { PreferencesRepository(context) }
 
     Scaffold(
-        topBar = {
-            TopAppBar(
-                title = {
-                    val navBackStackEntry by navController.currentBackStackEntryAsState()
-                    val currentRoute = navBackStackEntry?.destination?.route
-                    val titleRes = when (currentRoute) {
-                        Screen.History.route -> Screen.History.title
-                        Screen.Settings.route -> Screen.Settings.title
-                        else -> Screen.Active.title
-                    }
-                    Text(stringResource(id = titleRes))
-                },
-                actions = {
-                    val navBackStackEntry by navController.currentBackStackEntryAsState()
-                    val currentRoute = navBackStackEntry?.destination?.route
-                }
-            )
-        },
         bottomBar = {
             NavigationBar {
                 val navBackStackEntry by navController.currentBackStackEntryAsState()
