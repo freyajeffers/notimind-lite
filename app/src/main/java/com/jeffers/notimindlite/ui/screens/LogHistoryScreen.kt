@@ -744,7 +744,7 @@ fun LogHistoryCard(
                                 verticalArrangement = Arrangement.spacedBy(2.dp)
                             ) {
                                 Text(
-                                    text = "Inbox Lines (${inboxLines.size})",
+                                    text = stringResource(R.string.notification_inbox_lines, inboxLines.size),
                                     style = MaterialTheme.typography.labelSmall,
                                     fontWeight = FontWeight.Bold,
                                     color = MaterialTheme.colorScheme.primary
