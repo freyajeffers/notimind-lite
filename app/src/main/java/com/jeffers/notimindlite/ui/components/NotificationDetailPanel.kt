@@ -11,6 +11,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.res.stringResource
+import com.jeffers.notimindlite.R
 import com.jeffers.notimindlite.data.local.NotificationEntity
 import java.time.format.DateTimeFormatter
 
@@ -34,14 +36,20 @@ fun NotificationDetailPanel(
             .padding(12.dp),
         verticalArrangement = Arrangement.spacedBy(6.dp)
     ) {
-        DetailRow(label = "Package", value = item.packageName)
-        DetailRow(label = "App Name", value = item.appName)
-        DetailRow(label = "Priority", value = item.priority.toString())
-        DetailRow(label = "Channel ID", value = item.channelId ?: "Unknown")
-        DetailRow(label = "Post Time", value = dateTimeFormatter.format(java.time.Instant.ofEpochMilli(item.postTime)))
-        DetailRow(label = "Dismiss Time", value = item.dismissTime?.let { 
-            dateTimeFormatter.format(java.time.Instant.ofEpochMilli(it)) 
-        } ?: "N/A")
+        DetailRow(label = stringResource(R.string.notification_detail_package), value = item.packageName)
+        DetailRow(label = stringResource(R.string.notification_detail_app_name), value = item.appName)
+        DetailRow(label = stringResource(R.string.notification_detail_priority), value = item.priority.toString())
+        DetailRow(
+            label = stringResource(R.string.notification_detail_channel_id),
+            value = item.channelId ?: stringResource(R.string.notification_detail_unknown)
+        )
+        DetailRow(
+            label = stringResource(R.string.notification_detail_post_time),
+            value = dateTimeFormatter.format(java.time.Instant.ofEpochMilli(item.postTime))
+        )
+        DetailRow(label = stringResource(R.string.notification_detail_dismiss_time), value = item.dismissTime?.let {
+            dateTimeFormatter.format(java.time.Instant.ofEpochMilli(it))
+        } ?: stringResource(R.string.notification_detail_not_available))
     }
 }
 
