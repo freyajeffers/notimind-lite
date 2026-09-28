@@ -35,8 +35,10 @@ import com.jeffers.notimindlite.data.sync.FirestoreSyncRepository
 import com.jeffers.notimindlite.data.sync.SyncWorker
 import com.jeffers.notimindlite.data.local.PreferenceManager
 import com.jeffers.notimindlite.ui.components.RestoreBackupDialog
+import com.jeffers.notimindlite.ui.components.BackupKeyDialog
 import com.jeffers.notimindlite.util.DatabaseExporter
 import com.jeffers.notimindlite.domain.backup.generateBackupKey
+import com.jeffers.notimindlite.util.NetworkUtils
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -70,6 +72,9 @@ fun SettingsScreen(
     // Snackbar feedback surfaces success/failure without leaving the Settings screen.
     var selectedBackupUri by remember { mutableStateOf<Uri?>(null) }
     var showRestoreDialog by remember { mutableStateOf(false) }
+    var showBackupKeyDialog by remember { mutableStateOf(false) }
+    var backupKeyBase64 by remember { mutableStateOf("") }
+    var pendingBackupKey by remember { mutableStateOf<SecretKey?>(null) }
     val snackbarHostState = remember { SnackbarHostState() }
     val preferencesRepository = remember { com.jeffers.notimindlite.data.local.PreferencesRepository(context) }
     val restoreSuccessMsg = stringResource(id = R.string.settings_restore_success)
@@ -226,6 +231,24 @@ fun SettingsScreen(
                         Text(if (isSyncing) "Syncing..." else "Sync Now")
                     }
 
+                    OutlinedButton(
+                        onClick = {
+                            if (!NetworkUtils.isInternetAvailable(context)) {
+                                syncMessage = "An active internet connection is required to create a backup"
+                            } else {
+                                val secretKey = generateBackupKey(context)
+                                pendingBackupKey = secretKey
+                                backupKeyBase64 = com.jeffers.notimindlite.data.local.BackupKeyCodec.encode(secretKey)
+                                showBackupKeyDialog = true
+                            }
+                        },
+                        enabled = !isSyncing && !BuildConfig.DEBUG
+                    ) {
+                        Icon(Icons.Default.Restore, contentDescription = null)
+                        Spacer(Modifier.width(8.dp))
+                        Text("Create Encrypted Backup")
+                    }
+
                     syncMessage?.let { msg ->
                         Text(text = msg, style = MaterialTheme.typography.bodySmall)
                     }
@@ -280,6 +303,7 @@ fun SettingsScreen(
                     var piiRedactionChecked by remember { mutableStateOf(PreferenceManager(context).isPiiRedactionEnabled()) }
                     Switch(
                         checked = piiRedactionChecked,
+                        enabled = !BuildConfig.DEBUG,
                         onCheckedChange = { enabled ->
                             piiRedactionChecked = enabled
                             PreferenceManager(context).setPiiRedactionEnabled(enabled)
@@ -399,7 +423,7 @@ fun SettingsScreen(
                     }
                     Switch(
                         checked = prefMgr.isRestoreOnBootEnabled() && listenerGranted,
-                        enabled = listenerGranted,
+                        enabled = listenerGranted && !BuildConfig.DEBUG,
                         onCheckedChange = { prefMgr.setRestoreOnBootEnabled(it) }
                     )
                 }
@@ -474,6 +498,31 @@ fun SettingsScreen(
                         snackbarHostState.showSnackbar(msg)
                     }
                 },
+            )
+        }
+
+        if (showBackupKeyDialog && pendingBackupKey != null) {
+            BackupKeyDialog(
+                keyBase64 = backupKeyBase64,
+                onDismiss = {
+                    showBackupKeyDialog = false
+                    pendingBackupKey = null
+                },
+                onConfirm = { passphrase ->
+                    showBackupKeyDialog = false
+                    val secretKey = pendingBackupKey
+                    pendingBackupKey = null
+                    if (secretKey != null) {
+                        scope.launch {
+                            val result = DatabaseExporter.performEncryptedBackup(context, secretKey, passphrase)
+                            syncMessage = if (result.isSuccess) {
+                                "Backup created successfully"
+                            } else {
+                                "Backup failed: ${result.exceptionOrNull()?.localizedMessage}"
+                            }
+                        }
+                    }
+                }
             )
         }
 
