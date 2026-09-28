@@ -116,7 +116,7 @@ fun LogHistoryScreen(dao: NotificationDao, authManager: AuthManager, db: AppData
         SortMode.ALL -> "all"
     }
 
-    var sortMode by rememberSaveable { mutableStateOf(prefToSortMode(prefSort)) }
+    var sortMode by remember(prefSort) { mutableStateOf(prefToSortMode(prefSort)) }
     LaunchedEffect(sortMode) {
         preferences.setSortOrder(sortModeToPref(sortMode))
     }
