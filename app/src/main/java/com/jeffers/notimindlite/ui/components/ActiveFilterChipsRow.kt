@@ -17,7 +17,9 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
+import com.jeffers.notimindlite.R
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 
@@ -50,13 +52,15 @@ fun ActiveFilterChipsRow(
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
         chips.forEach { chip ->
+            val removeDescription = stringResource(R.string.filter_remove_template, chip.text)
+            val filterDescription = stringResource(R.string.filter_chip_template, chip.text)
             AssistChip(
                 onClick = chip.onClear,
                 label = { Text(chip.text) },
                 trailingIcon = {
                     Icon(
                         imageVector = Icons.Default.Close,
-                        contentDescription = "Remove ${chip.text}",
+                        contentDescription = removeDescription,
                         modifier = Modifier.size(CHIP_TRAILING_ICON_DP.dp)
                     )
                 },
@@ -66,7 +70,7 @@ fun ActiveFilterChipsRow(
                     trailingIconContentColor = MaterialTheme.colorScheme.onSecondaryContainer
                 ),
                 modifier = Modifier.semantics {
-                    contentDescription = "Filter: ${chip.text}. Tap to remove."
+                    contentDescription = filterDescription
                 }
             )
         }
