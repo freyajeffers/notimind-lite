@@ -75,11 +75,7 @@ import com.jeffers.notimindlite.ui.components.ActiveFirstRunEmptyState
 import com.jeffers.notimindlite.ui.components.ActivePermissionEmptyState
 import com.jeffers.notimindlite.ui.components.ActiveSearchEmptyState
 import com.jeffers.notimindlite.ui.components.ActionableChips
-import com.jeffers.notimindlite.ui.components.SpeedDialSettingsFab
-import com.jeffers.notimindlite.ui.components.BackupKeyDialog
-import com.jeffers.notimindlite.domain.backup.generateBackupKey
-import com.jeffers.notimindlite.util.DatabaseExporter
-import com.jeffers.notimindlite.util.NetworkUtils
+
 import com.jeffers.notimindlite.domain.search.HybridSearchEngine
 import com.jeffers.notimindlite.util.NotificationLauncher
 import com.jeffers.notimindlite.data.auth.AuthManager
@@ -92,7 +88,7 @@ import java.time.Instant
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.util.*
-import javax.crypto.SecretKey
+
 
 fun checkNotificationPermission(context: Context): Boolean {
     val flat = Settings.Secure.getString(
@@ -202,9 +198,7 @@ fun ActiveNotificationsScreen(dao: NotificationDao, authManager: AuthManager, db
     var debouncedSearchQuery by remember { mutableStateOf("") }
     var isSearchExplicitlyOpened by rememberSaveable { mutableStateOf(false) }
 
-    var showBackupKeyDialog by remember { mutableStateOf(false) }
-    var currentBackupKey by remember { mutableStateOf("") }
-    var currentPendingSecretKey by remember { mutableStateOf<SecretKey?>(null) }
+
 
     LaunchedEffect(searchQuery) {
         delay(100L)
@@ -366,34 +360,6 @@ fun ActiveNotificationsScreen(dao: NotificationDao, authManager: AuthManager, db
                 }
             )
         },
-        floatingActionButton = {
-            SpeedDialSettingsFab(
-                onSyncClick = { },
-                onBackupClick = {
-                    if (!NetworkUtils.isInternetAvailable(context)) {
-                        android.widget.Toast.makeText(
-                            context,
-                            "Active internet connection is required to create a backup",
-                            android.widget.Toast.LENGTH_LONG
-                        ).show()
-                        return@SpeedDialSettingsFab
-                    }
-                    scope.launch {
-                        try {
-                            val secretKey = generateBackupKey(context)
-                            val keyBase64 = com.jeffers.notimindlite.data.local.BackupKeyCodec.encode(secretKey)
-                            
-                            showBackupKeyDialog = true
-                            currentBackupKey = keyBase64
-                            currentPendingSecretKey = secretKey
-                        } catch (e: Exception) {
-                            Log.e("ActiveNotifications", "Backup key generation failed", e)
-                        }
-                    }
-                },
-                onSettingsClick = { }
-            )
-        }
     ) { innerPadding ->
         Box(modifier = Modifier.fillMaxSize()) {
             LazyColumn(
@@ -469,53 +435,6 @@ fun ActiveNotificationsScreen(dao: NotificationDao, authManager: AuthManager, db
                     }
                 }
 
-                item(key = "service_status_card") {
-                    Card(
-                        modifier = Modifier.fillMaxWidth(),
-                        colors = CardDefaults.cardColors(
-                            containerColor = if (isGranted)
-                                MaterialTheme.colorScheme.surfaceVariant
-                            else
-                                MaterialTheme.colorScheme.errorContainer
-                        )
-                    ) {
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(14.dp),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Column(modifier = Modifier.weight(1f)) {
-                                Text(
-                                    text = "Notification Listener Service",
-                                    style = MaterialTheme.typography.titleMedium,
-                                    fontWeight = FontWeight.Bold,
-                                    color = if (isGranted) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.onErrorContainer
-                                )
-                                Text(
-                                    text = if (isGranted) "Status: Active & Listening" else "Status: Permission Required",
-                                    fontSize = 12.sp,
-                                    color = if (isGranted) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error
-                                )
-                            }
-
-                            Button(
-                                onClick = {
-                                    val intent = Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS)
-                                    intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                                    context.startActivity(intent)
-                                },
-                                colors = ButtonDefaults.buttonColors(
-                                    containerColor = if (isGranted) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.errorContainer,
-                                    contentColor = if (isGranted) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onErrorContainer
-                                )
-                            ) {
-                                Text(if (isGranted) "Settings" else "Grant")
-                            }
-                        }
-                    }
-                }
 
                 // F-N usability [2026-09-06]: surface empty-state Composables when the
                 // entire DB is empty or a query returned no matches. Distinguishes three
@@ -747,46 +666,6 @@ fun ActiveNotificationsScreen(dao: NotificationDao, authManager: AuthManager, db
         )
     }
 
-    if (showBackupKeyDialog && currentPendingSecretKey != null) {
-        BackupKeyDialog(
-            keyBase64 = currentBackupKey,
-            onDismiss = {
-                showBackupKeyDialog = false
-                currentPendingSecretKey = null
-            },
-            onConfirm = { passphrase ->
-                showBackupKeyDialog = false
-                val secretKey = currentPendingSecretKey
-                currentPendingSecretKey = null
-                if (secretKey != null) {
-                    if (!NetworkUtils.isInternetAvailable(context)) {
-                        android.widget.Toast.makeText(
-                            context,
-                            "Active internet connection is required to create a backup",
-                            android.widget.Toast.LENGTH_LONG
-                        ).show()
-                        return@BackupKeyDialog
-                    }
-                    scope.launch {
-                        val result = DatabaseExporter.performEncryptedBackup(context, secretKey, passphrase)
-                        if (result.isSuccess) {
-                            android.widget.Toast.makeText(
-                                context,
-                                "Backup created successfully",
-                                android.widget.Toast.LENGTH_SHORT
-                            ).show()
-                        } else {
-                            android.widget.Toast.makeText(
-                                context,
-                                result.exceptionOrNull()?.message ?: "Backup failed",
-                                android.widget.Toast.LENGTH_LONG
-                            ).show()
-                        }
-                    }
-                }
-            }
-        )
-    }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
