@@ -285,6 +285,7 @@
     <string name="notification_attribute_vector_indexed">128-dim Indexed</string>
     <string name="notification_attribute_database_id_value">#%1$d</string>
     <string name="backup_share_key_chooser">Share Key</string>
+    <string name="backup_share_key_payload">My NotiMind Backup Key: %1$s</string>
     <string name="export_notifications_chooser">Export Notifications Log</string>
     <string name="snooze_reminder_title">Snooze Reminder</string>
     <string name="restored_after_reboot">Restored after Reboot</string>
