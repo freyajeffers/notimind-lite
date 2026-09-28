@@ -303,4 +303,6 @@
     <string name="notification_group_expand">Expand group</string>
     <string name="notification_group_collapse_short">Collapse</string>
     <string name="notification_group_expand_short">Expand</string>
+    <string name="notification_inbox_lines">Inbox Lines (%1$d)</string>
+    <string name="actionable_chip_label">%1$s: %2$s</string>
 </resources>

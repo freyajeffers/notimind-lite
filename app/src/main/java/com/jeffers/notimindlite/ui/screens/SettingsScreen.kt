@@ -77,6 +77,8 @@ fun SettingsScreen(
     val snackbarHostState = remember { SnackbarHostState() }
     val restoreSuccessMsg = stringResource(id = R.string.settings_restore_success)
     val restoreFailureMsg = stringResource(id = R.string.settings_restore_failure)
+    val syncSuccessTemplate = stringResource(R.string.settings_sync_success)
+    val syncFailureTemplate = stringResource(R.string.settings_sync_failure)
     val lifecycleOwner = LocalLifecycleOwner.current
     var listenerGranted by remember { mutableStateOf(checkNotificationPermission(context)) }
 
@@ -221,9 +223,12 @@ fun SettingsScreen(
                                     val res = repo.sync(uid, secretKey)
                                     isSyncing = false
                                     syncMessage = if (res.isSuccess) {
-                                        "Synced ${res.getOrDefault(0)} items successfully"
+                                        String.format(syncSuccessTemplate, res.getOrDefault(0))
                                     } else {
-                                        "Sync failed: ${res.exceptionOrNull()?.localizedMessage}"
+                                        String.format(
+                                            syncFailureTemplate,
+                                            res.exceptionOrNull()?.localizedMessage.orEmpty()
+                                        )
                                     }
                                 }
                             }
