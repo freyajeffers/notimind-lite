@@ -380,6 +380,9 @@ fun ActiveNotificationsScreen(dao: NotificationDao, authManager: AuthManager, db
                             focusManager.clearFocus(force = true)
                             keyboardController?.hide()
                         }) { Text("Clear filters") }
+                        if (recentSearches.isNotEmpty()) {
+                            TextButton(onClick = { recentSearches = emptyList() }) { Text("Reset searches") }
+                        }
                     }
                 }
             )
