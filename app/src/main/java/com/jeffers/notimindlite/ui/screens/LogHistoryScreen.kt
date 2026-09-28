@@ -122,6 +122,7 @@ fun LogHistoryScreen(dao: NotificationDao, authManager: AuthManager, db: AppData
     var recentSearches by rememberSaveable { mutableStateOf(preferences.recentSearches.value) }
     val focusManager = LocalFocusManager.current
     val keyboardController = LocalSoftwareKeyboardController.current
+
     LaunchedEffect(searchQuery) { preferences.setSharedSearchQuery(searchQuery) }
     LaunchedEffect(selectedPackages) { preferences.setSharedSelectedPackages(selectedPackages) }
     LaunchedEffect(selectedReasonFilter) { preferences.setSharedSelectedReason(selectedReasonFilter) }
@@ -447,10 +448,13 @@ fun LogHistoryScreen(dao: NotificationDao, authManager: AuthManager, db: AppData
                     properties = androidx.compose.ui.window.PopupProperties(focusable = false),
                     modifier = Modifier.fillMaxWidth(0.9f)
                 ) {
-                    if (searchQuery.isBlank()) {
-                        recentSearches.forEach { recent ->
-                            DropdownMenuItem(text = { Text(recent) }, onClick = { searchQuery = recent; expandedDropdown = false })
-                        }
+                    val matchingRecent = if (searchQuery.isBlank()) {
+                        recentSearches
+                    } else {
+                        recentSearches.filter { it.contains(searchQuery, ignoreCase = true) }
+                    }
+                    matchingRecent.forEach { recent ->
+                        DropdownMenuItem(text = { Text(recent) }, onClick = { searchQuery = recent; expandedDropdown = false })
                     }
                     searchSuggestions.forEach { suggestion ->
                         DropdownMenuItem(

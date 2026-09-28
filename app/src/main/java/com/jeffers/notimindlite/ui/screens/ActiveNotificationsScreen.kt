@@ -56,6 +56,8 @@ import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+import androidx.compose.foundation.layout.isImeVisible
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
 
@@ -176,7 +178,7 @@ fun AppIconImage(appIconUri: String?, modifier: Modifier = Modifier.size(20.dp))
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class, ExperimentalLayoutApi::class)
 @Composable
 fun ActiveNotificationsScreen(dao: NotificationDao, authManager: AuthManager, db: AppDatabase, preferences: PreferencesRepository) {
     val context = LocalContext.current
@@ -317,8 +319,13 @@ fun ActiveNotificationsScreen(dao: NotificationDao, authManager: AuthManager, db
 
     val searchFocusRequester = remember { FocusRequester() }
     var isSearchFocused by remember { mutableStateOf(false) }
-    LaunchedEffect(isSearchFocused, searchQuery) {
-        if (!isSearchFocused && searchQuery.isBlank()) isSearchExplicitlyOpened = false
+    val imeVisible = WindowInsets.isImeVisible
+
+    // Auto-hide when keyboard is dismissed (IME no longer visible) AND the field lost focus
+    LaunchedEffect(isSearchFocused, imeVisible, searchQuery) {
+        if (!imeVisible && !isSearchFocused && searchQuery.isBlank()) {
+            isSearchExplicitlyOpened = false
+        }
     }
 
     Scaffold(
@@ -468,11 +475,16 @@ fun ActiveNotificationsScreen(dao: NotificationDao, authManager: AuthManager, db
                                 properties = androidx.compose.ui.window.PopupProperties(focusable = false),
                                 modifier = Modifier.fillMaxWidth(0.9f)
                             ) {
-                                if (searchQuery.isBlank()) {
-                                    recentSearches.forEach { recent ->
-                                        DropdownMenuItem(text = { Text(recent) }, onClick = { searchQuery = recent; expandedDropdown = false })
-                                    }
+                                // Show recent searches that match the current query (or all recent when blank)
+                                val matchingRecent = remember(searchQuery, recentSearches) {
+                                    if (searchQuery.isBlank()) recentSearches
+                                    else recentSearches.filter { it.contains(searchQuery, ignoreCase = true) }
                                 }
+                                matchingRecent.forEach { recent ->
+                                    DropdownMenuItem(text = { Text(recent) }, onClick = { searchQuery = recent; expandedDropdown = false })
+                                }
+
+                                // Suggestions from notification content (de-duplicated)
                                 searchSuggestions.forEach { suggestion ->
                                     DropdownMenuItem(
                                         text = { Text(suggestion, fontSize = 14.sp) },
