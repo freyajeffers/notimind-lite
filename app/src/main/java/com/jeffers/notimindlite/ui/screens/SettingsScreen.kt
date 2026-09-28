@@ -290,9 +290,9 @@ fun SettingsScreen(
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Column(modifier = Modifier.weight(1f)) {
-                        Text("PII Redaction Engine", style = MaterialTheme.typography.bodyLarge)
+                        Text(stringResource(id = R.string.settings_pii_redaction_title), style = MaterialTheme.typography.bodyLarge)
                         Text(
-                            "Mask OTP codes, cards, phone numbers, and emails before saving.",
+                            stringResource(id = R.string.settings_pii_redaction_desc),
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -435,7 +435,7 @@ fun SettingsScreen(
                 ) {
                     Icon(Icons.Default.Restore, contentDescription = null)
                     Spacer(Modifier.width(8.dp))
-                    Text("Restore Backup Manually")
+                    Text(stringResource(id = R.string.settings_restore_manual))
                 }
             }
         }
