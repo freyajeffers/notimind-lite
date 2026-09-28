@@ -273,4 +273,13 @@
     <string name="notification_group_dismissed_desc">User swiped, clicked, or cleared notifications (sorted by time dismissed)</string>
     <string name="notification_group_lost_title">Lost Notifications</string>
     <string name="notification_group_lost_desc">App cancelled or package changed notifications (sorted by time dismissed)</string>
+    <string name="notification_attribute_dismiss_reason">Dismiss Reason</string>
+    <string name="quick_actions_sync">Sync Now</string>
+    <string name="quick_actions_backup">Backup</string>
+    <string name="quick_actions_settings">Settings</string>
+    <string name="quick_actions_close">Close quick actions</string>
+    <string name="quick_actions_open">Open quick actions</string>
+    <string name="quick_actions_expanded">Expanded</string>
+    <string name="quick_actions_collapsed">Collapsed</string>
+    <string name="splash_logo_description">NotiMind Logo</string>
 </resources>

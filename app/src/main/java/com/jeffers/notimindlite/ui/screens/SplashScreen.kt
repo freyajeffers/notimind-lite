@@ -14,6 +14,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
+import com.jeffers.notimindlite.R
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.delay
 
@@ -57,8 +59,8 @@ fun SplashScreen(onTimeout: () -> Unit) {
                 .background(MaterialTheme.colorScheme.onPrimary)
         ) {
             Image(
-                painter = painterResource(id = com.jeffers.notimindlite.R.mipmap.ic_launcher),
-                contentDescription = "NotiMind Logo",
+                painter = painterResource(id = R.mipmap.ic_launcher),
+                contentDescription = stringResource(R.string.splash_logo_description),
                 modifier = Modifier.fillMaxSize()
             )
         }
