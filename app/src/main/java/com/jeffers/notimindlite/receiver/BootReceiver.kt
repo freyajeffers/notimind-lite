@@ -9,6 +9,7 @@ import android.content.Intent
 import android.os.UserManager
 import android.service.notification.NotificationListenerService
 import android.util.Log
+import com.jeffers.notimindlite.R
 import androidx.core.app.NotificationCompat
 import com.jeffers.notimindlite.data.local.AppDatabase
 import com.jeffers.notimindlite.service.BootRestoreManager
@@ -124,7 +125,7 @@ class BootReceiver : BroadcastReceiver() {
                             .setSmallIcon(android.R.drawable.stat_notify_chat)
                             .setContentTitle("${item.appName}: ${item.summaryTitle}")
                             .setContentText(item.summaryContent)
-                            .setSubText("Restored after Reboot")
+                            .setSubText(context.getString(R.string.restored_after_reboot))
                             .setPriority(NotificationCompat.PRIORITY_DEFAULT)
                             .setAutoCancel(true)
 

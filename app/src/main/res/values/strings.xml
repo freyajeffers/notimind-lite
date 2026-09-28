@@ -12,6 +12,7 @@
     <string name="common_cancel">Cancel</string>
     <string name="common_show_passphrase">Show passphrase</string>
     <string name="common_hide_passphrase">Hide passphrase</string>
+    <string name="common_all">All</string>
     <string name="filter_remove_template">Remove %1$s</string>
     <string name="filter_chip_template">Filter: %1$s. Tap to remove.</string>
 
@@ -393,4 +394,28 @@
     <string name="quick_actions_expanded">Expanded</string>
     <string name="quick_actions_collapsed">Collapsed</string>
     <string name="splash_logo_description">NotiMind Logo</string>
+    <string name="notification_attribute_vector_indexed">128-dim Indexed</string>
+    <string name="notification_attribute_database_id_value">#%1$d</string>
+    <string name="backup_share_key_chooser">Share Key</string>
+    <string name="backup_share_key_payload">My NotiMind Backup Key: %1$s</string>
+    <string name="export_notifications_chooser">Export Notifications Log</string>
+    <string name="snooze_reminder_title">Snooze Reminder</string>
+    <string name="restored_after_reboot">Restored after Reboot</string>
+    <string name="notification_open_tooltip">Open notification</string>
+    <string name="notification_pin">Pin notification</string>
+    <string name="notification_unpin">Unpin notification</string>
+    <string name="notification_pin_short">Pin</string>
+    <string name="notification_unpin_short">Unpin</string>
+    <string name="notification_attributes_title">Notification Attributes</string>
+    <string name="notification_active_filter">Active</string>
+    <string name="notification_group_pin_all">Pin all in group</string>
+    <string name="notification_group_unpin_all">Unpin all in group</string>
+    <string name="notification_group_pin">Pin Group</string>
+    <string name="notification_group_unpin">Unpin Group</string>
+    <string name="notification_group_collapse">Collapse group</string>
+    <string name="notification_group_expand">Expand group</string>
+    <string name="notification_group_collapse_short">Collapse</string>
+    <string name="notification_group_expand_short">Expand</string>
+    <string name="notification_inbox_lines">Inbox Lines (%1$d)</string>
+    <string name="actionable_chip_label">%1$s: %2$s</string>
 </resources>
