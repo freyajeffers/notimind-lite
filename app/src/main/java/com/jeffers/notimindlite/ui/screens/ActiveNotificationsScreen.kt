@@ -190,6 +190,9 @@ fun AppIconImage(appIconUri: String?, modifier: Modifier = Modifier) {
 @Composable
 fun ActiveNotificationsScreen(dao: NotificationDao, authManager: AuthManager, db: AppDatabase) {
     val context = LocalContext.current
+    val backupNetworkRequired = stringResource(R.string.backup_network_required)
+    val backupCreatedSuccessfully = stringResource(R.string.backup_created_successfully)
+    val backupFailed = stringResource(R.string.backup_failed)
     val lifecycleOwner = LocalLifecycleOwner.current
     val prefManager = remember { PreferenceManager(context) }
 
@@ -412,7 +415,7 @@ fun ActiveNotificationsScreen(dao: NotificationDao, authManager: AuthManager, db
                     if (!NetworkUtils.isInternetAvailable(context)) {
                         android.widget.Toast.makeText(
                             context,
-                            "Active internet connection is required to create a backup",
+                            backupNetworkRequired,
                             android.widget.Toast.LENGTH_LONG
                         ).show()
                         return@SpeedDialSettingsFab
@@ -799,7 +802,7 @@ fun ActiveNotificationsScreen(dao: NotificationDao, authManager: AuthManager, db
                     if (!NetworkUtils.isInternetAvailable(context)) {
                         android.widget.Toast.makeText(
                             context,
-                            "Active internet connection is required to create a backup",
+                            backupNetworkRequired,
                             android.widget.Toast.LENGTH_LONG
                         ).show()
                         return@BackupKeyDialog
@@ -809,13 +812,13 @@ fun ActiveNotificationsScreen(dao: NotificationDao, authManager: AuthManager, db
                         if (result.isSuccess) {
                             android.widget.Toast.makeText(
                                 context,
-                                "Backup created successfully",
+                                backupCreatedSuccessfully,
                                 android.widget.Toast.LENGTH_SHORT
                             ).show()
                         } else {
                             android.widget.Toast.makeText(
                                 context,
-                                result.exceptionOrNull()?.message ?: "Backup failed",
+                                backupFailed,
                                 android.widget.Toast.LENGTH_LONG
                             ).show()
                         }
@@ -879,7 +882,15 @@ fun LogNotificationCard(
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     TooltipBox(
                         positionProvider = TooltipDefaults.rememberTooltipPositionProvider(TooltipAnchorPosition.Above),
-                        tooltip = { PlainTooltip { Text(if (item.isPinned) "Unpin notification" else "Pin notification") } },
+                        tooltip = {
+                            PlainTooltip {
+                                Text(
+                                    stringResource(
+                                        if (item.isPinned) R.string.notification_unpin else R.string.notification_pin
+                                    )
+                                )
+                            }
+                        },
                         state = rememberTooltipState()
                     ) {
                         IconButton(
@@ -892,7 +903,10 @@ fun LogNotificationCard(
                         ) {
                             Icon(
                                 imageVector = if (item.isPinned) Icons.Default.Bookmark else Icons.Outlined.BookmarkBorder,
-                                contentDescription = if (item.isPinned) "Unpin" else "Pin",
+                                contentDescription = stringResource(
+                                    if (item.isPinned) R.string.notification_unpin_short
+                                    else R.string.notification_pin_short
+                                ),
                                 tint = if (item.isPinned) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
                             )
                         }
@@ -1077,7 +1091,7 @@ fun NotificationExpandedAttributes(
             verticalArrangement = Arrangement.spacedBy(4.dp)
         ) {
             Text(
-                text = "Notification Attributes",
+                text = stringResource(R.string.notification_attributes_title),
                 style = MaterialTheme.typography.labelMedium,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.primary
