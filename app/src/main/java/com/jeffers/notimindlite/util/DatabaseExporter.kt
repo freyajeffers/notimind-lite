@@ -5,6 +5,7 @@ import android.content.Intent
 import android.net.Uri
 import android.util.Log
 import androidx.core.content.FileProvider
+import com.jeffers.notimindlite.R
 import com.jeffers.notimindlite.data.local.AppDatabase
 import com.jeffers.notimindlite.domain.backup.EncryptedBackupManager
 import com.jeffers.notimindlite.data.local.NotificationEntity
@@ -247,7 +248,11 @@ object DatabaseExporter {
                 addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
             }
 
-            context.startActivity(Intent.createChooser(shareIntent, "Export Notifications Log").apply {
+            context.startActivity(
+                Intent.createChooser(
+                    shareIntent,
+                    context.getString(R.string.export_notifications_chooser)
+                ).apply {
                 addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
             })
         } catch (e: Exception) {

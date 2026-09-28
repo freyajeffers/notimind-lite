@@ -282,4 +282,11 @@
     <string name="quick_actions_expanded">Expanded</string>
     <string name="quick_actions_collapsed">Collapsed</string>
     <string name="splash_logo_description">NotiMind Logo</string>
+    <string name="notification_attribute_vector_indexed">128-dim Indexed</string>
+    <string name="notification_attribute_database_id_value">#%1$d</string>
+    <string name="backup_share_key_chooser">Share Key</string>
+    <string name="export_notifications_chooser">Export Notifications Log</string>
+    <string name="snooze_reminder_title">Snooze Reminder</string>
+    <string name="restored_after_reboot">Restored after Reboot</string>
+    <string name="notification_open_tooltip">Open notification</string>
 </resources>
