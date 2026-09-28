@@ -93,7 +93,23 @@ fun LogHistoryScreen(dao: NotificationDao, authManager: AuthManager, db: AppData
     // F-K fix: persist user-meaningful state across process death / rotation.
     // Transient UI state (showSortMenu etc.) stays on `remember` — only durable
     // user input (sort/filter/search) survives.
-    var sortMode by rememberSaveable { mutableStateOf(SortMode.DISMISSED) }
+    // Initialize sortMode from persisted preference when available; keep UI-local default for direct interactions.
+    val prefSort by preferences.sortOrder.collectAsState()
+    fun prefToSortMode(pref: String): SortMode = when (pref) {
+        "newest" -> SortMode.NEWEST
+        "oldest" -> SortMode.OLDEST
+        "app" -> SortMode.APP_NAME
+        else -> SortMode.DISMISSED
+    }
+
+    fun sortModeToPref(mode: SortMode): String = when (mode) {
+        SortMode.NEWEST -> "newest"
+        SortMode.OLDEST -> "oldest"
+        SortMode.APP_NAME -> "app"
+        else -> "newest"
+    }
+
+    var sortMode by rememberSaveable { mutableStateOf(prefToSortMode(prefSort)) }
     var selectedReasonFilter by rememberSaveable { mutableStateOf(preferences.sharedSelectedReason.value) }
     var selectedPackages by remember { mutableStateOf(preferences.sharedSelectedPackages.value) }
 
@@ -285,6 +301,7 @@ fun LogHistoryScreen(dao: NotificationDao, authManager: AuthManager, db: AppData
                                 },
                                 onClick = {
                                     sortMode = SortMode.DISMISSED
+                                    preferences.setSortOrder(sortModeToPref(sortMode))
                                     showSortMenu = false
                                 }
                             )
@@ -299,6 +316,7 @@ fun LogHistoryScreen(dao: NotificationDao, authManager: AuthManager, db: AppData
                                 },
                                 onClick = {
                                     sortMode = SortMode.RECEIVED
+                                    preferences.setSortOrder(sortModeToPref(sortMode))
                                     showSortMenu = false
                                 }
                             )
@@ -313,6 +331,7 @@ fun LogHistoryScreen(dao: NotificationDao, authManager: AuthManager, db: AppData
                                 },
                                 onClick = {
                                     sortMode = SortMode.ALL
+                                    preferences.setSortOrder(sortModeToPref(sortMode))
                                     showSortMenu = false
                                 }
                             )
@@ -321,6 +340,7 @@ fun LogHistoryScreen(dao: NotificationDao, authManager: AuthManager, db: AppData
                                     text = { Text("${option.label} ${if (sortMode == option) "✓" else ""}") },
                                     onClick = {
                                         sortMode = option
+                                        preferences.setSortOrder(sortModeToPref(sortMode))
                                         showSortMenu = false
                                     }
                                 )
