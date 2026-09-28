@@ -421,6 +421,11 @@ class PreferencesRepository(context: Context) {
         backing.edit().putString("ui_recent_searches", JSONArray(updated).toString()).apply()
     }
     fun resetRecentSearches() { _recentSearches.value = emptyList(); backing.edit().putString("ui_recent_searches", "").apply() }
+    fun removeRecentSearch(q: String) {
+        val updated = _recentSearches.value.filterNot { it == q }
+        _recentSearches.value = updated
+        backing.edit().putString("ui_recent_searches", JSONArray(updated).toString()).apply()
+    }
 
     fun getEmbeddingRateMs() = backing.getLong(KEY_EMBEDDING_RATE_MS, DEFAULT_EMBEDDING_RATE_MS).coerceAtLeast(0L)
 

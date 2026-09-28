@@ -203,6 +203,17 @@ fun LogHistoryScreen(dao: NotificationDao, authManager: AuthManager, db: AppData
             TopAppBar(
                 title = {},
                 actions = {
+                    if (!selectedPackages.isNullOrEmpty() || selectedReasonFilter != null || searchQuery.isNotBlank()) {
+                        IconButton(onClick = {
+                            selectedPackages = null
+                            selectedReasonFilter = null
+                            searchQuery = ""
+                            isSearchFocused = false
+                            isSearchVisible = false
+                            focusManager.clearFocus(force = true)
+                            keyboardController?.hide()
+                        }) { Icon(Icons.Default.FilterAltOff, contentDescription = "Clear filters") }
+                    }
                     Box {
                         val hasActiveFilters = !selectedPackages.isNullOrEmpty() || selectedReasonFilter != null
                         TooltipBox(
@@ -319,24 +330,6 @@ fun LogHistoryScreen(dao: NotificationDao, authManager: AuthManager, db: AppData
                     IconButton(onClick = { isSearchVisible = true }) {
                         Icon(Icons.Default.Search, contentDescription = "Search")
                     }
-                    if (!selectedPackages.isNullOrEmpty() || selectedReasonFilter != null || searchQuery.isNotBlank() || recentSearches.isNotEmpty()) {
-                        IconButton(onClick = {
-                            selectedPackages = null
-                            selectedReasonFilter = null
-                            searchQuery = ""
-                            preferences.resetRecentSearches()
-                            isSearchFocused = false
-                            isSearchVisible = false
-                            focusManager.clearFocus(force = true)
-                            keyboardController?.hide()
-                        }) {
-                            Icon(Icons.Default.FilterAltOff, contentDescription = "Clear filters")
-                        }
-                        if (recentSearches.isNotEmpty()) {
-                            TextButton(onClick = { recentSearches = emptyList()
-                            preferences.resetRecentSearches() }) { Text("Reset searches") }
-                        }
-                    }
                 }
             )
         },
@@ -451,7 +444,17 @@ fun LogHistoryScreen(dao: NotificationDao, authManager: AuthManager, db: AppData
                         recentSearches.filter { it.contains(searchQuery, ignoreCase = true) }
                     }
                     matchingRecent.forEach { recent ->
-                        DropdownMenuItem(text = { Text(recent) }, onClick = { searchQuery = recent; expandedDropdown = false })
+                        DropdownMenuItem(
+                            text = { Text(recent) },
+                            trailingIcon = { IconButton(onClick = { preferences.removeRecentSearch(recent) }) { Icon(Icons.Default.Close, contentDescription = "Remove recent search") } },
+                            onClick = { searchQuery = recent; expandedDropdown = false }
+                        )
+                    }
+                    if (matchingRecent.isNotEmpty()) {
+                        DropdownMenuItem(
+                            text = { Text("Clear recent searches") },
+                            onClick = { preferences.resetRecentSearches(); expandedDropdown = false }
+                        )
                     }
                     searchSuggestions.forEach { suggestion ->
                         DropdownMenuItem(
