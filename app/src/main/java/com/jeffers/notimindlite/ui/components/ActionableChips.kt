@@ -101,7 +101,7 @@ private fun ActionChip(
             },
             label = { 
                 Text(
-                    text = "${config.label}: ${entity.value}",
+                    text = stringResource(R.string.actionable_chip_label, config.label, entity.value),
                     fontSize = 12.sp,
                     fontWeight = FontWeight.Medium,
                     color = config.onColor

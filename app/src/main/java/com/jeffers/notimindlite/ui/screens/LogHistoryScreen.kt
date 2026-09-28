@@ -67,6 +67,7 @@ import kotlinx.coroutines.withContext
 import java.time.Instant
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
+import java.time.format.FormatStyle
 import java.util.*
 
 private const val PREFETCH_AHEAD = 24
@@ -164,7 +165,7 @@ fun LogHistoryScreen(dao: NotificationDao, authManager: AuthManager, db: AppData
     }
 
     val dateTimeFormatter = remember {
-        DateTimeFormatter.ofPattern("MMM dd, HH:mm:ss", Locale.getDefault()).withZone(ZoneId.systemDefault())
+        DateTimeFormatter.ofLocalizedDateTime(FormatStyle.MEDIUM).withZone(ZoneId.systemDefault())
     }
 
     val availableReasons = remember(activeList) {
@@ -260,7 +261,15 @@ fun LogHistoryScreen(dao: NotificationDao, authManager: AuthManager, db: AppData
                             onDismissRequest = { showFilterMenu = false }
                         ) {
                             DropdownMenuItem(
-                                text = { Text(stringResource(id = R.string.log_history_filter_app_count, selectedPackages?.size?.toString() ?: "All")) },
+                                text = {
+                                    Text(
+                                        stringResource(
+                                            id = R.string.log_history_filter_app_count,
+                                            selectedPackages?.size?.toString()
+                                                ?: stringResource(R.string.common_all)
+                                        )
+                                    )
+                                },
                                 onClick = {
                                     showFilterMenu = false
                                     showPackagePicker = true
@@ -617,7 +626,7 @@ private fun DismissStatusBadge(item: NotificationEntity) {
             shape = MaterialTheme.shapes.extraSmall
         ) {
             Text(
-                text = "Active",
+                text = stringResource(R.string.notification_active_filter),
                 fontSize = 10.sp,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.primary,
@@ -698,7 +707,7 @@ fun LogHistoryCard(
                     Spacer(modifier = Modifier.width(6.dp))
                     TooltipBox(
                         positionProvider = TooltipDefaults.rememberTooltipPositionProvider(TooltipAnchorPosition.Above),
-                        tooltip = { PlainTooltip { Text("Open notification") } },
+                        tooltip = { PlainTooltip { Text(stringResource(R.string.notification_open_tooltip)) } },
                         state = rememberTooltipState()
                     ) {
                         IconButton(
@@ -782,7 +791,7 @@ fun LogHistoryCard(
                                 verticalArrangement = Arrangement.spacedBy(2.dp)
                             ) {
                                 Text(
-                                    text = "Inbox Lines (${inboxLines.size})",
+                                    text = stringResource(R.string.notification_inbox_lines, inboxLines.size),
                                     style = MaterialTheme.typography.labelSmall,
                                     fontWeight = FontWeight.Bold,
                                     color = MaterialTheme.colorScheme.primary
