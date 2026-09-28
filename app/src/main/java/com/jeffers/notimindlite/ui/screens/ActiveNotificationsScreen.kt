@@ -31,6 +31,7 @@ import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.ExpandLess
 import androidx.compose.material.icons.filled.ExpandMore
+import androidx.compose.material.icons.filled.FilterAltOff
 import androidx.compose.material.icons.filled.FilterList
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowUp
@@ -331,70 +332,39 @@ fun ActiveNotificationsScreen(dao: NotificationDao, authManager: AuthManager, db
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(stringResource(id = R.string.active_notifications_title), fontWeight = FontWeight.Bold) },
+                title = {},
                 actions = {
-                    TooltipBox(
-                        positionProvider = TooltipDefaults.rememberPlainTooltipPositionProvider(),
-                        tooltip = { PlainTooltip { Text(stringResource(id = R.string.active_notifications_filter_apps)) } },
-                        state = rememberTooltipState()
-                    ) {
-                        IconButton(onClick = { showPackagePicker = true }) {
-                            Icon(
-                                imageVector = Icons.Default.FilterList,
-                                contentDescription = stringResource(id = R.string.active_notifications_filter_apps),
-                                tint = if (!selectedPackages.isNullOrEmpty()) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
-                            )
-                        }
+                    IconButton(onClick = { showPackagePicker = true }) {
+                        Icon(Icons.Default.FilterList, contentDescription = stringResource(id = R.string.active_notifications_filter_apps), tint = if (!selectedPackages.isNullOrEmpty()) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface)
                     }
-                    TooltipBox(
-                        positionProvider = TooltipDefaults.rememberPlainTooltipPositionProvider(),
-                        tooltip = { PlainTooltip { Text(stringResource(id = R.string.active_notifications_search_placeholder)) } },
-                        state = rememberTooltipState()
-                    ) {
-                        IconButton(onClick = {
-                            if (isSearchExplicitlyOpened || searchQuery.isNotEmpty() || isSearchFocused) {
-                                isSearchExplicitlyOpened = false
-                                isSearchFocused = false
-                                searchQuery = ""
-                            } else {
-                                isSearchExplicitlyOpened = true
-                                scope.launch {
-                                    listState.animateScrollToItem(0)
-                                    searchFocusRequester.requestFocus()
-                                }
-                            }
-                        }) {
-                            Icon(
-                                imageVector = Icons.Default.Search,
-                                contentDescription = stringResource(id = R.string.common_search),
-                                tint = if (isSearchExplicitlyOpened ||
-                                    searchQuery.isNotEmpty() ||
-                                    isSearchFocused
-                                ) {
-                                    MaterialTheme.colorScheme.primary
-                                } else {
-                                    MaterialTheme.colorScheme.onSurface
-                                }
-                            )
+                    IconButton(onClick = {
+                        if (isSearchExplicitlyOpened || searchQuery.isNotEmpty() || isSearchFocused) {
+                            isSearchExplicitlyOpened = false
+                            isSearchFocused = false
+                            searchQuery = ""
+                        } else {
+                            isSearchExplicitlyOpened = true
+                            scope.launch { listState.animateScrollToItem(0); searchFocusRequester.requestFocus() }
                         }
+                    }) {
+                        Icon(Icons.Default.Search, contentDescription = stringResource(id = R.string.common_search))
                     }
                     if (!selectedPackages.isNullOrEmpty() || searchQuery.isNotBlank() || recentSearches.isNotEmpty()) {
-                        TextButton(onClick = {
-                            selectedPackages = null
-                            searchQuery = ""
-                            preferences.resetRecentSearches()
-                            isSearchFocused = false
-                            isSearchExplicitlyOpened = false
-                            focusManager.clearFocus(force = true)
-                            keyboardController?.hide()
-                        }) { Text("Clear filters") }
-                        if (recentSearches.isNotEmpty()) {
-                            TextButton(onClick = { preferences.resetRecentSearches() }) { Text("Reset searches") }
+                        IconButton(onClick = {
+                                selectedPackages = null
+                                searchQuery = ""
+                                preferences.resetRecentSearches()
+                                isSearchFocused = false
+                                isSearchExplicitlyOpened = false
+                                focusManager.clearFocus(force = true)
+                                keyboardController?.hide()
+                        }) {
+                            Icon(Icons.Default.FilterAltOff, contentDescription = "Clear filters")
                         }
                     }
                 }
             )
-        },
+        }
     ) { innerPadding ->
         Box(modifier = Modifier.fillMaxSize()) {
             LazyColumn(
