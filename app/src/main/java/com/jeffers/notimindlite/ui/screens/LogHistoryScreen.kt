@@ -503,6 +503,7 @@ fun LogHistoryScreen(dao: NotificationDao, authManager: AuthManager, db: AppData
                                 dateTimeFormatter = dateTimeFormatter,
                                 dao = dao,
                                 isExpanded = cardExpanded,
+                                highlightQuery = debouncedSearchQuery,
                                 onToggleExpand = {
                                     expandedCards = if (cardExpanded) {
                                         expandedCards - item.key
@@ -531,6 +532,7 @@ fun LogHistoryScreen(dao: NotificationDao, authManager: AuthManager, db: AppData
                                         dateTimeFormatter = dateTimeFormatter,
                                         dao = dao,
                                         isExpanded = cardExpanded,
+                                highlightQuery = debouncedSearchQuery,
                                         onToggleExpand = {
                                             expandedCards = if (cardExpanded) {
                                                 expandedCards - childItem.key
@@ -603,6 +605,7 @@ fun LogHistoryCard(
     dateTimeFormatter: DateTimeFormatter,
     dao: NotificationDao,
     isExpanded: Boolean,
+    highlightQuery: String = "",
     onToggleExpand: () -> Unit
 ) {
     val context = LocalContext.current
@@ -691,7 +694,7 @@ fun LogHistoryCard(
             if (isExpanded) {
                 Column(modifier = Modifier.padding(top = 8.dp)) {
                     Text(
-                        text = item.title,
+                        text = highlightSearchText(item.title, highlightQuery),
                         style = MaterialTheme.typography.bodyLarge,
                         fontWeight = FontWeight.SemiBold,
                         maxLines = 3,
@@ -699,7 +702,7 @@ fun LogHistoryCard(
                     )
                     Spacer(modifier = Modifier.height(4.dp))
                     Text(
-                        text = item.content,
+                        text = highlightSearchText(item.content, highlightQuery),
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         maxLines = 10,

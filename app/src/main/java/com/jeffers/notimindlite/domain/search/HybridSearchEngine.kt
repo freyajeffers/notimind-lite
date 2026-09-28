@@ -16,6 +16,17 @@ object HybridSearchEngine {
 
     private const val RRF_K = 60.0
 
+    /** Splits user input into normalized tokens for AND matching. */
+    fun tokenizeQuery(query: String): List<String> = query.trim().split(Regex("\\s+"))
+        .map { it.trim().trim { ch -> !ch.isLetterOrDigit() } }
+        .filter { it.isNotEmpty() }
+        .distinctBy { it.lowercase() }
+
+    private fun matchesTokens(entity: NotificationEntity, tokens: List<String>): Boolean {
+        val haystack = "${entity.title} ${entity.content} ${entity.appName} ${entity.packageName}"
+        return tokens.all { haystack.contains(it, ignoreCase = true) }
+    }
+
     /**
      * Performs Hybrid Search by combining SQLite FTS and Semantic Vector Space Projection.
      * Results are merged using Reciprocal Rank Fusion (RRF).
@@ -43,14 +54,12 @@ object HybridSearchEngine {
         query: String
     ): List<NotificationEntity> {
         val trimmedQuery = query.trim()
-        if (trimmedQuery.isEmpty()) return notifications
+        val tokens = tokenizeQuery(trimmedQuery)
+        if (tokens.isEmpty()) return notifications
 
         // 1. Keyword Pass (matches the suspend overload)
         val keywordResults = notifications.filter {
-            it.title.contains(trimmedQuery, ignoreCase = true) ||
-            it.content.contains(trimmedQuery, ignoreCase = true) ||
-            it.appName.contains(trimmedQuery, ignoreCase = true) ||
-            it.packageName.contains(trimmedQuery, ignoreCase = true)
+            matchesTokens(it, tokens)
         }
 
         // 2. Vector Pass (Semantic Search)
@@ -80,14 +89,12 @@ object HybridSearchEngine {
         query: String
     ): List<NotificationEntity> = withContext(Dispatchers.IO) {
         val trimmedQuery = query.trim()
-        if (trimmedQuery.isEmpty()) return@withContext notifications
+        val tokens = tokenizeQuery(trimmedQuery)
+        if (tokens.isEmpty()) return@withContext notifications
 
         // 1. Keyword Pass (Manual filter for provided list)
         val keywordResults = notifications.filter {
-            it.title.contains(trimmedQuery, ignoreCase = true) ||
-            it.content.contains(trimmedQuery, ignoreCase = true) ||
-            it.appName.contains(trimmedQuery, ignoreCase = true) ||
-            it.packageName.contains(trimmedQuery, ignoreCase = true)
+            matchesTokens(it, tokens)
         }
 
         // 2. Vector Pass (Semantic Search)
