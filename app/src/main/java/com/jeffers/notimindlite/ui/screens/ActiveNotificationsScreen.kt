@@ -36,6 +36,7 @@ import androidx.compose.material.icons.filled.FilterList
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material.icons.filled.PushPin
+import androidx.compose.material.icons.automirrored.filled.OpenInNew
 import com.jeffers.notimindlite.ui.components.NotificationGroupCard
 import com.jeffers.notimindlite.ui.components.groupNotifications
 import org.json.JSONArray
@@ -781,9 +782,7 @@ fun LogNotificationCard(
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable {
-                NotificationLauncher.launchNotification(context, item.packageName, item.key, item.intentUri)
-            },
+            .clickable(onClick = onToggleExpand),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surface
         )
@@ -851,16 +850,18 @@ fun LogNotificationCard(
 
                     TooltipBox(
                         positionProvider = TooltipDefaults.rememberTooltipPositionProvider(TooltipAnchorPosition.Above),
-                        tooltip = { PlainTooltip { Text(if (isExpanded) "Collapse details" else "Expand details") } },
+                        tooltip = { PlainTooltip { Text("Open notification") } },
                         state = rememberTooltipState()
                     ) {
                         IconButton(
-                            onClick = onToggleExpand,
+                            onClick = {
+                                NotificationLauncher.launchNotification(context, item.packageName, item.key, item.intentUri)
+                            },
                             modifier = Modifier.size(24.dp)
                         ) {
                             Icon(
-                                imageVector = if (isExpanded) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
-                                contentDescription = null
+                                imageVector = Icons.AutoMirrored.Filled.OpenInNew,
+                                contentDescription = "Open notification"
                             )
                         }
                     }
