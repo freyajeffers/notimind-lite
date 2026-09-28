@@ -138,7 +138,7 @@ fun SettingsScreen(
                         },
                         colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
                     ) {
-                        Icon(Icons.AutoMirrored.Filled.Logout, contentDescription = null)
+                        Icon(Icons.AutoMirrored.Filled.Logout, contentDescription = "Sign out")
                         Spacer(Modifier.width(8.dp))
                         Text("Sign Out")
                     }
@@ -161,7 +161,7 @@ fun SettingsScreen(
                             contentColor = MaterialTheme.colorScheme.onPrimaryContainer
                         )
                     ) {
-                        Icon(Icons.AutoMirrored.Filled.Login, contentDescription = null)
+                        Icon(Icons.AutoMirrored.Filled.Login, contentDescription = "Sign in")
                         Spacer(Modifier.width(8.dp))
                         Text(if (session.isAuthenticating) "Signing In..." else "Sign in with Google")
                     }
@@ -198,7 +198,7 @@ fun SettingsScreen(
             Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 Text(text = stringResource(id = R.string.settings_section_listener), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                    Icon(imageVector = if (listenerGrantedTop) Icons.Default.Notifications else Icons.Default.NotificationsOff, contentDescription = null, tint = if (listenerGrantedTop) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error)
+                    Icon(imageVector = if (listenerGrantedTop) Icons.Default.Notifications else Icons.Default.NotificationsOff, contentDescription = if (listenerGrantedTop) "Notification access enabled" else "Notification access disabled", tint = if (listenerGrantedTop) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error)
                     Text(text = stringResource(id = if (listenerGrantedTop) R.string.settings_listener_granted_desc else R.string.settings_listener_missing_desc), style = MaterialTheme.typography.bodyMedium, modifier = Modifier.weight(1f))
                 }
                 Button(onClick = { val intent = Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS); intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK); context.startActivity(intent) }, colors = ButtonDefaults.buttonColors(containerColor = if (listenerGrantedTop) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.error, contentColor = if (listenerGrantedTop) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onError)) {
@@ -212,7 +212,7 @@ fun SettingsScreen(
             Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 Text(text = stringResource(id = R.string.settings_section_restore), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(Icons.Default.Restore, contentDescription = null)
+                    Icon(Icons.Default.Restore, contentDescription = "Restore")
                     Spacer(Modifier.width(8.dp))
                     Column(modifier = Modifier.weight(1f)) {
                         Text(text = stringResource(id = R.string.settings_restore_on_boot_title), style = MaterialTheme.typography.bodyLarge)
@@ -221,7 +221,7 @@ fun SettingsScreen(
                     Switch(checked = prefMgrTop.isRestoreOnBootEnabled() && listenerGrantedTop, enabled = listenerGrantedTop && !BuildConfig.DEBUG, onCheckedChange = { prefMgrTop.setRestoreOnBootEnabled(it) })
                 }
                 OutlinedButton(onClick = { pickBackupLauncher.launch(arrayOf("application/octet-stream", "*/*")) }, modifier = Modifier.fillMaxWidth(), colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.primary)) {
-                    Icon(Icons.Default.Restore, contentDescription = null)
+                    Icon(Icons.Default.Restore, contentDescription = "Restore")
                     Spacer(Modifier.width(8.dp))
                     Text("Restore Backup Manually")
                 }
@@ -278,7 +278,7 @@ fun SettingsScreen(
                         },
                         enabled = !isSyncing
                     ) {
-                        Icon(Icons.Default.CloudSync, contentDescription = null)
+                        Icon(Icons.Default.CloudSync, contentDescription = "Cloud sync")
                         Spacer(Modifier.width(8.dp))
                         Text(if (isSyncing) "Syncing..." else "Sync Now")
                     }
@@ -296,7 +296,7 @@ fun SettingsScreen(
                         },
                         enabled = !isSyncing && !BuildConfig.DEBUG
                     ) {
-                        Icon(Icons.Default.Restore, contentDescription = null)
+                        Icon(Icons.Default.Restore, contentDescription = "Restore")
                         Spacer(Modifier.width(8.dp))
                         Text("Create Encrypted Backup")
                     }

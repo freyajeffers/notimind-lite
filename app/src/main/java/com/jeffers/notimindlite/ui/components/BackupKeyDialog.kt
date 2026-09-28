@@ -123,7 +123,7 @@ fun BackupKeyDialog(
                     },
                     modifier = Modifier.align(Alignment.End),
                 ) {
-                    Icon(Icons.Default.Share, contentDescription = null, modifier = Modifier.size(16.dp))
+                    Icon(Icons.Default.Share, contentDescription = "Share backup key", modifier = Modifier.size(16.dp))
                     Spacer(Modifier.width(4.dp))
                     Text("Share Key")
                 }
