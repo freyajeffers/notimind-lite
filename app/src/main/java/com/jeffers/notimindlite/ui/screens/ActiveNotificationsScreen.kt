@@ -382,8 +382,7 @@ fun ActiveNotificationsScreen(dao: NotificationDao, authManager: AuthManager, db
                             keyboardController?.hide()
                         }) { Text("Clear filters") }
                         if (recentSearches.isNotEmpty()) {
-                            TextButton(onClick = { recentSearches = emptyList()
-                            preferences.resetRecentSearches() }) { Text("Reset searches") }
+                            TextButton(onClick = { preferences.resetRecentSearches() }) { Text("Reset searches") }
                         }
                     }
                 }
