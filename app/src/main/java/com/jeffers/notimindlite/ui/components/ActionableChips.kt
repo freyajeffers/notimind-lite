@@ -110,7 +110,7 @@ private fun ActionChip(
             leadingIcon = {
                 Icon(
                     imageVector = config.icon,
-                    contentDescription = null,
+                    contentDescription = config.label,
                     modifier = Modifier.size(14.dp),
                     tint = config.onColor
                 )
@@ -145,7 +145,7 @@ private fun ActionChip(
                     clipboardManager.setText(AnnotatedString(entity.value))
                     expanded = false
                 },
-                leadingIcon = { Icon(Icons.Default.ContentCopy, contentDescription = null, modifier = Modifier.size(18.dp)) }
+            leadingIcon = { Icon(Icons.Default.ContentCopy, contentDescription = "Copy", modifier = Modifier.size(18.dp)) }
             )
 
             if (entity.type == ActionableEntityExtractor.EntityType.URL || entity.type == ActionableEntityExtractor.EntityType.LOCATION) {
@@ -176,7 +176,7 @@ private fun ActionChip(
                     leadingIcon = {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.OpenInNew,
-                            contentDescription = null,
+                            contentDescription = "Open",
                             modifier = Modifier.size(18.dp)
                         )
                     }
@@ -195,7 +195,7 @@ private fun ActionChip(
                     )
                     expanded = false
                 },
-                leadingIcon = { Icon(Icons.Default.Share, contentDescription = null, modifier = Modifier.size(18.dp)) }
+                leadingIcon = { Icon(Icons.Default.Share, contentDescription = stringResource(R.string.actionable_share), modifier = Modifier.size(18.dp)) }
             )
         }
     }
