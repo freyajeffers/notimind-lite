@@ -178,6 +178,9 @@
     <string name="settings_section_privacy">Privacy &amp; Telemetry</string>
     <string name="settings_strict_privacy_title">Strict Privacy Mode</string>
     <string name="settings_strict_privacy_desc">Disable all crash reporting and anonymous usage telemetry.</string>
+    <string name="settings_pii_redaction_title">PII Redaction Engine</string>
+    <string name="settings_pii_redaction_desc">Mask OTP codes, cards, phone numbers, and emails before saving.</string>
+    <string name="settings_restore_manual">Restore Backup Manually</string>
     <string name="settings_version_footer">NotiMind Lite · v%1$s (%2$d)</string>
 
     <!-- Backup Key -->
