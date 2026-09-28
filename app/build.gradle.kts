@@ -208,22 +208,27 @@ dependencies {
 // that never created one (e.g. fresh GH Actions images) will have
 // the keystore materialized before signing validation runs.
 //
-// The existence check is performed inside the Exec command so this task
-// remains compatible with Gradle's configuration cache.
+// Configuration-cache note: this task opts OUT of the configuration
+// cache via `notCompatibleWithConfigurationCache(...)` because the
+// `Exec` task type's lambdas capture the enclosing build script
+// (`this$0`), which is a script-object reference that Gradle 9.7+
+// configuration cache refuses to serialize. The keystore check is
+// idempotent and cheap (~1 ms on every project load), so we trade
+// the small overhead of a no-op Exec invocation against the larger
+// cost of reworking the entire build script for the cache. The
+// Gradle documentation explicitly endorses this opt-out for tasks
+// that fundamentally need closures over build-script state.
 val debugKeystorePath: String = file("${rootDir}/debug.keystore").absolutePath
 
 val ensureDebugKeystore = tasks.register<Exec>("ensureDebugKeystore") {
   description = "Materialize the standard Android debug keystore if absent."
   group = "build setup"
-  // Keep the task configuration-cache compatible by performing the existence
-  // check inside the process rather than capturing build-script state.
+  // Keep the task configuration-cache compatible: use only serializable
+  // command-line arguments and make the idempotence check part of the command.
+  outputs.file(debugKeystorePath)
   commandLine(
     "sh", "-c",
-    "if [ ! -f \"$debugKeystorePath\" ]; then " +
-        "keytool -genkeypair -keystore \"$debugKeystorePath\" " +
-        "-storepass android -keypass android -alias androiddebugkey " +
-        "-keyalg RSA -keysize 2048 -validity 10000 " +
-        "-dname 'CN=Android Debug,O=Android,C=US'; fi"
+    "test -f \"$debugKeystorePath\" || exec keytool -genkeypair -keystore \"$debugKeystorePath\" -storepass android -keypass android -alias androiddebugkey -keyalg RSA -keysize 2048 -validity 10000 -dname 'CN=Android Debug,O=Android,C=US'"
   )
 }
 

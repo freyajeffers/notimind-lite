@@ -35,8 +35,10 @@ import com.jeffers.notimindlite.data.sync.FirestoreSyncRepository
 import com.jeffers.notimindlite.data.sync.SyncWorker
 import com.jeffers.notimindlite.data.local.PreferenceManager
 import com.jeffers.notimindlite.ui.components.RestoreBackupDialog
+import com.jeffers.notimindlite.ui.components.BackupKeyDialog
 import com.jeffers.notimindlite.util.DatabaseExporter
 import com.jeffers.notimindlite.domain.backup.generateBackupKey
+import com.jeffers.notimindlite.util.NetworkUtils
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -57,30 +59,27 @@ import javax.crypto.SecretKey
 fun SettingsScreen(
     authManager: AuthManager,
     db: AppDatabase,
+    preferencesRepository: com.jeffers.notimindlite.data.local.PreferencesRepository,
     webClientId: String = ""
 ) {
     val session by authManager.session.collectAsState()
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
-    val prefMgr = remember(context) { PreferenceManager(context) }
     var isSyncing by remember { mutableStateOf(false) }
     var syncMessage by remember { mutableStateOf<String?>(null) }
-    var strictPrivacyEnabled by remember { mutableStateOf(prefMgr.isStrictPrivacyEnabled()) }
-    var piiRedactionEnabled by remember { mutableStateOf(prefMgr.isPiiRedactionEnabled()) }
-    var restoreOnBootEnabled by remember { mutableStateOf(prefMgr.isRestoreOnBootEnabled()) }
 
     // H1: file picker + restore dialog plumbing. The picker runs on the UI thread but
     // copies the URI to a local cache File on Dispatchers.IO before invoking performRestore.
     // Snackbar feedback surfaces success/failure without leaving the Settings screen.
     var selectedBackupUri by remember { mutableStateOf<Uri?>(null) }
     var showRestoreDialog by remember { mutableStateOf(false) }
+    var showBackupKeyDialog by remember { mutableStateOf(false) }
+    var backupKeyBase64 by remember { mutableStateOf("") }
+    var pendingBackupKey by remember { mutableStateOf<SecretKey?>(null) }
     val snackbarHostState = remember { SnackbarHostState() }
+
     val restoreSuccessMsg = stringResource(id = R.string.settings_restore_success)
     val restoreFailureMsg = stringResource(id = R.string.settings_restore_failure)
-    val syncSuccessTemplate = stringResource(R.string.settings_sync_success)
-    val syncFailureTemplate = stringResource(R.string.settings_sync_failure)
-    val lifecycleOwner = LocalLifecycleOwner.current
-    var listenerGranted by remember { mutableStateOf(checkNotificationPermission(context)) }
 
     val pickBackupLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.OpenDocument()
@@ -94,16 +93,10 @@ fun SettingsScreen(
         modifier = Modifier
             .fillMaxSize()
             .verticalScroll(rememberScrollState())
-            .padding(horizontal = 16.dp, vertical = 24.dp)
-            .imePadding(),
-        verticalArrangement = Arrangement.spacedBy(20.dp)
+            .padding(16.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        Text(
-            text = stringResource(id = R.string.settings_title),
-            style = MaterialTheme.typography.headlineMedium,
-            fontWeight = FontWeight.Bold,
-            modifier = Modifier.padding(horizontal = 4.dp)
-        )
+        Spacer(modifier = Modifier.height(0.dp))
 
         Card(
             modifier = Modifier.fillMaxWidth(),
@@ -114,7 +107,7 @@ fun SettingsScreen(
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 Text(
-                    text = stringResource(id = R.string.settings_section_account),
+                    text = "Account",
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.SemiBold
                 )
@@ -124,10 +117,7 @@ fun SettingsScreen(
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
-                        Icon(
-                            Icons.Default.Person,
-                            contentDescription = stringResource(id = R.string.settings_profile_cd)
-                        )
+                        Icon(Icons.Default.Person, contentDescription = "Profile")
                         Column {
                             Text(
                                 text = session.displayName ?: stringResource(id = R.string.settings_default_display_name),
@@ -147,16 +137,15 @@ fun SettingsScreen(
                             authManager.signOut()
                             SyncWorker.cancelPeriodicSync(context)
                         },
-                        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error),
-                        modifier = Modifier.fillMaxWidth()
+                        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
                     ) {
-                        Icon(Icons.AutoMirrored.Filled.Logout, contentDescription = null)
+                        Icon(Icons.AutoMirrored.Filled.Logout, contentDescription = "Sign out")
                         Spacer(Modifier.width(8.dp))
-                        Text(stringResource(id = R.string.settings_sign_out))
+                        Text("Sign Out")
                     }
                 } else {
                     Text(
-                        text = stringResource(id = R.string.settings_sign_in_prompt),
+                        text = "Sign in with Google to enable cloud backup & multi-device sync.",
                         style = MaterialTheme.typography.bodyMedium
                     )
 
@@ -173,15 +162,9 @@ fun SettingsScreen(
                             contentColor = MaterialTheme.colorScheme.onPrimaryContainer
                         )
                     ) {
-                        Icon(Icons.AutoMirrored.Filled.Login, contentDescription = null)
+                        Icon(Icons.AutoMirrored.Filled.Login, contentDescription = "Sign in")
                         Spacer(Modifier.width(8.dp))
-                        Text(
-                            if (session.isAuthenticating) {
-                                stringResource(id = R.string.settings_sign_in_loading)
-                            } else {
-                                stringResource(id = R.string.settings_sign_in_idle)
-                            }
-                        )
+                        Text(if (session.isAuthenticating) "Signing In..." else "Sign in with Google")
                     }
 
                     session.error?.let { err ->
@@ -190,6 +173,70 @@ fun SettingsScreen(
                 }
             }
         }
+
+        // Notification Access card moved to top for discoverability
+        val prefMgrTop = remember { PreferenceManager(context) }
+        val lifecycleOwnerTop = LocalLifecycleOwner.current
+        var listenerGrantedTop by remember { mutableStateOf(checkNotificationPermission(context)) }
+        DisposableEffect(lifecycleOwnerTop) {
+            val observer = androidx.lifecycle.LifecycleEventObserver { _, event ->
+                if (event == androidx.lifecycle.Lifecycle.Event.ON_RESUME) {
+                    listenerGrantedTop = checkNotificationPermission(context)
+                }
+            }
+            lifecycleOwnerTop.lifecycle.addObserver(observer)
+            onDispose { lifecycleOwnerTop.lifecycle.removeObserver(observer) }
+        }
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            colors = CardDefaults.cardColors(
+                containerColor = if (listenerGrantedTop)
+                    MaterialTheme.colorScheme.surfaceVariant
+                else
+                    MaterialTheme.colorScheme.errorContainer
+            )
+        ) {
+            Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                Text(text = stringResource(id = R.string.settings_section_listener), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                    Icon(imageVector = if (listenerGrantedTop) Icons.Default.Notifications else Icons.Default.NotificationsOff, contentDescription = if (listenerGrantedTop) "Notification access enabled" else "Notification access disabled", tint = if (listenerGrantedTop) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error)
+                    Text(text = stringResource(id = if (listenerGrantedTop) R.string.settings_listener_granted_desc else R.string.settings_listener_missing_desc), style = MaterialTheme.typography.bodyMedium, modifier = Modifier.weight(1f))
+                }
+                Button(onClick = { val intent = Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS); intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK); context.startActivity(intent) }, colors = ButtonDefaults.buttonColors(containerColor = if (listenerGrantedTop) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.error, contentColor = if (listenerGrantedTop) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onError)) {
+                    Text(stringResource(id = if (listenerGrantedTop) R.string.settings_listener_open else R.string.settings_listener_grant))
+                }
+            }
+        }
+
+        // Boot & Restore card placed near top for quick opt-in/out.
+        Card(modifier = Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)) {
+            Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                Text(text = stringResource(id = R.string.settings_section_restore), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(Icons.Default.Restore, contentDescription = "Restore")
+                    Spacer(Modifier.width(8.dp))
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(text = stringResource(id = R.string.settings_restore_on_boot_title), style = MaterialTheme.typography.bodyLarge)
+                        Text(text = stringResource(id = R.string.settings_restore_on_boot_desc), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    }
+                    Switch(checked = prefMgrTop.isRestoreOnBootEnabled() && listenerGrantedTop, enabled = listenerGrantedTop && !BuildConfig.DEBUG, onCheckedChange = { prefMgrTop.setRestoreOnBootEnabled(it) })
+                }
+                OutlinedButton(onClick = { pickBackupLauncher.launch(arrayOf("application/octet-stream", "*/*")) }, modifier = Modifier.fillMaxWidth(), colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.primary)) {
+                    Icon(Icons.Default.Restore, contentDescription = "Restore")
+                    Spacer(Modifier.width(8.dp))
+                    Text("Restore Backup Manually")
+                }
+            }
+        }
+
+        // Continue with other sections
+        SettingsCaptureSection(preferencesRepository = preferencesRepository)
+        ProfileManagerSection(repository = preferencesRepository)
+        SettingsPreferencesSection(preferencesRepository = preferencesRepository)
+        SettingsSyncSection(preferencesRepository = preferencesRepository)
+        SettingsPrivacySection(preferencesRepository = preferencesRepository)
+        SettingsAdvancedSection(preferencesRepository = preferencesRepository)
+        SettingsPreferencesBackupSection()
 
         if (session.isAuthenticated) {
             Card(
@@ -201,13 +248,13 @@ fun SettingsScreen(
                     verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
                     Text(
-                        text = stringResource(id = R.string.settings_section_sync),
+                        text = "Cloud Sync & Backup",
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.SemiBold
                     )
 
                     Text(
-                        text = stringResource(id = R.string.settings_sync_idle),
+                        text = "Automatic sync is active. You can also trigger an instant sync manually.",
                         style = MaterialTheme.typography.bodyMedium
                     )
 
@@ -216,35 +263,43 @@ fun SettingsScreen(
                             session.uid?.let { uid ->
                                 scope.launch {
                                     isSyncing = true
-                                    val repo = FirestoreSyncRepository(db)
+                                    val repo = FirestoreSyncRepository(db, profileId = preferencesRepository.activeProfileId.value)
 
                                     val secretKey: SecretKey = generateBackupKey(context)
 
                                     val res = repo.sync(uid, secretKey)
                                     isSyncing = false
                                     syncMessage = if (res.isSuccess) {
-                                        String.format(syncSuccessTemplate, res.getOrDefault(0))
+                                        "Synced ${res.getOrDefault(0)} items successfully"
                                     } else {
-                                        String.format(
-                                            syncFailureTemplate,
-                                            res.exceptionOrNull()?.localizedMessage.orEmpty()
-                                        )
+                                        "Sync failed: ${res.exceptionOrNull()?.localizedMessage}"
                                     }
                                 }
                             }
                         },
-                        enabled = !isSyncing,
-                        modifier = Modifier.fillMaxWidth()
+                        enabled = !isSyncing
                     ) {
-                        Icon(Icons.Default.CloudSync, contentDescription = null)
+                        Icon(Icons.Default.CloudSync, contentDescription = "Cloud sync")
                         Spacer(Modifier.width(8.dp))
-                        Text(
-                            if (isSyncing) {
-                                stringResource(id = R.string.settings_sync_now_loading)
+                        Text(if (isSyncing) "Syncing..." else "Sync Now")
+                    }
+
+                    OutlinedButton(
+                        onClick = {
+                            if (!NetworkUtils.isInternetAvailable(context)) {
+                                syncMessage = "An active internet connection is required to create a backup"
                             } else {
-                                stringResource(id = R.string.settings_sync_now_idle)
+                                val secretKey = generateBackupKey(context)
+                                pendingBackupKey = secretKey
+                                backupKeyBase64 = com.jeffers.notimindlite.data.local.BackupKeyCodec.encode(secretKey)
+                                showBackupKeyDialog = true
                             }
-                        )
+                        },
+                        enabled = !isSyncing && !BuildConfig.DEBUG
+                    ) {
+                        Icon(Icons.Default.Restore, contentDescription = "Restore")
+                        Spacer(Modifier.width(8.dp))
+                        Text("Create Encrypted Backup")
                     }
 
                     syncMessage?.let { msg ->
@@ -263,7 +318,7 @@ fun SettingsScreen(
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 Text(
-                    text = stringResource(id = R.string.settings_section_privacy),
+                    text = "Privacy & Telemetry",
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.SemiBold
                 )
@@ -272,21 +327,17 @@ fun SettingsScreen(
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Column(modifier = Modifier.weight(1f)) {
+                        Text("Strict Privacy Mode", style = MaterialTheme.typography.bodyLarge)
                         Text(
-                            stringResource(id = R.string.settings_strict_privacy_title),
-                            style = MaterialTheme.typography.bodyLarge
-                        )
-                        Text(
-                            stringResource(id = R.string.settings_strict_privacy_desc),
+                            "Disable all crash reporting and anonymous usage telemetry.",
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
                     Switch(
-                        checked = strictPrivacyEnabled,
+                        checked = remember { PreferenceManager(context).isStrictPrivacyEnabled() },
                         onCheckedChange = { enabled ->
-                            strictPrivacyEnabled = enabled
-                            prefMgr.setStrictPrivacyEnabled(enabled)
+                            PreferenceManager(context).setStrictPrivacyEnabled(enabled)
                         }
                     )
                 }
@@ -295,155 +346,26 @@ fun SettingsScreen(
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Column(modifier = Modifier.weight(1f)) {
-                        Text(stringResource(id = R.string.settings_pii_redaction_title), style = MaterialTheme.typography.bodyLarge)
+                        Text("PII Redaction Engine", style = MaterialTheme.typography.bodyLarge)
                         Text(
-                            stringResource(id = R.string.settings_pii_redaction_desc),
+                            "Mask OTP codes, cards, phone numbers, and emails before saving.",
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
+                    var piiRedactionChecked by remember { mutableStateOf(PreferenceManager(context).isPiiRedactionEnabled()) }
                     Switch(
-                        checked = piiRedactionEnabled,
+                        checked = piiRedactionChecked,
+                        enabled = !BuildConfig.DEBUG,
                         onCheckedChange = { enabled ->
-                            piiRedactionEnabled = enabled
-                            prefMgr.setPiiRedactionEnabled(enabled)
+                            piiRedactionChecked = enabled
+                            PreferenceManager(context).setPiiRedactionEnabled(enabled)
                         }
                     )
                 }
             }
         }
 
-        // F-N usability [2026-09-06]: Notification Access card — gives users a way to
-        // jump straight to the system permission screen without leaving Settings. This
-        // is the single highest-impact onboarding surface: without listener access the
-        // app captures nothing, so making the path to granting it obvious is critical.
-
-        // Refresh when the user returns to this screen (e.g., after toggling the
-        // system permission switch and pressing Back).
-        androidx.compose.runtime.DisposableEffect(lifecycleOwner) {
-            val observer = androidx.lifecycle.LifecycleEventObserver { _, event ->
-                if (event == androidx.lifecycle.Lifecycle.Event.ON_RESUME) {
-                    listenerGranted = checkNotificationPermission(context)
-                }
-            }
-            lifecycleOwner.lifecycle.addObserver(observer)
-            onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
-        }
-        Card(
-            modifier = Modifier.fillMaxWidth(),
-            colors = CardDefaults.cardColors(
-                containerColor = if (listenerGranted)
-                    MaterialTheme.colorScheme.surfaceVariant
-                else
-                    MaterialTheme.colorScheme.errorContainer
-            )
-        ) {
-            Column(
-                modifier = Modifier.padding(16.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                Text(
-                    text = stringResource(id = R.string.settings_section_listener),
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.SemiBold
-                )
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    Icon(
-                        imageVector = if (listenerGranted) Icons.Default.Notifications else Icons.Default.NotificationsOff,
-                        contentDescription = null,
-                        tint = if (listenerGranted) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error
-                    )
-                    Text(
-                        text = stringResource(
-                            id = if (listenerGranted) R.string.settings_listener_granted_desc
-                            else R.string.settings_listener_missing_desc
-                        ),
-                        style = MaterialTheme.typography.bodyMedium,
-                        modifier = Modifier.weight(1f)
-                    )
-                }
-                Button(
-                    onClick = {
-                        val intent = Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS)
-                        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                        context.startActivity(intent)
-                    },
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = if (listenerGranted) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.error,
-                        contentColor = if (listenerGranted) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onError
-                    ),
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Text(
-                        stringResource(
-                            id = if (listenerGranted) R.string.settings_listener_open
-                            else R.string.settings_listener_grant
-                        )
-                    )
-                }
-            }
-        }
-
-        // F-N usability [2026-09-06]: Boot & Restore card — exposes the existing
-        // restore-on-boot preference so users can opt in/out without digging through
-        // hidden debug menus. Audit F-L documents why this defaults off; the toggle
-        // is intentionally disabled until the listener permission is granted.
-        Card(
-            modifier = Modifier.fillMaxWidth(),
-            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
-        ) {
-            Column(
-                modifier = Modifier.padding(16.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                Text(
-                    text = stringResource(id = R.string.settings_section_restore),
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.SemiBold
-                )
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(Icons.Default.Restore, contentDescription = null)
-                    Spacer(Modifier.width(8.dp))
-                    Column(modifier = Modifier.weight(1f)) {
-                        Text(
-                            text = stringResource(id = R.string.settings_restore_on_boot_title),
-                            style = MaterialTheme.typography.bodyLarge
-                        )
-                        Text(
-                            text = stringResource(id = R.string.settings_restore_on_boot_desc),
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
-                    Switch(
-                        checked = restoreOnBootEnabled && listenerGranted,
-                        enabled = listenerGranted,
-                        onCheckedChange = {
-                            restoreOnBootEnabled = it
-                            prefMgr.setRestoreOnBootEnabled(it)
-                        }
-                    )
-                }
-                
-                OutlinedButton(
-                    onClick = {
-                        // Launch the system file picker scoped to .enc backup files. The
-                        // MIME filter keeps irrelevant files (images, docs) out of the chooser.
-                        // Persistable URI permissions are requested implicitly by OpenDocument.
-                        pickBackupLauncher.launch(arrayOf("application/octet-stream", "*/*"))
-                    },
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.primary)
-                ) {
-                    Icon(Icons.Default.Restore, contentDescription = null)
-                    Spacer(Modifier.width(8.dp))
-                    Text(stringResource(id = R.string.settings_restore_manual))
-                }
-            }
-        }
 
         // F-N usability [2026-09-06]: version footer — gives users a build identifier
         // they can quote in support tickets. Looked up via PackageManager at composable
@@ -498,6 +420,31 @@ fun SettingsScreen(
                         snackbarHostState.showSnackbar(msg)
                     }
                 },
+            )
+        }
+
+        if (showBackupKeyDialog && pendingBackupKey != null) {
+            BackupKeyDialog(
+                keyBase64 = backupKeyBase64,
+                onDismiss = {
+                    showBackupKeyDialog = false
+                    pendingBackupKey = null
+                },
+                onConfirm = { passphrase ->
+                    showBackupKeyDialog = false
+                    val secretKey = pendingBackupKey
+                    pendingBackupKey = null
+                    if (secretKey != null) {
+                        scope.launch {
+                            val result = DatabaseExporter.performEncryptedBackup(context, secretKey, passphrase)
+                            syncMessage = if (result.isSuccess) {
+                                "Backup created successfully"
+                            } else {
+                                "Backup failed: ${result.exceptionOrNull()?.localizedMessage}"
+                            }
+                        }
+                    }
+                }
             )
         }
 

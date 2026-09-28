@@ -11,11 +11,14 @@ import android.graphics.drawable.BitmapDrawable
 import android.service.notification.NotificationListenerService
 import android.service.notification.StatusBarNotification
 import android.util.Log
+import com.jeffers.notimindlite.BuildConfig
 import com.jeffers.notimindlite.data.local.AppDatabase
 import com.jeffers.notimindlite.data.local.Converters
 import com.jeffers.notimindlite.data.local.NotificationDao
 import com.jeffers.notimindlite.data.local.NotificationEntity
+import com.jeffers.notimindlite.data.local.PreferencesRepository
 import com.jeffers.notimindlite.util.NotificationLauncher
+import com.jeffers.notimindlite.util.NotificationActionExecutor
 import com.jeffers.notimindlite.util.VectorEmbeddingHelper
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -42,6 +45,7 @@ class NotificationLoggerService : NotificationListenerService() {
     private fun getDb(): AppDatabase = AppDatabase.getDatabase(applicationContext)
     private val serviceJob = SupervisorJob()
     private val scope = CoroutineScope(Dispatchers.IO + serviceJob)
+    private val actionExecutor by lazy { NotificationActionExecutor(PreferencesRepository(applicationContext)) }
 
     companion object {
         @Suppress("UnusedPrivateProperty") // Reserved for future debounce/filter tuning per F-A audit.
@@ -81,6 +85,24 @@ class NotificationLoggerService : NotificationListenerService() {
             } catch (e: Exception) {
                 Log.e("NotificationLoggerSrv", "Failed to rebind notification listener service", e)
             }
+        }
+
+        suspend fun markNotificationAsRead(context: Context, key: String) {
+            val preferences = PreferencesRepository(context)
+            AppDatabase.getDatabase(context).notificationDao()
+                .markAsRead(key, preferences.autoDeleteOnRead.value)
+        }
+
+        suspend fun markNotificationsAsRead(context: Context, keys: List<String>) {
+            val preferences = PreferencesRepository(context)
+            AppDatabase.getDatabase(context).notificationDao()
+                .markAsReadBatch(keys, preferences.autoDeleteOnRead.value)
+        }
+
+        suspend fun markAllNotificationsAsRead(context: Context) {
+            val preferences = PreferencesRepository(context)
+            AppDatabase.getDatabase(context).notificationDao()
+                .markAllAsRead(preferences.autoDeleteOnRead.value)
         }
     }
 
@@ -153,6 +175,10 @@ class NotificationLoggerService : NotificationListenerService() {
     }
 
     override fun onNotificationPosted(sbn: StatusBarNotification) {
+        if (!BuildConfig.DEBUG && !isNotificationCaptureEnabled()) {
+            Log.d(TAG, "Ignoring notification post event: capture disabled")
+            return
+        }
         if (!isNotificationListenerActive()) {
             Log.w(TAG, "Ignoring notification post event: listener permission revoked")
             return
@@ -165,16 +191,25 @@ class NotificationLoggerService : NotificationListenerService() {
         // (Single inserts are already optimized via Room, but we maintain compatibility)
         val entity = extractNotificationEntity(sbn)
         if (entity != null) {
+            registerNotificationActions(sbn, entity.key)
+            actionExecutor.executeOnNotification(applicationContext, entity.key, entity.packageName, entity.title)
             scope.launch {
                 try {
                     val dao = getDb().notificationDao()
                     val existing = dao.getNotificationByKey(entity.key)
-                    val updateCount = (existing?.updateCount ?: 0) + 1
-                    val originalPostTime =
-                        if (existing != null && existing.postTime > 0) existing.postTime else entity.postTime
+                    
+                    // Logic: Only treat as a "new notification" (new row) if the content has changed significantly.
+                    // Significant change = title or content is different.
+                    // Otherwise, update the existing row (increment update count).
+                    val hasSignificantChange = existing == null || 
+                        existing.title != entity.title || 
+                        existing.content != entity.content
+                    
+                    val updateCount = if (hasSignificantChange) 1 else (existing?.updateCount ?: 0) + 1
+                    val originalPostTime = if (hasSignificantChange) entity.postTime else (existing?.postTime ?: entity.postTime)
                     
                     val finalEntity = entity.copy(
-                        id = existing?.id ?: 0L,
+                        id = if (hasSignificantChange) 0L else (existing?.id ?: 0L),
                         updateCount = updateCount,
                         postTime = originalPostTime,
                         isRead = existing?.isRead ?: false,
@@ -191,6 +226,16 @@ class NotificationLoggerService : NotificationListenerService() {
             }
         }
     }
+
+    private fun registerNotificationActions(sbn: StatusBarNotification, key: String) {
+        sbn.notification?.actions?.forEachIndexed { index, action ->
+            NotificationLauncher.registerActionIntent(key, index, action.actionIntent)
+        }
+    }
+
+    private fun isNotificationCaptureEnabled(): Boolean =
+        com.jeffers.notimindlite.data.local.PreferencesRepository(applicationContext)
+            .captureNotifications.value
 
     private fun isNotificationListenerActive(): Boolean {
         val componentName = ComponentName(applicationContext, NotificationLoggerService::class.java)
@@ -214,7 +259,29 @@ class NotificationLoggerService : NotificationListenerService() {
     // returns early (blank content, summary, stale, missing app, etc.) — the function is intentionally
     // structured as a filter pipeline. Splitting it is tracked as future work; current contract is
     // well-covered by NotificationLoggerServiceTest.
+    private fun shouldCaptureNotification(sbn: StatusBarNotification): Boolean {
+        if (sbn.packageName == applicationContext.packageName) return false
+        val preferences = com.jeffers.notimindlite.data.local.PreferencesRepository(applicationContext)
+        if (!preferences.captureOngoing.value && sbn.isOngoing) return false
+        val notification = sbn.notification ?: return false
+        if (preferences.captureActionsOnly.value && notification.actions.isNullOrEmpty()) return false
+        val allow = preferences.capturePackageAllowlist.value.split(',', '\n', ' ', '\t')
+            .map(String::trim).filter(String::isNotEmpty).toSet()
+        val block = preferences.capturePackageBlocklist.value.split(',', '\n', ' ', '\t')
+            .map(String::trim).filter(String::isNotEmpty).toSet()
+        if (allow.isNotEmpty() && sbn.packageName !in allow) return false
+        if (sbn.packageName in block) return false
+        val importance = if (android.os.Build.VERSION.SDK_INT >= 26) {
+            notification.channelId?.let { getSystemService(android.app.NotificationManager::class.java)?.getNotificationChannel(it)?.importance }
+                ?: android.app.NotificationManager.IMPORTANCE_DEFAULT
+        } else {
+            (notification.priority + 2).coerceIn(0, 5)
+        }
+        return importance >= preferences.minImportance.value
+    }
+
     private fun extractNotificationEntity(sbn: StatusBarNotification): NotificationEntity? {
+        if (!shouldCaptureNotification(sbn)) return null
         try {
             if (sbn.packageName == applicationContext.packageName) return null
             val notification = sbn.notification ?: return null
@@ -235,12 +302,16 @@ class NotificationLoggerService : NotificationListenerService() {
                 else -> ""
             }
 
-            val textLines = extras?.getCharSequenceArray(Notification.EXTRA_TEXT_LINES)
-            val inboxLinesJson: String? = if (!textLines.isNullOrEmpty()) {
-                val linesList = textLines.map { it.toString() }
-                JSONArray(linesList).toString()
-            } else {
-                null
+            val inboxLinesJson: String? = try {
+                val textLines = extras?.getCharSequenceArray(Notification.EXTRA_TEXT_LINES)
+                if (!textLines.isNullOrEmpty()) {
+                    val linesList = textLines.map { it.toString() }
+                    JSONArray(linesList).toString()
+                } else null
+            } catch (e: ClassCastException) {
+                // Some devices put a String[] into the bundle instead of CharSequence[]
+                val stringLines = extras?.getStringArray(Notification.EXTRA_TEXT_LINES)
+                if (!stringLines.isNullOrEmpty()) JSONArray(stringLines.toList()).toString() else null
             }
 
             val category = notification.category
@@ -258,6 +329,9 @@ class NotificationLoggerService : NotificationListenerService() {
             content = san.content
             subText = san.subText
             bigText = san.bigText
+            if (PreferencesRepository(applicationContext).anonymizeTitles.value) {
+                title = "[REDACTED-TITLE]"
+            }
 
             if (title.isBlank() && content.isBlank()) return null
 
@@ -282,7 +356,12 @@ class NotificationLoggerService : NotificationListenerService() {
             }
             val appName = rawAppName ?: packageName
             val isGroupSummary = (notification.flags and Notification.FLAG_GROUP_SUMMARY) != 0
-            val smallIconRes = notification.smallIcon?.resId ?: 0
+            val smallIconRes = try {
+                notification.smallIcon?.resId ?: 0
+            } catch (e: IllegalStateException) {
+                // Some OEMs return BITMAP icons where getResId() throws; treat as no resource
+                0
+            }
             val appIconUri = getOrSaveAppIconUri(packageName)
             val channelId = notification.channelId
             val groupKey = sbn.groupKey

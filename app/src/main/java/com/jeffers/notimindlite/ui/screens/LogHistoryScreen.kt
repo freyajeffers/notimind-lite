@@ -10,6 +10,8 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Sort
@@ -17,6 +19,7 @@ import androidx.compose.material.icons.filled.Bookmark
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Download
 import androidx.compose.material.icons.automirrored.filled.OpenInNew
+import androidx.compose.material.icons.filled.FilterAltOff
 import androidx.compose.material.icons.filled.FilterList
 import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.KeyboardArrowDown
@@ -27,22 +30,22 @@ import com.jeffers.notimindlite.ui.components.groupNotifications
 import org.json.JSONArray
 import androidx.compose.material.icons.outlined.BookmarkBorder
 import androidx.compose.material3.*
-import androidx.compose.material3.TooltipAnchorPosition
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.semantics.Role
-import androidx.compose.ui.semantics.role
-import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
+
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.annotation.StringRes
 import com.jeffers.notimindlite.R
 import androidx.compose.foundation.background
 import com.jeffers.notimindlite.data.local.NotificationDao
@@ -71,19 +74,19 @@ private const val PREFETCH_AHEAD = 24
 private const val PREFETCH_BEHIND = 2
 private const val BASE_SORT_MODE_COUNT = 3
 
-enum class SortMode(@StringRes val labelRes: Int) {
-    DISMISSED(R.string.log_history_sort_dismissed),
-    RECEIVED(R.string.log_history_sort_received),
-    ALL(R.string.log_history_sort_all),
-    NEWEST(R.string.log_history_sort_newest),
-    OLDEST(R.string.log_history_sort_oldest),
-    APP_NAME(R.string.log_history_sort_app),
-    TITLE(R.string.log_history_sort_title)
+enum class SortMode(val label: String) {
+    DISMISSED("Time Dismissed"),
+    RECEIVED("Time Received"),
+    ALL("All Notifications"),
+    NEWEST("Newest First"),
+    OLDEST("Oldest First"),
+    APP_NAME("App Name"),
+    TITLE("Title")
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun LogHistoryScreen(dao: NotificationDao, authManager: AuthManager, db: AppDatabase) {
+fun LogHistoryScreen(dao: NotificationDao, authManager: AuthManager, db: AppDatabase, preferences: com.jeffers.notimindlite.data.local.PreferencesRepository) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     val listState = rememberLazyListState()
@@ -91,9 +94,35 @@ fun LogHistoryScreen(dao: NotificationDao, authManager: AuthManager, db: AppData
     // F-K fix: persist user-meaningful state across process death / rotation.
     // Transient UI state (showSortMenu etc.) stays on `remember` — only durable
     // user input (sort/filter/search) survives.
-    var sortMode by rememberSaveable { mutableStateOf(SortMode.DISMISSED) }
-    var selectedReasonFilter by rememberSaveable { mutableStateOf<Int?>(null) }
-    var selectedPackages by rememberSaveable { mutableStateOf<List<String>?>(null) }
+    // Initialize sortMode from persisted preference when available; keep UI-local default for direct interactions.
+    val prefSort by preferences.sortOrder.collectAsState()
+    fun prefToSortMode(pref: String): SortMode = when (pref) {
+        "newest" -> SortMode.NEWEST
+        "oldest" -> SortMode.OLDEST
+        "app" -> SortMode.APP_NAME
+        "title" -> SortMode.TITLE
+        "dismissed" -> SortMode.DISMISSED
+        "received" -> SortMode.RECEIVED
+        "all" -> SortMode.ALL
+        else -> SortMode.DISMISSED
+    }
+
+    fun sortModeToPref(mode: SortMode): String = when (mode) {
+        SortMode.NEWEST -> "newest"
+        SortMode.OLDEST -> "oldest"
+        SortMode.APP_NAME -> "app"
+        SortMode.TITLE -> "title"
+        SortMode.DISMISSED -> "dismissed"
+        SortMode.RECEIVED -> "received"
+        SortMode.ALL -> "all"
+    }
+
+    var sortMode by remember(prefSort) { mutableStateOf(prefToSortMode(prefSort)) }
+    LaunchedEffect(sortMode) {
+        preferences.setSortOrder(sortModeToPref(sortMode))
+    }
+    var selectedReasonFilter by rememberSaveable { mutableStateOf(preferences.sharedSelectedReason.value) }
+    var selectedPackages by remember { mutableStateOf(preferences.sharedSelectedPackages.value) }
 
     var showSortMenu by remember { mutableStateOf(false) }
     var showFilterMenu by remember { mutableStateOf(false) }
@@ -113,13 +142,26 @@ fun LogHistoryScreen(dao: NotificationDao, authManager: AuthManager, db: AppData
         SortMode.ALL, SortMode.NEWEST, SortMode.OLDEST, SortMode.APP_NAME, SortMode.TITLE -> allNotifsEver
     }
     // F-K fix: persist search text across process death.
-    var searchQuery by rememberSaveable { mutableStateOf("") }
+    var searchQuery by rememberSaveable { mutableStateOf(preferences.sharedSearchQuery.value) }
     // debouncedSearchQuery is a derived value, not user input; do not save.
     var debouncedSearchQuery by remember { mutableStateOf("") }
+    var isSearchVisible by rememberSaveable { mutableStateOf(false) }
+    var isSearchFocused by remember { mutableStateOf(false) }
+    var recentSearches by rememberSaveable { mutableStateOf(preferences.recentSearches.value) }
+    val focusManager = LocalFocusManager.current
+    val keyboardController = LocalSoftwareKeyboardController.current
+
+    LaunchedEffect(searchQuery) { preferences.setSharedSearchQuery(searchQuery) }
+    LaunchedEffect(selectedPackages) { preferences.setSharedSelectedPackages(selectedPackages) }
+    LaunchedEffect(selectedReasonFilter) { preferences.setSharedSelectedReason(selectedReasonFilter) }
 
     LaunchedEffect(searchQuery) {
         delay(100L)
         debouncedSearchQuery = searchQuery
+    }
+
+    LaunchedEffect(isSearchFocused, searchQuery) {
+        if (!isSearchFocused && searchQuery.isBlank()) isSearchVisible = false
     }
 
     val dateTimeFormatter = remember {
@@ -134,34 +176,29 @@ fun LogHistoryScreen(dao: NotificationDao, authManager: AuthManager, db: AppData
         activeList.map { it.packageName to it.appName }.distinctBy { it.first }
     }
 
-    val selectedPackageSet = remember(selectedPackages) { selectedPackages?.toSet().orEmpty() }
-    val filteredNotifs = remember(
-        activeList,
-        selectedReasonFilter,
-        selectedPackageSet,
-        debouncedSearchQuery,
-        sortMode
-    ) {
-        var list = activeList.distinctBy { "${it.packageName}_${it.title}_${it.content}" }
+    val filteredNotifs by remember(activeList, selectedReasonFilter, selectedPackages, debouncedSearchQuery, sortMode) {
+        derivedStateOf {
+            var list = activeList.distinctBy { "${it.packageName}_${it.title}_${it.content}" }
 
-        if (selectedReasonFilter != null) {
-            list = list.filter { it.dismissReason == selectedReasonFilter }
-        }
+            if (selectedReasonFilter != null) {
+                list = list.filter { it.dismissReason == selectedReasonFilter }
+            }
 
-        if (selectedPackageSet.isNotEmpty()) {
-            list = list.filter { it.packageName in selectedPackageSet }
-        }
+            if (!selectedPackages.isNullOrEmpty()) {
+                list = list.filter { selectedPackages!!.contains(it.packageName) }
+            }
 
-        if (debouncedSearchQuery.isNotBlank()) {
-            list = HybridSearchEngine.searchAndRankBlocking(list, debouncedSearchQuery)
-        }
+            if (debouncedSearchQuery.isNotBlank()) {
+                list = HybridSearchEngine.searchAndRankBlocking(list, debouncedSearchQuery)
+            }
 
-        when (sortMode) {
-            SortMode.NEWEST -> list.sortedByDescending { it.postTime }
-            SortMode.OLDEST -> list.sortedBy { it.postTime }
-            SortMode.APP_NAME -> list.sortedWith(compareBy(String.CASE_INSENSITIVE_ORDER) { it.appName })
-            SortMode.TITLE -> list.sortedWith(compareBy(String.CASE_INSENSITIVE_ORDER) { it.title })
-            else -> list
+            when (sortMode) {
+                SortMode.NEWEST -> list.sortedByDescending { it.postTime }
+                SortMode.OLDEST -> list.sortedBy { it.postTime }
+                SortMode.APP_NAME -> list.sortedWith(compareBy(String.CASE_INSENSITIVE_ORDER) { it.appName })
+                SortMode.TITLE -> list.sortedWith(compareBy(String.CASE_INSENSITIVE_ORDER) { it.title })
+                else -> list
+            }
         }
     }
 
@@ -191,18 +228,23 @@ fun LogHistoryScreen(dao: NotificationDao, authManager: AuthManager, db: AppData
     Scaffold(
         topBar = {
             TopAppBar(
-                title = {
-                    Text(
-                        text = stringResource(id = R.string.log_history_title, filteredNotifs.size, totalCount),
-                        fontWeight = FontWeight.Bold
-                    )
-                },
+                title = {},
                 actions = {
+                    if (!selectedPackages.isNullOrEmpty() || selectedReasonFilter != null || searchQuery.isNotBlank()) {
+                        IconButton(onClick = {
+                            selectedPackages = null
+                            selectedReasonFilter = null
+                            searchQuery = ""
+                            isSearchFocused = false
+                            isSearchVisible = false
+                            focusManager.clearFocus(force = true)
+                            keyboardController?.hide()
+                        }) { Icon(Icons.Default.FilterAltOff, contentDescription = "Clear filters") }
+                    }
                     Box {
                         val hasActiveFilters = !selectedPackages.isNullOrEmpty() || selectedReasonFilter != null
                         TooltipBox(
-                            positionProvider = TooltipDefaults
-                                .rememberTooltipPositionProvider(TooltipAnchorPosition.Above),
+                            positionProvider = TooltipDefaults.rememberTooltipPositionProvider(TooltipAnchorPosition.Above),
                             tooltip = { PlainTooltip { Text(stringResource(id = R.string.log_history_filter_title)) } },
                             state = rememberTooltipState()
                         ) {
@@ -255,16 +297,12 @@ fun LogHistoryScreen(dao: NotificationDao, authManager: AuthManager, db: AppData
 
                     Box {
                         TooltipBox(
-                            positionProvider = TooltipDefaults
-                                .rememberTooltipPositionProvider(TooltipAnchorPosition.Above),
-                            tooltip = { PlainTooltip { Text(stringResource(R.string.log_history_sort_title)) } },
+                            positionProvider = TooltipDefaults.rememberTooltipPositionProvider(TooltipAnchorPosition.Above),
+                            tooltip = { PlainTooltip { Text("Sort Logs") } },
                             state = rememberTooltipState()
                         ) {
                             IconButton(onClick = { showSortMenu = true }) {
-                                Icon(
-                                    Icons.AutoMirrored.Filled.Sort,
-                                    contentDescription = stringResource(R.string.notification_action_sort_history)
-                                )
+                                Icon(Icons.AutoMirrored.Filled.Sort, contentDescription = "Sort Log History")
                             }
                         }
                         DropdownMenu(
@@ -282,6 +320,7 @@ fun LogHistoryScreen(dao: NotificationDao, authManager: AuthManager, db: AppData
                                 },
                                 onClick = {
                                     sortMode = SortMode.DISMISSED
+                                    preferences.setSortOrder(sortModeToPref(sortMode))
                                     showSortMenu = false
                                 }
                             )
@@ -296,6 +335,7 @@ fun LogHistoryScreen(dao: NotificationDao, authManager: AuthManager, db: AppData
                                 },
                                 onClick = {
                                     sortMode = SortMode.RECEIVED
+                                    preferences.setSortOrder(sortModeToPref(sortMode))
                                     showSortMenu = false
                                 }
                             )
@@ -310,24 +350,24 @@ fun LogHistoryScreen(dao: NotificationDao, authManager: AuthManager, db: AppData
                                 },
                                 onClick = {
                                     sortMode = SortMode.ALL
+                                    preferences.setSortOrder(sortModeToPref(sortMode))
                                     showSortMenu = false
                                 }
                             )
                             SortMode.entries.drop(BASE_SORT_MODE_COUNT).forEach { option ->
                                 DropdownMenuItem(
-                                    text = {
-                                        Text(
-                                            stringResource(option.labelRes) +
-                                                if (sortMode == option) " ✓" else ""
-                                        )
-                                    },
+                                    text = { Text("${option.label} ${if (sortMode == option) "✓" else ""}") },
                                     onClick = {
                                         sortMode = option
+                                        preferences.setSortOrder(sortModeToPref(sortMode))
                                         showSortMenu = false
                                     }
                                 )
                             }
                         }
+                    }
+                    IconButton(onClick = { isSearchVisible = true }) {
+                        Icon(Icons.Default.Search, contentDescription = "Search")
                     }
                 }
             )
@@ -340,7 +380,7 @@ fun LogHistoryScreen(dao: NotificationDao, authManager: AuthManager, db: AppData
                 ) {
                     TooltipBox(
                         positionProvider = TooltipDefaults.rememberTooltipPositionProvider(TooltipAnchorPosition.Above),
-                        tooltip = { PlainTooltip { Text(stringResource(R.string.common_scroll_top)) } },
+                        tooltip = { PlainTooltip { Text("Scroll to Top") } },
                         state = rememberTooltipState()
                     ) {
                         SmallFloatingActionButton(
@@ -352,31 +392,25 @@ fun LogHistoryScreen(dao: NotificationDao, authManager: AuthManager, db: AppData
                             containerColor = MaterialTheme.colorScheme.primaryContainer,
                             contentColor = MaterialTheme.colorScheme.onPrimaryContainer
                         ) {
-                            Icon(
-                                Icons.Default.KeyboardArrowUp,
-                                contentDescription = stringResource(R.string.notification_action_scroll_top)
-                            )
+                            Icon(Icons.Default.KeyboardArrowUp, contentDescription = "Scroll to Top")
                         }
                     }
 
                     TooltipBox(
                         positionProvider = TooltipDefaults.rememberTooltipPositionProvider(TooltipAnchorPosition.Above),
-                        tooltip = { PlainTooltip { Text(stringResource(R.string.common_scroll_bottom)) } },
+                        tooltip = { PlainTooltip { Text("Scroll to Bottom") } },
                         state = rememberTooltipState()
                     ) {
                         SmallFloatingActionButton(
                             onClick = {
                                 scope.launch {
-                                    listState.animateScrollToItem(notificationGroups.lastIndex.coerceAtLeast(0))
+                                    listState.animateScrollToItem(filteredNotifs.size - 1)
                                 }
                             },
                             containerColor = MaterialTheme.colorScheme.primaryContainer,
                             contentColor = MaterialTheme.colorScheme.onPrimaryContainer
                         ) {
-                            Icon(
-                                Icons.Default.KeyboardArrowDown,
-                                contentDescription = stringResource(R.string.notification_action_scroll_bottom)
-                            )
+                            Icon(Icons.Default.KeyboardArrowDown, contentDescription = "Scroll to Bottom")
                         }
                     }
                 }
@@ -399,48 +433,68 @@ fun LogHistoryScreen(dao: NotificationDao, authManager: AuthManager, db: AppData
             }
             var expandedDropdown by remember { mutableStateOf(false) }
 
-            LaunchedEffect(searchSuggestions) {
-                expandedDropdown = searchSuggestions.isNotEmpty()
+            LaunchedEffect(searchSuggestions, recentSearches) {
+                expandedDropdown = searchSuggestions.isNotEmpty() || recentSearches.isNotEmpty()
             }
 
-            Box(
+            if (isSearchVisible || searchQuery.isNotBlank()) Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .widthIn(max = 760.dp)
-                    .align(Alignment.CenterHorizontally)
                     .padding(horizontal = 16.dp, vertical = 8.dp)
             ) {
                 OutlinedTextField(
                     value = searchQuery,
                     onValueChange = { searchQuery = it },
-                    modifier = Modifier.fillMaxWidth(),
-                    placeholder = { Text(stringResource(R.string.common_search)) },
-                    leadingIcon = {
-                        Icon(
-                            Icons.Default.Search,
-                            contentDescription = stringResource(R.string.common_search)
-                        )
-                    },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .onFocusChanged { isSearchFocused = it.isFocused },
+                    placeholder = { Text("Search") },
+                    leadingIcon = { Icon(Icons.Default.Search, contentDescription = "Search") },
                     trailingIcon = {
                         if (searchQuery.isNotEmpty()) {
                             IconButton(onClick = { searchQuery = "" }) {
-                                Icon(
-                                    Icons.Default.Close,
-                                    contentDescription = stringResource(R.string.common_clear_search)
-                                )
+                                Icon(Icons.Default.Close, contentDescription = "Clear Search")
                             }
                         }
                     },
                     singleLine = true,
+                    keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+                    keyboardActions = KeyboardActions(onDone = {
+                        val query = searchQuery.trim()
+                        if (query.isNotEmpty()) {
+                            recentSearches = listOf(query) + recentSearches.filterNot { it == query }.take(9)
+                            preferences.addRecentSearch(query)
+                        }
+                        focusManager.clearFocus(force = true)
+                        keyboardController?.hide()
+                    }),
                     shape = RoundedCornerShape(12.dp)
                 )
 
                 DropdownMenu(
-                    expanded = expandedDropdown && searchSuggestions.isNotEmpty(),
+                    expanded = expandedDropdown && (searchSuggestions.isNotEmpty() || (searchQuery.isBlank() && recentSearches.isNotEmpty())),
                     onDismissRequest = { expandedDropdown = false },
                     properties = androidx.compose.ui.window.PopupProperties(focusable = false),
                     modifier = Modifier.fillMaxWidth(0.9f)
                 ) {
+                    val matchingRecent = if (searchQuery.isBlank()) {
+                        recentSearches
+                    } else {
+                        recentSearches.filter { it.contains(searchQuery, ignoreCase = true) }
+                    }
+                    matchingRecent.forEach { recent ->
+                        DropdownMenuItem(
+                            text = { Text(recent) },
+                            trailingIcon = { IconButton(onClick = { preferences.removeRecentSearch(recent) }) { Icon(Icons.Default.Close, contentDescription = "Remove recent search") } },
+                            onClick = { searchQuery = recent; expandedDropdown = false }
+                        )
+                    }
+                    if (matchingRecent.isNotEmpty()) {
+                        DropdownMenuItem(
+                            text = { Text("Clear recent searches") },
+                            onClick = { preferences.resetRecentSearches(); expandedDropdown = false }
+                        )
+                    }
                     searchSuggestions.forEach { suggestion ->
                         DropdownMenuItem(
                             text = { Text(suggestion, fontSize = 14.sp) },
@@ -459,8 +513,8 @@ fun LogHistoryScreen(dao: NotificationDao, authManager: AuthManager, db: AppData
                         stringResource(R.string.log_history_empty_initial)
                     else
                         stringResource(R.string.log_history_empty_search),
-                    description = stringResource(R.string.log_history_empty_filter_desc),
-                    clearButtonText = stringResource(R.string.log_history_clear_filters),
+                    description = "No notifications match your current filters.",
+                    clearButtonText = "Clear All Filters",
                     onClearClick = {
                         searchQuery = ""
                         selectedReasonFilter = null
@@ -470,10 +524,7 @@ fun LogHistoryScreen(dao: NotificationDao, authManager: AuthManager, db: AppData
             } else {
                 LazyColumn(
                     state = listState,
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .widthIn(max = 760.dp)
-                        .align(Alignment.CenterHorizontally),
+                    modifier = Modifier.fillMaxSize(),
                     contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
@@ -491,6 +542,7 @@ fun LogHistoryScreen(dao: NotificationDao, authManager: AuthManager, db: AppData
                                 dateTimeFormatter = dateTimeFormatter,
                                 dao = dao,
                                 isExpanded = cardExpanded,
+                                highlightQuery = debouncedSearchQuery,
                                 onToggleExpand = {
                                     expandedCards = if (cardExpanded) {
                                         expandedCards - item.key
@@ -519,6 +571,7 @@ fun LogHistoryScreen(dao: NotificationDao, authManager: AuthManager, db: AppData
                                         dateTimeFormatter = dateTimeFormatter,
                                         dao = dao,
                                         isExpanded = cardExpanded,
+                                highlightQuery = debouncedSearchQuery,
                                         onToggleExpand = {
                                             expandedCards = if (cardExpanded) {
                                                 expandedCards - childItem.key
@@ -591,6 +644,7 @@ fun LogHistoryCard(
     dateTimeFormatter: DateTimeFormatter,
     dao: NotificationDao,
     isExpanded: Boolean,
+    highlightQuery: String = "",
     onToggleExpand: () -> Unit
 ) {
     val context = LocalContext.current
@@ -599,7 +653,6 @@ fun LogHistoryCard(
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .semantics { role = Role.Button }
             .clickable(onClick = onToggleExpand),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surface
@@ -623,25 +676,14 @@ fun LogHistoryCard(
                         text = item.appName,
                         fontWeight = FontWeight.Bold,
                         fontSize = 13.sp,
-                        color = MaterialTheme.colorScheme.primary,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                        modifier = Modifier.weight(1f)
+                        color = MaterialTheme.colorScheme.primary
                     )
                 }
 
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     TooltipBox(
                         positionProvider = TooltipDefaults.rememberTooltipPositionProvider(TooltipAnchorPosition.Above),
-                        tooltip = { PlainTooltip { Text(
-                            stringResource(
-                                if (item.isPinned) {
-                                    R.string.log_history_unpin_tooltip
-                                } else {
-                                    R.string.log_history_pin_tooltip
-                                }
-                            )
-                        ) } },
+                        tooltip = { PlainTooltip { Text(if (item.isPinned) "Unpin notification" else "Pin notification") } },
                         state = rememberTooltipState()
                     ) {
                         IconButton(
@@ -649,17 +691,12 @@ fun LogHistoryCard(
                                 scope.launch {
                                     dao.updatePinnedStatus(item.key, !item.isPinned)
                                 }
-                            }
+                            },
+                            modifier = Modifier.size(24.dp)
                         ) {
                             Icon(
                                 imageVector = if (item.isPinned) Icons.Default.Bookmark else Icons.Outlined.BookmarkBorder,
-                                contentDescription = stringResource(
-                                    if (item.isPinned) {
-                                        R.string.log_history_unpin_desc
-                                    } else {
-                                        R.string.log_history_pin_desc
-                                    }
-                                ),
+                                contentDescription = if (item.isPinned) "Unpin" else "Pin",
                                 tint = if (item.isPinned) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
                             )
                         }
@@ -681,11 +718,12 @@ fun LogHistoryCard(
                                     item.key,
                                     item.intentUri
                                 )
-                            }
+                            },
+                            modifier = Modifier.size(24.dp)
                         ) {
                             Icon(
                                 imageVector = Icons.AutoMirrored.Filled.OpenInNew,
-                                contentDescription = stringResource(R.string.log_history_open_desc)
+                                contentDescription = "Open notification"
                             )
                         }
                     }
@@ -695,7 +733,7 @@ fun LogHistoryCard(
             if (isExpanded) {
                 Column(modifier = Modifier.padding(top = 8.dp)) {
                     Text(
-                        text = item.title,
+                        text = highlightSearchText(item.title, highlightQuery),
                         style = MaterialTheme.typography.bodyLarge,
                         fontWeight = FontWeight.SemiBold,
                         maxLines = 3,
@@ -703,7 +741,7 @@ fun LogHistoryCard(
                     )
                     Spacer(modifier = Modifier.height(4.dp))
                     Text(
-                        text = item.content,
+                        text = highlightSearchText(item.content, highlightQuery),
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         maxLines = 10,

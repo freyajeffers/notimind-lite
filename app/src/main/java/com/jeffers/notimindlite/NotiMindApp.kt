@@ -9,6 +9,9 @@ import android.content.res.Configuration
 import android.os.Bundle
 import android.util.Log
 import com.jeffers.notimindlite.util.AppIconCache
+import com.jeffers.notimindlite.data.local.AppDatabase
+import com.jeffers.notimindlite.data.local.PreferencesRepository
+import com.jeffers.notimindlite.util.DatabaseLockManager
 
 class NotiMindApp : Application(), android.content.ComponentCallbacks2 {
     companion object {
@@ -18,6 +21,7 @@ class NotiMindApp : Application(), android.content.ComponentCallbacks2 {
     override fun onCreate() {
         super.onCreate()
         com.jeffers.notimindlite.util.AppInitializer.initialize(this)
+        if (PreferencesRepository(this).autoLockDb.value || PreferencesRepository(this).appLockEnabled.value) DatabaseLockManager.unlock()
         Log.i(TAG, "NotiMind Lite Application Initialized")
     }
 
@@ -29,6 +33,11 @@ class NotiMindApp : Application(), android.content.ComponentCallbacks2 {
         when (level) {
             android.content.ComponentCallbacks2.TRIM_MEMORY_UI_HIDDEN -> {
                 AppIconCache.clearCache()
+                val preferences = PreferencesRepository(this)
+                if (preferences.autoLockDb.value || preferences.appLockEnabled.value) {
+                    DatabaseLockManager.lock()
+                    AppDatabase.resetInstance()
+                }
             }
             android.content.ComponentCallbacks2.TRIM_MEMORY_RUNNING_LOW,
             android.content.ComponentCallbacks2.TRIM_MEMORY_RUNNING_CRITICAL -> {

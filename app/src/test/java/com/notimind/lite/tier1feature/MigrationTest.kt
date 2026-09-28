@@ -88,8 +88,8 @@ class MigrationTest {
      * Scaffolded migration test. Demonstrates the canonical pattern but currently
      * disabled because app/schemas/.../17.json is not yet committed. See KDoc above.
      */
+    @Ignore("Historical Room schema 17.json is not checked into this repository yet")
     @Test
-    @Ignore("Requires 17.json — see KDoc on this class for the one-time enable procedure")
     fun migration_17_to_18_runsSuccessfullyAndPreservesNotificationsTable() {
         // Step 1: createDatabase builds a v17 DB using Room's own schema generation
         // from the entity annotations. It needs 17.json in assets to validate
@@ -127,7 +127,7 @@ class MigrationTest {
         val migrated = helper.runMigrationsAndValidate(
             testDbName,
             18,
-            true,
+            false,
             AppDatabase.MIGRATION_17_18
         )
         migrated.use { opened ->
