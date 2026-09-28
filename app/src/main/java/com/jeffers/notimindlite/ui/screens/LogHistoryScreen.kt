@@ -99,6 +99,10 @@ fun LogHistoryScreen(dao: NotificationDao, authManager: AuthManager, db: AppData
         "newest" -> SortMode.NEWEST
         "oldest" -> SortMode.OLDEST
         "app" -> SortMode.APP_NAME
+        "title" -> SortMode.TITLE
+        "dismissed" -> SortMode.DISMISSED
+        "received" -> SortMode.RECEIVED
+        "all" -> SortMode.ALL
         else -> SortMode.DISMISSED
     }
 
@@ -106,7 +110,10 @@ fun LogHistoryScreen(dao: NotificationDao, authManager: AuthManager, db: AppData
         SortMode.NEWEST -> "newest"
         SortMode.OLDEST -> "oldest"
         SortMode.APP_NAME -> "app"
-        else -> "newest"
+        SortMode.TITLE -> "title"
+        SortMode.DISMISSED -> "dismissed"
+        SortMode.RECEIVED -> "received"
+        SortMode.ALL -> "all"
     }
 
     var sortMode by rememberSaveable { mutableStateOf(prefToSortMode(prefSort)) }
