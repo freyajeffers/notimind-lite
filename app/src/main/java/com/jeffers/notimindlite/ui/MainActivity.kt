@@ -10,6 +10,10 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.sizeIn
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
@@ -19,6 +23,8 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.semantics
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
@@ -30,6 +36,7 @@ import com.jeffers.notimindlite.data.local.AppDatabase
 import com.jeffers.notimindlite.data.local.PreferencesRepository
 import com.jeffers.notimindlite.service.NotificationLoggerService
 import com.jeffers.notimindlite.ui.screens.checkNotificationPermission
+import com.jeffers.notimindlite.ui.theme.Dimens
 import com.jeffers.notimindlite.domain.clustering.DynamicClusterManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -130,10 +137,26 @@ class MainActivity : ComponentActivity() {
                     if (showPermissionDialog && !hasPermission) {
                         AlertDialog(
                             onDismissRequest = { showPermissionDialog = false },
-                            title = { Text(stringResource(id = R.string.main_listener_required_title)) },
-                            text = { Text(stringResource(id = R.string.main_listener_required_desc)) },
+                            title = {
+                                Text(
+                                    text = stringResource(id = R.string.main_listener_required_title),
+                                    modifier = Modifier.semantics { heading() }
+                                )
+                            },
+                            text = {
+                                Text(
+                                    text = stringResource(id = R.string.main_listener_required_desc),
+                                    modifier = Modifier
+                                        .heightIn(max = Dimens.DialogContentMaxHeight)
+                                        .verticalScroll(rememberScrollState())
+                                )
+                            },
                             confirmButton = {
                                 Button(
+                                    modifier = Modifier.sizeIn(
+                                        minWidth = Dimens.MinimumTouchTarget,
+                                        minHeight = Dimens.MinimumTouchTarget
+                                    ),
                                     onClick = {
                                         showPermissionDialog = false
                                         val intent = Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS)
@@ -145,7 +168,13 @@ class MainActivity : ComponentActivity() {
                                 }
                             },
                             dismissButton = {
-                                TextButton(onClick = { showPermissionDialog = false }) {
+                                TextButton(
+                                    onClick = { showPermissionDialog = false },
+                                    modifier = Modifier.sizeIn(
+                                        minWidth = Dimens.MinimumTouchTarget,
+                                        minHeight = Dimens.MinimumTouchTarget
+                                    )
+                                ) {
                                     Text(stringResource(id = R.string.common_later))
                                 }
                             }

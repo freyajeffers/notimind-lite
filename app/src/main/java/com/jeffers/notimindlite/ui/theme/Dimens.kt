@@ -1,6 +1,5 @@
 package com.jeffers.notimindlite.ui.theme
 
-import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 
 object Dimens {
@@ -10,6 +9,8 @@ object Dimens {
     val Medium = 12.dp
     val Large = 16.dp
     val ExtraLarge = 20.dp
+    val MinimumTouchTarget = 48.dp
+    val DialogContentMaxHeight = 240.dp
     val IconSmall = 16.dp
     val IconMedium = 18.dp
     val IconLarge = 20.dp
