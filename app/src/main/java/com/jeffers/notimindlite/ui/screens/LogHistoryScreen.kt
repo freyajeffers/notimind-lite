@@ -513,8 +513,8 @@ fun LogHistoryScreen(dao: NotificationDao, authManager: AuthManager, db: AppData
                         stringResource(R.string.log_history_empty_initial)
                     else
                         stringResource(R.string.log_history_empty_search),
-                    description = "No notifications match your current filters.",
-                    clearButtonText = "Clear All Filters",
+                    description = stringResource(R.string.log_history_empty_filter_desc),
+                    clearButtonText = stringResource(R.string.log_history_clear_filters),
                     onClearClick = {
                         searchQuery = ""
                         selectedReasonFilter = null

@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -24,6 +25,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 
@@ -84,6 +87,7 @@ private fun EmptyStateShell(
         Spacer(modifier = Modifier.height(TITLE_TOP_SPACER_DP.dp))
         Text(
             text = title,
+            modifier = Modifier.semantics { heading() },
             style = MaterialTheme.typography.headlineSmall,
             color = MaterialTheme.colorScheme.onSurface,
             textAlign = TextAlign.Center
@@ -125,6 +129,7 @@ private const val DESCRIPTION_TOP_SPACER_DP = 12
 private const val EXTRA_TOP_SPACER_DP = 20
 private const val PRIMARY_TOP_SPACER_DP = 28
 private const val SECONDARY_TOP_SPACER_DP = 12
+private const val ACTION_MIN_HEIGHT_DP = 48
 
 // Layout constants for [StepRow] (the numbered how-to list in the permission empty state).
 private const val STEP_INDEX_SIZE_DP = 24
@@ -165,6 +170,7 @@ fun ActivePermissionEmptyState(
         primaryAction = {
             Button(
                 onClick = onGrantClick,
+                modifier = Modifier.heightIn(min = ACTION_MIN_HEIGHT_DP.dp),
                 colors = ButtonDefaults.buttonColors(
                     containerColor = MaterialTheme.colorScheme.primary,
                     contentColor = MaterialTheme.colorScheme.onPrimary
@@ -188,7 +194,7 @@ fun ActivePermissionEmptyState(
 private fun StepRow(index: Int, text: String) {
     androidx.compose.foundation.layout.Row(
         verticalAlignment = Alignment.Top,
-        modifier = Modifier.fillMaxWidth()
+        modifier = Modifier.fillMaxWidth().semantics(mergeDescendants = true) {}
     ) {
         Surface(
             shape = RoundedCornerShape(ICON_RING_CORNER_PERCENT),
@@ -255,7 +261,10 @@ fun ActiveSearchEmptyState(
         title = title,
         description = description,
         secondaryAction = {
-            OutlinedButton(onClick = onClearClick) { Text(clearButtonText) }
+            OutlinedButton(
+                onClick = onClearClick,
+                modifier = Modifier.heightIn(min = ACTION_MIN_HEIGHT_DP.dp)
+            ) { Text(clearButtonText) }
         }
     )
 }

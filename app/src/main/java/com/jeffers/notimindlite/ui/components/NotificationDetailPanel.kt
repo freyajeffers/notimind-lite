@@ -7,7 +7,8 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -36,6 +37,12 @@ fun NotificationDetailPanel(
             .padding(12.dp),
         verticalArrangement = Arrangement.spacedBy(6.dp)
     ) {
+        Text(
+            text = stringResource(R.string.notification_detail_heading),
+            style = MaterialTheme.typography.labelLarge,
+            color = MaterialTheme.colorScheme.onSurface,
+            modifier = Modifier.semantics { heading() }
+        )
         DetailRow(label = stringResource(R.string.notification_detail_package), value = item.packageName)
         DetailRow(label = stringResource(R.string.notification_detail_app_name), value = item.appName)
         DetailRow(label = stringResource(R.string.notification_detail_priority), value = item.priority.toString())
@@ -57,20 +64,21 @@ fun NotificationDetailPanel(
 private fun DetailRow(label: String, value: String) {
     Row(
         modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
         Text(
             text = label,
             fontSize = 12.sp,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
-            fontWeight = FontWeight.Medium
+            fontWeight = FontWeight.Medium,
+            modifier = Modifier.weight(0.38f)
         )
         Text(
             text = value,
             fontSize = 12.sp,
             color = MaterialTheme.colorScheme.onSurface,
-            fontWeight = FontWeight.Normal
+            fontWeight = FontWeight.Normal,
+            modifier = Modifier.weight(0.62f)
         )
     }
 }

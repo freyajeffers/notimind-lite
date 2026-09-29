@@ -9,6 +9,7 @@
     <string name="common_scroll_bottom">Scroll to Bottom</string>
     <string name="common_clear_search">Clear Search</string>
     <string name="common_retry">Retry</string>
+    <string name="common_error_icon">Error</string>
     <string name="common_cancel">Cancel</string>
     <string name="common_show_passphrase">Show passphrase</string>
     <string name="common_hide_passphrase">Hide passphrase</string>
@@ -311,6 +312,7 @@
     <string name="notification_detail_dismiss_time">Dismiss Time</string>
     <string name="notification_detail_unknown">Unknown</string>
     <string name="notification_detail_not_available">N/A</string>
+    <string name="notification_detail_heading">Notification details</string>
     <string name="notification_action_open">Open notification</string>
     <string name="notification_action_pin">Pin notification</string>
     <string name="notification_action_unpin">Unpin notification</string>

@@ -6,8 +6,11 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ErrorOutline
 import androidx.compose.material3.Button
@@ -18,15 +21,19 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import com.jeffers.notimindlite.R
 
 @Composable
 @Suppress("FunctionNaming") // Composable PascalCase is required by the Compose API;
 // detekt's FunctionNaming rule does not exempt Composables.
 fun GlobalErrorScreen(
     message: String,
-    actionLabel: String = "Retry",
+    actionLabel: String? = null,
     onActionClick: () -> Unit,
     icon: ImageVector = Icons.Default.ErrorOutline
 ) {
@@ -35,20 +42,24 @@ fun GlobalErrorScreen(
         contentAlignment = Alignment.Center
     ) {
         Column(
-            modifier = Modifier.padding(24.dp),
+            modifier = Modifier
+                .verticalScroll(rememberScrollState())
+                .padding(24.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
             Icon(
                 imageVector = icon,
-                contentDescription = "Error icon",
+                contentDescription = stringResource(R.string.common_error_icon),
                 modifier = Modifier.size(64.dp),
                 tint = MaterialTheme.colorScheme.error
             )
             Spacer(modifier = Modifier.height(16.dp))
             Text(
-                text = "Something went wrong",
+                text = stringResource(R.string.global_error_title),
+                modifier = Modifier.semantics { heading() },
                 style = MaterialTheme.typography.headlineSmall,
+                color = MaterialTheme.colorScheme.onSurface,
                 textAlign = TextAlign.Center
             )
             Spacer(modifier = Modifier.height(8.dp))
@@ -59,8 +70,8 @@ fun GlobalErrorScreen(
                 textAlign = TextAlign.Center
             )
             Spacer(modifier = Modifier.height(24.dp))
-            Button(onClick = onActionClick) {
-                Text(text = actionLabel)
+            Button(onClick = onActionClick, modifier = Modifier.heightIn(min = 48.dp)) {
+                Text(text = actionLabel ?: stringResource(R.string.common_retry))
             }
         }
     }
