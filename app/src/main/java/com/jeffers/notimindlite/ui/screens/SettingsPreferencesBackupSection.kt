@@ -20,6 +20,10 @@ import kotlinx.coroutines.withContext
 @Composable
 fun SettingsPreferencesBackupSection() {
     val context = LocalContext.current
+    val backupExportedMessage = stringResource(R.string.pref_backup_exported)
+    val backupImportedMessage = stringResource(R.string.pref_backup_imported)
+    val backupFailedFormat = stringResource(R.string.pref_backup_failed)
+    val backupUnknownError = stringResource(R.string.pref_backup_unknown_error)
     val scope = rememberCoroutineScope()
     var message by remember { mutableStateOf<String?>(null) }
     val exportLauncher = rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("application/json")) { uri ->
@@ -32,8 +36,8 @@ fun SettingsPreferencesBackupSection() {
                         ?: error("Unable to open destination")
                     temp.delete()
                 }
-                context.getString(R.string.pref_backup_exported)
-            }.getOrElse { context.getString(R.string.pref_backup_failed, it.message ?: "unknown error") }
+                backupExportedMessage
+            }.getOrElse { backupFailedFormat.format(it.message ?: backupUnknownError) }
         }
     }
     val importLauncher = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
@@ -46,8 +50,8 @@ fun SettingsPreferencesBackupSection() {
                     PreferencesBackup.importPreferences(context, temp.absolutePath)
                     temp.delete()
                 }
-                context.getString(R.string.pref_backup_imported)
-            }.getOrElse { context.getString(R.string.pref_backup_failed, it.message ?: "unknown error") }
+                backupImportedMessage
+            }.getOrElse { backupFailedFormat.format(it.message ?: backupUnknownError) }
         }
     }
 
