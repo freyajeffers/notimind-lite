@@ -74,14 +74,14 @@ private const val PREFETCH_AHEAD = 24
 private const val PREFETCH_BEHIND = 2
 private const val BASE_SORT_MODE_COUNT = 3
 
-enum class SortMode(val label: String) {
-    DISMISSED("Time Dismissed"),
-    RECEIVED("Time Received"),
-    ALL("All Notifications"),
-    NEWEST("Newest First"),
-    OLDEST("Oldest First"),
-    APP_NAME("App Name"),
-    TITLE("Title")
+enum class SortMode(val labelRes: Int) {
+    DISMISSED(R.string.log_history_sort_dismissed),
+    RECEIVED(R.string.log_history_sort_received),
+    ALL(R.string.log_history_sort_all),
+    NEWEST(R.string.log_history_sort_newest_first),
+    OLDEST(R.string.log_history_sort_oldest_first),
+    APP_NAME(R.string.log_history_sort_by_app),
+    TITLE(R.string.log_history_sort_by_title)
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -298,7 +298,7 @@ fun LogHistoryScreen(dao: NotificationDao, authManager: AuthManager, db: AppData
                     Box {
                         TooltipBox(
                             positionProvider = TooltipDefaults.rememberTooltipPositionProvider(TooltipAnchorPosition.Above),
-                            tooltip = { PlainTooltip { Text("Sort Logs") } },
+                            tooltip = { PlainTooltip { Text(stringResource(R.string.log_history_sort_tooltip)) } },
                             state = rememberTooltipState()
                         ) {
                             IconButton(onClick = { showSortMenu = true }) {
@@ -356,7 +356,7 @@ fun LogHistoryScreen(dao: NotificationDao, authManager: AuthManager, db: AppData
                             )
                             SortMode.entries.drop(BASE_SORT_MODE_COUNT).forEach { option ->
                                 DropdownMenuItem(
-                                    text = { Text("${option.label} ${if (sortMode == option) "✓" else ""}") },
+                                    text = { Text("${stringResource(option.labelRes)} ${if (sortMode == option) "✓" else ""}") },
                                     onClick = {
                                         sortMode = option
                                         preferences.setSortOrder(sortModeToPref(sortMode))
@@ -367,7 +367,7 @@ fun LogHistoryScreen(dao: NotificationDao, authManager: AuthManager, db: AppData
                         }
                     }
                     IconButton(onClick = { isSearchVisible = true }) {
-                        Icon(Icons.Default.Search, contentDescription = "Search")
+                        Icon(Icons.Default.Search, contentDescription = stringResource(R.string.log_history_search_cd))
                     }
                 }
             )
@@ -448,8 +448,8 @@ fun LogHistoryScreen(dao: NotificationDao, authManager: AuthManager, db: AppData
                     modifier = Modifier
                         .fillMaxWidth()
                         .onFocusChanged { isSearchFocused = it.isFocused },
-                    placeholder = { Text("Search") },
-                    leadingIcon = { Icon(Icons.Default.Search, contentDescription = "Search") },
+                    placeholder = { Text(stringResource(R.string.common_search)) },
+                    leadingIcon = { Icon(Icons.Default.Search, contentDescription = stringResource(R.string.log_history_search_cd)) },
                     trailingIcon = {
                         if (searchQuery.isNotEmpty()) {
                             IconButton(onClick = { searchQuery = "" }) {
@@ -485,13 +485,13 @@ fun LogHistoryScreen(dao: NotificationDao, authManager: AuthManager, db: AppData
                     matchingRecent.forEach { recent ->
                         DropdownMenuItem(
                             text = { Text(recent) },
-                            trailingIcon = { IconButton(onClick = { preferences.removeRecentSearch(recent) }) { Icon(Icons.Default.Close, contentDescription = "Remove recent search") } },
+                            trailingIcon = { IconButton(onClick = { preferences.removeRecentSearch(recent) }) { Icon(Icons.Default.Close, contentDescription = stringResource(R.string.log_history_remove_recent_search)) } },
                             onClick = { searchQuery = recent; expandedDropdown = false }
                         )
                     }
                     if (matchingRecent.isNotEmpty()) {
                         DropdownMenuItem(
-                            text = { Text("Clear recent searches") },
+                            text = { Text(stringResource(R.string.log_history_clear_recent_searches)) },
                             onClick = { preferences.resetRecentSearches(); expandedDropdown = false }
                         )
                     }
@@ -513,8 +513,8 @@ fun LogHistoryScreen(dao: NotificationDao, authManager: AuthManager, db: AppData
                         stringResource(R.string.log_history_empty_initial)
                     else
                         stringResource(R.string.log_history_empty_search),
-                    description = "No notifications match your current filters.",
-                    clearButtonText = "Clear All Filters",
+                    description = stringResource(R.string.log_history_empty_filter_desc),
+                    clearButtonText = stringResource(R.string.log_history_clear_filters),
                     onClearClick = {
                         searchQuery = ""
                         selectedReasonFilter = null

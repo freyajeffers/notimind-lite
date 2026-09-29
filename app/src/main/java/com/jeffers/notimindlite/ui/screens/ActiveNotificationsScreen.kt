@@ -458,8 +458,8 @@ fun ActiveNotificationsScreen(dao: NotificationDao, authManager: AuthManager, db
                                     .focusRequester(searchFocusRequester)
                                     .onFocusChanged { isSearchFocused = it.isFocused }
                                     .semantics { contentDescription = "ActiveSearchField" },
-                                placeholder = { Text("Search") },
-                                leadingIcon = { Icon(Icons.Default.Search, contentDescription = "Search") },
+                                placeholder = { Text(stringResource(R.string.active_notifications_search_placeholder)) },
+                                leadingIcon = { Icon(Icons.Default.Search, contentDescription = stringResource(R.string.active_notifications_search_placeholder)) },
                                 trailingIcon = {
                                     if (searchQuery.isNotEmpty()) {
                                         IconButton(onClick = { searchQuery = "" }) {

@@ -32,6 +32,8 @@
     <string name="package_filter_search_label">Search applications</string>
     <string name="package_filter_search_hint">Search apps…</string>
     <string name="package_filter_apply">Apply</string>
+    <string name="package_filter_clear">Clear All</string>
+    <string name="package_filter_search_cd">Search applications</string>
 
     <!-- Main -->
     <string name="main_listener_required_title">Notification Listener Required</string>
@@ -69,6 +71,14 @@
     <string name="log_history_collapse_tooltip">Collapse details</string>
     <string name="log_history_expand_tooltip">Expand details</string>
     <string name="log_history_toggle_desc">Toggle Details</string>
+    <string name="log_history_search_cd">Search notification history</string>
+    <string name="log_history_clear_recent_searches">Clear recent searches</string>
+    <string name="log_history_remove_recent_search">Remove recent search</string>
+    <string name="log_history_sort_tooltip">Sort Logs</string>
+    <string name="log_history_sort_newest_first">Newest First</string>
+    <string name="log_history_sort_oldest_first">Oldest First</string>
+    <string name="log_history_sort_by_app">App Name</string>
+    <string name="log_history_sort_by_title">Title</string>
 
     <!-- Active Notifications -->
     <string name="active_notifications_title">NotiMind</string>
@@ -185,6 +195,15 @@
     <string name="settings_pii_redaction_desc">Mask OTP codes, cards, phone numbers, and emails before saving.</string>
     <string name="settings_restore_manual">Restore Backup Manually</string>
     <string name="settings_version_footer">NotiMind Lite · v%1$s (%2$d)</string>
+    <string name="settings_account_title">Account</string>
+    <string name="settings_profile_icon_cd">Profile</string>
+    <string name="settings_sign_in">Sign in with Google</string>
+    <string name="settings_signing_in">Signing In…</string>
+    <string name="settings_sign_in_cd">Sign in</string>
+    <string name="settings_sign_out_cd">Sign out</string>
+    <string name="settings_restore_icon_cd">Restore</string>
+    <string name="settings_cloud_sync_cd">Cloud sync</string>
+    <string name="settings_create_backup">Create Encrypted Backup</string>
 
     <!-- Settings: Data & Search preferences -->
     <string name="pref_data_search_title">Data &amp; Search</string>

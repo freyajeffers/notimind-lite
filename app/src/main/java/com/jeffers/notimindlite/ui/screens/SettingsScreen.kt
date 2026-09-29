@@ -107,7 +107,7 @@ fun SettingsScreen(
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 Text(
-                    text = "Account",
+                    text = stringResource(R.string.settings_account_title),
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.SemiBold
                 )
@@ -117,7 +117,7 @@ fun SettingsScreen(
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
-                        Icon(Icons.Default.Person, contentDescription = "Profile")
+                        Icon(Icons.Default.Person, contentDescription = stringResource(R.string.settings_profile_icon_cd))
                         Column {
                             Text(
                                 text = session.displayName ?: stringResource(id = R.string.settings_default_display_name),
@@ -139,13 +139,13 @@ fun SettingsScreen(
                         },
                         colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
                     ) {
-                        Icon(Icons.AutoMirrored.Filled.Logout, contentDescription = "Sign out")
+                        Icon(Icons.AutoMirrored.Filled.Logout, contentDescription = stringResource(R.string.settings_sign_out_cd))
                         Spacer(Modifier.width(8.dp))
-                        Text("Sign Out")
+                        Text(stringResource(R.string.settings_sign_out))
                     }
                 } else {
                     Text(
-                        text = "Sign in with Google to enable cloud backup & multi-device sync.",
+                        text = stringResource(R.string.settings_sign_in_prompt),
                         style = MaterialTheme.typography.bodyMedium
                     )
 
@@ -162,9 +162,9 @@ fun SettingsScreen(
                             contentColor = MaterialTheme.colorScheme.onPrimaryContainer
                         )
                     ) {
-                        Icon(Icons.AutoMirrored.Filled.Login, contentDescription = "Sign in")
+                        Icon(Icons.AutoMirrored.Filled.Login, contentDescription = stringResource(R.string.settings_sign_in_cd))
                         Spacer(Modifier.width(8.dp))
-                        Text(if (session.isAuthenticating) "Signing In..." else "Sign in with Google")
+                        Text(stringResource(if (session.isAuthenticating) R.string.settings_signing_in else R.string.settings_sign_in))
                     }
 
                     session.error?.let { err ->
@@ -213,7 +213,7 @@ fun SettingsScreen(
             Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 Text(text = stringResource(id = R.string.settings_section_restore), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(Icons.Default.Restore, contentDescription = "Restore")
+                    Icon(Icons.Default.Restore, contentDescription = stringResource(R.string.settings_restore_icon_cd))
                     Spacer(Modifier.width(8.dp))
                     Column(modifier = Modifier.weight(1f)) {
                         Text(text = stringResource(id = R.string.settings_restore_on_boot_title), style = MaterialTheme.typography.bodyLarge)
@@ -222,9 +222,9 @@ fun SettingsScreen(
                     Switch(checked = prefMgrTop.isRestoreOnBootEnabled() && listenerGrantedTop, enabled = listenerGrantedTop && !BuildConfig.DEBUG, onCheckedChange = { prefMgrTop.setRestoreOnBootEnabled(it) })
                 }
                 OutlinedButton(onClick = { pickBackupLauncher.launch(arrayOf("application/octet-stream", "*/*")) }, modifier = Modifier.fillMaxWidth(), colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.primary)) {
-                    Icon(Icons.Default.Restore, contentDescription = "Restore")
+                    Icon(Icons.Default.Restore, contentDescription = stringResource(R.string.settings_restore_icon_cd))
                     Spacer(Modifier.width(8.dp))
-                    Text("Restore Backup Manually")
+                    Text(stringResource(R.string.settings_restore_manual))
                 }
             }
         }
@@ -248,13 +248,13 @@ fun SettingsScreen(
                     verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
                     Text(
-                        text = "Cloud Sync & Backup",
+                        text = stringResource(R.string.settings_section_sync),
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.SemiBold
                     )
 
                     Text(
-                        text = "Automatic sync is active. You can also trigger an instant sync manually.",
+                        text = stringResource(R.string.settings_sync_idle),
                         style = MaterialTheme.typography.bodyMedium
                     )
 
@@ -270,24 +270,24 @@ fun SettingsScreen(
                                     val res = repo.sync(uid, secretKey)
                                     isSyncing = false
                                     syncMessage = if (res.isSuccess) {
-                                        "Synced ${res.getOrDefault(0)} items successfully"
+                                        context.getString(R.string.settings_sync_success, res.getOrDefault(0))
                                     } else {
-                                        "Sync failed: ${res.exceptionOrNull()?.localizedMessage}"
+                                        context.getString(R.string.settings_sync_failure, res.exceptionOrNull()?.localizedMessage.orEmpty())
                                     }
                                 }
                             }
                         },
                         enabled = !isSyncing
                     ) {
-                        Icon(Icons.Default.CloudSync, contentDescription = "Cloud sync")
+                        Icon(Icons.Default.CloudSync, contentDescription = stringResource(R.string.settings_cloud_sync_cd))
                         Spacer(Modifier.width(8.dp))
-                        Text(if (isSyncing) "Syncing..." else "Sync Now")
+                        Text(stringResource(if (isSyncing) R.string.settings_sync_now_loading else R.string.settings_sync_now_idle))
                     }
 
                     OutlinedButton(
                         onClick = {
                             if (!NetworkUtils.isInternetAvailable(context)) {
-                                syncMessage = "An active internet connection is required to create a backup"
+                                syncMessage = context.getString(R.string.backup_network_required)
                             } else {
                                 val secretKey = generateBackupKey(context)
                                 pendingBackupKey = secretKey
@@ -297,9 +297,9 @@ fun SettingsScreen(
                         },
                         enabled = !isSyncing && !BuildConfig.DEBUG
                     ) {
-                        Icon(Icons.Default.Restore, contentDescription = "Restore")
+                        Icon(Icons.Default.Restore, contentDescription = stringResource(R.string.settings_restore_icon_cd))
                         Spacer(Modifier.width(8.dp))
-                        Text("Create Encrypted Backup")
+                        Text(stringResource(R.string.settings_create_backup))
                     }
 
                     syncMessage?.let { msg ->
@@ -318,7 +318,7 @@ fun SettingsScreen(
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 Text(
-                    text = "Privacy & Telemetry",
+                    text = stringResource(R.string.settings_section_privacy),
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.SemiBold
                 )
@@ -327,9 +327,9 @@ fun SettingsScreen(
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Column(modifier = Modifier.weight(1f)) {
-                        Text("Strict Privacy Mode", style = MaterialTheme.typography.bodyLarge)
+                        Text(stringResource(R.string.settings_strict_privacy_title), style = MaterialTheme.typography.bodyLarge)
                         Text(
-                            "Disable all crash reporting and anonymous usage telemetry.",
+                            stringResource(R.string.settings_strict_privacy_desc),
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -346,9 +346,9 @@ fun SettingsScreen(
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Column(modifier = Modifier.weight(1f)) {
-                        Text("PII Redaction Engine", style = MaterialTheme.typography.bodyLarge)
+                        Text(stringResource(R.string.settings_pii_redaction_title), style = MaterialTheme.typography.bodyLarge)
                         Text(
-                            "Mask OTP codes, cards, phone numbers, and emails before saving.",
+                            stringResource(R.string.settings_pii_redaction_desc),
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
