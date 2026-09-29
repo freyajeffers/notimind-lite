@@ -1,6 +1,6 @@
 package com.jeffers.notimindlite.ui.dialogs
 
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -10,7 +10,10 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.res.stringResource
+import com.jeffers.notimindlite.R
 
 @Composable
 fun AppPackageSelectorDialog(
@@ -20,7 +23,9 @@ fun AppPackageSelectorDialog(
     onPackagesSelected: (List<String>?) -> Unit
 ) {
     var searchQuery by remember { mutableStateOf("") }
-    val currentSelected = remember { mutableStateListOf<String>().apply { addAll(selectedPackages) } }
+    val currentSelected = remember(selectedPackages) {
+        mutableStateListOf<String>().apply { addAll(selectedPackages) }
+    }
 
     val filteredApps = remember(searchQuery, availableApps) {
         if (searchQuery.isBlank()) availableApps
@@ -31,15 +36,21 @@ fun AppPackageSelectorDialog(
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Filter by Application") },
+        title = { Text(stringResource(R.string.package_filter_title)) },
         text = {
             Column(modifier = Modifier.fillMaxWidth()) {
                 OutlinedTextField(
                     value = searchQuery,
                     onValueChange = { searchQuery = it },
                     modifier = Modifier.fillMaxWidth(),
-                    placeholder = { Text("Search apps...") },
-                    leadingIcon = { Icon(Icons.Default.Search, contentDescription = "Search apps") },
+                    label = { Text(stringResource(R.string.package_filter_search_label)) },
+                    placeholder = { Text(stringResource(R.string.package_filter_search_hint)) },
+                    leadingIcon = {
+                        Icon(
+                            Icons.Default.Search,
+                            contentDescription = stringResource(R.string.common_search),
+                        )
+                    },
                     singleLine = true
                 )
                 Spacer(modifier = Modifier.height(8.dp))
@@ -49,21 +60,23 @@ fun AppPackageSelectorDialog(
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .clickable {
-                                    if (isChecked) currentSelected.remove(pkg)
-                                    else currentSelected.add(pkg)
-                                }
+                                .heightIn(min = 48.dp)
+                                .toggleable(
+                                    value = isChecked,
+                                    role = Role.Checkbox,
+                                    onValueChange = { checked ->
+                                        if (checked) currentSelected.add(pkg) else currentSelected.remove(pkg)
+                                    },
+                                )
                                 .padding(vertical = 6.dp),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             Checkbox(
                                 checked = isChecked,
-                                onCheckedChange = { checked ->
-                                    if (checked) currentSelected.add(pkg) else currentSelected.remove(pkg)
-                                }
+                                onCheckedChange = null,
                             )
                             Spacer(modifier = Modifier.width(8.dp))
-                            Column {
+                            Column(modifier = Modifier.weight(1f)) {
                                 Text(label, style = MaterialTheme.typography.bodyMedium)
                                 Text(pkg, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                             }
@@ -74,12 +87,12 @@ fun AppPackageSelectorDialog(
         },
         confirmButton = {
             Button(onClick = { onPackagesSelected(if (currentSelected.isEmpty()) null else currentSelected.toList()) }) {
-                Text("Apply")
+                Text(stringResource(R.string.package_filter_apply))
             }
         },
         dismissButton = {
-            TextButton(onClick = { onPackagesSelected(null) }) {
-                Text("Clear All")
+            TextButton(onClick = onDismiss) {
+                Text(stringResource(R.string.common_cancel))
             }
         }
     )
