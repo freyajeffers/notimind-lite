@@ -43,6 +43,10 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.role
+import androidx.compose.ui.semantics.stateDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -120,6 +124,9 @@ fun NotificationGroupCard(
     val formattedTime = remember(group.latestPostTime) {
         dateTimeFormatter.format(Instant.ofEpochMilli(group.latestPostTime))
     }
+    val groupToggleDescription = stringResource(
+        if (isGroupExpanded) R.string.notification_group_collapse else R.string.notification_group_expand
+    )
 
     Card(
         modifier = modifier.fillMaxWidth(),
@@ -134,6 +141,10 @@ fun NotificationGroupCard(
                 modifier = Modifier
                     .fillMaxWidth()
                     .clickable { onToggleGroupExpand() }
+                    .semantics {
+                        role = Role.Button
+                        stateDescription = groupToggleDescription
+                    }
                     .padding(vertical = 4.dp),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
@@ -215,7 +226,7 @@ fun NotificationGroupCard(
                                     dao.updatePinnedStatusBatch(keys, newPinned)
                                 }
                             },
-                            modifier = Modifier.size(28.dp)
+                            modifier = Modifier.size(48.dp)
                         ) {
                             Icon(
                                 imageVector = if (group.isPinned) Icons.Default.Bookmark else Icons.Outlined.BookmarkBorder,
@@ -242,7 +253,7 @@ fun NotificationGroupCard(
                     ) {
                         IconButton(
                             onClick = onToggleGroupExpand,
-                            modifier = Modifier.size(28.dp)
+                            modifier = Modifier.size(48.dp)
                         ) {
                             Icon(
                                 imageVector = if (isGroupExpanded) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
