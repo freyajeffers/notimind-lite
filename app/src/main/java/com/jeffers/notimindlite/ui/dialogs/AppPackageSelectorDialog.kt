@@ -11,6 +11,8 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.res.stringResource
+import com.jeffers.notimindlite.R
 
 @Composable
 fun AppPackageSelectorDialog(
@@ -31,15 +33,15 @@ fun AppPackageSelectorDialog(
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Filter by Application") },
+        title = { Text(stringResource(R.string.package_filter_title)) },
         text = {
             Column(modifier = Modifier.fillMaxWidth()) {
                 OutlinedTextField(
                     value = searchQuery,
                     onValueChange = { searchQuery = it },
                     modifier = Modifier.fillMaxWidth(),
-                    placeholder = { Text("Search apps...") },
-                    leadingIcon = { Icon(Icons.Default.Search, contentDescription = "Search apps") },
+                    placeholder = { Text(stringResource(R.string.package_filter_search_hint)) },
+                    leadingIcon = { Icon(Icons.Default.Search, contentDescription = stringResource(R.string.common_search_apps)) },
                     singleLine = true
                 )
                 Spacer(modifier = Modifier.height(8.dp))
@@ -74,12 +76,12 @@ fun AppPackageSelectorDialog(
         },
         confirmButton = {
             Button(onClick = { onPackagesSelected(if (currentSelected.isEmpty()) null else currentSelected.toList()) }) {
-                Text("Apply")
+                Text(stringResource(R.string.common_apply))
             }
         },
         dismissButton = {
             TextButton(onClick = { onPackagesSelected(null) }) {
-                Text("Clear All")
+                Text(stringResource(R.string.common_clear_all))
             }
         }
     )

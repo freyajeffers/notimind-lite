@@ -239,7 +239,7 @@ fun LogHistoryScreen(dao: NotificationDao, authManager: AuthManager, db: AppData
                             isSearchVisible = false
                             focusManager.clearFocus(force = true)
                             keyboardController?.hide()
-                        }) { Icon(Icons.Default.FilterAltOff, contentDescription = "Clear filters") }
+                        }) { Icon(Icons.Default.FilterAltOff, contentDescription = stringResource(R.string.common_clear_filters)) }
                     }
                     Box {
                         val hasActiveFilters = !selectedPackages.isNullOrEmpty() || selectedReasonFilter != null
@@ -298,11 +298,11 @@ fun LogHistoryScreen(dao: NotificationDao, authManager: AuthManager, db: AppData
                     Box {
                         TooltipBox(
                             positionProvider = TooltipDefaults.rememberTooltipPositionProvider(TooltipAnchorPosition.Above),
-                            tooltip = { PlainTooltip { Text("Sort Logs") } },
+                            tooltip = { PlainTooltip { Text(stringResource(R.string.log_history_sort_tooltip)) } },
                             state = rememberTooltipState()
                         ) {
                             IconButton(onClick = { showSortMenu = true }) {
-                                Icon(Icons.AutoMirrored.Filled.Sort, contentDescription = "Sort Log History")
+                                Icon(Icons.AutoMirrored.Filled.Sort, contentDescription = stringResource(R.string.log_history_sort_content_desc))
                             }
                         }
                         DropdownMenu(
@@ -380,7 +380,7 @@ fun LogHistoryScreen(dao: NotificationDao, authManager: AuthManager, db: AppData
                 ) {
                     TooltipBox(
                         positionProvider = TooltipDefaults.rememberTooltipPositionProvider(TooltipAnchorPosition.Above),
-                        tooltip = { PlainTooltip { Text("Scroll to Top") } },
+                        tooltip = { PlainTooltip { Text(stringResource(R.string.common_scroll_top)) } },
                         state = rememberTooltipState()
                     ) {
                         SmallFloatingActionButton(
@@ -392,13 +392,13 @@ fun LogHistoryScreen(dao: NotificationDao, authManager: AuthManager, db: AppData
                             containerColor = MaterialTheme.colorScheme.primaryContainer,
                             contentColor = MaterialTheme.colorScheme.onPrimaryContainer
                         ) {
-                            Icon(Icons.Default.KeyboardArrowUp, contentDescription = "Scroll to Top")
+                            Icon(Icons.Default.KeyboardArrowUp, contentDescription = stringResource(R.string.common_scroll_top))
                         }
                     }
 
                     TooltipBox(
                         positionProvider = TooltipDefaults.rememberTooltipPositionProvider(TooltipAnchorPosition.Above),
-                        tooltip = { PlainTooltip { Text("Scroll to Bottom") } },
+                        tooltip = { PlainTooltip { Text(stringResource(R.string.common_scroll_bottom)) } },
                         state = rememberTooltipState()
                     ) {
                         SmallFloatingActionButton(
@@ -410,7 +410,7 @@ fun LogHistoryScreen(dao: NotificationDao, authManager: AuthManager, db: AppData
                             containerColor = MaterialTheme.colorScheme.primaryContainer,
                             contentColor = MaterialTheme.colorScheme.onPrimaryContainer
                         ) {
-                            Icon(Icons.Default.KeyboardArrowDown, contentDescription = "Scroll to Bottom")
+                            Icon(Icons.Default.KeyboardArrowDown, contentDescription = stringResource(R.string.common_scroll_bottom))
                         }
                     }
                 }
@@ -448,12 +448,12 @@ fun LogHistoryScreen(dao: NotificationDao, authManager: AuthManager, db: AppData
                     modifier = Modifier
                         .fillMaxWidth()
                         .onFocusChanged { isSearchFocused = it.isFocused },
-                    placeholder = { Text("Search") },
-                    leadingIcon = { Icon(Icons.Default.Search, contentDescription = "Search") },
+                    placeholder = { Text(stringResource(R.string.log_history_search_placeholder)) },
+                    leadingIcon = { Icon(Icons.Default.Search, contentDescription = stringResource(R.string.common_search)) },
                     trailingIcon = {
                         if (searchQuery.isNotEmpty()) {
                             IconButton(onClick = { searchQuery = "" }) {
-                                Icon(Icons.Default.Close, contentDescription = "Clear Search")
+                                Icon(Icons.Default.Close, contentDescription = stringResource(R.string.common_clear_search))
                             }
                         }
                     },
@@ -485,13 +485,13 @@ fun LogHistoryScreen(dao: NotificationDao, authManager: AuthManager, db: AppData
                     matchingRecent.forEach { recent ->
                         DropdownMenuItem(
                             text = { Text(recent) },
-                            trailingIcon = { IconButton(onClick = { preferences.removeRecentSearch(recent) }) { Icon(Icons.Default.Close, contentDescription = "Remove recent search") } },
+                            trailingIcon = { IconButton(onClick = { preferences.removeRecentSearch(recent) }) { Icon(Icons.Default.Close, contentDescription = stringResource(R.string.common_remove_recent_search)) } },
                             onClick = { searchQuery = recent; expandedDropdown = false }
                         )
                     }
                     if (matchingRecent.isNotEmpty()) {
                         DropdownMenuItem(
-                            text = { Text("Clear recent searches") },
+                            text = { Text(stringResource(R.string.log_history_clear_recent_searches)) },
                             onClick = { preferences.resetRecentSearches(); expandedDropdown = false }
                         )
                     }
@@ -513,8 +513,8 @@ fun LogHistoryScreen(dao: NotificationDao, authManager: AuthManager, db: AppData
                         stringResource(R.string.log_history_empty_initial)
                     else
                         stringResource(R.string.log_history_empty_search),
-                    description = "No notifications match your current filters.",
-                    clearButtonText = "Clear All Filters",
+                    description = stringResource(R.string.log_history_filter_empty_desc),
+                    clearButtonText = stringResource(R.string.log_history_filter_empty_clear),
                     onClearClick = {
                         searchQuery = ""
                         selectedReasonFilter = null

@@ -418,4 +418,41 @@
     <string name="notification_group_expand_short">Expand</string>
     <string name="notification_inbox_lines">Inbox Lines (%1$d)</string>
     <string name="actionable_chip_label">%1$s: %2$s</string>
+
+    <!-- UI polish: shared accessibility labels and actions -->
+    <string name="common_clear_filters">Clear filters</string>
+    <string name="common_clear_recent_searches">Clear recent searches</string>
+    <string name="common_remove_recent_search">Remove recent search</string>
+    <string name="common_page_up">Page up</string>
+    <string name="common_page_down">Page down</string>
+    <string name="common_search_apps">Search apps</string>
+    <string name="common_apply">Apply</string>
+    <string name="common_clear_all">Clear All</string>
+    <string name="common_restore">Restore</string>
+    <string name="settings_account">Account</string>
+    <string name="settings_profile">Profile</string>
+    <string name="settings_sign_in">Sign in</string>
+    <string name="settings_notification_access_enabled">Notification access enabled</string>
+    <string name="settings_notification_access_disabled">Notification access disabled</string>
+    <string name="settings_cloud_sync_backup">Cloud Sync &amp; Backup</string>
+    <string name="settings_cloud_sync_active">Automatic sync is active. You can also trigger an instant sync manually.</string>
+    <string name="settings_syncing">Syncing…</string>
+    <string name="settings_create_encrypted_backup">Create Encrypted Backup</string>
+    <string name="settings_privacy_telemetry">Privacy &amp; Telemetry</string>
+    <string name="settings_strict_privacy_short">Strict Privacy Mode</string>
+    <string name="settings_strict_privacy_short_desc">Disable all crash reporting and anonymous usage telemetry.</string>
+    <string name="settings_pii_redaction_short">PII Redaction Engine</string>
+    <string name="settings_pii_redaction_short_desc">Mask OTP codes, cards, phone numbers, and emails before saving.</string>
+    <string name="log_history_sort_tooltip">Sort Logs</string>
+    <string name="log_history_sort_content_desc">Sort Log History</string>
+    <string name="log_history_search_placeholder">Search</string>
+    <string name="log_history_clear_recent_searches">Clear recent searches</string>
+    <string name="log_history_filter_empty_desc">No notifications match your current filters.</string>
+    <string name="log_history_filter_empty_clear">Clear All Filters</string>
+    <string name="active_search_field_desc">Active notification search</string>
+    <string name="active_page_up_desc">Page up</string>
+    <string name="active_page_down_desc">Page down</string>
+    <string name="active_app_filter_count">%1$d app%2$s</string>
+    <string name="active_app_plural_suffix">s</string>
+    <string name="active_search_placeholder">Search</string>
 </resources>

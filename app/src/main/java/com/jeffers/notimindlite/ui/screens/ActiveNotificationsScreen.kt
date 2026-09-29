@@ -149,12 +149,12 @@ fun getPriorityLabel(priority: Int): String {
     }
 }
 
-enum class NotificationSection(val keyName: String, val title: String, val subtitle: String) {
-    PINNED("PINNED", "Pinned Notifications", "Flagged & saved notifications for later reference"),
-    ACTIVE("ACTIVE", "Active Notifications", "Currently active status bar notifications (sorted by time received)"),
-    FILTERED("FILTERED", "Filtered Notifications", "System, clutter, spam, and auto-filtered notifications"),
-    DISMISSED("DISMISSED", "Recently Dismissed", "User swiped, clicked, or cleared notifications (sorted by time dismissed)"),
-    LOST("LOST", "Lost Notifications", "App cancelled or package changed notifications (sorted by time dismissed)")
+enum class NotificationSection(val keyName: String, val titleRes: Int, val subtitleRes: Int) {
+    PINNED("PINNED", R.string.section_pinned_title, R.string.section_pinned_subtitle),
+    ACTIVE("ACTIVE", R.string.section_active_title, R.string.section_active_subtitle),
+    FILTERED("FILTERED", R.string.section_filtered_title, R.string.section_filtered_subtitle),
+    DISMISSED("DISMISSED", R.string.section_dismissed_title, R.string.section_dismissed_subtitle),
+    LOST("LOST", R.string.section_lost_title, R.string.section_lost_subtitle)
 }
 
 @Composable
@@ -174,7 +174,7 @@ fun AppIconImage(appIconUri: String?, modifier: Modifier = Modifier.size(20.dp))
     if (imageBitmap != null) {
         Image(
             bitmap = imageBitmap,
-            contentDescription = "App Icon",
+            contentDescription = stringResource(R.string.notification_icon_description),
             modifier = modifier
         )
     }
@@ -344,7 +344,7 @@ fun ActiveNotificationsScreen(dao: NotificationDao, authManager: AuthManager, db
                             focusManager.clearFocus(force = true)
                             keyboardController?.hide()
                         }) {
-                            Icon(Icons.Default.FilterAltOff, contentDescription = "Clear filters")
+                            Icon(Icons.Default.FilterAltOff, contentDescription = stringResource(R.string.common_clear_filters))
                         }
                     }
                     TooltipBox(
@@ -384,24 +384,24 @@ fun ActiveNotificationsScreen(dao: NotificationDao, authManager: AuthManager, db
         floatingActionButton = {
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 SmallFloatingActionButton(
-                    modifier = Modifier.semantics { contentDescription = "PageUpButton" },
+                    modifier = Modifier.semantics { contentDescription = context.getString(R.string.active_page_up_desc) },
                     onClick = {
                         val first = listState.layoutInfo.visibleItemsInfo.firstOrNull()?.index ?: 0
                         val page = listState.layoutInfo.visibleItemsInfo.size.coerceAtLeast(1)
                         scope.launch { listState.animateScrollToItem((first - page).coerceAtLeast(0)) }
                     },
                 ) {
-                    Icon(Icons.Default.KeyboardArrowUp, contentDescription = "Page up")
+                    Icon(Icons.Default.KeyboardArrowUp, contentDescription = stringResource(R.string.active_page_up_desc))
                 }
                 SmallFloatingActionButton(
-                    modifier = Modifier.semantics { contentDescription = "PageDownButton" },
+                    modifier = Modifier.semantics { contentDescription = context.getString(R.string.active_page_down_desc) },
                     onClick = {
                         val first = listState.layoutInfo.visibleItemsInfo.firstOrNull()?.index ?: 0
                         val page = listState.layoutInfo.visibleItemsInfo.size.coerceAtLeast(1)
                         scope.launch { listState.animateScrollToItem(first + page) }
                     },
                 ) {
-                    Icon(Icons.Default.KeyboardArrowDown, contentDescription = "Page down")
+                    Icon(Icons.Default.KeyboardArrowDown, contentDescription = stringResource(R.string.active_page_down_desc))
                 }
             }
         }
@@ -457,13 +457,13 @@ fun ActiveNotificationsScreen(dao: NotificationDao, authManager: AuthManager, db
                                     .padding(bottom = 6.dp)
                                     .focusRequester(searchFocusRequester)
                                     .onFocusChanged { isSearchFocused = it.isFocused }
-                                    .semantics { contentDescription = "ActiveSearchField" },
-                                placeholder = { Text("Search") },
-                                leadingIcon = { Icon(Icons.Default.Search, contentDescription = "Search") },
+                                    .semantics { contentDescription = context.getString(R.string.active_search_field_desc) },
+                                placeholder = { Text(stringResource(R.string.active_search_placeholder)) },
+                                leadingIcon = { Icon(Icons.Default.Search, contentDescription = stringResource(R.string.common_search)) },
                                 trailingIcon = {
                                     if (searchQuery.isNotEmpty()) {
                                         IconButton(onClick = { searchQuery = "" }) {
-                                            Icon(Icons.Default.Close, contentDescription = "Clear Search")
+                                            Icon(Icons.Default.Close, contentDescription = stringResource(R.string.common_clear_search))
                                         }
                                     }
                                 },
@@ -494,13 +494,13 @@ fun ActiveNotificationsScreen(dao: NotificationDao, authManager: AuthManager, db
                                 matchingRecent.forEach { recent ->
                                     DropdownMenuItem(
                                         text = { Text(recent) },
-                                        trailingIcon = { IconButton(onClick = { preferences.removeRecentSearch(recent) }) { Icon(Icons.Default.Close, contentDescription = "Remove recent search") } },
+                                        trailingIcon = { IconButton(onClick = { preferences.removeRecentSearch(recent) }) { Icon(Icons.Default.Close, contentDescription = stringResource(R.string.common_remove_recent_search)) } },
                                         onClick = { searchQuery = recent; expandedDropdown = false }
                                     )
                                 }
                                 if (matchingRecent.isNotEmpty()) {
                                     DropdownMenuItem(
-                                        text = { Text("Clear recent searches") },
+                                        text = { Text(stringResource(R.string.common_clear_recent_searches)) },
                                         onClick = { preferences.resetRecentSearches(); expandedDropdown = false }
                                     )
                                 }
@@ -645,12 +645,12 @@ fun ActiveNotificationsScreen(dao: NotificationDao, authManager: AuthManager, db
                                 ) {
                                     Column(modifier = Modifier.weight(1f)) {
                                         Text(
-                                            text = section.title,
+                                            text = stringResource(section.titleRes),
                                             style = MaterialTheme.typography.titleMedium,
                                             fontWeight = FontWeight.Bold
                                         )
                                         Text(
-                                            text = section.subtitle,
+                                            text = stringResource(section.subtitleRes),
                                             style = MaterialTheme.typography.bodySmall,
                                             color = MaterialTheme.colorScheme.onSurfaceVariant
                                         )
