@@ -75,7 +75,12 @@ fun ActiveFilterChipsRow(
             )
         }
         if (chips.isNotEmpty()) {
-            TextButton(onClick = onClearAll) {
+            TextButton(
+                onClick = onClearAll,
+                modifier = Modifier.semantics {
+                    contentDescription = clearAllLabel
+                }
+            ) {
                 Text(clearAllLabel)
             }
         }

@@ -60,6 +60,7 @@ import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.foundation.layout.isImeVisible
 import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
 
@@ -221,6 +222,13 @@ fun ActiveNotificationsScreen(dao: NotificationDao, authManager: AuthManager, db
 
     // F-K fix: selectedPackages is user filter state — persist across process death.
     var selectedPackages by remember { mutableStateOf(preferences.sharedSelectedPackages.value) }
+    val selectedPackageCountLabel = selectedPackages?.takeIf { it.isNotEmpty() }?.let {
+        pluralStringResource(
+            id = R.plurals.active_filter_apps_count,
+            count = it.size,
+            it.size
+        )
+    }
     var showPackagePicker by remember { mutableStateOf(false) }
     LaunchedEffect(selectedPackages) { preferences.setSharedSelectedPackages(selectedPackages) }
 
@@ -582,9 +590,9 @@ fun ActiveNotificationsScreen(dao: NotificationDao, authManager: AuthManager, db
                         searchQuery = ""
                     }
                 }
-                selectedPackages?.takeIf { it.isNotEmpty() }?.let { pkgs ->
+                selectedPackageCountLabel?.let { packageCountLabel ->
                     activeChips += ActiveFilterChip(
-                        text = "${pkgs.size} app${if (pkgs.size == 1) "" else "s"}"
+                        text = packageCountLabel
                     ) { selectedPackages = null }
                 }
                 if (activeChips.isNotEmpty()) {

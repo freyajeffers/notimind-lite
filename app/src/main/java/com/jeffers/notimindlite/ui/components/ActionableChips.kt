@@ -3,6 +3,8 @@ package com.jeffers.notimindlite.ui.components
 import android.content.Intent
 import android.net.Uri
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.OpenInNew
@@ -40,13 +42,13 @@ fun ActionableChips(
     Row(
         modifier = modifier
             .fillMaxWidth()
+            .horizontalScroll(rememberScrollState())
             .padding(vertical = 8.dp),
-        horizontalArrangement = Arrangement.Start,
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         entities.forEach { entity ->
             ActionChip(entity = entity)
-            Spacer(modifier = Modifier.width(8.dp))
         }
     }
 }
@@ -110,7 +112,7 @@ private fun ActionChip(
             leadingIcon = {
                 Icon(
                     imageVector = config.icon,
-                    contentDescription = config.label,
+                    contentDescription = null,
                     modifier = Modifier.size(14.dp),
                     tint = config.onColor
                 )
@@ -145,7 +147,13 @@ private fun ActionChip(
                     clipboardManager.setText(AnnotatedString(entity.value))
                     expanded = false
                 },
-            leadingIcon = { Icon(Icons.Default.ContentCopy, contentDescription = "Copy", modifier = Modifier.size(18.dp)) }
+            leadingIcon = {
+                Icon(
+                    Icons.Default.ContentCopy,
+                    contentDescription = null,
+                    modifier = Modifier.size(18.dp)
+                )
+            }
             )
 
             if (entity.type == ActionableEntityExtractor.EntityType.URL || entity.type == ActionableEntityExtractor.EntityType.LOCATION) {
@@ -176,7 +184,7 @@ private fun ActionChip(
                     leadingIcon = {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.OpenInNew,
-                            contentDescription = "Open",
+                            contentDescription = null,
                             modifier = Modifier.size(18.dp)
                         )
                     }

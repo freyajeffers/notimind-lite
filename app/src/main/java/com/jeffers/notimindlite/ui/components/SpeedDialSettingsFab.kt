@@ -18,6 +18,7 @@ import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.semantics.stateDescription
+import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.semantics
 import com.jeffers.notimindlite.R
@@ -42,6 +43,9 @@ fun SpeedDialSettingsFab(
 
     val quickActionStateDescription = stringResource(
         if (expanded) R.string.quick_actions_expanded else R.string.quick_actions_collapsed
+    )
+    val quickActionContentDescription = stringResource(
+        if (expanded) R.string.quick_actions_close else R.string.quick_actions_open
     )
 
     Box(
@@ -86,21 +90,24 @@ fun SpeedDialSettingsFab(
 
         FloatingActionButton(
             onClick = { expanded = !expanded },
-            modifier = Modifier.rotate(rotation),
+            modifier = Modifier
+                .rotate(rotation)
+                .semantics {
+                    contentDescription = quickActionContentDescription
+                    stateDescription = quickActionStateDescription
+                },
             containerColor = MaterialTheme.colorScheme.primary,
             contentColor = MaterialTheme.colorScheme.onPrimary
         ) {
             if (expanded) {
                 Icon(
                     Icons.Default.Close,
-                    contentDescription = stringResource(R.string.quick_actions_close),
-                    modifier = Modifier.semantics { stateDescription = quickActionStateDescription }
+                    contentDescription = null
                 )
             } else {
                 Icon(
                     Icons.Default.Settings,
-                    contentDescription = stringResource(R.string.quick_actions_open),
-                    modifier = Modifier.semantics { stateDescription = quickActionStateDescription }
+                    contentDescription = null
                 )
             }
         }
@@ -121,11 +128,14 @@ private fun SpeedDialItem(
     ) {
         SmallFloatingActionButton(
             onClick = onClick,
+            modifier = Modifier.semantics {
+                contentDescription = label
+            },
             shape = CircleShape,
             containerColor = MaterialTheme.colorScheme.secondaryContainer,
             contentColor = MaterialTheme.colorScheme.onSecondaryContainer
         ) {
-            Icon(icon, contentDescription = label, modifier = Modifier.size(20.dp))
+            Icon(icon, contentDescription = null, modifier = Modifier.size(20.dp))
         }
     }
 }

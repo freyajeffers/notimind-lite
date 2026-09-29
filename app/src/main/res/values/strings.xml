@@ -150,6 +150,10 @@
     <string name="active_empty_search_clear">Clear search</string>
     <string name="active_filter_chips_label">Filtered by:</string>
     <string name="active_filter_chips_clear_all">Clear</string>
+    <plurals name="active_filter_apps_count">
+        <item quantity="one">%1$d app</item>
+        <item quantity="other">%1$d apps</item>
+    </plurals>
 
     <!-- Settings -->
     <string name="settings_title">Settings &amp; Cloud Backup</string>
