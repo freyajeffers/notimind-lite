@@ -344,7 +344,7 @@ fun ActiveNotificationsScreen(dao: NotificationDao, authManager: AuthManager, db
                             focusManager.clearFocus(force = true)
                             keyboardController?.hide()
                         }) {
-                            Icon(Icons.Default.FilterAltOff, contentDescription = "Clear filters")
+                            Icon(Icons.Default.FilterAltOff, contentDescription = stringResource(R.string.common_clear_filters))
                         }
                     }
                     TooltipBox(
@@ -384,24 +384,24 @@ fun ActiveNotificationsScreen(dao: NotificationDao, authManager: AuthManager, db
         floatingActionButton = {
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 SmallFloatingActionButton(
-                    modifier = Modifier.semantics { contentDescription = "PageUpButton" },
+                    modifier = Modifier.semantics { contentDescription = stringResource(R.string.common_page_up) },
                     onClick = {
                         val first = listState.layoutInfo.visibleItemsInfo.firstOrNull()?.index ?: 0
                         val page = listState.layoutInfo.visibleItemsInfo.size.coerceAtLeast(1)
                         scope.launch { listState.animateScrollToItem((first - page).coerceAtLeast(0)) }
                     },
                 ) {
-                    Icon(Icons.Default.KeyboardArrowUp, contentDescription = "Page up")
+                    Icon(Icons.Default.KeyboardArrowUp, contentDescription = stringResource(R.string.common_page_up))
                 }
                 SmallFloatingActionButton(
-                    modifier = Modifier.semantics { contentDescription = "PageDownButton" },
+                    modifier = Modifier.semantics { contentDescription = stringResource(R.string.common_page_down) },
                     onClick = {
                         val first = listState.layoutInfo.visibleItemsInfo.firstOrNull()?.index ?: 0
                         val page = listState.layoutInfo.visibleItemsInfo.size.coerceAtLeast(1)
                         scope.launch { listState.animateScrollToItem(first + page) }
                     },
                 ) {
-                    Icon(Icons.Default.KeyboardArrowDown, contentDescription = "Page down")
+                    Icon(Icons.Default.KeyboardArrowDown, contentDescription = stringResource(R.string.common_page_down))
                 }
             }
         }
@@ -458,12 +458,12 @@ fun ActiveNotificationsScreen(dao: NotificationDao, authManager: AuthManager, db
                                     .focusRequester(searchFocusRequester)
                                     .onFocusChanged { isSearchFocused = it.isFocused }
                                     .semantics { contentDescription = "ActiveSearchField" },
-                                placeholder = { Text("Search") },
-                                leadingIcon = { Icon(Icons.Default.Search, contentDescription = "Search") },
+                                placeholder = { Text(stringResource(R.string.active_notifications_search_placeholder)) },
+                                leadingIcon = { Icon(Icons.Default.Search, contentDescription = stringResource(R.string.common_search)) },
                                 trailingIcon = {
                                     if (searchQuery.isNotEmpty()) {
                                         IconButton(onClick = { searchQuery = "" }) {
-                                            Icon(Icons.Default.Close, contentDescription = "Clear Search")
+                                            Icon(Icons.Default.Close, contentDescription = stringResource(R.string.common_clear_search))
                                         }
                                     }
                                 },
@@ -494,13 +494,13 @@ fun ActiveNotificationsScreen(dao: NotificationDao, authManager: AuthManager, db
                                 matchingRecent.forEach { recent ->
                                     DropdownMenuItem(
                                         text = { Text(recent) },
-                                        trailingIcon = { IconButton(onClick = { preferences.removeRecentSearch(recent) }) { Icon(Icons.Default.Close, contentDescription = "Remove recent search") } },
+                                        trailingIcon = { IconButton(onClick = { preferences.removeRecentSearch(recent) }) { Icon(Icons.Default.Close, contentDescription = stringResource(R.string.common_remove_recent_search)) } },
                                         onClick = { searchQuery = recent; expandedDropdown = false }
                                     )
                                 }
                                 if (matchingRecent.isNotEmpty()) {
                                     DropdownMenuItem(
-                                        text = { Text("Clear recent searches") },
+                                        text = { Text(stringResource(R.string.common_clear_recent_searches)) },
                                         onClick = { preferences.resetRecentSearches(); expandedDropdown = false }
                                     )
                                 }
@@ -812,7 +812,7 @@ fun LogNotificationCard(
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     TooltipBox(
                         positionProvider = TooltipDefaults.rememberTooltipPositionProvider(TooltipAnchorPosition.Above),
-                        tooltip = { PlainTooltip { Text(if (item.isPinned) "Unpin notification" else "Pin notification") } },
+                        tooltip = { PlainTooltip { Text(stringResource(if (item.isPinned) R.string.notification_unpin else R.string.notification_pin)) } },
                         state = rememberTooltipState()
                     ) {
                         IconButton(
@@ -825,7 +825,7 @@ fun LogNotificationCard(
                         ) {
                             Icon(
                                 imageVector = if (item.isPinned) Icons.Default.Bookmark else Icons.Outlined.BookmarkBorder,
-                                contentDescription = if (item.isPinned) "Unpin" else "Pin",
+                                contentDescription = stringResource(if (item.isPinned) R.string.notification_unpin_short else R.string.notification_pin_short),
                                 tint = if (item.isPinned) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
                             )
                         }
@@ -850,7 +850,7 @@ fun LogNotificationCard(
 
                     TooltipBox(
                         positionProvider = TooltipDefaults.rememberTooltipPositionProvider(TooltipAnchorPosition.Above),
-                        tooltip = { PlainTooltip { Text("Open notification") } },
+                        tooltip = { PlainTooltip { Text(stringResource(R.string.notification_open_tooltip)) } },
                         state = rememberTooltipState()
                     ) {
                         IconButton(
@@ -861,7 +861,7 @@ fun LogNotificationCard(
                         ) {
                             Icon(
                                 imageVector = Icons.AutoMirrored.Filled.OpenInNew,
-                                contentDescription = "Open notification"
+                                contentDescription = stringResource(R.string.notification_open_tooltip)
                             )
                         }
                     }
@@ -952,7 +952,7 @@ fun LogNotificationCard(
                                 verticalArrangement = Arrangement.spacedBy(2.dp)
                             ) {
                                 Text(
-                                    text = "Inbox Lines (${inboxLines.size})",
+                                    text = stringResource(R.string.notification_inbox_lines, inboxLines.size),
                                     style = MaterialTheme.typography.labelSmall,
                                     fontWeight = FontWeight.Bold,
                                     color = MaterialTheme.colorScheme.primary
@@ -1005,26 +1005,26 @@ fun NotificationExpandedAttributes(
             verticalArrangement = Arrangement.spacedBy(4.dp)
         ) {
             Text(
-                text = "Notification Attributes",
+                text = stringResource(R.string.notification_attributes_title),
                 style = MaterialTheme.typography.labelMedium,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.primary
             )
-            AttributeRow(label = "Package", value = item.packageName)
+            AttributeRow(label = stringResource(R.string.notification_detail_package), value = item.packageName)
             if (item.appName.isNotBlank() && item.appName != item.packageName) {
-                AttributeRow(label = "App Name", value = item.appName)
+                AttributeRow(label = stringResource(R.string.notification_detail_app_name), value = item.appName)
             }
             if (!item.channelId.isNullOrEmpty()) {
-                AttributeRow(label = "Channel ID", value = item.channelId)
+                AttributeRow(label = stringResource(R.string.notification_detail_channel_id), value = item.channelId)
             }
             if (!item.category.isNullOrEmpty()) {
-                AttributeRow(label = "Category", value = item.category)
+                AttributeRow(label = stringResource(R.string.notification_attribute_category), value = item.category)
             }
-            AttributeRow(label = "Priority", value = getPriorityLabel(item.priority))
-            AttributeRow(label = "Time Received", value = dateTimeFormatter.format(Instant.ofEpochMilli(item.postTime)))
+            AttributeRow(label = stringResource(R.string.notification_detail_priority), value = getPriorityLabel(item.priority))
+            AttributeRow(label = stringResource(R.string.notification_attribute_time_received), value = dateTimeFormatter.format(Instant.ofEpochMilli(item.postTime)))
             if (item.lastUpdatedTime > 0 && item.lastUpdatedTime != item.postTime) {
                 AttributeRow(
-                    label = "Last Updated",
+                    label = stringResource(R.string.notification_attribute_last_updated),
                     value = dateTimeFormatter.format(Instant.ofEpochMilli(item.lastUpdatedTime))
                 )
             }
@@ -1033,7 +1033,7 @@ fun NotificationExpandedAttributes(
             }
             if (item.dismissTime != null && item.dismissTime > 0) {
                 AttributeRow(
-                    label = "Time Dismissed",
+                    label = stringResource(R.string.notification_attribute_time_dismissed),
                     value = dateTimeFormatter.format(Instant.ofEpochMilli(item.dismissTime))
                 )
             }
@@ -1041,55 +1041,55 @@ fun NotificationExpandedAttributes(
                 AttributeRow(label = "Dismiss Reason", value = stringResource(id = getReasonLabel(item.dismissReason)))
             }
             if (item.isOngoing) {
-                AttributeRow(label = "Ongoing", value = "Yes")
+                AttributeRow(label = stringResource(R.string.notification_attribute_ongoing), value = stringResource(R.string.notification_value_yes))
             }
             if (item.isPersistent) {
-                AttributeRow(label = "Persistent", value = "Yes")
+                AttributeRow(label = stringResource(R.string.notification_attribute_persistent), value = stringResource(R.string.notification_value_yes))
             }
             if (!item.isClearable) {
-                AttributeRow(label = "Clearable", value = "No")
+                AttributeRow(label = stringResource(R.string.notification_attribute_clearable), value = stringResource(R.string.notification_value_no))
             }
             if (item.isPinned) {
-                AttributeRow(label = "Pinned", value = "Yes")
+                AttributeRow(label = stringResource(R.string.notification_attribute_pinned), value = stringResource(R.string.notification_value_yes))
             }
             if (item.isRead) {
-                AttributeRow(label = "Read Status", value = "Read")
+                AttributeRow(label = stringResource(R.string.notification_attribute_read_status), value = stringResource(R.string.notification_value_read))
             }
             if (item.isGroupSummary) {
-                AttributeRow(label = "Group Summary", value = "Yes")
+                AttributeRow(label = stringResource(R.string.notification_attribute_group_summary), value = stringResource(R.string.notification_value_yes))
             }
             if (!item.groupKey.isNullOrEmpty()) {
-                AttributeRow(label = "Group Key", value = item.groupKey)
+                AttributeRow(label = stringResource(R.string.notification_attribute_group_key), value = item.groupKey)
             }
             if (item.actionsCount > 0) {
-                AttributeRow(label = "Actions Count", value = "${item.actionsCount}")
+                AttributeRow(label = stringResource(R.string.notification_attribute_actions_count), value = "${item.actionsCount}")
             }
             if (!item.actionLabels.isNullOrEmpty()) {
-                AttributeRow(label = "Action Labels", value = item.actionLabels)
+                AttributeRow(label = stringResource(R.string.notification_attribute_action_labels), value = item.actionLabels)
             }
             if (!item.intentUri.isNullOrEmpty()) {
-                AttributeRow(label = "Intent URI", value = item.intentUri)
+                AttributeRow(label = stringResource(R.string.notification_attribute_intent_uri), value = item.intentUri)
             }
             if (item.smallIconRes != 0) {
-                AttributeRow(label = "Small Icon Res", value = "0x${item.smallIconRes.toString(16).uppercase()}")
+                AttributeRow(label = stringResource(R.string.notification_attribute_small_icon_res), value = "0x${item.smallIconRes.toString(16).uppercase()}")
             }
             if (!item.appIconUri.isNullOrEmpty()) {
-                AttributeRow(label = "App Icon URI", value = item.appIconUri)
+                AttributeRow(label = stringResource(R.string.notification_attribute_app_icon_uri), value = item.appIconUri)
             }
-            AttributeRow(label = "Sync Status", value = item.syncStatus.name)
+            AttributeRow(label = stringResource(R.string.notification_attribute_sync_status), value = item.syncStatus.name)
             if (item.lastSyncedAt > 0) {
                 AttributeRow(
-                    label = "Last Synced",
+                    label = stringResource(R.string.notification_attribute_last_synced),
                     value = dateTimeFormatter.format(Instant.ofEpochMilli(item.lastSyncedAt))
                 )
             }
             if (item.embedding != null) {
-                AttributeRow(label = "Vector Embedding", value = "128-dim Indexed")
+                AttributeRow(label = stringResource(R.string.notification_attribute_vector_embedding), value = stringResource(R.string.notification_value_vector_indexed))
             }
             if (item.id > 0) {
-                AttributeRow(label = "Database ID", value = "#${item.id}")
+                AttributeRow(label = stringResource(R.string.notification_attribute_database_id), value = stringResource(R.string.notification_attribute_database_id_value, item.id))
             }
-            AttributeRow(label = "Key", value = item.key)
+            AttributeRow(label = stringResource(R.string.notification_attribute_key), value = item.key)
         }
     }
 }
