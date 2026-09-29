@@ -172,7 +172,15 @@
     <string name="settings_listener_missing_desc">NotiMind cannot capture notifications until you grant access.</string>
     <string name="settings_listener_open">Open Settings</string>
     <string name="settings_listener_grant">Grant Access</string>
+    <string name="settings_listener_enabled_cd">Notification access enabled</string>
+    <string name="settings_listener_disabled_cd">Notification access disabled</string>
     <string name="settings_section_restore">Boot &amp; Restore</string>
+    <string name="settings_restore_cd">Restore</string>
+    <string name="settings_backup_create">Create Encrypted Backup</string>
+    <string name="settings_backup_create_cd">Create encrypted backup</string>
+    <string name="settings_backup_offline">An active internet connection is required to create a backup</string>
+    <string name="settings_backup_success">Backup created successfully</string>
+    <string name="settings_backup_failure">Backup failed: %1$s</string>
     <string name="settings_restore_on_boot_title">Restore on boot</string>
     <string name="settings_restore_on_boot_desc">Re-surface recently active notifications after a device reboot. Requires notification access.</string>
     <string name="settings_restore_picked_default_name">backup file</string>
