@@ -205,11 +205,11 @@ class NotificationLoggerService : NotificationListenerService() {
                         existing.title != entity.title || 
                         existing.content != entity.content
                     
-                    val updateCount = if (hasSignificantChange) 1 else (existing?.updateCount ?: 0) + 1
-                    val originalPostTime = if (hasSignificantChange) entity.postTime else (existing?.postTime ?: entity.postTime)
+                    val updateCount = if (hasSignificantChange) 1 else existing.updateCount + 1
+                    val originalPostTime = if (hasSignificantChange) entity.postTime else existing.postTime
                     
                     val finalEntity = entity.copy(
-                        id = if (hasSignificantChange) 0L else (existing?.id ?: 0L),
+                        id = if (hasSignificantChange) 0L else existing.id,
                         updateCount = updateCount,
                         postTime = originalPostTime,
                         isRead = existing?.isRead ?: false,
@@ -265,19 +265,23 @@ class NotificationLoggerService : NotificationListenerService() {
         if (!preferences.captureOngoing.value && sbn.isOngoing) return false
         val notification = sbn.notification ?: return false
         if (preferences.captureActionsOnly.value && notification.actions.isNullOrEmpty()) return false
-        val allow = preferences.capturePackageAllowlist.value.split(',', '\n', ' ', '\t')
-            .map(String::trim).filter(String::isNotEmpty).toSet()
-        val block = preferences.capturePackageBlocklist.value.split(',', '\n', ' ', '\t')
-            .map(String::trim).filter(String::isNotEmpty).toSet()
+        val allow = parsePackageList(preferences.capturePackageAllowlist.value)
+        val block = parsePackageList(preferences.capturePackageBlocklist.value)
         if (allow.isNotEmpty() && sbn.packageName !in allow) return false
         if (sbn.packageName in block) return false
-        val importance = if (android.os.Build.VERSION.SDK_INT >= 26) {
-            notification.channelId?.let { getSystemService(android.app.NotificationManager::class.java)?.getNotificationChannel(it)?.importance }
-                ?: android.app.NotificationManager.IMPORTANCE_DEFAULT
-        } else {
-            (notification.priority + 2).coerceIn(0, 5)
-        }
+        val importance = notification.channelId?.let {
+            getSystemService(android.app.NotificationManager::class.java)
+                ?.getNotificationChannel(it)
+                ?.importance
+        } ?: android.app.NotificationManager.IMPORTANCE_DEFAULT
         return importance >= preferences.minImportance.value
+    }
+
+    private fun parsePackageList(raw: String): Set<String> {
+        return raw.split(',', '\n', ' ', '\t')
+            .map { it.trim() }
+            .filter { it.isNotEmpty() }
+            .toSet()
     }
 
     private fun extractNotificationEntity(sbn: StatusBarNotification): NotificationEntity? {
