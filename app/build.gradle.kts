@@ -110,6 +110,10 @@ android {
   }
 }
 
+detekt {
+  baseline = file("detekt-baseline.xml")
+}
+
 ksp {
     arg("room.schemaLocation", "$projectDir/schemas")
     arg("room.incremental", "true")

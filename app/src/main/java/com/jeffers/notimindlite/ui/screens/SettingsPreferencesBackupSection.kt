@@ -16,12 +16,16 @@ import com.jeffers.notimindlite.util.PreferencesBackup
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import java.util.Locale
 
 @Composable
 fun SettingsPreferencesBackupSection() {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     var message by remember { mutableStateOf<String?>(null) }
+    val exportedMessage = stringResource(R.string.pref_backup_exported)
+    val importedMessage = stringResource(R.string.pref_backup_imported)
+    val failedMessageFormat = stringResource(R.string.pref_backup_failed)
     val exportLauncher = rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("application/json")) { uri ->
         if (uri != null) scope.launch {
             message = runCatching {
@@ -32,8 +36,10 @@ fun SettingsPreferencesBackupSection() {
                         ?: error("Unable to open destination")
                     temp.delete()
                 }
-                context.getString(R.string.pref_backup_exported)
-            }.getOrElse { context.getString(R.string.pref_backup_failed, it.message ?: "unknown error") }
+                exportedMessage
+            }.getOrElse {
+                String.format(Locale.getDefault(), failedMessageFormat, it.message ?: "unknown error")
+            }
         }
     }
     val importLauncher = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
@@ -46,8 +52,10 @@ fun SettingsPreferencesBackupSection() {
                     PreferencesBackup.importPreferences(context, temp.absolutePath)
                     temp.delete()
                 }
-                context.getString(R.string.pref_backup_imported)
-            }.getOrElse { context.getString(R.string.pref_backup_failed, it.message ?: "unknown error") }
+                importedMessage
+            }.getOrElse {
+                String.format(Locale.getDefault(), failedMessageFormat, it.message ?: "unknown error")
+            }
         }
     }
 
