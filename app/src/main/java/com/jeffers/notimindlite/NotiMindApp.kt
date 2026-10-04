@@ -21,7 +21,14 @@ class NotiMindApp : Application(), android.content.ComponentCallbacks2 {
     override fun onCreate() {
         super.onCreate()
         com.jeffers.notimindlite.util.AppInitializer.initialize(this)
-        if (PreferencesRepository(this).autoLockDb.value || PreferencesRepository(this).appLockEnabled.value) DatabaseLockManager.unlock()
+        runCatching {
+            val prefs = PreferencesRepository(this)
+            if (prefs.autoLockDb.value || prefs.appLockEnabled.value) {
+                DatabaseLockManager.unlock()
+            }
+        }.onFailure {
+            Log.e(TAG, "PreferencesRepository unavailable during onCreate: ${it.message}")
+        }
         Log.i(TAG, "NotiMind Lite Application Initialized")
     }
 
