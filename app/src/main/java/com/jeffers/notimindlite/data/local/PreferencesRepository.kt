@@ -19,10 +19,11 @@ data class AutoExecuteRule(
 /** User-facing runtime options persisted in the existing direct-boot-safe preference store. */
 class PreferencesRepository(context: Context) {
     private val appContext = context.applicationContext
-    private val profileStore = appContext.getSharedPreferences(PROFILE_STORE, Context.MODE_PRIVATE)
+    private val deContext = appContext.createDeviceProtectedStorageContext()
+    private val profileStore = deContext.getSharedPreferences(PROFILE_STORE, Context.MODE_PRIVATE)
     private var activeId = profileStore.getString(KEY_ACTIVE_PROFILE, DEFAULT_PROFILE_ID) ?: DEFAULT_PROFILE_ID
     private val backing: android.content.SharedPreferences
-        get() = appContext.getSharedPreferences("notimind_lite_prefs_$activeId", Context.MODE_PRIVATE)
+        get() = deContext.getSharedPreferences("notimind_lite_prefs_$activeId", Context.MODE_PRIVATE)
 
     init {
         migrateRenamedKeys()
