@@ -4,9 +4,42 @@ All notable changes to NotiMind Lite are documented here. This project adheres t
 
 ---
 
-## [Unreleased] - User Preference Integration
+## [Unreleased] - Preference Runtime, UX Polish & Reliability
 
-### 🚀 Features
+### 🚀 Features & Runtime Integration
+
+- **feat(prefs)**: Apply profile defaults, capture filters, performance tuning, maintenance scheduling, and runtime preference accessors across capture, sync, search, retention, and UI modules.
+- **feat(retention)**: Add preference-driven cleanup scheduling and maintenance workers.
+- **feat(backup)**: Enforce export-format and anonymization preferences at the backup boundary.
+- **feat(settings)**: Add performance tuning, maintenance, export-format, anonymization, and preference-backup controls with user-facing descriptions and localized labels.
+- **feat(search)**: Integrate preference-controlled FTS/vector search behavior, shared recent searches, package/date filters, reset controls, query tokenization, and match highlighting.
+- **refactor(search)**: Consolidate duplicate intelligence engines while preserving hybrid search and suggestion behavior.
+
+### 🗃️ Data Migration & Storage Safety
+
+- **feat(migration)**: Add guarded on-device plaintext dry-run diagnostics, streaming copy orchestration, atomic database cutover, rollback handling, and a migration command receiver.
+- **fix(migration)**: Harden SQLCipher cutover table filtering and startup migration exception handling.
+- **fix(storage)**: Load SQLCipher and scroll-related settings reliably from the preferences repository.
+- **fix(boot)**: Move `PreferencesRepository` to Device Protected storage to prevent the boot-time crash before credential-encrypted storage is available.
+
+### 🎨 UI, Accessibility & Localization
+
+- **feat(ui)**: Add log sorting options, shared filters/recent queries, search reset behavior, notification metadata highlighting, and a unified settings layout.
+- **polish(ui)**: Improve notification card icon prefetching, active-section filtering, action placement, tooltip positioning, touch targets, and debug-disabled settings scrolling.
+- **feat(i18n,a11y)**: Complete localization of displayed notification content, sections, metadata, controls, filters, quick actions, splash content, and accessibility descriptions.
+- **a11y(ui)**: Add semantics and labels for search fields, page controls, actionable-chip icons, and previously unlabeled controls.
+- **fix(theme)**: Share preference state between navigation and Settings and make AMOLED surfaces/system bars pure black.
+- **fix(ui)**: Replace deprecated tooltip/icon APIs and restore stable navigation icons after accessibility polish.
+
+### 🛡️ Reliability & Compatibility
+
+- **fix(service)**: Tolerate OEM notification extras including bitmap icons and string arrays.
+- **fix(preferences)**: Correct the embedding API and add performance accessors.
+- **build**: Update Robolectric to 4.17, remove avoidable lint/configuration warnings, and make debug-keystore generation configuration-cache compatible.
+- **test**: Stabilize `NotificationLoggerServiceTest` by polling for insertion instead of relying on fixed sleeps.
+- **chore(detekt)**: Refresh the static-analysis baseline and resolve remaining findings.
+
+### 🚀 Existing Unreleased Features
 
 - **feat(prefs)**: Complete runtime preference integration for capture, cloud sync, FTS4 and semantic search, retention, export encryption, privacy/redaction, security, and advanced tuning controls.
 - **feat(settings)**: Expose preference state and actions in the Settings UI, with build-aware safeguards that keep destructive options disabled in debug builds.
