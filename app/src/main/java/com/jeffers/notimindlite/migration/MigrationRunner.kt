@@ -2,16 +2,19 @@ package com.jeffers.notimindlite.migration
 
 import android.content.Context
 import android.os.StatFs
+import androidx.room.Room
 import androidx.sqlite.db.SupportSQLiteDatabase
+import androidx.sqlite.db.SupportSQLiteOpenHelper
+import androidx.sqlite.db.framework.FrameworkSQLiteOpenHelperFactory
 import com.jeffers.notimindlite.data.local.AppDatabase
+import com.jeffers.notimindlite.data.local.EncryptedDatabaseFactory
 import java.io.File
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
 /**
- * Non-destructive migration gate. It only collects preflight diagnostics today;
- * copy/cutover must not be enabled until the SQLCipher key and rollback protocol
- * are implemented and covered by device tests.
+ * Coordinates guarded legacy migration after the SQLCipher key and rollback protocol
+ * have passed their validation gates.
  */
 class MigrationRunner(
   private val context: Context,
@@ -20,16 +23,94 @@ class MigrationRunner(
 
   suspend fun runMigrationIfNeeded(featureFlag: Boolean = false): MigrationState = withContext(Dispatchers.IO) {
     if (!featureFlag) return@withContext MigrationState.NOT_REQUIRED
-    preflight()
-    // Deliberately stop before copying or replacing any database files.
-    MigrationState.PREFLIGHT
+    migrateLegacyDatabase()
   }
 
   fun preflight(): MigrationPreflight {
-    val databaseDir = context.getDatabasePath(AppDatabase.CE_DATABASE_NAME).parentFile
+    return preflight(AppDatabase.CE_DATABASE_NAME)
+  }
+
+  /** Performs one guarded production migration for the active database identity. */
+  @Suppress("ReturnCount", "LongMethod", "TooGenericExceptionCaught")
+  fun migrateLegacyDatabase(databaseName: String = AppDatabase.CE_DATABASE_NAME): MigrationState {
+    synchronized(MIGRATION_LOCK) {
+      val diagnostics = preflight(databaseName)
+      if (!diagnostics.plaintextExists) return MigrationState.NOT_REQUIRED
+      if (diagnostics.encryptedExists) return MigrationState.RETRYABLE_FAILURE
+      if (diagnostics.plaintextDatabase.name != databaseName) {
+        return MigrationState.RETRYABLE_FAILURE
+      }
+
+      val directory = diagnostics.plaintextDatabase.parentFile
+        ?: return MigrationState.RETRYABLE_FAILURE
+      val encryptedTemp = File(directory, "$databaseName.tmp_encrypted")
+      val quarantine = File(directory, "$databaseName.quarantine")
+      if (encryptedTemp.exists() || quarantine.exists()) return MigrationState.RETRYABLE_FAILURE
+
+      val targetFactory = EncryptedDatabaseFactory.openHelperFactory(context, databaseName)
+        ?: return MigrationState.RETRYABLE_FAILURE
+      val sourceHelper = plaintextHelper(diagnostics.plaintextDatabase.name)
+      val target = Room.databaseBuilder(context, AppDatabase::class.java, encryptedTemp.name)
+        .openHelperFactory(targetFactory)
+        .build()
+      return try {
+        val sidecars = listOf("-wal", "-shm").map { suffix ->
+          File(directory, "$databaseName$suffix") to
+            File(directory, "$databaseName$suffix.quarantine")
+        }
+        val result = migrateOpenedDatabases(
+          source = sourceHelper.writableDatabase,
+          target = target.openHelper.writableDatabase,
+          plaintextFile = diagnostics.plaintextDatabase,
+          encryptedTempFile = encryptedTemp,
+          quarantineFile = quarantine,
+          closeDatabases = {
+            sourceHelper.close()
+            target.close()
+          },
+          executeCutover = false
+        )
+        if (result.state != MigrationState.CUTOVER_PENDING) {
+          result.state
+        } else {
+          sourceHelper.close()
+          target.close()
+          val movedSidecars = mutableListOf<Pair<File, File>>()
+          try {
+            sidecars.filter { it.first.isFile }.forEach { (current, backup) ->
+              check(current.renameTo(backup)) { "Unable to quarantine ${current.name}" }
+              movedSidecars += current to backup
+            }
+            val cutover = orchestrator.atomicCutover(
+              diagnostics.plaintextDatabase,
+              encryptedTemp,
+              quarantine
+            )
+            val finalized = orchestrator.finalizeSuccessfulCutover(
+              cutover,
+              movedSidecars.map { it.second }
+            )
+            if (finalized.state != MigrationState.COMPLETE) {
+              movedSidecars.asReversed().forEach { (current, backup) -> backup.renameTo(current) }
+            }
+            finalized.state
+          } catch (failure: Throwable) {
+            movedSidecars.asReversed().forEach { (current, backup) -> backup.renameTo(current) }
+            throw failure
+          }
+        }
+      } finally {
+        sourceHelper.close()
+        target.close()
+      }
+    }
+  }
+
+  private fun preflight(databaseName: String): MigrationPreflight {
+    val databaseDir = context.getDatabasePath(databaseName).parentFile
       ?: error("Unable to resolve database directory")
-    val plaintext = findLegacyPlaintextFile(databaseDir)
-    val encrypted = context.getDatabasePath(AppDatabase.CE_DATABASE_NAME)
+    val plaintext = findLegacyPlaintextFile(databaseDir, databaseName)
+    val encrypted = context.getDatabasePath(databaseName)
     val sourceBytes = plaintext.takeIf { it.exists() }?.length() ?: 0L
     val requiredBytes = (sourceBytes * 2L).coerceAtLeast(1L)
     val stat = StatFs(databaseDir.absolutePath)
@@ -44,10 +125,10 @@ class MigrationRunner(
     )
   }
 
-  private fun findLegacyPlaintextFile(databaseDir: File): File {
+  private fun findLegacyPlaintextFile(databaseDir: File, databaseName: String): File {
     val candidates = listOf(
-      File(databaseDir, AppDatabase.CE_DATABASE_NAME),
-      File(databaseDir, "${AppDatabase.CE_DATABASE_NAME}.plaintext")
+      File(databaseDir, databaseName),
+      File(databaseDir, "$databaseName.plaintext")
     )
     return candidates.firstOrNull { it.isFile && isPlaintextSQLite(it) }
       ?: candidates.last()
@@ -61,7 +142,20 @@ class MigrationRunner(
   }
 
   private companion object {
+    private val MIGRATION_LOCK = Any()
     private val SQLITE_HEADER = "SQLite format 3\u0000".toByteArray(Charsets.US_ASCII)
+  }
+
+  private fun plaintextHelper(name: String): SupportSQLiteOpenHelper {
+    val callback = object : SupportSQLiteOpenHelper.Callback(AppDatabase.DATABASE_VERSION) {
+      override fun onCreate(db: SupportSQLiteDatabase) = Unit
+      override fun onUpgrade(db: SupportSQLiteDatabase, oldVersion: Int, newVersion: Int) = Unit
+    }
+    val configuration = SupportSQLiteOpenHelper.Configuration.builder(context)
+      .name(name)
+      .callback(callback)
+      .build()
+    return FrameworkSQLiteOpenHelperFactory().create(configuration)
   }
 
   fun migrateOpenedDatabases(

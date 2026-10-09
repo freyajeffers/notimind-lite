@@ -40,9 +40,9 @@ class MigrationRunnerTest : BaseRobolectricTest() {
   }
 
   @Test
-  fun featureFlagOnStartsPreflight() = runTest {
+  fun featureFlagOnRunsNoOpWhenNoLegacyDatabase() = runTest {
     val state = MigrationRunner(context).runMigrationIfNeeded(featureFlag = true)
-    assertEquals(MigrationState.PREFLIGHT, state)
+    assertEquals(MigrationState.NOT_REQUIRED, state)
   }
 
   @Test
