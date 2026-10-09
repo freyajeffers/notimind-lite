@@ -95,6 +95,32 @@ class DatabaseMigrationOrchestrator(
     }
   }
 
+  /**
+   * Permanently removes the quarantine copies after the encrypted database is active.
+   * The caller must invoke this only after successful cutover and any required validation.
+   */
+  @Suppress("ReturnCount")
+  fun finalizeSuccessfulCutover(
+    result: MigrationResult,
+    additionalBackupFiles: List<File> = emptyList()
+  ): MigrationResult {
+    if (result.state != MigrationState.COMPLETE) return result
+    val backupFiles = buildList {
+      result.backupFile?.let(::add)
+      addAll(additionalBackupFiles)
+    }.distinct()
+    if (backupFiles.isEmpty()) return result
+
+    val failedFile = backupFiles.firstOrNull { !fileOps.secureDelete(it) }
+    return if (failedFile == null) {
+      result.copy(backupFile = null)
+    } else {
+      result.copy(
+        state = MigrationState.RETRYABLE_FAILURE,
+        failure = IllegalStateException("Unable to securely remove migration backup: ${failedFile.name}")
+      )
+    }
+  }
   private fun userTables(database: SupportSQLiteDatabase): List<String> {
     val names = mutableListOf<String>()
     database.query(
@@ -183,6 +209,7 @@ class DatabaseMigrationOrchestrator(
 
 interface MigrationFileOps {
   fun rename(source: File, destination: File)
+  fun secureDelete(file: File): Boolean = SecureFileShredder.shred(file)
 }
 
 private object RealMigrationFileOps : MigrationFileOps {
