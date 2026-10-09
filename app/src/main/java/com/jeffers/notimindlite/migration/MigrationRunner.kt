@@ -51,7 +51,8 @@ class MigrationRunner(
     if (copyResult.state != MigrationState.VERIFYING) return copyResult
     if (!executeCutover) return copyResult.copy(state = MigrationState.CUTOVER_PENDING)
     closeDatabases()
-    return orchestrator.atomicCutover(plaintextFile, encryptedTempFile, quarantineFile)
+    val cutoverResult = orchestrator.atomicCutover(plaintextFile, encryptedTempFile, quarantineFile)
+    return orchestrator.finalizeSuccessfulCutover(cutoverResult)
   }
 
   /**
