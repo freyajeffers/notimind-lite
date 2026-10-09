@@ -24,6 +24,22 @@ class MigrationRunnerTest : BaseRobolectricTest() {
   }
 
   @Test
+  fun preflightRecognizesPlaintextLegacyDatabaseBySQLiteHeader() {
+    val databaseFile = context.getDatabasePath(AppDatabase.CE_DATABASE_NAME)
+    databaseFile.parentFile?.mkdirs()
+    databaseFile.writeBytes("SQLite format 3\u0000".toByteArray() + ByteArray(32))
+    try {
+      val preflight = MigrationRunner(context).preflight()
+
+      assertEquals(true, preflight.plaintextExists)
+      assertEquals(databaseFile.absolutePath, preflight.plaintextFile.absolutePath)
+      assertEquals(false, preflight.encryptedExists)
+    } finally {
+      databaseFile.delete()
+    }
+  }
+
+  @Test
   fun featureFlagOnStartsPreflight() = runTest {
     val state = MigrationRunner(context).runMigrationIfNeeded(featureFlag = true)
     assertEquals(MigrationState.PREFLIGHT, state)
