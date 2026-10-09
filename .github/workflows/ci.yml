@@ -30,7 +30,7 @@ jobs:
   # --------------------------------------------------------------------------
   static-analysis:
     name: Lint & Detekt
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 20
 
     steps:
@@ -67,7 +67,7 @@ jobs:
   # --------------------------------------------------------------------------
   unit-tests:
     name: Unit Tests & Coverage
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 25
 
     steps:
@@ -110,7 +110,7 @@ jobs:
   # --------------------------------------------------------------------------
   build-release:
     name: Assemble Release APK
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 25
 
     steps:
