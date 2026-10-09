@@ -10,6 +10,7 @@ import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.jeffers.notimindlite.data.auth.AuthManager
 import com.jeffers.notimindlite.data.local.AppDatabase
+import com.jeffers.notimindlite.data.local.PreferencesRepository
 import com.jeffers.notimindlite.ui.MainNavigation
 import com.jeffers.notimindlite.ui.theme.NotiMindLiteTheme
 import org.junit.After
@@ -25,6 +26,7 @@ class MainActivityInstrumentedTest {
     val composeTestRule = createComposeRule()
 
     private lateinit var database: AppDatabase
+    private lateinit var preferencesRepository: PreferencesRepository
 
     @Before
     fun setup() {
@@ -32,6 +34,7 @@ class MainActivityInstrumentedTest {
         database = Room.inMemoryDatabaseBuilder(context, AppDatabase::class.java)
             .allowMainThreadQueries()
             .build()
+        preferencesRepository = PreferencesRepository(context)
     }
 
     @After
@@ -46,7 +49,8 @@ class MainActivityInstrumentedTest {
                 MainNavigation(
                     notificationDao = database.notificationDao(),
                     authManager = AuthManager(ApplicationProvider.getApplicationContext()),
-                    db = database
+                    db = database,
+                    preferencesRepository = preferencesRepository
                 )
             }
         }
@@ -61,7 +65,8 @@ class MainActivityInstrumentedTest {
                 MainNavigation(
                     notificationDao = database.notificationDao(),
                     authManager = AuthManager(ApplicationProvider.getApplicationContext()),
-                    db = database
+                    db = database,
+                    preferencesRepository = preferencesRepository
                 )
             }
         }
