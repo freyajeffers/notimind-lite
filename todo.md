@@ -11,7 +11,7 @@ CONVENTION: When a feature is partially implemented, the remaining work is liste
 - Legacy plaintext-to-SQLCipher migration for existing users (critical)
   - Implement and test `DatabaseMigrationOrchestrator` that performs `sqlcipher_export()` or equivalent safe migration.
   - Acceptance: migrate a seeded plaintext DB with N rows and verify exactly N rows exist in encrypted DB; shred plaintext files securely.
-  - Current progress: schema-compatible streaming copy now verifies inserted rows and exact notification counts before cutover; secure file cleanup and sidecar handling are covered. Legacy-file detection, encrypted reopen, and device validation remain pending.
+  - Current progress: schema-compatible streaming copy verifies inserted rows and exact notification counts before cutover; secure file cleanup, sidecar handling, legacy-file detection, encrypted reopen, and ARM64 physical-device validation are covered. Automatic production trigger for legacy installations remains pending.
   - Origin: docs/Phase 2 - Cryptographic Hardening & Keystore Storage Security.md; MASTER_TECHNICAL_SPECIFICATION.md
 
 - Add formal migration tests using Room's MigrationTestHelper for each historical version (1..18) or create a synthetic schema generator to emit valid `<version>.json` files.
