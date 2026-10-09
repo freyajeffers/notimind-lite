@@ -32,7 +32,7 @@ class MigrationRunnerTest : BaseRobolectricTest() {
       val preflight = MigrationRunner(context).preflight()
 
       assertEquals(true, preflight.plaintextExists)
-      assertEquals(databaseFile.absolutePath, preflight.plaintextFile.absolutePath)
+      assertEquals(databaseFile.absolutePath, preflight.plaintextDatabase.absolutePath)
       assertEquals(false, preflight.encryptedExists)
     } finally {
       databaseFile.delete()
