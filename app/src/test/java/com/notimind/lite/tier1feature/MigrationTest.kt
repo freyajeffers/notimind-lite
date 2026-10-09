@@ -13,7 +13,6 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
-import org.junit.Ignore
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -88,7 +87,6 @@ class MigrationTest {
      * Scaffolded migration test. Demonstrates the canonical pattern but currently
      * disabled because app/schemas/.../17.json is not yet committed. See KDoc above.
      */
-    @Ignore("Historical Room schema 17.json is not checked into this repository yet")
     @Test
     fun migration_17_to_18_runsSuccessfullyAndPreservesNotificationsTable() {
         // Step 1: createDatabase builds a v17 DB using Room's own schema generation
@@ -146,8 +144,36 @@ class MigrationTest {
         }
     }
 
+    @Test
+    fun migration_18_to_19_backfillsNotificationGroups() {
+        val testDbName = "migration-test-18-19.db"
+        helper.createDatabase(testDbName, 18).use { v18 ->
+            v18.execSQL(
+                "INSERT INTO notifications " +
+                    "(key, packageName, appName, title, content, category, channelId, subText, bigText, " +
+                    "groupKey, isOngoing, isClearable, actionsCount, dismissReason, dismissTime, intentUri, " +
+                    "isPinned, actionLabels, postTime, lastUpdatedTime, updateCount, isRead) VALUES " +
+                    "(?, ?, ?, ?, ?, NULL, NULL, NULL, NULL, NULL, 0, 1, 0, NULL, NULL, NULL, 0, NULL, ?, 0, 1, 0)",
+                arrayOf<Any?>(
+                    "migration_18_key", "com.migration.test", "MigrationApp", "Group title",
+                    "Group content", System.currentTimeMillis()
+                )
+            )
+        }
+
+        helper.runMigrationsAndValidate(testDbName, 19, true, AppDatabase.MIGRATION_18_19).use { migrated ->
+            migrated.query(
+                "SELECT notificationCount FROM notification_groups WHERE groupKey = ?",
+                arrayOf<Any>("com.migration.test")
+            ).use { cursor ->
+                assertTrue("Migration must backfill notification_groups", cursor.moveToFirst())
+                assertEquals(1, cursor.getInt(cursor.getColumnIndexOrThrow("notificationCount")))
+            }
+        }
+    }
+
     /**
-     * Smoke test: builds the current schema (v18) end-to-end via Room and verifies
+     * Smoke test: builds the current schema (v19) end-to-end via Room and verifies
      * a round-tripped notification is retrievable. Always green — no prerequisites.
      */
     @Test
