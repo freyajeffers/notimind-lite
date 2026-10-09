@@ -98,7 +98,12 @@ class MigrationCommandReceiver : BroadcastReceiver() {
                 check(current.renameTo(backup)) { "Unable to quarantine ${current.name}" }
                 movedSidecars += current to backup
             }
-            val result = DatabaseMigrationOrchestrator().atomicCutover(source, encryptedTemp, quarantine)
+            val orchestrator = DatabaseMigrationOrchestrator()
+            val cutoverResult = orchestrator.atomicCutover(source, encryptedTemp, quarantine)
+            val result = orchestrator.finalizeSuccessfulCutover(
+                cutoverResult,
+                movedSidecars.map { it.second }
+            )
             if (result.state != MigrationState.COMPLETE) {
                 movedSidecars.asReversed().forEach { (current, backup) -> backup.renameTo(current) }
             }
