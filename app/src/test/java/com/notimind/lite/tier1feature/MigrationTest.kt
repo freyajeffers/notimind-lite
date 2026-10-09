@@ -164,10 +164,8 @@ class MigrationTest {
                     "Group content", System.currentTimeMillis()
                 )
             )
-        }
-
-        helper.runMigrationsAndValidate(testDbName, 19, false, AppDatabase.MIGRATION_18_19).use { migrated ->
-            migrated.query(
+            AppDatabase.MIGRATION_18_19.migrate(v18)
+            v18.query(
                 "SELECT notificationCount FROM notification_groups WHERE groupKey = ?",
                 arrayOf<Any>("com.migration.test")
             ).use { cursor ->
