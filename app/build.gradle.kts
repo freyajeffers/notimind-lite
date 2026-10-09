@@ -14,9 +14,12 @@ android {
   compileSdk = 37
 
   val targetMinSdk = (project.findProperty("minSdk") as? String)?.toIntOrNull() ?: 33
+  val validationApplicationIdSuffix =
+    project.findProperty("validationApplicationIdSuffix") as? String
 
   defaultConfig {
     applicationId = "com.jeffers.notimindlite"
+    validationApplicationIdSuffix?.let { applicationIdSuffix = it }
     minSdk = targetMinSdk
     targetSdk = 36
     versionCode = 1
@@ -239,6 +242,10 @@ val ensureDebugKeystore = tasks.register<Exec>("ensureDebugKeystore") {
 // Wire ensureDebugKeystore into AGP's signing validation tasks so any
 // build that triggers validateSigning* also runs our generator first.
 afterEvaluate {
+  val validationApplicationIdSuffix =
+    project.findProperty("validationApplicationIdSuffix") as? String
+  tasks.matching { it.name == "processDebugGoogleServices" }
+    .configureEach { onlyIf { validationApplicationIdSuffix == null } }
   tasks.matching { it.name.startsWith("validateSigning") }
     .configureEach { dependsOn(ensureDebugKeystore) }
 }
