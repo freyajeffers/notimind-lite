@@ -1,0 +1,476 @@
+{
+  "formatVersion": 1,
+  "database": {
+    "version": 18,
+    "identityHash": "31bde04c65501789213c6734a973acb3",
+    "entities": [
+      {
+        "tableName": "notifications",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `key` TEXT NOT NULL, `packageName` TEXT NOT NULL, `appName` TEXT NOT NULL, `appIconUri` TEXT, `title` TEXT NOT NULL, `content` TEXT NOT NULL, `postTime` INTEGER NOT NULL, `lastUpdatedTime` INTEGER NOT NULL, `updateCount` INTEGER NOT NULL, `isDismissed` INTEGER NOT NULL, `isPersistent` INTEGER NOT NULL, `isRead` INTEGER NOT NULL, `isGroupSummary` INTEGER NOT NULL, `category` TEXT, `channelId` TEXT, `subText` TEXT, `bigText` TEXT, `inboxLinesJson` TEXT, `priority` INTEGER NOT NULL, `groupKey` TEXT, `isOngoing` INTEGER NOT NULL, `isClearable` INTEGER NOT NULL, `actionsCount` INTEGER NOT NULL, `dismissReason` INTEGER, `dismissTime` INTEGER, `intentUri` TEXT, `isPinned` INTEGER NOT NULL, `actionLabels` TEXT, `smallIconRes` INTEGER NOT NULL, `syncStatus` TEXT NOT NULL, `lastSyncedAt` INTEGER NOT NULL, `embedding` BLOB)",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "key",
+            "columnName": "key",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "packageName",
+            "columnName": "packageName",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "appName",
+            "columnName": "appName",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "appIconUri",
+            "columnName": "appIconUri",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "title",
+            "columnName": "title",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "content",
+            "columnName": "content",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "postTime",
+            "columnName": "postTime",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "lastUpdatedTime",
+            "columnName": "lastUpdatedTime",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "updateCount",
+            "columnName": "updateCount",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "isDismissed",
+            "columnName": "isDismissed",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "isPersistent",
+            "columnName": "isPersistent",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "isRead",
+            "columnName": "isRead",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "isGroupSummary",
+            "columnName": "isGroupSummary",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "category",
+            "columnName": "category",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "channelId",
+            "columnName": "channelId",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "subText",
+            "columnName": "subText",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "bigText",
+            "columnName": "bigText",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "inboxLinesJson",
+            "columnName": "inboxLinesJson",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "priority",
+            "columnName": "priority",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "groupKey",
+            "columnName": "groupKey",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "isOngoing",
+            "columnName": "isOngoing",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "isClearable",
+            "columnName": "isClearable",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "actionsCount",
+            "columnName": "actionsCount",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "dismissReason",
+            "columnName": "dismissReason",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "dismissTime",
+            "columnName": "dismissTime",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "intentUri",
+            "columnName": "intentUri",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "isPinned",
+            "columnName": "isPinned",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "actionLabels",
+            "columnName": "actionLabels",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "smallIconRes",
+            "columnName": "smallIconRes",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "syncStatus",
+            "columnName": "syncStatus",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "lastSyncedAt",
+            "columnName": "lastSyncedAt",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "embedding",
+            "columnName": "embedding",
+            "affinity": "BLOB"
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": true,
+          "columnNames": [
+            "id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_notifications_key",
+            "unique": true,
+            "columnNames": [
+              "key"
+            ],
+            "orders": [],
+            "createSql": "CREATE UNIQUE INDEX IF NOT EXISTS `index_notifications_key` ON `${TABLE_NAME}` (`key`)"
+          },
+          {
+            "name": "index_notifications_isDismissed_postTime",
+            "unique": false,
+            "columnNames": [
+              "isDismissed",
+              "postTime"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_notifications_isDismissed_postTime` ON `${TABLE_NAME}` (`isDismissed`, `postTime`)"
+          },
+          {
+            "name": "index_notifications_isDismissed_dismissTime",
+            "unique": false,
+            "columnNames": [
+              "isDismissed",
+              "dismissTime"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_notifications_isDismissed_dismissTime` ON `${TABLE_NAME}` (`isDismissed`, `dismissTime`)"
+          },
+          {
+            "name": "index_notifications_isDismissed_isOngoing_postTime",
+            "unique": false,
+            "columnNames": [
+              "isDismissed",
+              "isOngoing",
+              "postTime"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_notifications_isDismissed_isOngoing_postTime` ON `${TABLE_NAME}` (`isDismissed`, `isOngoing`, `postTime`)"
+          },
+          {
+            "name": "index_notifications_isDismissed_dismissReason_dismissTime",
+            "unique": false,
+            "columnNames": [
+              "isDismissed",
+              "dismissReason",
+              "dismissTime"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_notifications_isDismissed_dismissReason_dismissTime` ON `${TABLE_NAME}` (`isDismissed`, `dismissReason`, `dismissTime`)"
+          },
+          {
+            "name": "index_notifications_packageName_isDismissed_postTime",
+            "unique": false,
+            "columnNames": [
+              "packageName",
+              "isDismissed",
+              "postTime"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_notifications_packageName_isDismissed_postTime` ON `${TABLE_NAME}` (`packageName`, `isDismissed`, `postTime`)"
+          },
+          {
+            "name": "index_notifications_isPinned_postTime",
+            "unique": false,
+            "columnNames": [
+              "isPinned",
+              "postTime"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_notifications_isPinned_postTime` ON `${TABLE_NAME}` (`isPinned`, `postTime`)"
+          },
+          {
+            "name": "index_notifications_isRead_isDismissed",
+            "unique": false,
+            "columnNames": [
+              "isRead",
+              "isDismissed"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_notifications_isRead_isDismissed` ON `${TABLE_NAME}` (`isRead`, `isDismissed`)"
+          },
+          {
+            "name": "index_notifications_syncStatus",
+            "unique": false,
+            "columnNames": [
+              "syncStatus"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_notifications_syncStatus` ON `${TABLE_NAME}` (`syncStatus`)"
+          }
+        ]
+      },
+      {
+        "tableName": "apps",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`packageName` TEXT NOT NULL, `appName` TEXT NOT NULL, `appIconUri` TEXT, `statusBarIconRes` INTEGER NOT NULL, `statusBarIconPackage` TEXT, `firstSeenTime` INTEGER NOT NULL, `lastSeenTime` INTEGER NOT NULL, `syncStatus` TEXT NOT NULL, `lastSyncedAt` INTEGER NOT NULL, PRIMARY KEY(`packageName`))",
+        "fields": [
+          {
+            "fieldPath": "packageName",
+            "columnName": "packageName",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "appName",
+            "columnName": "appName",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "appIconUri",
+            "columnName": "appIconUri",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "statusBarIconRes",
+            "columnName": "statusBarIconRes",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "statusBarIconPackage",
+            "columnName": "statusBarIconPackage",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "firstSeenTime",
+            "columnName": "firstSeenTime",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "lastSeenTime",
+            "columnName": "lastSeenTime",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "syncStatus",
+            "columnName": "syncStatus",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "lastSyncedAt",
+            "columnName": "lastSyncedAt",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "packageName"
+          ]
+        }
+      },
+      {
+        "tableName": "notifications_fts",
+        "createSql": "CREATE VIRTUAL TABLE IF NOT EXISTS `${TABLE_NAME}` USING FTS4(`title` TEXT NOT NULL, `content` TEXT NOT NULL, `appName` TEXT NOT NULL, `packageName` TEXT NOT NULL, content=`notifications`)",
+        "fields": [
+          {
+            "fieldPath": "title",
+            "columnName": "title",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "content",
+            "columnName": "content",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "appName",
+            "columnName": "appName",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "packageName",
+            "columnName": "packageName",
+            "affinity": "TEXT",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": []
+        },
+        "ftsVersion": "FTS4",
+        "ftsOptions": {
+          "tokenizer": "simple",
+          "tokenizerArgs": [],
+          "contentTable": "notifications",
+          "languageIdColumnName": "",
+          "matchInfo": "FTS4",
+          "notIndexedColumns": [],
+          "prefixSizes": [],
+          "preferredOrder": "ASC"
+        },
+        "contentSyncTriggers": [
+          "CREATE TRIGGER IF NOT EXISTS room_fts_content_sync_notifications_fts_BEFORE_UPDATE BEFORE UPDATE ON `notifications` BEGIN DELETE FROM `notifications_fts` WHERE `docid`=OLD.`rowid`; END",
+          "CREATE TRIGGER IF NOT EXISTS room_fts_content_sync_notifications_fts_BEFORE_DELETE BEFORE DELETE ON `notifications` BEGIN DELETE FROM `notifications_fts` WHERE `docid`=OLD.`rowid`; END",
+          "CREATE TRIGGER IF NOT EXISTS room_fts_content_sync_notifications_fts_AFTER_UPDATE AFTER UPDATE ON `notifications` BEGIN INSERT INTO `notifications_fts`(`docid`, `title`, `content`, `appName`, `packageName`) VALUES (NEW.`rowid`, NEW.`title`, NEW.`content`, NEW.`appName`, NEW.`packageName`); END",
+          "CREATE TRIGGER IF NOT EXISTS room_fts_content_sync_notifications_fts_AFTER_INSERT AFTER INSERT ON `notifications` BEGIN INSERT INTO `notifications_fts`(`docid`, `title`, `content`, `appName`, `packageName`) VALUES (NEW.`rowid`, NEW.`title`, NEW.`content`, NEW.`appName`, NEW.`packageName`); END"
+        ]
+      },
+      {
+        "tableName": "backup_records",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `actionType` TEXT NOT NULL, `fileHash` TEXT NOT NULL, `signature` TEXT NOT NULL, `timestamp` INTEGER NOT NULL, `fileName` TEXT, `logMessage` TEXT, `encryptionKeyBase64` TEXT)",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "actionType",
+            "columnName": "actionType",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "fileHash",
+            "columnName": "fileHash",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "signature",
+            "columnName": "signature",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "timestamp",
+            "columnName": "timestamp",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "fileName",
+            "columnName": "fileName",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "logMessage",
+            "columnName": "logMessage",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "encryptionKeyBase64",
+            "columnName": "encryptionKeyBase64",
+            "affinity": "TEXT"
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": true,
+          "columnNames": [
+            "id"
+          ]
+        }
+      }
+    ],
+    "setupQueries": [
+      "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '31bde04c65501789213c6734a973acb3')"
+    ]
+  }
+}
