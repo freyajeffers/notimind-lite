@@ -4,6 +4,8 @@ import android.content.Context
 import android.os.UserManager
 import android.util.Log
 import com.jeffers.notimindlite.util.DatabaseLockManager
+import com.jeffers.notimindlite.migration.MigrationRunner
+import com.jeffers.notimindlite.migration.MigrationState
 import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
@@ -458,6 +460,19 @@ abstract class AppDatabase : RoomDatabase() {
             } else ceInstance ?: synchronized(this) {
                 ceInstance ?: run {
                     val databaseName = databaseName(CE_DATABASE_NAME, profileId)
+                    val preferences = PreferencesRepository(appContext)
+                    val migrationState = if (
+                        preferences.dbEncrypted.value &&
+                        preferences.dbEncryptionMode.value != DbEncryptionMode.NONE
+                    ) {
+                        MigrationRunner(appContext).migrateLegacyDatabase(databaseName)
+                    } else {
+                        MigrationState.NOT_REQUIRED
+                    }
+                    when (migrationState) {
+                        MigrationState.NOT_REQUIRED, MigrationState.COMPLETE -> Unit
+                        else -> error("Legacy database migration did not complete safely")
+                    }
                     val instance = Room.databaseBuilder(
                         appContext,
                         AppDatabase::class.java,
