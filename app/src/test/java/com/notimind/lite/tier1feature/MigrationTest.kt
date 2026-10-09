@@ -108,13 +108,14 @@ class MigrationTest {
                     "groupKey, isOngoing, isClearable, actionsCount, dismissReason, dismissTime, intentUri, " +
                     "isPinned, actionLabels, postTime, lastUpdatedTime, updateCount, isRead) " +
                     "VALUES " +
-                        "(?, ?, ?, ?, ?, NULL, NULL, NULL, NULL, NULL, 0, 1, 0, NULL, NULL, NULL, 0, NULL, ?, 0, 1, 0)",
+                        "(?, ?, ?, ?, ?, NULL, NULL, NULL, NULL, ?, 0, 1, 0, NULL, NULL, NULL, 0, NULL, ?, 0, 1, 0)",
                 arrayOf<Any?>(
                     "migration_test_key",
                     "com.migration.test",
                     "MigrationApp",
                     "Migration Title",
                     "Migration Content",
+                    "com.migration.test",
                     System.currentTimeMillis()
                 )
             )

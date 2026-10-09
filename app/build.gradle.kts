@@ -106,6 +106,7 @@ android {
     }
   }
   testOptions { unitTests { isIncludeAndroidResources = true } }
+  sourceSets["test"].assets.directories.add("$projectDir/schemas")
   lint {
     abortOnError = true
     checkDependencies = true
