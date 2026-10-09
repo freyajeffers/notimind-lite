@@ -49,7 +49,10 @@ class MigrationCommandReceiver : BroadcastReceiver() {
             AppDatabase::class.java,
             encryptedTempFile.name
         ).apply {
-            EncryptedDatabaseFactory.openHelperFactory(context, encryptedTempFile.name)?.let(::openHelperFactory)
+            // Use the production database identity so the promoted file can be reopened after cutover.
+            EncryptedDatabaseFactory
+                .openHelperFactory(context, databaseName)
+                ?.let(::openHelperFactory)
         }.build()
 
         try {
