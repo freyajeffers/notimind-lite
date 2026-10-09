@@ -104,11 +104,13 @@ class MigrationTest {
             // to v18 — see AppDatabase.kt:207.
             v17.execSQL(
                 "INSERT INTO notifications " +
-                    "(key, packageName, appName, title, content, category, channelId, subText, bigText, " +
-                    "groupKey, isOngoing, isClearable, actionsCount, dismissReason, dismissTime, intentUri, " +
-                    "isPinned, actionLabels, postTime, lastUpdatedTime, updateCount, isRead) " +
-                    "VALUES " +
-                        "(?, ?, ?, ?, ?, NULL, NULL, NULL, NULL, ?, 0, 1, 0, NULL, NULL, NULL, 0, NULL, ?, 0, 1, 0)",
+                    "(key, packageName, appName, appIconUri, title, content, postTime, lastUpdatedTime, " +
+                    "updateCount, isDismissed, isPersistent, isRead, isGroupSummary, category, channelId, " +
+                    "subText, bigText, inboxLinesJson, priority, groupKey, isOngoing, isClearable, actionsCount, " +
+                    "dismissReason, dismissTime, intentUri, isPinned, actionLabels, smallIconRes, syncStatus, " +
+                    "lastSyncedAt, embedding) VALUES " +
+                    "(?, ?, ?, NULL, ?, ?, ?, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL, NULL, NULL, 0, ?, 0, 1, 0, " +
+                    "NULL, NULL, NULL, 0, NULL, 0, 'PENDING', 0, NULL)",
                 arrayOf<Any?>(
                     "migration_test_key",
                     "com.migration.test",
