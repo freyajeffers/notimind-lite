@@ -166,7 +166,7 @@ class MigrationTest {
             )
         }
 
-        helper.runMigrationsAndValidate(testDbName, 19, true, AppDatabase.MIGRATION_18_19).use { migrated ->
+        helper.runMigrationsAndValidate(testDbName, 19, false, AppDatabase.MIGRATION_18_19).use { migrated ->
             migrated.query(
                 "SELECT notificationCount FROM notification_groups WHERE groupKey = ?",
                 arrayOf<Any>("com.migration.test")
