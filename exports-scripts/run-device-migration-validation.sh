@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-PACKAGE="${PACKAGE:-com.jeffers.notimindlite}"
+PACKAGE="${PACKAGE:-com.jeffers.notimindlite.validation}"
 TEST_PACKAGE="${TEST_PACKAGE:-${PACKAGE}.test}"
 SERIAL="${ANDROID_SERIAL:-}"
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"

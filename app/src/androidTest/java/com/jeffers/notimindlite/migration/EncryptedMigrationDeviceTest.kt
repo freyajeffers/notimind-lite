@@ -33,7 +33,6 @@ class EncryptedMigrationDeviceTest {
         val quarantineFile = context.getDatabasePath(quarantineName)
         val passphrase = SqlCipherKeyManager.getOrCreatePassphrase(context, identityName)
         val factory = SupportOpenHelperFactory(passphrase)
-        passphrase.fill(0)
         var source: AppDatabase? = null
         var target: AppDatabase? = null
 

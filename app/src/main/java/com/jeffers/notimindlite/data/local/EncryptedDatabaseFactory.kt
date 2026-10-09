@@ -18,9 +18,12 @@ object EncryptedDatabaseFactory {
         ensureSqlCipherLoaded()
         val useKeystore = preferences.useKeystore.value && preferences.dbEncryptionMode.value == DbEncryptionMode.KEYSTORE
         val passphrase = SqlCipherKeyManager.getOrCreatePassphrase(context, databaseName, useKeystore)
-        return SupportOpenHelperFactory(passphrase).also {
-            passphrase.fill(0)
-        }
+        // SupportOpenHelperFactory retains the supplied array until the helper opens.
+        // Copy before clearing the caller-owned array; clearing this same array breaks
+        // database initialization when Room opens the helper after builder creation.
+        val factoryPassphrase = passphrase.copyOf()
+        passphrase.fill(0)
+        return SupportOpenHelperFactory(factoryPassphrase)
     }
 
     @Synchronized
