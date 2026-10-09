@@ -15,7 +15,7 @@ CONVENTION: When a feature is partially implemented, the remaining work is liste
   - Origin: docs/Phase 2 - Cryptographic Hardening & Keystore Storage Security.md; MASTER_TECHNICAL_SPECIFICATION.md
 
 - Add formal migration tests using Room's MigrationTestHelper for each historical version (1..18) or create a synthetic schema generator to emit valid `<version>.json` files.
-  - Origin: docs/room-schema-backfill.md
+  - Current progress: committed schemas 17, 18, and 19 are now exercised by enabled 17->18 and 18->19 tests; schemas 1..16 still need historical backfill or synthetic generation.
 
 - Verify hardware-backed Keystore (StrongBox/TEE) coverage on supported devices and fallback tests for devices without StrongBox.
   - Origin: Phase 2 doc
