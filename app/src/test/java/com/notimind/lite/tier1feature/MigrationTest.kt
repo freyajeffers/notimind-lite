@@ -63,8 +63,7 @@ class MigrationTest {
     @get:Rule
     val helper: MigrationTestHelper = MigrationTestHelper(
         InstrumentationRegistry.getInstrumentation(),
-        AppDatabase::class.java,
-        emptyList(),
+        "schemas/com.jeffers.notimindlite.data.local.AppDatabase",
         FrameworkSQLiteOpenHelperFactory()
     )
 
