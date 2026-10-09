@@ -20,23 +20,16 @@ import kotlinx.coroutines.withContext
 import java.util.Locale
 
 @SuppressLint("LocalContextGetResourceValueCall")
+@Suppress("LongMethod", "FunctionNaming")
 @Composable
 fun SettingsPreferencesBackupSection() {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     var message by remember { mutableStateOf<String?>(null) }
-<<<<<<< Updated upstream
-    val exportedMessage = stringResource(R.string.pref_backup_exported)
-    val importedMessage = stringResource(R.string.pref_backup_imported)
-    val failedMessageFormat = stringResource(R.string.pref_backup_failed)
-=======
-
     // Pre-fetch strings to avoid @Composable calls inside coroutines and satisfy Lint
     val strExported = stringResource(R.string.pref_backup_exported)
     val strImported = stringResource(R.string.pref_backup_imported)
     val strFailed = stringResource(R.string.pref_backup_failed)
-
->>>>>>> Stashed changes
     val exportLauncher = rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("application/json")) { uri ->
         if (uri != null) scope.launch {
             val result = runCatching {
@@ -47,19 +40,13 @@ fun SettingsPreferencesBackupSection() {
                         ?: error("Unable to open destination")
                     temp.delete()
                 }
-<<<<<<< Updated upstream
-                exportedMessage
-            }.getOrElse {
-                String.format(Locale.getDefault(), failedMessageFormat, it.message ?: "unknown error")
-=======
                 true
             }
             message = if (result.isSuccess) {
                 strExported
             } else {
-                // For parameterized strings, we still use context.getString since we need to inject the error message
-                context.getString(R.string.pref_backup_failed, result.exceptionOrNull()?.message ?: "unknown error")
->>>>>>> Stashed changes
+                // For parameterized strings, format the prefetched localized resource with the error message.
+                String.format(Locale.getDefault(), strFailed, result.exceptionOrNull()?.message ?: "unknown error")
             }
         }
     }
@@ -73,18 +60,12 @@ fun SettingsPreferencesBackupSection() {
                     PreferencesBackup.importPreferences(context, temp.absolutePath)
                     temp.delete()
                 }
-<<<<<<< Updated upstream
-                importedMessage
-            }.getOrElse {
-                String.format(Locale.getDefault(), failedMessageFormat, it.message ?: "unknown error")
-=======
                 true
             }
             message = if (result.isSuccess) {
                 strImported
             } else {
-                context.getString(R.string.pref_backup_failed, result.exceptionOrNull()?.message ?: "unknown error")
->>>>>>> Stashed changes
+                String.format(Locale.getDefault(), strFailed, result.exceptionOrNull()?.message ?: "unknown error")
             }
         }
     }
