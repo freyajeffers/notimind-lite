@@ -28,13 +28,40 @@ class MigrationRunner(
   fun preflight(): MigrationPreflight {
     val databaseDir = context.getDatabasePath(AppDatabase.CE_DATABASE_NAME).parentFile
       ?: error("Unable to resolve database directory")
-    val plaintext = File(databaseDir, "${AppDatabase.CE_DATABASE_NAME}.plaintext")
+    val plaintext = findLegacyPlaintextFile(databaseDir)
     val encrypted = context.getDatabasePath(AppDatabase.CE_DATABASE_NAME)
     val sourceBytes = plaintext.takeIf { it.exists() }?.length() ?: 0L
     val requiredBytes = (sourceBytes * 2L).coerceAtLeast(1L)
     val stat = StatFs(databaseDir.absolutePath)
     val availableBytes = stat.availableBlocksLong * stat.blockSizeLong
-    return MigrationPreflight(plaintext, encrypted, plaintext.exists(), encrypted.exists(), availableBytes, requiredBytes)
+    return MigrationPreflight(
+      plaintext,
+      encrypted,
+      plaintext.exists(),
+      encrypted.isFile && !isPlaintextSQLite(encrypted),
+      availableBytes,
+      requiredBytes
+    )
+  }
+
+  private fun findLegacyPlaintextFile(databaseDir: File): File {
+    val candidates = listOf(
+      File(databaseDir, AppDatabase.CE_DATABASE_NAME),
+      File(databaseDir, "${AppDatabase.CE_DATABASE_NAME}.plaintext")
+    )
+    return candidates.firstOrNull { it.isFile && isPlaintextSQLite(it) }
+      ?: candidates.last()
+  }
+
+  private fun isPlaintextSQLite(file: File): Boolean {
+    if (!file.isFile || file.length() < SQLITE_HEADER.size) return false
+    val header = ByteArray(SQLITE_HEADER.size)
+    val read = file.inputStream().use { input -> input.read(header) }
+    return read == header.size && header.contentEquals(SQLITE_HEADER)
+  }
+
+  private companion object {
+    private val SQLITE_HEADER = "SQLite format 3\u0000".toByteArray(Charsets.US_ASCII)
   }
 
   fun migrateOpenedDatabases(
