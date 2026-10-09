@@ -1,11 +1,15 @@
 package com.jeffers.notimindlite.migration
 
 import com.notimind.lite.base.BaseRobolectricTest
+import androidx.room.Room
+import com.jeffers.notimindlite.data.local.AppDatabase
+import com.jeffers.notimindlite.data.local.NotificationEntity
 import java.io.File
 import java.nio.file.Files
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import kotlinx.coroutines.test.runTest
 
 class DatabaseMigrationOrchestratorTest : BaseRobolectricTest() {
   @Test
@@ -46,6 +50,49 @@ class DatabaseMigrationOrchestratorTest : BaseRobolectricTest() {
       assertTrue(encrypted.exists())
     } finally {
       directory.deleteRecursively()
+    }
+  }
+
+  @Test
+  fun copyAndVerifyPreservesExactlyAllNotificationRows() = runTest {
+    val source = Room.inMemoryDatabaseBuilder(context, AppDatabase::class.java)
+      .allowMainThreadQueries().build()
+    val target = Room.inMemoryDatabaseBuilder(context, AppDatabase::class.java)
+      .allowMainThreadQueries().build()
+    try {
+      source.notificationDao().insertNotification(
+        NotificationEntity(
+          key = "migration-1",
+          packageName = "pkg",
+          appName = "App",
+          title = "One",
+          content = "A",
+          postTime = 1L
+        )
+      )
+      source.notificationDao().insertNotification(
+        NotificationEntity(
+          key = "migration-2",
+          packageName = "pkg",
+          appName = "App",
+          title = "Two",
+          content = "B",
+          postTime = 2L
+        )
+      )
+
+      val result = DatabaseMigrationOrchestrator().copyAndVerify(
+        source.openHelper.readableDatabase,
+        target.openHelper.writableDatabase,
+        batchSize = 1
+      )
+
+      assertEquals(MigrationState.VERIFYING, result.state)
+      assertEquals(2, target.notificationDao().getAllNotificationsList().size)
+      assertEquals(2, result.verifiedRows)
+    } finally {
+      source.close()
+      target.close()
     }
   }
 }
