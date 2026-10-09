@@ -152,7 +152,12 @@ class DatabaseMigrationOrchestrator(
         var count = 0
         while (cursor.moveToNext()) {
           val values = cursorValues(cursor, columns)
-          target.insert(table, android.database.sqlite.SQLiteDatabase.CONFLICT_IGNORE, values)
+          val insertedRowId = target.insert(
+            table,
+            android.database.sqlite.SQLiteDatabase.CONFLICT_ABORT,
+            values
+          )
+          check(insertedRowId != -1L) { "Unable to insert row into $table" }
           count++
         }
         count
