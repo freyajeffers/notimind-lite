@@ -428,5 +428,5 @@
     <string name="migration_settings_confirm_description">The migration verifies copied rows before replacing the plaintext database. This may take a moment.</string>
     <string name="migration_settings_confirm">Migrate</string>
     <string name="migration_settings_cancel">Cancel</string>
-    <string name="migration_settings_failure">Migration did not complete: %1$s</string>
+    <string name="migration_settings_failure">Database migration did not complete. Please try again.</string>
 </resources>

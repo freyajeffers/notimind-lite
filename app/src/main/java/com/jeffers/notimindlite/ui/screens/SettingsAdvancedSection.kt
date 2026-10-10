@@ -41,6 +41,7 @@ fun SettingsAdvancedSection(
     val preflight = remember(databaseName) { MigrationRunner(context).preflight(databaseName) }
     var showMigrationConfirmation by remember { mutableStateOf(false) }
     var migrationMessage by remember { mutableStateOf<String?>(null) }
+    val migrationFailureMessage = stringResource(R.string.migration_settings_failure)
     val enableTelemetry by preferencesRepository.enableTelemetry.collectAsState(initial = true)
     val telemetryLevel by preferencesRepository.telemetryLevel.collectAsState(initial = "minimal")
     val maxDbMb by preferencesRepository.maxDbMb.collectAsState(initial = 512)
@@ -112,7 +113,7 @@ fun SettingsAdvancedSection(
                             if (state == MigrationState.COMPLETE) {
                                 null
                             } else {
-                                context.getString(R.string.migration_settings_failure, state)
+                                migrationFailureMessage
                             }
                         }
                         if (migrationMessage == null) onMigrationCompleted()
