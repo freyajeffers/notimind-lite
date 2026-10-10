@@ -90,19 +90,25 @@ scope:
 This is real engineering work (likely 1–3 focused sessions). It is NOT a
 "git checkout historical, build, copy" operation.
 
-## Current state (verified at session end)
+## Current state
 
-- `app/schemas/com.jeffers.notimindlite.data.local.AppDatabase/18.json` is the
-  only schema in source control.
-- `tier1_feature/MigrationTest.smoke_notificationRoundTripSucceedsAtCurrentSchema`
-  is green; exercises Room end-to-end at v18.
-- `tier1_feature/MigrationTest.migration_17_to_18_*` is `@Ignore`d pending
-  either (a) the synthetic schema generator above or (b) hand-construction
-  of just `17.json` (the only migration that could conceivably be enabled
-  without historical backfill, since it's adjacent to the existing v18).
-- Master branch is clean and in sync with `origin/master`.
+- Schemas 8–16 were emitted by Room's KSP processor from isolated historical
+  worktrees and are tracked under `app/schemas/...` and test assets.
+- Schemas 1–7 were recovered from the committed database-change history:
+  `MIGRATION_1_2` through `MIGRATION_7_8`, the historical entity field order,
+  and the index changes. Their columns and index sets are documented in the
+  JSON files and mirrored in `app/src/main/assets/...`.
+- The 1–7 files are reconstruction artifacts, not Room-emitted snapshots.
+  Their `identityHash` cannot be recovered from Git because the historical
+  source never exported Room schemas. They must not be treated as proof that
+  `MigrationTestHelper.validateMigration` will accept every early transition.
+- The current migration smoke tests remain the authoritative executable
+  checks for the emitted schema chain; early-version validation is a follow-up
+  if exact historical Room identity hashes become available.
 
 ## Decision
 
-Backfill deferred. The scaffold stays in place so future work can pick it up
-when the engineering bandwidth is available.
+Recoverable schema structure has been backfilled without fabricating historical
+source commits. The provenance limitation for versions 1–7 is recorded next to
+the artifacts rather than silently presenting reconstructed JSON as an exact
+Room export.
