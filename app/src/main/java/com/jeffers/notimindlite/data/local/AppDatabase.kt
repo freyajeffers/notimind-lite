@@ -4,6 +4,7 @@ import android.content.Context
 import android.os.UserManager
 import android.util.Log
 import com.jeffers.notimindlite.util.DatabaseLockManager
+import com.jeffers.notimindlite.migration.EncryptionMigrationConsent
 import com.jeffers.notimindlite.migration.MigrationRunner
 import com.jeffers.notimindlite.migration.MigrationState
 import androidx.room.Database
@@ -444,6 +445,7 @@ abstract class AppDatabase : RoomDatabase() {
             }
         }
 
+        @Suppress("CyclomaticComplexMethod")
         fun getCeInstance(context: Context): AppDatabase {
             val appContext = context.applicationContext
             val userManager = appContext.getSystemService(Context.USER_SERVICE) as? UserManager
@@ -461,10 +463,11 @@ abstract class AppDatabase : RoomDatabase() {
                 ceInstance ?: run {
                     val databaseName = databaseName(CE_DATABASE_NAME, profileId)
                     val preferences = PreferencesRepository(appContext)
-                    val migrationState = if (
-                        preferences.dbEncrypted.value &&
-                        preferences.dbEncryptionMode.value != DbEncryptionMode.NONE
-                    ) {
+                    val encryptionRequested =
+                        preferences.dbEncrypted.value && preferences.dbEncryptionMode.value != DbEncryptionMode.NONE
+                    val legacyPlaintextPending = MigrationRunner(appContext).preflight(databaseName).plaintextExists
+                    val consent = EncryptionMigrationConsent.get(appContext)
+                    val migrationState = if (encryptionRequested && legacyPlaintextPending && consent == EncryptionMigrationConsent.Decision.ACCEPTED) {
                         MigrationRunner(appContext).migrateLegacyDatabase(databaseName)
                     } else {
                         MigrationState.NOT_REQUIRED
@@ -473,12 +476,18 @@ abstract class AppDatabase : RoomDatabase() {
                         MigrationState.NOT_REQUIRED, MigrationState.COMPLETE -> Unit
                         else -> error("Legacy database migration did not complete safely")
                     }
+                    val useEncryption = encryptionRequested &&
+                        (!legacyPlaintextPending || consent == EncryptionMigrationConsent.Decision.ACCEPTED)
                     val instance = Room.databaseBuilder(
                         appContext,
                         AppDatabase::class.java,
                         databaseName
                     )
-                    .apply { EncryptedDatabaseFactory.openHelperFactory(appContext, databaseName)?.let(::openHelperFactory) }
+                    .apply {
+                        if (useEncryption) {
+                            EncryptedDatabaseFactory.openHelperFactory(appContext, databaseName)?.let(::openHelperFactory)
+                        }
+                    }
                     .addMigrations(
                         MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7,
                         MIGRATION_7_8, MIGRATION_8_9, MIGRATION_9_10,

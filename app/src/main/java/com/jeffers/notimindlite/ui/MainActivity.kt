@@ -28,6 +28,9 @@ import androidx.lifecycle.lifecycleScope
 import com.jeffers.notimindlite.R
 import com.jeffers.notimindlite.data.local.AppDatabase
 import com.jeffers.notimindlite.data.local.PreferencesRepository
+import com.jeffers.notimindlite.data.local.DbEncryptionMode
+import com.jeffers.notimindlite.migration.EncryptionMigrationConsent
+import com.jeffers.notimindlite.migration.MigrationRunner
 import com.jeffers.notimindlite.service.NotificationLoggerService
 import com.jeffers.notimindlite.ui.screens.checkNotificationPermission
 import com.jeffers.notimindlite.domain.clustering.DynamicClusterManager
@@ -44,17 +47,43 @@ class MainActivity : ComponentActivity() {
             }
         }
 
-    @Suppress("TooGenericExceptionCaught", "LongMethod")
+    @Suppress("TooGenericExceptionCaught", "LongMethod", "CyclomaticComplexMethod")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         window.statusBarColor = android.graphics.Color.BLACK
         window.navigationBarColor = android.graphics.Color.BLACK
 
+        val preferencesRepository = PreferencesRepository(applicationContext)
+        val migrationRunner = MigrationRunner(applicationContext)
+        val profileId = PreferencesRepository.activeProfileId(applicationContext)
+        val databaseName = if (profileId == PreferencesRepository.DEFAULT_PROFILE_ID) {
+            AppDatabase.CE_DATABASE_NAME
+        } else {
+            "${AppDatabase.CE_DATABASE_NAME}_$profileId"
+        }
+        val migrationConsentRequired = preferencesRepository.dbEncrypted.value &&
+            preferencesRepository.dbEncryptionMode.value != DbEncryptionMode.NONE &&
+            EncryptionMigrationConsent.get(applicationContext) == EncryptionMigrationConsent.Decision.UNKNOWN &&
+            migrationRunner.preflight(databaseName).plaintextExists
+
+        if (migrationConsentRequired) {
+            setContent {
+                com.jeffers.notimindlite.ui.theme.NotiMindLiteTheme {
+                    EncryptionMigrationConsentDialog(
+                        onDecision = { decision ->
+                            EncryptionMigrationConsent.set(applicationContext, decision)
+                            recreate()
+                        }
+                    )
+                }
+            }
+            return
+        }
+
         val database = AppDatabase.getDatabase(applicationContext)
         val dao = database.notificationDao()
         val authManager = com.jeffers.notimindlite.data.auth.AuthManager(applicationContext)
-        val preferencesRepository = PreferencesRepository(applicationContext)
 
         checkPostNotificationsPermission()
 
@@ -167,4 +196,31 @@ class MainActivity : ComponentActivity() {
             }
         }
     }
+}
+
+@Suppress("FunctionNaming")
+@Composable
+private fun EncryptionMigrationConsentDialog(
+    onDecision: (EncryptionMigrationConsent.Decision) -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = { onDecision(EncryptionMigrationConsent.Decision.DECLINED) },
+        title = { Text("Encrypt existing notification data?") },
+        text = {
+            Text(
+                "NotiMind found an existing plaintext database. Accept to securely migrate it " +
+                    "to encrypted storage. Your original database is retained until verification succeeds."
+            )
+        },
+        confirmButton = {
+            Button(onClick = { onDecision(EncryptionMigrationConsent.Decision.ACCEPTED) }) {
+                Text("Encrypt and continue")
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = { onDecision(EncryptionMigrationConsent.Decision.DECLINED) }) {
+                Text("Keep unencrypted")
+            }
+        }
+    )
 }
