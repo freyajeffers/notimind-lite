@@ -52,19 +52,23 @@ object SqlCipherKeyManager {
             val baseSpec = android.security.keystore.KeyGenParameterSpec.Builder(alias, purposes)
                 .setBlockModes(android.security.keystore.KeyProperties.BLOCK_MODE_GCM)
                 .setEncryptionPaddings(android.security.keystore.KeyProperties.ENCRYPTION_PADDING_NONE)
+            var generatedKey: SecretKey? = null
 
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
                 try {
                     generator.init(baseSpec.setIsStrongBoxBacked(true).build())
-                    return generator.generateKey()
+                    generatedKey = generator.generateKey()
                 } catch (_: Exception) {
                     // StrongBox is optional. Retry in the TEE-backed/default Keystore
                     // provider before treating the provider as unavailable.
                 }
             }
 
-            generator.init(baseSpec.setIsStrongBoxBacked(false).build())
-            generator.generateKey()
+            if (generatedKey == null) {
+                generator.init(baseSpec.setIsStrongBoxBacked(false).build())
+                generatedKey = generator.generateKey()
+            }
+            generatedKey
         } catch (e: Exception) {
             check(Build.FINGERPRINT == "robolectric") {
                 "AndroidKeyStore is required for SQLCipher passphrase protection"

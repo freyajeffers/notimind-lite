@@ -40,18 +40,22 @@ object BackupKeyCodec {
             .setBlockModes(KeyProperties.BLOCK_MODE_GCM)
             .setEncryptionPaddings(KeyProperties.ENCRYPTION_PADDING_NONE)
             .setKeySize(AES_KEY_SIZE_BITS)
+        var generatedKey: SecretKey? = null
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
             try {
                 keyGenerator.init(baseSpec.setIsStrongBoxBacked(true).build())
-                return keyGenerator.generateKey()
+                generatedKey = keyGenerator.generateKey()
             } catch (_: Exception) {
                 // StrongBox is optional; use the platform Keystore/TEE fallback.
             }
         }
 
-        keyGenerator.init(baseSpec.setIsStrongBoxBacked(false).build())
-        return keyGenerator.generateKey()
+        if (generatedKey == null) {
+            keyGenerator.init(baseSpec.setIsStrongBoxBacked(false).build())
+            generatedKey = keyGenerator.generateKey()
+        }
+        return checkNotNull(generatedKey)
     }
 
     /** Encodes a SecretKey's raw bytes as Base64 for user-facing display (not for DB storage). */
