@@ -1,31 +1,26 @@
 {
   "project_info": {
-    "project_number": "1234567890",
-    "project_id": "notimind-lite-demo",
-    "storage_bucket": "notimind-lite-demo.appspot.com"
+    "project_number": "665231760725",
+    "project_id": "notimind-lite",
+    "storage_bucket": "notimind-lite.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:1234567890:android:abcdef1234567890",
+        "mobilesdk_app_id": "1:665231760725:android:1f7258f0491ea19031e3dc",
         "android_client_info": {
           "package_name": "com.jeffers.notimindlite"
         }
       },
-      "oauth_client": [
-        {
-          "client_id": "1234567890-demo.apps.googleusercontent.com",
-          "client_type": 3
-        }
-      ],
+      "oauth_client": [],
       "api_key": [
         {
-          "current_key": "AIzaSyDemoApiKeyForNotiMindLite"
+          "current_key": "AIzaSyAG--cpMdYeTdeVEf1NSF06eQLDqny1x9U"
         }
       ],
       "services": {
         "appinvite_service": {
-          "status": 1
+          "other_platform_oauth_client": []
         }
       }
     }
