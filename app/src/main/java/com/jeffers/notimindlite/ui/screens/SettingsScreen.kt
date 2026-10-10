@@ -60,8 +60,10 @@ fun SettingsScreen(
     authManager: AuthManager,
     db: AppDatabase,
     preferencesRepository: com.jeffers.notimindlite.data.local.PreferencesRepository,
-    webClientId: String = ""
+    webClientId: String? = null
 ) {
+    val configuredWebClientId = webClientId?.takeIf { it.isNotBlank() }
+        ?: stringResource(R.string.default_web_client_id)
     val session by authManager.session.collectAsState()
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
@@ -152,7 +154,7 @@ fun SettingsScreen(
                     Button(
                         onClick = {
                             scope.launch {
-                                authManager.signInWithGoogle(webClientId)
+                                authManager.signInWithGoogle(configuredWebClientId)
                                 SyncWorker.schedulePeriodicSync(context)
                             }
                         },
