@@ -429,4 +429,5 @@
     <string name="migration_settings_confirm">Migrate</string>
     <string name="migration_settings_cancel">Cancel</string>
     <string name="migration_settings_failure">Database migration did not complete. Please try again.</string>
+    <string name="default_web_client_id">665231760725-71848pgk0v4hindp9l2m84sg6kted2ep.apps.googleusercontent.com</string>
 </resources>
