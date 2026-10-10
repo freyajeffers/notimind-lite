@@ -28,6 +28,12 @@ dependencyResolutionManagement {
   }
 }
 
+buildCache {
+  local {
+    isEnabled = true
+  }
+}
+
 // Keep any dependency that is introduced by a plugin or transitive graph at a
 // patched version. These rules are harmless when the module is absent and
 // prevent vulnerable versions from entering any project configuration.
