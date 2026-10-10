@@ -14,6 +14,14 @@
       },
       "oauth_client": [
         {
+          "client_id": "665231760725-lit89okit058m6s1h2uda4234ecictth.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.jeffers.notimindlite",
+            "certificate_hash": "df1633a856ff086430af9938f9af098d59c0566d"
+          }
+        },
+        {
           "client_id": "665231760725-t8tikqbjur5ust6vn1hucn9qg4kdg5mn.apps.googleusercontent.com",
           "client_type": 3
         }
