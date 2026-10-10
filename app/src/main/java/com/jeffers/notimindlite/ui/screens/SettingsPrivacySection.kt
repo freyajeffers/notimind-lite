@@ -18,7 +18,7 @@ fun SettingsPrivacySection(preferencesRepository: PreferencesRepository) {
     val scope = rememberCoroutineScope()
     val autoDelete by preferencesRepository.autoDeleteOnRead.collectAsState(initial = false)
     val anonymizeTitles by preferencesRepository.anonymizeTitles.collectAsState(initial = false)
-    val redactPii by preferencesRepository.redactPii.collectAsState(initial = true)
+    val redactPii by preferencesRepository.redactPii.collectAsState(initial = false)
 
     Card(
         modifier = Modifier.fillMaxWidth(),
@@ -58,7 +58,11 @@ fun SettingsPrivacySection(preferencesRepository: PreferencesRepository) {
                     Text(stringResource(R.string.pref_redact_pii_title), style = MaterialTheme.typography.bodyLarge)
                     Text(stringResource(R.string.pref_redact_pii_summary), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
-                Switch(checked = redactPii, onCheckedChange = { scope.launch { preferencesRepository.setRedactPii(it) } }, enabled = !BuildConfig.DEBUG)
+                Switch(
+                    checked = redactPii,
+                    onCheckedChange = { scope.launch { preferencesRepository.setRedactPii(it) } },
+                    enabled = !BuildConfig.DEBUG
+                )
             }
         }
     }
