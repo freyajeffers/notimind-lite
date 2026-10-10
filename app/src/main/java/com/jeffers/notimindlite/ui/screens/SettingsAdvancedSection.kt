@@ -4,16 +4,43 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import com.jeffers.notimindlite.data.local.PreferencesRepository
+import com.jeffers.notimindlite.data.local.AppDatabase
+import com.jeffers.notimindlite.data.local.DbEncryptionMode
+import com.jeffers.notimindlite.migration.EncryptionMigrationConsent
+import com.jeffers.notimindlite.migration.MigrationRunner
+import com.jeffers.notimindlite.migration.MigrationState
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import com.jeffers.notimindlite.BuildConfig
 import com.jeffers.notimindlite.R
 
+@Suppress("LongMethod", "FunctionNaming")
 @Composable
-fun SettingsAdvancedSection(preferencesRepository: PreferencesRepository) {
+fun SettingsAdvancedSection(
+    preferencesRepository: PreferencesRepository,
+    onMigrationCompleted: () -> Unit
+) {
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
+    val encryptionEnabled = preferencesRepository.dbEncrypted.collectAsState(initial = false).value &&
+        preferencesRepository.dbEncryptionMode.collectAsState(initial = DbEncryptionMode.NONE).value !=
+            DbEncryptionMode.NONE
+    val profileId = preferencesRepository.activeProfileId.collectAsState().value
+    val databaseName = if (profileId == PreferencesRepository.DEFAULT_PROFILE_ID) {
+        AppDatabase.CE_DATABASE_NAME
+    } else {
+        "${AppDatabase.CE_DATABASE_NAME}_$profileId"
+    }
+    val preflight = remember(databaseName) { MigrationRunner(context).preflight(databaseName) }
+    var showMigrationConfirmation by remember { mutableStateOf(false) }
+    var migrationMessage by remember { mutableStateOf<String?>(null) }
     val enableTelemetry by preferencesRepository.enableTelemetry.collectAsState(initial = true)
     val telemetryLevel by preferencesRepository.telemetryLevel.collectAsState(initial = "minimal")
     val maxDbMb by preferencesRepository.maxDbMb.collectAsState(initial = 512)
@@ -51,6 +78,14 @@ fun SettingsAdvancedSection(preferencesRepository: PreferencesRepository) {
                 OutlinedTextField(value = maxDbMb.toString(), onValueChange = { it.toIntOrNull()?.let(preferencesRepository::setMaxDbMb) }, modifier = Modifier.width(120.dp), singleLine = true)
             }
 
+            if (encryptionEnabled && preflight.plaintextExists) {
+                Text(stringResource(R.string.migration_settings_pending), style = MaterialTheme.typography.bodyMedium)
+                Button(onClick = { showMigrationConfirmation = true }) {
+                    Text(stringResource(R.string.migration_settings_button))
+                }
+                migrationMessage?.let { Text(it, color = MaterialTheme.colorScheme.error) }
+            }
+
             Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
                 Column(modifier = Modifier.weight(1f)) {
                     Text(stringResource(R.string.pref_vector_cache_max_title), style = MaterialTheme.typography.bodyLarge)
@@ -59,5 +94,36 @@ fun SettingsAdvancedSection(preferencesRepository: PreferencesRepository) {
                 OutlinedTextField(value = vectorCacheMax.toString(), onValueChange = { it.toIntOrNull()?.let(preferencesRepository::setVectorCacheMax) }, modifier = Modifier.width(120.dp), singleLine = true)
             }
         }
+    }
+
+    if (showMigrationConfirmation) {
+        AlertDialog(
+            onDismissRequest = { showMigrationConfirmation = false },
+            title = { Text(stringResource(R.string.migration_settings_confirm_title)) },
+            text = { Text(stringResource(R.string.migration_settings_confirm_description)) },
+            confirmButton = {
+                Button(onClick = {
+                    showMigrationConfirmation = false
+                    scope.launch {
+                        migrationMessage = withContext(Dispatchers.IO) {
+                            EncryptionMigrationConsent.set(context, EncryptionMigrationConsent.Decision.ACCEPTED)
+                            AppDatabase.resetInstance()
+                            val state = MigrationRunner(context).migrateLegacyDatabase(databaseName)
+                            if (state == MigrationState.COMPLETE) {
+                                null
+                            } else {
+                                context.getString(R.string.migration_settings_failure, state)
+                            }
+                        }
+                        if (migrationMessage == null) onMigrationCompleted()
+                    }
+                }) { Text(stringResource(R.string.migration_settings_confirm)) }
+            },
+            dismissButton = {
+                TextButton(onClick = { showMigrationConfirmation = false }) {
+                    Text(stringResource(R.string.migration_settings_cancel))
+                }
+            }
+        )
     }
 }

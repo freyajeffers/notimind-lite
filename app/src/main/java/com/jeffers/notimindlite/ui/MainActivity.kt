@@ -205,21 +205,16 @@ private fun EncryptionMigrationConsentDialog(
 ) {
     AlertDialog(
         onDismissRequest = { onDecision(EncryptionMigrationConsent.Decision.DECLINED) },
-        title = { Text("Encrypt existing notification data?") },
-        text = {
-            Text(
-                "NotiMind found an existing plaintext database. Accept to securely migrate it " +
-                    "to encrypted storage. Your original database is retained until verification succeeds."
-            )
-        },
+        title = { Text(stringResource(R.string.migration_consent_title)) },
+        text = { Text(stringResource(R.string.migration_consent_description)) },
         confirmButton = {
             Button(onClick = { onDecision(EncryptionMigrationConsent.Decision.ACCEPTED) }) {
-                Text("Encrypt and continue")
+                Text(stringResource(R.string.migration_consent_accept))
             }
         },
         dismissButton = {
             TextButton(onClick = { onDecision(EncryptionMigrationConsent.Decision.DECLINED) }) {
-                Text("Keep unencrypted")
+                Text(stringResource(R.string.migration_consent_decline))
             }
         }
     )

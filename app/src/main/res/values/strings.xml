@@ -418,4 +418,15 @@
     <string name="notification_group_expand_short">Expand</string>
     <string name="notification_inbox_lines">Inbox Lines (%1$d)</string>
     <string name="actionable_chip_label">%1$s: %2$s</string>
+    <string name="migration_consent_title">Encrypt existing notification data?</string>
+    <string name="migration_consent_description">NotiMind found an existing plaintext database. Accept to securely migrate it to encrypted storage. Your original database is retained until verification succeeds.</string>
+    <string name="migration_consent_accept">Encrypt and continue</string>
+    <string name="migration_consent_decline">Keep unencrypted</string>
+    <string name="migration_settings_pending">An unencrypted database is waiting to be migrated.</string>
+    <string name="migration_settings_button">Migrate database to encrypted storage</string>
+    <string name="migration_settings_confirm_title">Migrate database to encrypted storage?</string>
+    <string name="migration_settings_confirm_description">The migration verifies copied rows before replacing the plaintext database. This may take a moment.</string>
+    <string name="migration_settings_confirm">Migrate</string>
+    <string name="migration_settings_cancel">Cancel</string>
+    <string name="migration_settings_failure">Migration did not complete: %1$s</string>
 </resources>
