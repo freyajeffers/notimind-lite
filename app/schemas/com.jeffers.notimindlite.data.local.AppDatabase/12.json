@@ -1,0 +1,308 @@
+{
+  "formatVersion": 1,
+  "database": {
+    "version": 12,
+    "identityHash": "d63d9a6ba7400829c1b6cfbcb2365691",
+    "entities": [
+      {
+        "tableName": "notifications",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `key` TEXT NOT NULL, `packageName` TEXT NOT NULL, `appName` TEXT NOT NULL, `appIconUri` TEXT, `title` TEXT NOT NULL, `content` TEXT NOT NULL, `postTime` INTEGER NOT NULL, `lastUpdatedTime` INTEGER NOT NULL, `updateCount` INTEGER NOT NULL, `isDismissed` INTEGER NOT NULL, `isPersistent` INTEGER NOT NULL, `isRead` INTEGER NOT NULL, `isGroupSummary` INTEGER NOT NULL, `category` TEXT, `channelId` TEXT, `subText` TEXT, `bigText` TEXT, `inboxLinesJson` TEXT, `priority` INTEGER NOT NULL, `groupKey` TEXT, `isOngoing` INTEGER NOT NULL, `isClearable` INTEGER NOT NULL, `actionsCount` INTEGER NOT NULL, `dismissReason` INTEGER, `dismissTime` INTEGER, `intentUri` TEXT, `isPinned` INTEGER NOT NULL, `actionLabels` TEXT, `smallIconRes` INTEGER NOT NULL, FOREIGN KEY(`packageName`) REFERENCES `apps`(`packageName`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "key",
+            "columnName": "key",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "packageName",
+            "columnName": "packageName",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "appName",
+            "columnName": "appName",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "appIconUri",
+            "columnName": "appIconUri",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "title",
+            "columnName": "title",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "content",
+            "columnName": "content",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "postTime",
+            "columnName": "postTime",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "lastUpdatedTime",
+            "columnName": "lastUpdatedTime",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "updateCount",
+            "columnName": "updateCount",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "isDismissed",
+            "columnName": "isDismissed",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "isPersistent",
+            "columnName": "isPersistent",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "isRead",
+            "columnName": "isRead",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "isGroupSummary",
+            "columnName": "isGroupSummary",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "category",
+            "columnName": "category",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "channelId",
+            "columnName": "channelId",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "subText",
+            "columnName": "subText",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "bigText",
+            "columnName": "bigText",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "inboxLinesJson",
+            "columnName": "inboxLinesJson",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "priority",
+            "columnName": "priority",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "groupKey",
+            "columnName": "groupKey",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "isOngoing",
+            "columnName": "isOngoing",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "isClearable",
+            "columnName": "isClearable",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "actionsCount",
+            "columnName": "actionsCount",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "dismissReason",
+            "columnName": "dismissReason",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "dismissTime",
+            "columnName": "dismissTime",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "intentUri",
+            "columnName": "intentUri",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "isPinned",
+            "columnName": "isPinned",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "actionLabels",
+            "columnName": "actionLabels",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "smallIconRes",
+            "columnName": "smallIconRes",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": true,
+          "columnNames": [
+            "id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_notifications_key",
+            "unique": true,
+            "columnNames": [
+              "key"
+            ],
+            "orders": [],
+            "createSql": "CREATE UNIQUE INDEX IF NOT EXISTS `index_notifications_key` ON `${TABLE_NAME}` (`key`)"
+          },
+          {
+            "name": "index_notifications_isDismissed_postTime",
+            "unique": false,
+            "columnNames": [
+              "isDismissed",
+              "postTime"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_notifications_isDismissed_postTime` ON `${TABLE_NAME}` (`isDismissed`, `postTime`)"
+          },
+          {
+            "name": "index_notifications_isDismissed_dismissTime",
+            "unique": false,
+            "columnNames": [
+              "isDismissed",
+              "dismissTime"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_notifications_isDismissed_dismissTime` ON `${TABLE_NAME}` (`isDismissed`, `dismissTime`)"
+          },
+          {
+            "name": "index_notifications_packageName_isDismissed",
+            "unique": false,
+            "columnNames": [
+              "packageName",
+              "isDismissed"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_notifications_packageName_isDismissed` ON `${TABLE_NAME}` (`packageName`, `isDismissed`)"
+          },
+          {
+            "name": "index_notifications_isPinned_postTime",
+            "unique": false,
+            "columnNames": [
+              "isPinned",
+              "postTime"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_notifications_isPinned_postTime` ON `${TABLE_NAME}` (`isPinned`, `postTime`)"
+          },
+          {
+            "name": "index_notifications_isRead",
+            "unique": false,
+            "columnNames": [
+              "isRead"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_notifications_isRead` ON `${TABLE_NAME}` (`isRead`)"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "table": "apps",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "packageName"
+            ],
+            "referencedColumns": [
+              "packageName"
+            ]
+          }
+        ]
+      },
+      {
+        "tableName": "apps",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`packageName` TEXT NOT NULL, `appName` TEXT NOT NULL, `appIconUri` TEXT, `firstSeenTime` INTEGER NOT NULL, `lastSeenTime` INTEGER NOT NULL, PRIMARY KEY(`packageName`))",
+        "fields": [
+          {
+            "fieldPath": "packageName",
+            "columnName": "packageName",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "appName",
+            "columnName": "appName",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "appIconUri",
+            "columnName": "appIconUri",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "firstSeenTime",
+            "columnName": "firstSeenTime",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "lastSeenTime",
+            "columnName": "lastSeenTime",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "packageName"
+          ]
+        }
+      }
+    ],
+    "setupQueries": [
+      "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'd63d9a6ba7400829c1b6cfbcb2365691')"
+    ]
+  }
+}

@@ -16,6 +16,7 @@ fi
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 APP_PATH="app/src/main/java/com/jeffers/notimindlite/data/local/AppDatabase.kt"
 WORKTREE_BASE="$ROOT/.worktrees/schemas"
+JAVA_HOME_PATH="${JAVA_HOME:-$(dirname "$(dirname "$(readlink -f "$(command -v java)")")")}"
 SCHEMA_PACKAGE="com.jeffers.notimindlite.data.local.AppDatabase"
 mkdir -p "$WORKTREE_BASE"
 
@@ -97,6 +98,7 @@ for ver in "$@"; do
     git worktree add -f "$worktree" "$commit"
   fi
   prepare_build_inputs "$worktree"
+  python3 "$ROOT/exports-scripts/patch-historical-builds.py" >/dev/null
 
   # Room only exports when the historical build supplies a schema location.
   python3 - "$worktree/app/build.gradle.kts" <<'PY'
@@ -112,7 +114,7 @@ PY
 
   echo "Generating schema ${ver} in $worktree"
   "$ROOT/gradlew" --project-dir "$worktree" \
-    -Dorg.gradle.java.home=/usr/lib/jvm/java-17-openjdk-amd64 \
+    -Dorg.gradle.java.home="$JAVA_HOME_PATH" \
     :app:kspDebugKotlin --no-daemon --max-workers=2 --console=plain
 
   schema="$worktree/app/schemas/$SCHEMA_PACKAGE/${ver}.json"
