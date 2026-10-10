@@ -141,7 +141,9 @@ class PreferencesRepository(context: Context) {
     val minImportance: StateFlow<Int> = _minImportance
     val captureActionsOnly: StateFlow<Boolean> = _captureActionsOnly
 
-    private val _redactPii = MutableStateFlow(backing.getBoolean("config_pii_redaction", backing.getBoolean("config_redact_pii", true)))
+    private val _redactPii = MutableStateFlow(
+        backing.getBoolean("config_pii_redaction", backing.getBoolean("config_redact_pii", false))
+    )
     private val _encryptedExports = MutableStateFlow(backing.getBoolean("config_encrypted_exports", true))
     private val _requirePassphrase = MutableStateFlow(backing.getBoolean("config_require_passphrase", false))
     private val _autoLockDb = MutableStateFlow(backing.getBoolean("config_auto_lock_db", false))
