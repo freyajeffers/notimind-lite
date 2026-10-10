@@ -62,6 +62,7 @@ notimind-commits.txt
 summary.md
 
 # Local/exported account-manifest artifacts; migration scripts already tracked remain tracked
+/repomix-output.xml
 /exports-scripts/*
 !/exports-scripts/sqlcipher-migration-smoke.sh
 !/exports-scripts/sqlcipher-create-fixture.sh
