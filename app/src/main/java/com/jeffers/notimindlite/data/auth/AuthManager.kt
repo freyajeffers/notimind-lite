@@ -2,6 +2,7 @@ package com.jeffers.notimindlite.data.auth
 
 import android.content.Context
 import android.content.MutableContextWrapper
+import android.content.Intent
 import androidx.credentials.CredentialManager
 import androidx.credentials.GetCredentialRequest
 import androidx.credentials.exceptions.GetCredentialException
@@ -19,7 +20,10 @@ class AuthManager(
     private val firebaseAuth: FirebaseAuth = FirebaseAuth.getInstance()
 ) {
     private val credentialContext = MutableContextWrapper(context)
-    private val _session = MutableStateFlow(mapFirebaseUser(firebaseAuth.currentUser))
+    private val supabaseAuth = SupabaseAuthManager(context)
+    private val _session = MutableStateFlow(
+        supabaseAuth.currentSession().takeIf { it.isAuthenticated } ?: mapFirebaseUser(firebaseAuth.currentUser)
+    )
     val session: StateFlow<UserSession> = _session.asStateFlow()
 
     init {
@@ -30,39 +34,20 @@ class AuthManager(
 
     suspend fun signInWithGoogle(webClientId: String): Result<UserSession> {
         _session.value = _session.value.copy(isAuthenticating = true, error = null)
-        return try {
-            val credentialManager = CredentialManager.create(credentialContext)
-            val googleIdOption = GetGoogleIdOption.Builder()
-                .setFilterByAuthorizedAccounts(false)
-                .setServerClientId(webClientId)
-                .setAutoSelectEnabled(false)
-                .build()
+        supabaseAuth.beginGoogleSignIn()
+        return Result.success(_session.value)
+    }
 
-            val request = GetCredentialRequest.Builder()
-                .addCredentialOption(googleIdOption)
-                .build()
-
-            val result = credentialManager.getCredential(credentialContext, request)
-            val googleCredential = GoogleIdTokenCredential.createFrom(result.credential.data)
-            val authCredential = GoogleAuthProvider.getCredential(googleCredential.idToken, null)
-
-            val authResult = firebaseAuth.signInWithCredential(authCredential).await()
-            val user = authResult.user
-            val session = mapFirebaseUser(user)
-            _session.value = session
-            Result.success(session)
-        } catch (e: GetCredentialException) {
-            val session = _session.value.copy(isAuthenticating = false, error = e.localizedMessage ?: "Google Sign-In canceled")
-            _session.value = session
-            Result.failure(e)
-        } catch (e: Exception) {
-            val session = _session.value.copy(isAuthenticating = false, error = e.localizedMessage ?: "Sign-In failed")
-            _session.value = session
-            Result.failure(e)
-        }
+    suspend fun handleIntent(intent: Intent): Result<UserSession>? {
+        val uri = intent.data ?: return null
+        if (uri.scheme != "notimindlite" || uri.host != "supabase-callback") return null
+        val result = supabaseAuth.completeCallback(uri)
+        _session.value = result.getOrElse { _session.value.copy(isAuthenticating = false, error = it.localizedMessage ?: "Sign-In failed") }
+        return result
     }
 
     fun signOut() {
+        supabaseAuth.signOut()
         firebaseAuth.signOut()
         _session.value = UserSession(isAuthenticated = false)
     }

@@ -40,6 +40,8 @@ import kotlinx.coroutines.withContext
 
 class MainActivity : ComponentActivity() {
 
+    private lateinit var authManager: com.jeffers.notimindlite.data.auth.AuthManager
+
     private val requestPermissionLauncher =
         registerForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted ->
             if (isGranted) {
@@ -83,7 +85,8 @@ class MainActivity : ComponentActivity() {
 
         val database = AppDatabase.getDatabase(applicationContext)
         val dao = database.notificationDao()
-        val authManager = com.jeffers.notimindlite.data.auth.AuthManager(applicationContext)
+        authManager = com.jeffers.notimindlite.data.auth.AuthManager(applicationContext)
+        lifecycleScope.launch { authManager.handleIntent(intent) }
 
         checkPostNotificationsPermission()
 
@@ -183,6 +186,12 @@ class MainActivity : ComponentActivity() {
                 }
             }
         }
+    }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        if (::authManager.isInitialized) lifecycleScope.launch { authManager.handleIntent(intent) }
     }
 
     private fun checkPostNotificationsPermission() {
