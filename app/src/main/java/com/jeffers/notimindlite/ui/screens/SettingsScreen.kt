@@ -337,6 +337,7 @@ fun SettingsScreen(
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.SemiBold
                 )
+                var strictPrivacyEnabled by remember { mutableStateOf(PreferenceManager(context).isStrictPrivacyEnabled()) }
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
                     modifier = Modifier.fillMaxWidth()
@@ -350,31 +351,10 @@ fun SettingsScreen(
                         )
                     }
                     Switch(
-                        checked = remember { PreferenceManager(context).isStrictPrivacyEnabled() },
+                        checked = strictPrivacyEnabled,
                         onCheckedChange = { enabled ->
+                            strictPrivacyEnabled = enabled
                             PreferenceManager(context).setStrictPrivacyEnabled(enabled)
-                        }
-                    )
-                }
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Column(modifier = Modifier.weight(1f)) {
-                        Text("PII Redaction Engine", style = MaterialTheme.typography.bodyLarge)
-                        Text(
-                            "Mask OTP codes, cards, phone numbers, and emails before saving.",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
-                    var piiRedactionChecked by remember { mutableStateOf(PreferenceManager(context).isPiiRedactionEnabled()) }
-                    Switch(
-                        checked = piiRedactionChecked,
-                        enabled = !BuildConfig.DEBUG,
-                        onCheckedChange = { enabled ->
-                            piiRedactionChecked = enabled
-                            PreferenceManager(context).setPiiRedactionEnabled(enabled)
                         }
                     )
                 }
