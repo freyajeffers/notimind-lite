@@ -28,7 +28,8 @@ class AuthManager(
 
     init {
         firebaseAuth.addAuthStateListener { auth ->
-            _session.value = mapFirebaseUser(auth.currentUser)
+            val supabaseSession = supabaseAuth.currentSession()
+            _session.value = if (supabaseSession.isAuthenticated) supabaseSession else mapFirebaseUser(auth.currentUser)
         }
     }
 
