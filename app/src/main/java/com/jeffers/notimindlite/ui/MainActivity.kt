@@ -86,7 +86,10 @@ class MainActivity : ComponentActivity() {
         val database = AppDatabase.getDatabase(applicationContext)
         val dao = database.notificationDao()
         authManager = com.jeffers.notimindlite.data.auth.AuthManager(applicationContext)
-        lifecycleScope.launch { authManager.handleIntent(intent) }
+        lifecycleScope.launch {
+            authManager.handleIntent(intent)
+            restoreSettingsAfterLogin(preferencesRepository)
+        }
 
         checkPostNotificationsPermission()
 
@@ -194,6 +197,18 @@ class MainActivity : ComponentActivity() {
         if (::authManager.isInitialized) lifecycleScope.launch { authManager.handleIntent(intent) }
     }
 
+    private suspend fun restoreSettingsAfterLogin(preferences: PreferencesRepository) {
+        val session = authManager.session.value
+        if (!session.isAuthenticated || session.uid == null) return
+        val result = if (preferences.useSupabaseSync.value) {
+            com.jeffers.notimindlite.data.sync.SupabaseSettingsSyncRepository(
+                com.jeffers.notimindlite.data.auth.SupabaseAuthManager(applicationContext)
+            ).restoreOrUpload(preferences, session.uid)
+        } else {
+            com.jeffers.notimindlite.data.sync.FirebaseSettingsSyncRepository().restoreOrUpload(preferences, session.uid)
+        }
+        result.exceptionOrNull()?.let { android.util.Log.w("MainActivity", "Settings restore deferred", it) }
+    }
     private fun checkPostNotificationsPermission() {
         if (BuildConfig.REQUIRES_RUNTIME_POST_NOTIFICATIONS) {
             if (ContextCompat.checkSelfPermission(
