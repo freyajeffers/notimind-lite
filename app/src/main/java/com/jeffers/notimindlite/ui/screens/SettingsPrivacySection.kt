@@ -6,10 +6,12 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import com.jeffers.notimindlite.BuildConfig
 import com.jeffers.notimindlite.data.local.PreferencesRepository
+import com.jeffers.notimindlite.data.local.PreferenceManager
 import com.jeffers.notimindlite.R
 import kotlinx.coroutines.launch
 
@@ -19,6 +21,9 @@ fun SettingsPrivacySection(preferencesRepository: PreferencesRepository) {
     val autoDelete by preferencesRepository.autoDeleteOnRead.collectAsState(initial = false)
     val anonymizeTitles by preferencesRepository.anonymizeTitles.collectAsState(initial = false)
     val redactPii by preferencesRepository.redactPii.collectAsState(initial = false)
+    val context = LocalContext.current
+    val preferenceManager = remember { PreferenceManager(context) }
+    var strictPrivacyEnabled by remember { mutableStateOf(preferenceManager.isStrictPrivacyEnabled()) }
 
     Card(
         modifier = Modifier.fillMaxWidth(),
@@ -62,6 +67,20 @@ fun SettingsPrivacySection(preferencesRepository: PreferencesRepository) {
                     checked = redactPii,
                     onCheckedChange = { scope.launch { preferencesRepository.setRedactPii(it) } },
                     enabled = !BuildConfig.DEBUG
+                )
+            }
+
+            Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Text("Strict Privacy Mode", style = MaterialTheme.typography.bodyLarge)
+                    Text("Disable all crash reporting and anonymous usage telemetry.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+                Switch(
+                    checked = strictPrivacyEnabled,
+                    onCheckedChange = {
+                        strictPrivacyEnabled = it
+                        preferenceManager.setStrictPrivacyEnabled(it)
+                    }
                 )
             }
         }

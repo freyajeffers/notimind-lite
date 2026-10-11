@@ -225,6 +225,24 @@ fun SettingsScreen(
                     Spacer(Modifier.width(8.dp))
                     Text("Restore Backup Manually")
                 }
+                OutlinedButton(
+                    onClick = {
+                        if (!NetworkUtils.isInternetAvailable(context)) {
+                            syncMessage = "An active internet connection is required to create a backup"
+                        } else {
+                            val secretKey = generateBackupKey(context)
+                            pendingBackupKey = secretKey
+                            backupKeyBase64 = com.jeffers.notimindlite.data.local.BackupKeyCodec.encode(secretKey)
+                            showBackupKeyDialog = true
+                        }
+                    },
+                    enabled = !BuildConfig.DEBUG,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Icon(Icons.Default.Restore, contentDescription = "Encrypted backup")
+                    Spacer(Modifier.width(8.dp))
+                    Text("Create Encrypted Backup")
+                }
             }
         }
 
@@ -239,78 +257,6 @@ fun SettingsScreen(
             onMigrationCompleted = { (context as? android.app.Activity)?.recreate() }
         )
         SettingsPreferencesBackupSection()
-
-        if (session.isAuthenticated) {
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
-            ) {
-                Column(
-                    modifier = Modifier.padding(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    Text(
-                        text = "Encrypted Cloud Backup",
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.SemiBold
-                    )
-                    OutlinedButton(
-                        onClick = {
-                            if (!NetworkUtils.isInternetAvailable(context)) {
-                                syncMessage = "An active internet connection is required to create a backup"
-                            } else {
-                                val secretKey = generateBackupKey(context)
-                                pendingBackupKey = secretKey
-                                backupKeyBase64 = com.jeffers.notimindlite.data.local.BackupKeyCodec.encode(secretKey)
-                                showBackupKeyDialog = true
-                            }
-                        },
-                        enabled = !BuildConfig.DEBUG
-                    ) {
-                        Icon(Icons.Default.Restore, contentDescription = "Encrypted backup")
-                        Spacer(Modifier.width(8.dp))
-                        Text("Create Encrypted Backup")
-                    }
-                }
-            }
-        }
-
-        Card(
-            modifier = Modifier.fillMaxWidth(),
-            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
-        ) {
-            Column(
-                modifier = Modifier.padding(16.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                Text(
-                    text = "Privacy & Telemetry",
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.SemiBold
-                )
-                var strictPrivacyEnabled by remember { mutableStateOf(PreferenceManager(context).isStrictPrivacyEnabled()) }
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Column(modifier = Modifier.weight(1f)) {
-                        Text("Strict Privacy Mode", style = MaterialTheme.typography.bodyLarge)
-                        Text(
-                            "Disable all crash reporting and anonymous usage telemetry.",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
-                    Switch(
-                        checked = strictPrivacyEnabled,
-                        onCheckedChange = { enabled ->
-                            strictPrivacyEnabled = enabled
-                            PreferenceManager(context).setStrictPrivacyEnabled(enabled)
-                        }
-                    )
-                }
-            }
-        }
 
 
         // F-N usability [2026-09-06]: version footer — gives users a build identifier
