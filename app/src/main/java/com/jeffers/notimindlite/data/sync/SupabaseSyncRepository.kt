@@ -39,6 +39,7 @@ class SupabaseSyncRepository(
             }
             Result.success(local.size + imported)
         } catch (e: Exception) {
+            android.util.Log.e("SupabaseSync", "Notification sync failed", e)
             Result.failure(e)
         }
     }
