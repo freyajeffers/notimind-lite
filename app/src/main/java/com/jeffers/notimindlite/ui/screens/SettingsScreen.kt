@@ -10,7 +10,6 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.CloudSync
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.NotificationsOff
 import androidx.compose.material.icons.filled.Restore
@@ -31,9 +30,6 @@ import com.jeffers.notimindlite.BuildConfig
 import com.jeffers.notimindlite.data.auth.AuthManager
 import com.jeffers.notimindlite.data.auth.UserSession
 import com.jeffers.notimindlite.data.local.AppDatabase
-import com.jeffers.notimindlite.data.sync.FirestoreSyncRepository
-import com.jeffers.notimindlite.data.sync.SupabaseSyncRepository
-import com.jeffers.notimindlite.data.auth.SupabaseAuthManager
 import com.jeffers.notimindlite.data.sync.SyncWorker
 import com.jeffers.notimindlite.data.local.PreferenceManager
 import com.jeffers.notimindlite.ui.components.RestoreBackupDialog
@@ -69,7 +65,6 @@ fun SettingsScreen(
     val session by authManager.session.collectAsState()
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
-    var isSyncing by remember { mutableStateOf(false) }
     var syncMessage by remember { mutableStateOf<String?>(null) }
 
     // H1: file picker + restore dialog plumbing. The picker runs on the UI thread but
@@ -255,50 +250,10 @@ fun SettingsScreen(
                     verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
                     Text(
-                        text = "Cloud Sync & Backup",
+                        text = "Encrypted Cloud Backup",
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.SemiBold
                     )
-
-                    Text(
-                        text = "Automatic sync is active. You can also trigger an instant sync manually.",
-                        style = MaterialTheme.typography.bodyMedium
-                    )
-
-                    OutlinedButton(
-                        onClick = {
-                            session.uid?.let { uid ->
-                                scope.launch {
-                                    isSyncing = true
-                                    val res = if (preferencesRepository.useSupabaseSync.value) {
-                                        SupabaseSyncRepository(
-                                            db,
-                                            SupabaseAuthManager(context),
-                                            preferencesRepository.activeProfileId.value
-                                        ).sync()
-                                    } else {
-                                        val secretKey: SecretKey = generateBackupKey(context)
-                                        FirestoreSyncRepository(
-                                            db,
-                                            profileId = preferencesRepository.activeProfileId.value
-                                        ).sync(session.uid!!, secretKey)
-                                    }
-                                    isSyncing = false
-                                    syncMessage = if (res.isSuccess) {
-                                        "Synced ${res.getOrDefault(0)} items successfully"
-                                    } else {
-                                        "Sync failed: ${res.exceptionOrNull()?.localizedMessage}"
-                                    }
-                                }
-                            }
-                        },
-                        enabled = !isSyncing
-                    ) {
-                        Icon(Icons.Default.CloudSync, contentDescription = "Cloud sync")
-                        Spacer(Modifier.width(8.dp))
-                        Text(if (isSyncing) "Syncing..." else "Sync Now")
-                    }
-
                     OutlinedButton(
                         onClick = {
                             if (!NetworkUtils.isInternetAvailable(context)) {
@@ -310,15 +265,11 @@ fun SettingsScreen(
                                 showBackupKeyDialog = true
                             }
                         },
-                        enabled = !isSyncing && !BuildConfig.DEBUG
+                        enabled = !BuildConfig.DEBUG
                     ) {
-                        Icon(Icons.Default.Restore, contentDescription = "Restore")
+                        Icon(Icons.Default.Restore, contentDescription = "Encrypted backup")
                         Spacer(Modifier.width(8.dp))
                         Text("Create Encrypted Backup")
-                    }
-
-                    syncMessage?.let { msg ->
-                        Text(text = msg, style = MaterialTheme.typography.bodySmall)
                     }
                 }
             }
