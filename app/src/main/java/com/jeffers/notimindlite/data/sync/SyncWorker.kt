@@ -62,6 +62,15 @@ class SyncWorker(
             )
         }
 
+        fun runImmediateSync(context: Context) {
+            val request = androidx.work.OneTimeWorkRequestBuilder<SyncWorker>().build()
+            WorkManager.getInstance(context).enqueueUniqueWork(
+                "notimind_manual_sync",
+                androidx.work.ExistingWorkPolicy.REPLACE,
+                request
+            )
+        }
+
         fun cancelPeriodicSync(context: Context) {
             WorkManager.getInstance(context).cancelUniqueWork(SYNC_WORK_NAME)
         }

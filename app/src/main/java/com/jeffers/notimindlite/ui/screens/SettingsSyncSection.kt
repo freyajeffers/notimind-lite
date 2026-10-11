@@ -6,9 +6,11 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import com.jeffers.notimindlite.data.local.PreferencesRepository
+import com.jeffers.notimindlite.data.sync.SyncWorker
 import com.jeffers.notimindlite.BuildConfig
 import com.jeffers.notimindlite.R
 import kotlinx.coroutines.launch
@@ -16,6 +18,7 @@ import kotlinx.coroutines.launch
 @Composable
 fun SettingsSyncSection(preferencesRepository: PreferencesRepository) {
     val scope = rememberCoroutineScope()
+    val context = LocalContext.current
     val syncInterval by preferencesRepository.syncInterval.collectAsState(initial = 60)
     val syncWifiOnly by preferencesRepository.syncWifiOnly.collectAsState(initial = true)
     val syncChargingOnly by preferencesRepository.syncChargingOnly.collectAsState(initial = false)
@@ -63,7 +66,7 @@ fun SettingsSyncSection(preferencesRepository: PreferencesRepository) {
 
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
                 Text(text = stringResource(R.string.pref_sync_last, if (lastSyncTs == 0L) stringResource(R.string.pref_sync_never) else java.text.DateFormat.getDateTimeInstance().format(java.util.Date(lastSyncTs))), style = MaterialTheme.typography.bodySmall)
-                Button(onClick = { scope.launch { preferencesRepository.setLastSyncTs(System.currentTimeMillis()) /* placeholder: trigger SyncWorker externally */ } }) {
+                Button(onClick = { preferencesRepository.setLastSyncTs(System.currentTimeMillis()); SyncWorker.runImmediateSync(context) }) {
                     Text(stringResource(R.string.pref_sync_now))
                 }
             }
