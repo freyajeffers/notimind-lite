@@ -32,6 +32,9 @@ android {
     buildConfigField("boolean", "SUPPORTS_DYNAMIC_COLOR", "${targetMinSdk >= 31}")
     buildConfigField("boolean", "SUPPORTS_LONG_VERSION_CODE", "${targetMinSdk >= 28}")
     buildConfigField("boolean", "REQUIRES_RUNTIME_POST_NOTIFICATIONS", "${targetMinSdk >= 33}")
+    buildConfigField("String", "SUPABASE_URL", "\"https://uwkvafirzncltapkbnjx.supabase.co\"")
+    buildConfigField("String", "SUPABASE_ANON_KEY", "\"sb_publishable_LY8_1AM6UEwG8o0tysXsow_syhRrQ1X\"")
+    buildConfigField("String", "SUPABASE_REDIRECT_URI", "\"notimindlite://supabase-callback\"")
   }
 
   signingConfigs {
