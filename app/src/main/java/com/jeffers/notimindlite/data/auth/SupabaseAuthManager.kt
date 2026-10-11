@@ -21,6 +21,8 @@ class SupabaseAuthManager(private val context: Context) {
         get() = prefs.getString("pkce_verifier", null)
         set(value) = prefs.edit().putString("pkce_verifier", value).apply()
 
+    fun accessToken(): String? = prefs.getString("access_token", null)
+
     fun currentSession(): UserSession = prefs.getString("access_token", null)
         ?.let { decodeUser(it) }
         ?.copy(isAuthenticated = true)

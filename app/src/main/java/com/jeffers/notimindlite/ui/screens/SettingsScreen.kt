@@ -32,6 +32,8 @@ import com.jeffers.notimindlite.data.auth.AuthManager
 import com.jeffers.notimindlite.data.auth.UserSession
 import com.jeffers.notimindlite.data.local.AppDatabase
 import com.jeffers.notimindlite.data.sync.FirestoreSyncRepository
+import com.jeffers.notimindlite.data.sync.SupabaseSyncRepository
+import com.jeffers.notimindlite.data.auth.SupabaseAuthManager
 import com.jeffers.notimindlite.data.sync.SyncWorker
 import com.jeffers.notimindlite.data.local.PreferenceManager
 import com.jeffers.notimindlite.ui.components.RestoreBackupDialog
@@ -268,11 +270,19 @@ fun SettingsScreen(
                             session.uid?.let { uid ->
                                 scope.launch {
                                     isSyncing = true
-                                    val repo = FirestoreSyncRepository(db, profileId = preferencesRepository.activeProfileId.value)
-
-                                    val secretKey: SecretKey = generateBackupKey(context)
-
-                                    val res = repo.sync(uid, secretKey)
+                                    val res = if (preferencesRepository.useSupabaseSync.value) {
+                                        SupabaseSyncRepository(
+                                            db,
+                                            SupabaseAuthManager(context),
+                                            preferencesRepository.activeProfileId.value
+                                        ).sync()
+                                    } else {
+                                        val secretKey: SecretKey = generateBackupKey(context)
+                                        FirestoreSyncRepository(
+                                            db,
+                                            profileId = preferencesRepository.activeProfileId.value
+                                        ).sync(session.uid!!, secretKey)
+                                    }
                                     isSyncing = false
                                     syncMessage = if (res.isSuccess) {
                                         "Synced ${res.getOrDefault(0)} items successfully"

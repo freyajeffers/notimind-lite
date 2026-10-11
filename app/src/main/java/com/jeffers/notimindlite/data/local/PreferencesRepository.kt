@@ -170,10 +170,12 @@ class PreferencesRepository(context: Context) {
     private val _syncWifiOnly = MutableStateFlow(backing.getBoolean("config_sync_wifi_only", true))
     private val _syncChargingOnly = MutableStateFlow(backing.getBoolean("config_sync_charging_only", true))
     private val _lastSyncTs = MutableStateFlow(backing.getLong("config_last_sync_ts", 0L))
+    private val _useSupabaseSync = MutableStateFlow(backing.getBoolean("config_use_supabase_sync", false))
     val syncInterval: StateFlow<Int> = _syncInterval
     val syncWifiOnly: StateFlow<Boolean> = _syncWifiOnly
     val syncChargingOnly: StateFlow<Boolean> = _syncChargingOnly
     val lastSyncTs: StateFlow<Long> = _lastSyncTs
+    val useSupabaseSync: StateFlow<Boolean> = _useSupabaseSync
 
     // Shared UI search & filter state across Active and History screens
     private val _sharedSearchQuery = MutableStateFlow(backing.getString("ui_shared_search_query", "") ?: "")
@@ -349,6 +351,7 @@ class PreferencesRepository(context: Context) {
     fun setSyncWifiOnly(v: Boolean) { backing.edit().putBoolean("config_sync_wifi_only", v).apply(); _syncWifiOnly.value = v }
     fun setSyncChargingOnly(v: Boolean) { backing.edit().putBoolean("config_sync_charging_only", v).apply(); _syncChargingOnly.value = v }
     fun setLastSyncTs(v: Long) { backing.edit().putLong("config_last_sync_ts", v).apply(); _lastSyncTs.value = v }
+    fun setUseSupabaseSync(v: Boolean) { backing.edit().putBoolean("config_use_supabase_sync", v).apply(); _useSupabaseSync.value = v }
     fun setEnableSync(value: Boolean) { backing.edit().putBoolean(KEY_ENABLE_SYNC, value).apply(); _enableSync.value = value }
     fun setEnableVector(value: Boolean) { backing.edit().putBoolean(KEY_ENABLE_VECTOR, value).apply(); _enableVector.value = value }
     fun setEnableFts4(value: Boolean) { backing.edit().putBoolean(KEY_ENABLE_FTS4, value).apply(); _enableFts4.value = value }
