@@ -170,7 +170,7 @@ class PreferencesRepository(context: Context) {
     private val _syncWifiOnly = MutableStateFlow(backing.getBoolean("config_sync_wifi_only", true))
     private val _syncChargingOnly = MutableStateFlow(backing.getBoolean("config_sync_charging_only", true))
     private val _lastSyncTs = MutableStateFlow(backing.getLong("config_last_sync_ts", 0L))
-    private val _useSupabaseSync = MutableStateFlow(backing.getBoolean("config_use_supabase_sync", false))
+    private val _useSupabaseSync = MutableStateFlow(backing.getBoolean("config_use_supabase_sync", true))
     val syncInterval: StateFlow<Int> = _syncInterval
     val syncWifiOnly: StateFlow<Boolean> = _syncWifiOnly
     val syncChargingOnly: StateFlow<Boolean> = _syncChargingOnly
@@ -352,6 +352,35 @@ class PreferencesRepository(context: Context) {
     fun setSyncChargingOnly(v: Boolean) { backing.edit().putBoolean("config_sync_charging_only", v).apply(); _syncChargingOnly.value = v }
     fun setLastSyncTs(v: Long) { backing.edit().putLong("config_last_sync_ts", v).apply(); _lastSyncTs.value = v }
     fun setUseSupabaseSync(v: Boolean) { backing.edit().putBoolean("config_use_supabase_sync", v).apply(); _useSupabaseSync.value = v }
+
+    /** Export only user-facing settings; auth tokens and local sync metadata are excluded. */
+    fun exportSyncableSettings(): org.json.JSONObject {
+        val result = org.json.JSONObject()
+        backing.all.forEach { (key, value) ->
+            if (!key.startsWith("config_") || key == "config_use_supabase_sync") {
+                when (value) {
+                    is Boolean, is Int, is Long, is Float, is String -> result.put(key, value)
+                }
+            }
+        }
+        return result
+    }
+
+    fun importSyncableSettings(settings: org.json.JSONObject) {
+        val editor = backing.edit()
+        settings.keys().forEach { key ->
+            if (!key.startsWith("config_") || key == "config_use_supabase_sync") {
+                when (val value = settings.opt(key)) {
+                    is Boolean -> editor.putBoolean(key, value)
+                    is Int -> editor.putInt(key, value)
+                    is Long -> editor.putLong(key, value)
+                    is Double -> editor.putFloat(key, value.toFloat())
+                    is String -> editor.putString(key, value)
+                }
+            }
+        }
+        editor.apply()
+    }
     fun setEnableSync(value: Boolean) { backing.edit().putBoolean(KEY_ENABLE_SYNC, value).apply(); _enableSync.value = value }
     fun setEnableVector(value: Boolean) { backing.edit().putBoolean(KEY_ENABLE_VECTOR, value).apply(); _enableVector.value = value }
     fun setEnableFts4(value: Boolean) { backing.edit().putBoolean(KEY_ENABLE_FTS4, value).apply(); _enableFts4.value = value }

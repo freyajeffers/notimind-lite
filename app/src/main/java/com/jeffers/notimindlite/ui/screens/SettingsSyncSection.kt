@@ -58,8 +58,8 @@ fun SettingsSyncSection(preferencesRepository: PreferencesRepository) {
 
             Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
                 Column(modifier = Modifier.weight(1f)) {
-                    Text("Use Supabase cloud sync", style = MaterialTheme.typography.bodyLarge)
-                    Text("Optional backend; disabled uses Firebase sync", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text("Supabase cloud sync (default)", style = MaterialTheme.typography.bodyLarge)
+                    Text("Uses the existing Supabase project; disable to use Firebase sync", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
                 Switch(checked = useSupabaseSync, onCheckedChange = { scope.launch { preferencesRepository.setUseSupabaseSync(it) } })
             }

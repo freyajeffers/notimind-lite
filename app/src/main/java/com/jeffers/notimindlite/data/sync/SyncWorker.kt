@@ -24,10 +24,14 @@ class SyncWorker(
         val preferences = PreferencesRepository(applicationContext)
         val profileId = preferences.activeProfileId.value
         if (preferences.useSupabaseSync.value) {
-            val repository = SupabaseSyncRepository(db, SupabaseAuthManager(applicationContext), profileId)
+            val supabaseAuth = SupabaseAuthManager(applicationContext)
+            val userId = supabaseAuth.currentSession().uid ?: return Result.success()
+            SupabaseSettingsSyncRepository(supabaseAuth).restoreOrUpload(preferences, userId)
+            val repository = SupabaseSyncRepository(db, supabaseAuth, profileId)
             return if (repository.sync().isSuccess) Result.success() else Result.retry()
         }
         val user = com.google.firebase.auth.FirebaseAuth.getInstance().currentUser ?: return Result.success()
+        FirebaseSettingsSyncRepository().restoreOrUpload(preferences, user.uid)
         val repository = FirestoreSyncRepository(db, profileId = profileId)
         
         // Use a stable device-bound key for background sync (Android KeyStore-backed).
