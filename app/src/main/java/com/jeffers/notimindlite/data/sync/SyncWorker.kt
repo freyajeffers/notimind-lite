@@ -8,7 +8,7 @@ import androidx.work.NetworkType
 import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
 import androidx.work.WorkerParameters
-import com.google.firebase.auth.FirebaseAuth
+import com.jeffers.notimindlite.data.auth.SupabaseAuthManager
 import com.jeffers.notimindlite.data.local.AppDatabase
 import com.jeffers.notimindlite.data.local.PreferencesRepository
 import com.jeffers.notimindlite.domain.backup.generateBackupKey
@@ -20,9 +20,14 @@ class SyncWorker(
 ) : CoroutineWorker(context, params) {
 
     override suspend fun doWork(): Result {
-        val user = FirebaseAuth.getInstance().currentUser ?: return Result.success()
         val db = AppDatabase.getDatabase(applicationContext)
-        val profileId = PreferencesRepository.activeProfileId(applicationContext)
+        val preferences = PreferencesRepository(applicationContext)
+        val profileId = preferences.activeProfileId.value
+        if (preferences.useSupabaseSync.value) {
+            val repository = SupabaseSyncRepository(db, SupabaseAuthManager(applicationContext), profileId)
+            return if (repository.sync().isSuccess) Result.success() else Result.retry()
+        }
+        val user = com.google.firebase.auth.FirebaseAuth.getInstance().currentUser ?: return Result.success()
         val repository = FirestoreSyncRepository(db, profileId = profileId)
         
         // Use a stable device-bound key for background sync (Android KeyStore-backed).

@@ -20,6 +20,7 @@ fun SettingsSyncSection(preferencesRepository: PreferencesRepository) {
     val syncWifiOnly by preferencesRepository.syncWifiOnly.collectAsState(initial = true)
     val syncChargingOnly by preferencesRepository.syncChargingOnly.collectAsState(initial = false)
     val lastSyncTs by preferencesRepository.lastSyncTs.collectAsState(initial = 0L)
+    val useSupabaseSync by preferencesRepository.useSupabaseSync.collectAsState(initial = false)
 
     Card(
         modifier = Modifier.fillMaxWidth(),
@@ -50,6 +51,14 @@ fun SettingsSyncSection(preferencesRepository: PreferencesRepository) {
                     Text(stringResource(R.string.pref_sync_charging_summary), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
                 Switch(checked = syncChargingOnly, onCheckedChange = { scope.launch { preferencesRepository.setSyncChargingOnly(it) } }, enabled = !BuildConfig.DEBUG)
+            }
+
+            Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Text("Use Supabase cloud sync", style = MaterialTheme.typography.bodyLarge)
+                    Text("Optional backend; disabled uses Firebase sync", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+                Switch(checked = useSupabaseSync, onCheckedChange = { scope.launch { preferencesRepository.setUseSupabaseSync(it) } }, enabled = !BuildConfig.DEBUG)
             }
 
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
