@@ -1,0 +1,183 @@
+{
+  "formatVersion": 1,
+  "database": {
+    "version": 8,
+    "identityHash": "40c42c028c905948be6f2e20aebba1be",
+    "entities": [
+      {
+        "tableName": "notifications",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `key` TEXT NOT NULL, `packageName` TEXT NOT NULL, `appName` TEXT NOT NULL, `title` TEXT NOT NULL, `content` TEXT NOT NULL, `postTime` INTEGER NOT NULL, `isDismissed` INTEGER NOT NULL, `isPersistent` INTEGER NOT NULL, `category` TEXT, `channelId` TEXT, `subText` TEXT, `bigText` TEXT, `priority` INTEGER NOT NULL, `groupKey` TEXT, `isOngoing` INTEGER NOT NULL, `isClearable` INTEGER NOT NULL, `actionsCount` INTEGER NOT NULL, `dismissReason` INTEGER, `dismissTime` INTEGER, `intentUri` TEXT, `isPinned` INTEGER NOT NULL, `actionLabels` TEXT)",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "key",
+            "columnName": "key",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "packageName",
+            "columnName": "packageName",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "appName",
+            "columnName": "appName",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "title",
+            "columnName": "title",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "content",
+            "columnName": "content",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "postTime",
+            "columnName": "postTime",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "isDismissed",
+            "columnName": "isDismissed",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "isPersistent",
+            "columnName": "isPersistent",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "category",
+            "columnName": "category",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "channelId",
+            "columnName": "channelId",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "subText",
+            "columnName": "subText",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "bigText",
+            "columnName": "bigText",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "priority",
+            "columnName": "priority",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "groupKey",
+            "columnName": "groupKey",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "isOngoing",
+            "columnName": "isOngoing",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "isClearable",
+            "columnName": "isClearable",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "actionsCount",
+            "columnName": "actionsCount",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "dismissReason",
+            "columnName": "dismissReason",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "dismissTime",
+            "columnName": "dismissTime",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "intentUri",
+            "columnName": "intentUri",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "isPinned",
+            "columnName": "isPinned",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "actionLabels",
+            "columnName": "actionLabels",
+            "affinity": "TEXT"
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": true,
+          "columnNames": [
+            "id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_notifications_isDismissed",
+            "unique": false,
+            "columnNames": [
+              "isDismissed"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_notifications_isDismissed` ON `${TABLE_NAME}` (`isDismissed`)"
+          },
+          {
+            "name": "index_notifications_isPinned",
+            "unique": false,
+            "columnNames": [
+              "isPinned"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_notifications_isPinned` ON `${TABLE_NAME}` (`isPinned`)"
+          },
+          {
+            "name": "index_notifications_postTime",
+            "unique": false,
+            "columnNames": [
+              "postTime"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_notifications_postTime` ON `${TABLE_NAME}` (`postTime`)"
+          }
+        ]
+      }
+    ],
+    "setupQueries": [
+      "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '40c42c028c905948be6f2e20aebba1be')"
+    ]
+  }
+}

@@ -1,5 +1,6 @@
 package com.jeffers.notimindlite.data.local
 
+import android.os.Build
 import android.security.keystore.KeyGenParameterSpec
 import android.security.keystore.KeyProperties
 import android.util.Base64
@@ -34,17 +35,27 @@ object BackupKeyCodec {
         }
 
         val keyGenerator = KeyGenerator.getInstance(KeyProperties.KEY_ALGORITHM_AES, ANDROID_KEYSTORE)
-        val spec = KeyGenParameterSpec.Builder(
-            KEY_ALIAS,
-            KeyProperties.PURPOSE_ENCRYPT or KeyProperties.PURPOSE_DECRYPT
-        )
+        val purposes = KeyProperties.PURPOSE_ENCRYPT or KeyProperties.PURPOSE_DECRYPT
+        val baseSpec = KeyGenParameterSpec.Builder(KEY_ALIAS, purposes)
             .setBlockModes(KeyProperties.BLOCK_MODE_GCM)
             .setEncryptionPaddings(KeyProperties.ENCRYPTION_PADDING_NONE)
             .setKeySize(AES_KEY_SIZE_BITS)
-            .build()
+        var generatedKey: SecretKey? = null
 
-        keyGenerator.init(spec)
-        return keyGenerator.generateKey()
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+            try {
+                keyGenerator.init(baseSpec.setIsStrongBoxBacked(true).build())
+                generatedKey = keyGenerator.generateKey()
+            } catch (_: Exception) {
+                // StrongBox is optional; use the platform Keystore/TEE fallback.
+            }
+        }
+
+        if (generatedKey == null) {
+            keyGenerator.init(baseSpec.setIsStrongBoxBacked(false).build())
+            generatedKey = keyGenerator.generateKey()
+        }
+        return checkNotNull(generatedKey)
     }
 
     /** Encodes a SecretKey's raw bytes as Base64 for user-facing display (not for DB storage). */

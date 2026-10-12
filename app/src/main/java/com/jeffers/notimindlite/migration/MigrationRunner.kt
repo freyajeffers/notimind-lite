@@ -106,7 +106,7 @@ class MigrationRunner(
     }
   }
 
-  private fun preflight(databaseName: String): MigrationPreflight {
+  fun preflight(databaseName: String): MigrationPreflight {
     val databaseDir = context.getDatabasePath(databaseName).parentFile
       ?: error("Unable to resolve database directory")
     val plaintext = findLegacyPlaintextFile(databaseDir, databaseName)

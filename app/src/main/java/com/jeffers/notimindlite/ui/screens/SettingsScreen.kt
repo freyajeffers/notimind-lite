@@ -235,7 +235,10 @@ fun SettingsScreen(
         SettingsPreferencesSection(preferencesRepository = preferencesRepository)
         SettingsSyncSection(preferencesRepository = preferencesRepository)
         SettingsPrivacySection(preferencesRepository = preferencesRepository)
-        SettingsAdvancedSection(preferencesRepository = preferencesRepository)
+        SettingsAdvancedSection(
+            preferencesRepository = preferencesRepository,
+            onMigrationCompleted = { (context as? android.app.Activity)?.recreate() }
+        )
         SettingsPreferencesBackupSection()
 
         if (session.isAuthenticated) {

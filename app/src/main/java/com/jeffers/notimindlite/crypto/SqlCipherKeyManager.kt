@@ -47,14 +47,28 @@ object SqlCipherKeyManager {
             val keyStore = KeyStore.getInstance(KEYSTORE).apply { load(null) }
             (keyStore.getKey(alias, null) as? SecretKey)?.let { return it }
             val generator = KeyGenerator.getInstance(KEY_ALGORITHM, KEYSTORE)
-            generator.init(android.security.keystore.KeyGenParameterSpec.Builder(
-                alias,
-                android.security.keystore.KeyProperties.PURPOSE_ENCRYPT or
-                    android.security.keystore.KeyProperties.PURPOSE_DECRYPT
-            ).setBlockModes(android.security.keystore.KeyProperties.BLOCK_MODE_GCM)
+            val purposes = android.security.keystore.KeyProperties.PURPOSE_ENCRYPT or
+                android.security.keystore.KeyProperties.PURPOSE_DECRYPT
+            val baseSpec = android.security.keystore.KeyGenParameterSpec.Builder(alias, purposes)
+                .setBlockModes(android.security.keystore.KeyProperties.BLOCK_MODE_GCM)
                 .setEncryptionPaddings(android.security.keystore.KeyProperties.ENCRYPTION_PADDING_NONE)
-                .build())
-            generator.generateKey()
+            var generatedKey: SecretKey? = null
+
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+                try {
+                    generator.init(baseSpec.setIsStrongBoxBacked(true).build())
+                    generatedKey = generator.generateKey()
+                } catch (_: Exception) {
+                    // StrongBox is optional. Retry in the TEE-backed/default Keystore
+                    // provider before treating the provider as unavailable.
+                }
+            }
+
+            if (generatedKey == null) {
+                generator.init(baseSpec.setIsStrongBoxBacked(false).build())
+                generatedKey = generator.generateKey()
+            }
+            generatedKey
         } catch (e: Exception) {
             check(Build.FINGERPRINT == "robolectric") {
                 "AndroidKeyStore is required for SQLCipher passphrase protection"
