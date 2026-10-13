@@ -49,29 +49,22 @@ class FirestoreSyncRepository(
 
             // 1. Upload unsynced local changes in batches
             val unsynced = dao.getUnsyncedNotifications()
+                .distinctBy { it.key }
             var syncCount = 0
 
             if (unsynced.isNotEmpty()) {
                 val now = System.currentTimeMillis()
                 for (chunk in unsynced.chunked(firestoreBatchSize)) {
                     val batch = firestore.batch()
-                    var hasWrites = false
-                    val syncedKeys = mutableListOf<String>()
-
-                    for (notification in chunk) {
-                        syncedKeys.add(notification.key)
-                        if (notification.syncStatus != SyncStatus.PENDING_DELETE) {
-                            val map = buildEncryptedNotificationMap(notification, secretKey)
-                            val docRef = userCol.document(notification.key)
-                            batch.set(docRef, map)
-                            hasWrites = true
+                    val syncedKeys = chunk.map { it.key }
+                    chunk.forEach { notification ->
+                        val docRef = userCol.document(notification.key)
+                        if (notification.syncStatus == SyncStatus.PENDING_DELETE) {
+                            return@forEach
                         }
+                        batch.set(docRef, buildEncryptedNotificationMap(notification, secretKey))
                     }
-
-                    if (hasWrites) {
-                        batch.commit().await()
-                    }
-
+                    batch.commit().await()
                     dao.updateSyncStatusBatch(syncedKeys, SyncStatus.SYNCED, now)
                     syncCount += chunk.size
                 }
