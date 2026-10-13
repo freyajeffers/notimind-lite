@@ -32,18 +32,35 @@ class SupabaseSyncRepository(
         val token = auth.accessToken() ?: return Result.failure(IllegalStateException("Supabase session required"))
         val userId = auth.currentSession().uid ?: return Result.failure(IllegalStateException("Supabase user id missing"))
         return try {
-            val local = db.notificationDao().getAllNotificationsSync()
-            val records = JSONArray()
-            local.forEach { records.put(record(userId, it)) }
-            if (records.length() > 0) request("POST", "/rest/v1/notification_records?on_conflict=user_id,profile_id,notification_key", token, records.toString(), "resolution=merge-duplicates,return=minimal")
-
-            val remoteBody = request("GET", "/rest/v1/notification_records?profile_id=eq.${encode(profileId)}&select=payload", token)
+            val local = db.notificationDao().getAllNotificationsSync().distinctBy { it.key }
+            val remoteBody = request(
+                "GET",
+                "/rest/v1/notification_records?profile_id=eq.${encode(profileId)}&select=notification_key,updated_at,payload",
+                token
+            )
             val remote = JSONArray(remoteBody)
+            val remoteUpdated = buildMap {
+                for (i in 0 until remote.length()) {
+                    val row = remote.getJSONObject(i)
+                    put(row.optString("notification_key"), row.optLong("updated_at"))
+                }
+            }
+            val records = JSONArray()
+            local.forEach { entity ->
+                if (entity.syncStatus.name != "PENDING_DELETE" && entity.lastUpdatedTime > (remoteUpdated[entity.key] ?: Long.MIN_VALUE)) {
+                    records.put(record(userId, entity))
+                }
+            }
+            if (records.length() > 0) {
+                request("POST", "/rest/v1/notification_records?on_conflict=user_id,profile_id,notification_key", token, records.toString(), "resolution=merge-duplicates,return=minimal")
+            }
+
             var imported = 0
             for (i in 0 until remote.length()) {
                 val payload = remote.getJSONObject(i).optJSONObject("payload") ?: continue
                 val entity = entity(payload) ?: continue
-                if (db.notificationDao().getNotificationByKey(entity.key) == null) {
+                val existing = db.notificationDao().getNotificationByKey(entity.key)
+                if (existing == null || entity.lastUpdatedTime > existing.lastUpdatedTime) {
                     db.notificationDao().insert(entity)
                     imported++
                 }
