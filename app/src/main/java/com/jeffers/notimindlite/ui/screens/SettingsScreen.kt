@@ -207,6 +207,8 @@ fun SettingsScreen(
             }
         }
 
+        SettingsSyncSection(preferencesRepository = preferencesRepository)
+
         // Boot & Restore card placed near top for quick opt-in/out.
         Card(modifier = Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)) {
             Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
@@ -250,7 +252,6 @@ fun SettingsScreen(
         SettingsCaptureSection(preferencesRepository = preferencesRepository)
         ProfileManagerSection(repository = preferencesRepository)
         SettingsPreferencesSection(preferencesRepository = preferencesRepository)
-        SettingsSyncSection(preferencesRepository = preferencesRepository)
         SettingsPrivacySection(preferencesRepository = preferencesRepository)
         SettingsAdvancedSection(
             preferencesRepository = preferencesRepository,
