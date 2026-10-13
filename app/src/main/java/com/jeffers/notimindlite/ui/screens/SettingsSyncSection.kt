@@ -32,6 +32,12 @@ fun SettingsSyncSection(preferencesRepository: PreferencesRepository) {
         ?: remember { mutableStateOf(null) }
     val syncRunning = syncWorkInfo?.state == WorkInfo.State.RUNNING || syncWorkInfo?.state == WorkInfo.State.ENQUEUED
 
+    LaunchedEffect(syncWorkInfo?.state) {
+        if (syncWorkInfo?.state == WorkInfo.State.SUCCEEDED) {
+            preferencesRepository.refreshLastSyncTs()
+        }
+    }
+
     Card(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)

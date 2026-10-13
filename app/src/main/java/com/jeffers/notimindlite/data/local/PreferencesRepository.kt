@@ -351,6 +351,10 @@ class PreferencesRepository(context: Context) {
     fun setSyncWifiOnly(v: Boolean) { backing.edit().putBoolean("config_sync_wifi_only", v).apply(); _syncWifiOnly.value = v }
     fun setSyncChargingOnly(v: Boolean) { backing.edit().putBoolean("config_sync_charging_only", v).apply(); _syncChargingOnly.value = v }
     fun setLastSyncTs(v: Long) { backing.edit().putLong("config_last_sync_ts", v).apply(); _lastSyncTs.value = v }
+    fun refreshLastSyncTs() {
+        _lastSyncTs.value = backing.getLong("config_last_sync_ts", 0L)
+    }
+
     fun setUseSupabaseSync(v: Boolean) { backing.edit().putBoolean("config_use_supabase_sync", v).apply(); _useSupabaseSync.value = v }
 
     /** Export only user-facing settings; auth tokens and local sync metadata are excluded. */
