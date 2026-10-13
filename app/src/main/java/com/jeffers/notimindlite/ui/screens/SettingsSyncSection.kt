@@ -13,6 +13,9 @@ import com.jeffers.notimindlite.data.local.PreferencesRepository
 import com.jeffers.notimindlite.data.sync.SyncWorker
 import com.jeffers.notimindlite.BuildConfig
 import com.jeffers.notimindlite.R
+import androidx.work.WorkInfo
+import androidx.work.WorkManager
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
 @Composable
@@ -24,6 +27,10 @@ fun SettingsSyncSection(preferencesRepository: PreferencesRepository) {
     val syncChargingOnly by preferencesRepository.syncChargingOnly.collectAsState(initial = false)
     val lastSyncTs by preferencesRepository.lastSyncTs.collectAsState(initial = 0L)
     val useSupabaseSync by preferencesRepository.useSupabaseSync.collectAsState(initial = false)
+    var syncWorkId by remember { mutableStateOf<java.util.UUID?>(null) }
+    val syncWorkInfo by syncWorkId?.let { WorkManager.getInstance(context).getWorkInfoByIdFlow(it).collectAsState(initial = null) }
+        ?: remember { mutableStateOf(null) }
+    val syncRunning = syncWorkInfo?.state == WorkInfo.State.RUNNING || syncWorkInfo?.state == WorkInfo.State.ENQUEUED
 
     Card(
         modifier = Modifier.fillMaxWidth(),
@@ -66,8 +73,15 @@ fun SettingsSyncSection(preferencesRepository: PreferencesRepository) {
 
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
                 Text(text = stringResource(R.string.pref_sync_last, if (lastSyncTs == 0L) stringResource(R.string.pref_sync_never) else java.text.DateFormat.getDateTimeInstance().format(java.util.Date(lastSyncTs))), style = MaterialTheme.typography.bodySmall)
-                Button(onClick = { preferencesRepository.setLastSyncTs(System.currentTimeMillis()); SyncWorker.runImmediateSync(context) }) {
-                    Text(stringResource(R.string.pref_sync_now))
+                Button(
+                    onClick = { syncWorkId = SyncWorker.runImmediateSync(context) },
+                    enabled = !syncRunning
+                ) {
+                    if (syncRunning) {
+                        CircularProgressIndicator(modifier = Modifier.size(18.dp), strokeWidth = 2.dp)
+                        Spacer(Modifier.width(8.dp))
+                    }
+                    Text(if (syncRunning) "Syncing…" else stringResource(R.string.pref_sync_now))
                 }
             }
         }

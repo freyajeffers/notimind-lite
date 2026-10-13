@@ -28,7 +28,10 @@ class SyncWorker(
             val userId = supabaseAuth.currentSession().uid ?: return Result.success()
             SupabaseSettingsSyncRepository(supabaseAuth).restoreOrUpload(preferences, userId)
             val repository = SupabaseSyncRepository(db, supabaseAuth, profileId)
-            return if (repository.sync().isSuccess) Result.success() else Result.retry()
+            return if (repository.sync().isSuccess) {
+                preferences.setLastSyncTs(System.currentTimeMillis())
+                Result.success()
+            } else Result.retry()
         }
         val user = com.google.firebase.auth.FirebaseAuth.getInstance().currentUser ?: return Result.success()
         FirebaseSettingsSyncRepository().restoreOrUpload(preferences, user.uid)
@@ -39,6 +42,7 @@ class SyncWorker(
 
         val result = repository.sync(user.uid, secretKey)
         return if (result.isSuccess) {
+            preferences.setLastSyncTs(System.currentTimeMillis())
             Result.success()
         } else {
             Result.retry()
@@ -66,13 +70,14 @@ class SyncWorker(
             )
         }
 
-        fun runImmediateSync(context: Context) {
+        fun runImmediateSync(context: Context): java.util.UUID {
             val request = androidx.work.OneTimeWorkRequestBuilder<SyncWorker>().build()
             WorkManager.getInstance(context).enqueueUniqueWork(
                 "notimind_manual_sync",
                 androidx.work.ExistingWorkPolicy.REPLACE,
                 request
             )
+            return request.id
         }
 
         fun cancelPeriodicSync(context: Context) {
