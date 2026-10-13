@@ -15,7 +15,13 @@ class SupabaseSettingsSyncRepository(private val auth: SupabaseAuthManager) : Se
         try {
             val token = auth.accessToken() ?: return@withContext Result.failure(IllegalStateException("Supabase session required"))
             val path = "/rest/v1/user_settings?user_id=eq.${java.net.URLEncoder.encode(userId, "UTF-8")}&select=settings"
-            val response = request("GET", path, token)
+            val response = try {
+                request("GET", path, token)
+            } catch (e: IllegalStateException) {
+                if (!e.message.orEmpty().contains("HTTP 401")) throw e
+                val refreshed = auth.refreshSession().getOrThrow()
+                request("GET", path, refreshed)
+            }
             val rows = JSONArray(if (response.isBlank()) "[]" else response)
             val local = preferences.exportSyncableSettings()
             if (rows.length() == 0) {

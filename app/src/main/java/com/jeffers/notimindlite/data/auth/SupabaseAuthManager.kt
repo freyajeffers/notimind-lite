@@ -76,6 +76,31 @@ class SupabaseAuthManager(private val context: Context) {
         }
     }
 
+    /** Try to refresh the Supabase session using the stored refresh token. Returns the new access token on success. */
+    suspend fun refreshSession(): Result<String> = withContext(Dispatchers.IO) {
+        val refresh = readSecret("refresh_token") ?: return@withContext Result.failure(IllegalStateException("Missing refresh token"))
+        try {
+            val connection = (URL(BuildConfig.SUPABASE_URL + "/auth/v1/token?grant_type=refresh_token").openConnection() as HttpURLConnection)
+            connection.requestMethod = "POST"
+            connection.doOutput = true
+            connection.setRequestProperty("apikey", BuildConfig.SUPABASE_ANON_KEY)
+            connection.setRequestProperty("Content-Type", "application/json")
+            connection.outputStream.use {
+                it.write(JSONObject().put("refresh_token", refresh).toString().toByteArray())
+            }
+            val body = (if (connection.responseCode in 200..299) connection.inputStream else connection.errorStream)
+                .bufferedReader().use { it.readText() }
+            if (connection.responseCode !in 200..299) error(JSONObject(body).optString("msg", "Supabase refresh failed"))
+            val response = JSONObject(body)
+            val token = response.getString("access_token")
+            saveSecret("access_token", token)
+            saveSecret("refresh_token", response.optString("refresh_token"))
+            Result.success(token)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
     fun signOut() { prefs.edit().clear().apply() }
 
     private fun secretKey(): SecretKey {
