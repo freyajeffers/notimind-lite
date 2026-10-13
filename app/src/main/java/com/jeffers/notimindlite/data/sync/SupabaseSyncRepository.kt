@@ -18,9 +18,20 @@ class SupabaseSyncRepository(
     private val profileId: String
 ) {
     suspend fun sync(): Result<Int> = withContext(Dispatchers.IO) {
-        val token = auth.accessToken() ?: return@withContext Result.failure(IllegalStateException("Supabase session required"))
-        val userId = auth.currentSession().uid ?: return@withContext Result.failure(IllegalStateException("Supabase user id missing"))
-        try {
+        val first = syncOnce()
+        val error = first.exceptionOrNull()
+        if (error?.message.orEmpty().contains("HTTP 401")) {
+            auth.refreshSession().fold(
+                onSuccess = { syncOnce() },
+                onFailure = { Result.failure(it) }
+            )
+        } else first
+    }
+
+    private suspend fun syncOnce(): Result<Int> {
+        val token = auth.accessToken() ?: return Result.failure(IllegalStateException("Supabase session required"))
+        val userId = auth.currentSession().uid ?: return Result.failure(IllegalStateException("Supabase user id missing"))
+        return try {
             val local = db.notificationDao().getAllNotificationsSync()
             val records = JSONArray()
             local.forEach { records.put(record(userId, it)) }
