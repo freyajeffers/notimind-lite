@@ -51,8 +51,12 @@ object DatabaseMigrator {
             }
             dao.updateEmbeddingsBatch(embeddingPairs)
             Log.i(TAG, "Vectorization complete.")
-        } catch (e: Exception) {
-            Log.e(TAG, "Failed to vectorize existing notifications: ${e.message}", e)
+        } catch (e: java.io.IOException) {
+            Log.e(TAG, "Failed to vectorize existing notifications: IO error", e)
+        } catch (e: java.lang.IllegalStateException) {
+            Log.e(TAG, "Failed to vectorize existing notifications: illegal state", e)
+        } catch (e: java.lang.RuntimeException) {
+            Log.e(TAG, "Failed to vectorize existing notifications: runtime error", e)
         }
     }
 
@@ -109,22 +113,24 @@ object DatabaseMigrator {
             // 3. Rebuild full-text search index
             try {
                 db.execSQL("INSERT INTO notifications_fts(notifications_fts) VALUES('rebuild');")
-            } catch (e: Exception) {
-                Log.e(TAG, "Failed rebuilding FTS index during merge: ${e.message}")
+            } catch (e: android.database.SQLException) {
+                Log.e(TAG, "Failed rebuilding FTS index during merge: ${e.message}", e)
             }
 
             // 4. Clear merged records from DE database staging buffer
             try {
                 db.execSQL("DELETE FROM de_db.notifications;")
                 db.execSQL("DELETE FROM de_db.apps;")
-            } catch (e: Exception) {
-                Log.e(TAG, "Failed clearing DE staging tables: ${e.message}")
+            } catch (e: android.database.SQLException) {
+                Log.e(TAG, "Failed clearing DE staging tables: ${e.message}", e)
             }
 
             db.setTransactionSuccessful()
             
-        } catch (e: Exception) {
+        } catch (e: android.database.SQLException) {
             Log.e(TAG, "Error during cross-database merge: ${e.message}", e)
+        } catch (e: java.lang.IllegalStateException) {
+            Log.e(TAG, "Error during cross-database merge: illegal state", e)
         } finally {
             db.endTransaction()
             try {
