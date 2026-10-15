@@ -50,7 +50,11 @@ class DatabaseMigrationOrchestrator(
         verified += targetCount
       }
       MigrationResult(MigrationState.VERIFYING, copied, verified)
-    } catch (failure: Throwable) {
+    } catch (failure: android.database.sqlite.SQLiteException) {
+      MigrationResult(MigrationState.ROLLBACK_REQUIRED, 0, 0, failure = failure)
+    } catch (failure: IllegalStateException) {
+      MigrationResult(MigrationState.ROLLBACK_REQUIRED, 0, 0, failure = failure)
+    } catch (failure: SecurityException) {
       MigrationResult(MigrationState.ROLLBACK_REQUIRED, 0, 0, failure = failure)
     }
   }
@@ -85,12 +89,14 @@ class DatabaseMigrationOrchestrator(
       fileOps.rename(plaintextFile, quarantineFile)
       try {
         fileOps.rename(encryptedTempFile, plaintextFile)
-      } catch (promotionFailure: Throwable) {
+      } catch (promotionFailure: IllegalStateException) {
         fileOps.rename(quarantineFile, plaintextFile)
         throw promotionFailure
       }
       MigrationResult(MigrationState.COMPLETE, 0, 0, backupFile = quarantineFile)
-    } catch (failure: Throwable) {
+    } catch (failure: IllegalStateException) {
+      MigrationResult(MigrationState.ROLLBACK_REQUIRED, 0, 0, failure = failure)
+    } catch (failure: SecurityException) {
       MigrationResult(MigrationState.ROLLBACK_REQUIRED, 0, 0, failure = failure)
     }
   }

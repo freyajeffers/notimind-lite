@@ -274,24 +274,40 @@ class PreferencesRepository(context: Context) {
     private fun readProfiles(): List<Profile> {
         val raw = profileStore.getString(KEY_PROFILES, null)
         if (raw == null) {
-            val legacy = appContext.getSharedPreferences("notimind_lite_prefs", Context.MODE_PRIVATE)
-            if (legacy.all.isNotEmpty() && !backing.contains(KEY_ENABLE_SYNC)) {
-                val editor = backing.edit()
-                legacy.all.forEach { (key, value) -> when (value) {
+            migrateLegacyIfNeeded()
+            val default = Profile(DEFAULT_PROFILE_ID, "Default", System.currentTimeMillis())
+            profileStore.edit().putString(
+                KEY_PROFILES,
+                JSONArray().put(JSONObject().put("id", default.id).put("name", default.name).put("createdAt", default.createdAt)).toString()
+            ).apply()
+            return listOf(default)
+        }
+        return parseProfiles(raw)
+    }
+
+    private fun migrateLegacyIfNeeded() {
+        val legacy = appContext.getSharedPreferences("notimind_lite_prefs", Context.MODE_PRIVATE)
+        if (legacy.all.isNotEmpty() && !backing.contains(KEY_ENABLE_SYNC)) {
+            val editor = backing.edit()
+            legacy.all.forEach { (key, value) ->
+                when (value) {
                     is Boolean -> editor.putBoolean(key, value)
                     is Int -> editor.putInt(key, value)
                     is Long -> editor.putLong(key, value)
                     is String -> editor.putString(key, value)
-                } }
-                editor.apply()
+                }
             }
-            val default = Profile(DEFAULT_PROFILE_ID, "Default", System.currentTimeMillis())
-            profileStore.edit().putString(KEY_PROFILES, JSONArray().put(JSONObject().put("id", default.id).put("name", default.name).put("createdAt", default.createdAt)).toString()).apply()
-            return listOf(default)
+            editor.apply()
         }
+    }
+
+    private fun parseProfiles(raw: String): List<Profile> {
         return runCatching {
             val array = JSONArray(raw)
-            (0 until array.length()).map { val o = array.getJSONObject(it); Profile(o.getString("id"), o.getString("name"), o.getLong("createdAt")) }
+            (0 until array.length()).map { index ->
+                val profile = array.getJSONObject(index)
+                Profile(profile.getString("id"), profile.getString("name"), profile.getLong("createdAt"))
+            }
         }.getOrDefault(listOf(Profile(DEFAULT_PROFILE_ID, "Default", 0L)))
     }
 
@@ -355,7 +371,10 @@ class PreferencesRepository(context: Context) {
         _lastSyncTs.value = backing.getLong("config_last_sync_ts", 0L)
     }
 
-    fun setUseSupabaseSync(v: Boolean) { backing.edit().putBoolean("config_use_supabase_sync", v).apply(); _useSupabaseSync.value = v }
+    fun setUseSupabaseSync(v: Boolean) {
+        backing.edit().putBoolean("config_use_supabase_sync", v).apply()
+        _useSupabaseSync.value = v
+    }
 
     /** Export only user-facing settings; auth tokens and local sync metadata are excluded. */
     fun exportSyncableSettings(): org.json.JSONObject {

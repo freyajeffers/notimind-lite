@@ -30,9 +30,8 @@ import androidx.compose.ui.unit.dp
  *
  * Pure-Composable, additive — does not change any existing call sites.
  */
-@Suppress("FunctionNaming") // Composable PascalCase required by Compose API.
 @Composable
-fun ActiveFilterChipsRow(
+fun activeFilterChipsRow(
     label: String,
     chips: List<ActiveFilterChip>,
     clearAllLabel: String,

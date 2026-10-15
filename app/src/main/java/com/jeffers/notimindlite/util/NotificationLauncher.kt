@@ -50,8 +50,6 @@ object NotificationLauncher {
                 return true
             } catch (e: PendingIntent.CanceledException) {
                 Log.w(TAG, "Action PendingIntent was canceled for: ${notifKey}_action_$actionIndex", e)
-            } catch (e: Exception) {
-                Log.e(TAG, "Failed to trigger action PendingIntent for: ${notifKey}_action_$actionIndex", e)
             }
         } else {
             Log.w(TAG, "No cached action PendingIntent found for: ${notifKey}_action_$actionIndex")
@@ -71,8 +69,6 @@ object NotificationLauncher {
                 launched = true
             } catch (e: PendingIntent.CanceledException) {
                 Log.w(TAG, "PendingIntent was canceled for key: $key. Attempting persistent intentUri fallback.", e)
-            } catch (e: Exception) {
-                Log.e(TAG, "Failed to send PendingIntent for key: $key", e)
             }
         }
 
@@ -95,8 +91,8 @@ object NotificationLauncher {
                 }
             } catch (e: SecurityException) {
                 Log.e(TAG, "SecurityException launching parsed intentUri for package: $packageName", e)
-            } catch (e: Exception) {
-                Log.w(TAG, "Failed to launch from parsed intentUri for package: $packageName", e)
+            } catch (e: java.net.URISyntaxException) {
+                Log.w(TAG, "Malformed intentUri for package: $packageName", e)
             }
         }
 
@@ -111,8 +107,10 @@ object NotificationLauncher {
                 } else {
                     Log.w(TAG, "No launch intent found for package: $packageName")
                 }
-            } catch (e: Exception) {
-                Log.e(TAG, "Failed to launch package main intent for: $packageName", e)
+            } catch (e: SecurityException) {
+                Log.e(TAG, "SecurityException while launching package main intent for: $packageName", e)
+            } catch (e: IllegalStateException) {
+                Log.e(TAG, "Invalid launch state for package: $packageName", e)
             }
         }
     }

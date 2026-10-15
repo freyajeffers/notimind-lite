@@ -80,7 +80,7 @@ import com.jeffers.notimindlite.data.local.PreferencesRepository
 import com.jeffers.notimindlite.service.NotificationLoggerService
 import com.jeffers.notimindlite.ui.dialogs.AppPackageSelectorDialog
 import com.jeffers.notimindlite.ui.components.ActiveFilterChip
-import com.jeffers.notimindlite.ui.components.ActiveFilterChipsRow
+import com.jeffers.notimindlite.ui.components.activeFilterChipsRow
 import com.jeffers.notimindlite.ui.components.ActiveFirstRunEmptyState
 import com.jeffers.notimindlite.ui.components.ActivePermissionEmptyState
 import com.jeffers.notimindlite.ui.components.ActiveSearchEmptyState
@@ -589,7 +589,7 @@ fun ActiveNotificationsScreen(dao: NotificationDao, authManager: AuthManager, db
                 }
                 if (activeChips.isNotEmpty()) {
                     item(key = "active_filter_chips") {
-                        ActiveFilterChipsRow(
+                        activeFilterChipsRow(
                             label = stringResource(id = R.string.active_filter_chips_label),
                             chips = activeChips,
                             clearAllLabel = stringResource(id = R.string.active_filter_chips_clear_all),

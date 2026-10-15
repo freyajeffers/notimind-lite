@@ -25,6 +25,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 import org.json.JSONArray
+import android.os.Bundle
 import java.io.File
 import java.io.FileOutputStream
 import java.util.Collections
@@ -286,145 +287,155 @@ class NotificationLoggerService : NotificationListenerService() {
 
     private fun extractNotificationEntity(sbn: StatusBarNotification): NotificationEntity? {
         if (!shouldCaptureNotification(sbn)) return null
-        try {
-            if (sbn.packageName == applicationContext.packageName) return null
-            val notification = sbn.notification ?: return null
-            val packageName = sbn.packageName
+        if (sbn.packageName == applicationContext.packageName) return null
+        val notification = sbn.notification ?: return null
+        val packageName = sbn.packageName
+
+        return try {
+            // Parse and sanitize fields in small focused helpers to reduce cyclomatic
+            // complexity and make individual behaviors testable.
             val extras = notification.extras
-            val conversationTitle = extras?.getCharSequence(Notification.EXTRA_CONVERSATION_TITLE)?.toString()
-            val rawTitle = extras?.getCharSequence(Notification.EXTRA_TITLE)?.toString() ?: ""
-            var title = if (rawTitle.isNotBlank()) rawTitle else (conversationTitle ?: "")
-
-            val rawContent = extras?.getCharSequence(Notification.EXTRA_TEXT)?.toString() ?: ""
-            var subText = extras?.getCharSequence(Notification.EXTRA_SUB_TEXT)?.toString()
-            var bigText = extras?.getCharSequence(Notification.EXTRA_BIG_TEXT)?.toString()
-            val summaryText = extras?.getCharSequence(Notification.EXTRA_SUMMARY_TEXT)?.toString()
-            var content = when {
-                rawContent.isNotBlank() -> rawContent
-                !bigText.isNullOrBlank() -> bigText
-                !summaryText.isNullOrBlank() -> summaryText
-                else -> ""
-            }
-
-            val inboxLinesJson: String? = try {
-                val textLines = extras?.getCharSequenceArray(Notification.EXTRA_TEXT_LINES)
-                if (!textLines.isNullOrEmpty()) {
-                    val linesList = textLines.map { it.toString() }
-                    JSONArray(linesList).toString()
-                } else null
-            } catch (e: ClassCastException) {
-                // Some devices put a String[] into the bundle instead of CharSequence[]
-                val stringLines = extras?.getStringArray(Notification.EXTRA_TEXT_LINES)
-                if (!stringLines.isNullOrEmpty()) JSONArray(stringLines.toList()).toString() else null
-            }
-
+            val (title, content, subText, bigText) = parseTitleAndContent(extras)
+            val inboxLinesJson = extractInboxLinesJson(extras)
             val category = notification.category
             @Suppress("DEPRECATION")
             val priority = notification.priority
             val postTime = sbn.postTime
             val now = System.currentTimeMillis()
 
-            // Run sanitization pipeline (package filter + PII redaction). The pipeline returns null
-            // to indicate the notification should be dropped (fail-closed).
             val pipeline = com.jeffers.notimindlite.sanitization.SanitizationPipeline(applicationContext)
             val san = pipeline.sanitize(packageName, title, content, subText, bigText) ?: return null
-            // overwrite working variables with sanitized values
-            title = san.title
-            content = san.content
-            subText = san.subText
-            bigText = san.bigText
-            if (PreferencesRepository(applicationContext).anonymizeTitles.value) {
-                title = "[REDACTED-TITLE]"
-            }
 
-            if (title.isBlank() && content.isBlank()) return null
+            val finalTitle = if (PreferencesRepository(applicationContext).anonymizeTitles.value) "[REDACTED-TITLE]" else san.title
+            val finalContent = san.content
+            val finalSubText = san.subText
+            val finalBigText = san.bigText
 
+            if (finalTitle.isBlank() && finalContent.isBlank()) return null
             val summaryRegex = Regex("""\d+\s+more\s+notifications?""", RegexOption.IGNORE_CASE)
-            if (summaryRegex.matches(title) ||
-                summaryRegex.matches(content) ||
-                (subText != null && summaryRegex.matches(subText))
-            ) return null
+            if (summaryRegex.matches(finalTitle) || summaryRegex.matches(finalContent) || (finalSubText != null && summaryRegex.matches(finalSubText))) return null
 
             val maxAgeMs = 30L * 24 * 60 * 60 * 1000L
             if (postTime > 0 && (now - postTime) > maxAgeMs) return null
 
-            // Always use a deterministic app-derived key. The system-provided sbn.key is
-            // inconsistent between post/remove events on some devices, causing dismissal
-            // lookups to miss the originally logged row.
-            val key = "${sbn.packageName}|${sbn.id}|${sbn.tag ?: ""}"
-            val rawAppName = try {
-                val appInfo = packageManager.getApplicationInfo(packageName, PackageManager.MATCH_UNINSTALLED_PACKAGES)
-                packageManager.getApplicationLabel(appInfo).toString()
-            } catch (e: Exception) {
-                null
-            }
-            val appName = rawAppName ?: packageName
-            val isGroupSummary = (notification.flags and Notification.FLAG_GROUP_SUMMARY) != 0
-            val smallIconRes = try {
-                notification.smallIcon?.resId ?: 0
-            } catch (e: IllegalStateException) {
-                // Some OEMs return BITMAP icons where getResId() throws; treat as no resource
-                0
-            }
-            val appIconUri = getOrSaveAppIconUri(packageName)
-            val channelId = notification.channelId
-            val groupKey = sbn.groupKey
-            val isOngoing = sbn.isOngoing
-            val isClearable = sbn.isClearable
-            val actions = notification.actions
-            val actionsCount = actions?.size ?: 0
-
-            val actionLabelsJson: String? = if (!actions.isNullOrEmpty()) {
-                val labels = mutableListOf<String>()
-                actions.forEachIndexed { index, action ->
-                    val label = action.title?.toString() ?: "Action $index"
-                    labels.add(label)
-                }
-                JSONArray(labels).toString()
-            } else {
-                null
-            }
-
-            val intentUri = try {
-                packageManager.getLaunchIntentForPackage(packageName)?.toUri(Intent.URI_INTENT_SCHEME)
-            } catch (e: Exception) {
-                null
-            }
-
-            return NotificationEntity(
-                key = key,
-                packageName = packageName,
-                appName = appName,
-                appIconUri = appIconUri,
-                title = title,
-                content = content,
-                postTime = postTime,
-                lastUpdatedTime = now,
-                updateCount = 1,
-                isDismissed = false,
-                isPersistent = isOngoing,
-                isRead = false,
-                isGroupSummary = isGroupSummary,
-                category = category,
-                channelId = channelId,
-                subText = subText,
-                bigText = bigText,
-                inboxLinesJson = inboxLinesJson,
-                priority = priority,
-                groupKey = groupKey,
-                isOngoing = isOngoing,
-                isClearable = isClearable,
-                actionsCount = actionsCount,
-                intentUri = intentUri,
-                isPinned = false,
-                actionLabels = actionLabelsJson,
-                smallIconRes = smallIconRes
+            return buildNotificationEntity(
+                NotificationBuildInput(sbn, notification, san, inboxLinesJson, postTime, now)
             )
         } catch (e: Exception) {
             Log.e(TAG, "Failed to extract notification entity", e)
-            return null
+            null
         }
     }
+
+    private fun buildNotificationEntity(input: NotificationBuildInput): NotificationEntity {
+        val sbn = input.sbn
+        val notification = input.notification
+        val san = input.san
+        val packageName = sbn.packageName
+        val isOngoing = sbn.isOngoing
+        return NotificationEntity(
+            key = "${sbn.packageName}|${sbn.id}|${sbn.tag ?: ""}",
+            packageName = packageName,
+            appName = resolveAppName(packageName),
+            appIconUri = getOrSaveAppIconUri(packageName),
+            title = san.title,
+            content = san.content,
+            postTime = input.postTime,
+            lastUpdatedTime = input.now,
+            updateCount = 1,
+            isDismissed = false,
+            isPersistent = isOngoing,
+            isRead = false,
+            isGroupSummary = (notification.flags and Notification.FLAG_GROUP_SUMMARY) != 0,
+            category = notification.category,
+            channelId = notification.channelId,
+            subText = san.subText,
+            bigText = san.bigText,
+            inboxLinesJson = input.inboxLinesJson,
+            priority = notification.priority,
+            groupKey = sbn.groupKey,
+            isOngoing = isOngoing,
+            isClearable = sbn.isClearable,
+            actionsCount = notification.actions?.size ?: 0,
+            intentUri = safeLaunchIntentUri(packageName),
+            isPinned = false,
+            actionLabels = buildActionLabelsJson(notification.actions),
+            smallIconRes = safeSmallIconRes(notification)
+        )
+    }
+
+    private data class NotificationBuildInput(
+        val sbn: StatusBarNotification,
+        val notification: Notification,
+        val san: com.jeffers.notimindlite.sanitization.SanitizationResult,
+        val inboxLinesJson: String?,
+        val postTime: Long,
+        val now: Long
+    )
+
+    private fun parseTitleAndContent(extras: Bundle?): Quad<String, String, String?, String?> {
+        val conversationTitle = extras?.getCharSequence(Notification.EXTRA_CONVERSATION_TITLE)?.toString()
+        val rawTitle = extras?.getCharSequence(Notification.EXTRA_TITLE)?.toString() ?: ""
+        val title = if (rawTitle.isNotBlank()) rawTitle else (conversationTitle ?: "")
+        val rawContent = extras?.getCharSequence(Notification.EXTRA_TEXT)?.toString() ?: ""
+        val subText = extras?.getCharSequence(Notification.EXTRA_SUB_TEXT)?.toString()
+        val bigText = extras?.getCharSequence(Notification.EXTRA_BIG_TEXT)?.toString()
+        val summaryText = extras?.getCharSequence(Notification.EXTRA_SUMMARY_TEXT)?.toString()
+        val content = when {
+            rawContent.isNotBlank() -> rawContent
+            !bigText.isNullOrBlank() -> bigText
+            !summaryText.isNullOrBlank() -> summaryText
+            else -> ""
+        }
+        return Quad(title, content, subText, bigText)
+    }
+
+    private fun extractInboxLinesJson(extras: Bundle?): String? {
+        return try {
+            val textLines = extras?.getCharSequenceArray(Notification.EXTRA_TEXT_LINES)
+            if (!textLines.isNullOrEmpty()) JSONArray(textLines.map { it.toString() }).toString() else null
+        } catch (e: ClassCastException) {
+            val stringLines = extras?.getStringArray(Notification.EXTRA_TEXT_LINES)
+            if (!stringLines.isNullOrEmpty()) JSONArray(stringLines.toList()).toString() else null
+        }
+    }
+
+    private fun resolveAppName(packageName: String): String {
+        return try {
+            val appInfo = packageManager.getApplicationInfo(packageName, PackageManager.MATCH_UNINSTALLED_PACKAGES)
+            packageManager.getApplicationLabel(appInfo).toString()
+        } catch (e: Exception) {
+            packageName
+        }
+    }
+
+    private fun safeSmallIconRes(notification: Notification): Int {
+        return try {
+            notification.smallIcon?.resId ?: 0
+        } catch (e: IllegalStateException) {
+            0
+        }
+    }
+
+    private fun buildActionLabelsJson(actions: Array<android.app.Notification.Action>?): String? {
+        if (actions.isNullOrEmpty()) return null
+        val labels = mutableListOf<String>()
+        actions.forEachIndexed { index, action ->
+            labels.add(action.title?.toString() ?: "Action $index")
+        }
+        return JSONArray(labels).toString()
+    }
+
+    private fun safeLaunchIntentUri(packageName: String): String? {
+        return try {
+            packageManager.getLaunchIntentForPackage(packageName)?.toUri(Intent.URI_INTENT_SCHEME)
+        } catch (e: Exception) {
+            null
+        }
+    }
+
+    // Small tuple-like holder to return four values without creating a top-level data class.
+    private data class Quad<A, B, C, D>(val a: A, val b: B, val c: C, val d: D)
 
     override fun onNotificationRemoved(sbn: StatusBarNotification) {
         if (!isNotificationListenerActive()) {

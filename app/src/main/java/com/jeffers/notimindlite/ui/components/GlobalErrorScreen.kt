@@ -22,9 +22,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 
 @Composable
-@Suppress("FunctionNaming") // Composable PascalCase is required by the Compose API;
-// detekt's FunctionNaming rule does not exempt Composables.
-fun GlobalErrorScreen(
+fun globalErrorScreen(
     message: String,
     actionLabel: String = "Retry",
     onActionClick: () -> Unit,

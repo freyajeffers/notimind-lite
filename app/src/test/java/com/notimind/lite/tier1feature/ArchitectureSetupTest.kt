@@ -5,7 +5,10 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import com.jeffers.notimindlite.data.local.AppDatabase
 import com.notimind.lite.base.BaseRobolectricTest
-import org.junit.Assert.*
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertSame
+import org.junit.Assert.assertTrue
 import org.junit.Test
 import java.io.File
 
@@ -24,14 +27,20 @@ class ArchitectureSetupTest : BaseRobolectricTest() {
         if (buildGradleFile.exists()) {
             val content = buildGradleFile.readText().lowercase()
             for (keyword in forbiddenKeywords) {
-                assertFalse("Forbidden dependency keyword '$keyword' found in app/build.gradle.kts", content.contains(keyword))
+                assertFalse(
+                    "Forbidden dependency keyword '$keyword' found in app/build.gradle.kts",
+                    content.contains(keyword)
+                )
             }
         }
 
         if (versionsTomlFile.exists()) {
             val content = versionsTomlFile.readText().lowercase()
             for (keyword in forbiddenKeywords) {
-                assertFalse("Forbidden dependency keyword '$keyword' found in libs.versions.toml", content.contains(keyword))
+                assertFalse(
+                    "Forbidden dependency keyword '$keyword' found in libs.versions.toml",
+                    content.contains(keyword)
+                )
             }
         }
     }
@@ -43,7 +52,10 @@ class ArchitectureSetupTest : BaseRobolectricTest() {
 
         val packageInfo = packageManager.getPackageInfo(
             packageName,
-            PackageManager.GET_PERMISSIONS or PackageManager.GET_SERVICES or PackageManager.GET_RECEIVERS or PackageManager.GET_ACTIVITIES
+            PackageManager.GET_PERMISSIONS or
+                PackageManager.GET_SERVICES or
+                PackageManager.GET_RECEIVERS or
+                PackageManager.GET_ACTIVITIES
         )
 
         val requestedPermissions = packageInfo.requestedPermissions?.toList() ?: emptyList()

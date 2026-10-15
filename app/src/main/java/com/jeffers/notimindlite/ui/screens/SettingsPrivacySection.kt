@@ -1,8 +1,23 @@
 package com.jeffers.notimindlite.ui.screens
 
-import androidx.compose.foundation.layout.*
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Switch
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.res.stringResource
@@ -70,19 +85,28 @@ fun SettingsPrivacySection(preferencesRepository: PreferencesRepository) {
                 )
             }
 
-            Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
-                Column(modifier = Modifier.weight(1f)) {
-                    Text("Strict Privacy Mode", style = MaterialTheme.typography.bodyLarge)
-                    Text("Disable all crash reporting and anonymous usage telemetry.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            strictPrivacyRow(
+                enabled = strictPrivacyEnabled,
+                onChanged = {
+                    strictPrivacyEnabled = it
+                    preferenceManager.setStrictPrivacyEnabled(it)
                 }
-                Switch(
-                    checked = strictPrivacyEnabled,
-                    onCheckedChange = {
-                        strictPrivacyEnabled = it
-                        preferenceManager.setStrictPrivacyEnabled(it)
-                    }
-                )
-            }
+            )
         }
+    }
+}
+
+@Composable
+private fun strictPrivacyRow(enabled: Boolean, onChanged: (Boolean) -> Unit) {
+    Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
+        Column(modifier = Modifier.weight(1f)) {
+            Text("Strict Privacy Mode", style = MaterialTheme.typography.bodyLarge)
+            Text(
+                "Disable all crash reporting and anonymous usage telemetry.",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+        Switch(checked = enabled, onCheckedChange = onChanged)
     }
 }

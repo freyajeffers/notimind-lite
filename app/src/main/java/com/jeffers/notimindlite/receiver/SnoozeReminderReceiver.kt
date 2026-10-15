@@ -3,7 +3,6 @@ package com.jeffers.notimindlite.receiver
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
-import android.util.Log
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import android.app.NotificationChannel
@@ -15,7 +14,6 @@ import com.jeffers.notimindlite.R
  */
 class SnoozeReminderReceiver : BroadcastReceiver() {
     companion object {
-        private const val TAG = "SnoozeReceiver"
         private const val CHANNEL_ID = "snooze_reminders"
     }
 

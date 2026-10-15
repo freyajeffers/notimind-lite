@@ -118,7 +118,6 @@ android {
 }
 
 detekt {
-  baseline = file("detekt-baseline.xml")
 }
 
 ksp {

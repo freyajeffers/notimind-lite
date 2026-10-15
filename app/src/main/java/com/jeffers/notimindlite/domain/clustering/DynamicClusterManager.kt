@@ -96,6 +96,30 @@ object DynamicClusterManager {
         )
     )
 
+    private val PACKAGE_DOMAIN_MARKERS: List<Pair<String, List<String>>> = listOf(
+        "finance" to listOf("bank", "pay", "wallet", "money", "finance", "crypto"),
+        "delivery" to listOf("food", "eat", "delivery", "order", "courier", "transit"),
+        "security" to listOf("auth", "otp", "pass", "secure", "vpn"),
+        "travel" to listOf("flight", "hotel", "ride", "airline", "trip", "travel"),
+        "shopping" to listOf("shop", "store", "deal", "cart", "mall"),
+        "health" to listOf("fit", "health", "gym", "run", "doctor", "med"),
+        "smarthome" to listOf("home", "smart", "camera", "iot", "nest", "ring"),
+        "game" to listOf("game", "play", "arcade", "rpg"),
+        "social" to listOf("chat", "message", "social", "talk", "mail"),
+        "productivity" to listOf("task", "note", "cal", "office", "doc", "meet"),
+        "media" to listOf("music", "video", "audio", "stream", "tube", "tv"),
+        "education" to listOf("learn", "edu", "course", "school", "study"),
+        "news" to listOf("news", "press", "weather"),
+        "food" to listOf("recipe", "cook", "dine"),
+        "realestate" to listOf("zillow", "rent", "estate"),
+        "automotive" to listOf("car", "auto", "drive", "gas"),
+        "dating" to listOf("date", "match", "tinder"),
+        "events" to listOf("ticket", "event", "concert"),
+        "utilities" to listOf("telecom", "mobile", "utility"),
+        "pets" to listOf("pet", "vet", "dog", "cat"),
+        "career" to listOf("job", "career", "hire", "workplace")
+    )
+
     private val OS_CATEGORY_MAPPING: Map<Int, String> = mapOf(
         ApplicationInfo.CATEGORY_GAME to "game",
         ApplicationInfo.CATEGORY_AUDIO to "media",
@@ -116,87 +140,91 @@ object DynamicClusterManager {
         synchronized(this) {
             if (isInitialized) return
             try {
-                for ((domain, subMap) in HIERARCHICAL_VOCABULARY) {
-                    val domainNode = rootClusters.getOrPut(domain) { ClusterNode(domain) }
-                    for ((subCategory, words) in subMap) {
-                        val subNode = domainNode.subClusters.getOrPut(subCategory) { ClusterNode(subCategory) }
-                        subNode.keywords.addAll(words)
-                        domainNode.keywords.addAll(words)
-                    }
-                }
-
-                val pm = context.packageManager
-                val apps = pm.getInstalledApplications(PackageManager.MATCH_UNINSTALLED_PACKAGES)
-
-                for (app in apps) {
-                    val appLabel = try {
-                        pm.getApplicationLabel(app).toString().lowercase()
-                    } catch (e: Exception) {
-                        null
-                    }
-                    val pkgName = app.packageName.lowercase()
-                    val catId = app.category
-
-                    val domain = if (catId != ApplicationInfo.CATEGORY_UNDEFINED) {
-                        OS_CATEGORY_MAPPING[catId]
-                    } else {
-                        inferDomainFromPackageName(pkgName, appLabel)
-                    }
-
-                    if (domain != null && rootClusters.containsKey(domain)) {
-                        val domainNode = rootClusters[domain]!!
-                        if (!appLabel.isNullOrBlank()) {
-                            domainNode.keywords.add(appLabel)
-                            domainNode.keywords.addAll(appLabel.split("\\s+".toRegex()).filter { it.length > 2 })
-                        }
-                        val pkgParts = pkgName.split(".")
-                        val meaningfulParts = pkgParts.filter { 
-                            it != "com" && it != "android" && it != "app" && it != "mobile" && it != "apps" && it.length > 2 
-                        }
-                        domainNode.keywords.addAll(meaningfulParts)
-                        
-                        val combined = "$pkgName ${appLabel ?: ""}".lowercase()
-                        for ((subName, subNode) in domainNode.subClusters) {
-                            if (subNode.keywords.any { combined.contains(it) }) {
-                                subNode.keywords.add(appLabel ?: "")
-                                subNode.keywords.addAll(meaningfulParts)
-                            }
-                        }
-                    }
-                }
+                initializeVocabulary()
+                enrichInstalledApplications(context.packageManager)
                 isInitialized = true
-            } catch (e: Exception) {
-                Log.e(TAG, "Error initializing hierarchical clusters", e)
+            } catch (e: PackageManager.NameNotFoundException) {
+                Log.e(TAG, "Unable to resolve an installed application", e)
+            } catch (e: SecurityException) {
+                Log.e(TAG, "Unable to inspect installed applications", e)
             }
         }
     }
 
+    private fun initializeVocabulary() {
+        HIERARCHICAL_VOCABULARY.forEach { (domain, subMap) ->
+            val domainNode = rootClusters.getOrPut(domain) { ClusterNode(domain) }
+            subMap.forEach { (subCategory, words) ->
+                val subNode = domainNode.subClusters.getOrPut(subCategory) { ClusterNode(subCategory) }
+                subNode.keywords.addAll(words)
+                domainNode.keywords.addAll(words)
+            }
+        }
+    }
+
+    private fun enrichInstalledApplications(packageManager: PackageManager) {
+        packageManager
+            .getInstalledApplications(PackageManager.MATCH_UNINSTALLED_PACKAGES)
+            .forEach { app -> enrichApplication(packageManager, app) }
+    }
+
+    private fun enrichApplication(packageManager: PackageManager, app: ApplicationInfo) {
+        val appLabel = applicationLabel(packageManager, app)
+        val packageName = app.packageName.lowercase()
+        val domain = appDomain(app, packageName, appLabel) ?: return
+        val domainNode = rootClusters[domain] ?: return
+        val meaningfulParts = meaningfulPackageParts(packageName)
+        domainNode.keywords.addAll(appKeywords(appLabel, meaningfulParts))
+        val combined = "$packageName ${appLabel ?: ""}".lowercase()
+        addMatchingSubcategoryKeywords(domainNode, combined, appLabel, meaningfulParts)
+    }
+
+    private fun applicationLabel(packageManager: PackageManager, app: ApplicationInfo): String? {
+        return try {
+            packageManager.getApplicationLabel(app).toString().lowercase()
+        } catch (e: PackageManager.NameNotFoundException) {
+            null
+        }
+    }
+
+    private fun appDomain(app: ApplicationInfo, packageName: String, label: String?): String? {
+        return if (app.category != ApplicationInfo.CATEGORY_UNDEFINED) {
+            OS_CATEGORY_MAPPING[app.category]
+        } else {
+            inferDomainFromPackageName(packageName, label)
+        }
+    }
+
+    private fun meaningfulPackageParts(packageName: String): List<String> {
+        return packageName.split(".").filter {
+            it !in setOf("com", "android", "app", "mobile", "apps") && it.length > 2
+        }
+    }
+
+    private fun appKeywords(label: String?, meaningfulParts: List<String>): List<String> {
+        val labelWords = label?.split("\\s+".toRegex())?.filter { it.length > 2 }.orEmpty()
+        return listOfNotNull(label) + labelWords + meaningfulParts
+    }
+
+    private fun addMatchingSubcategoryKeywords(
+        domainNode: ClusterNode,
+        combined: String,
+        appLabel: String?,
+        meaningfulParts: List<String>
+    ) {
+        domainNode.subClusters.values
+            .filter { subNode -> subNode.keywords.any(combined::contains) }
+            .forEach { subNode ->
+                appLabel?.let(subNode.keywords::add)
+                subNode.keywords.addAll(meaningfulParts)
+            }
+    }
+
     private fun inferDomainFromPackageName(pkgName: String, appLabel: String?): String? {
         val combined = "$pkgName ${appLabel ?: ""}".lowercase()
-        return when {
-            combined.contains("bank") || combined.contains("pay") || combined.contains("wallet") || combined.contains("money") || combined.contains("finance") || combined.contains("crypto") -> "finance"
-            combined.contains("food") || combined.contains("eat") || combined.contains("delivery") || combined.contains("order") || combined.contains("courier") || combined.contains("transit") -> "delivery"
-            combined.contains("auth") || combined.contains("otp") || combined.contains("pass") || combined.contains("secure") || combined.contains("vpn") -> "security"
-            combined.contains("flight") || combined.contains("hotel") || combined.contains("ride") || combined.contains("airline") || combined.contains("trip") || combined.contains("travel") -> "travel"
-            combined.contains("shop") || combined.contains("store") || combined.contains("deal") || combined.contains("cart") || combined.contains("mall") -> "shopping"
-            combined.contains("fit") || combined.contains("health") || combined.contains("gym") || combined.contains("run") || combined.contains("doctor") || combined.contains("med") -> "health"
-            combined.contains("home") || combined.contains("smart") || combined.contains("camera") || combined.contains("iot") || combined.contains("nest") || combined.contains("ring") -> "smarthome"
-            combined.contains("game") || combined.contains("play") || combined.contains("arcade") || combined.contains("rpg") -> "game"
-            combined.contains("chat") || combined.contains("message") || combined.contains("social") || combined.contains("talk") || combined.contains("mail") -> "social"
-            combined.contains("task") || combined.contains("note") || combined.contains("cal") || combined.contains("office") || combined.contains("doc") || combined.contains("meet") -> "productivity"
-            combined.contains("music") || combined.contains("video") || combined.contains("audio") || combined.contains("stream") || combined.contains("tube") || combined.contains("tv") -> "media"
-            combined.contains("learn") || combined.contains("edu") || combined.contains("course") || combined.contains("school") || combined.contains("study") -> "education"
-            combined.contains("news") || combined.contains("press") || combined.contains("weather") -> "news"
-            combined.contains("recipe") || combined.contains("cook") || combined.contains("dine") -> "food"
-            combined.contains("zillow") || combined.contains("rent") || combined.contains("estate") -> "realestate"
-            combined.contains("car") || combined.contains("auto") || combined.contains("drive") || combined.contains("gas") -> "automotive"
-            combined.contains("date") || combined.contains("match") || combined.contains("tinder") -> "dating"
-            combined.contains("ticket") || combined.contains("event") || combined.contains("concert") -> "events"
-            combined.contains("telecom") || combined.contains("mobile") || combined.contains("utility") -> "utilities"
-            combined.contains("pet") || combined.contains("vet") || combined.contains("dog") || combined.contains("cat") -> "pets"
-            combined.contains("job") || combined.contains("career") || combined.contains("hire") || combined.contains("workplace") -> "career"
-            else -> null
-        }
+        return PACKAGE_DOMAIN_MARKERS.firstOrNull { (_, markers) ->
+            markers.any(combined::contains)
+        }?.first
     }
 
     fun getDynamicClusters(): Map<String, Set<String>> {
@@ -219,20 +247,26 @@ object DynamicClusterManager {
     }
 
     fun findMatchingClusters(queryTokens: List<String>): Map<String, Set<ClusterNode>> {
-        val matched = mutableMapOf<String, MutableSet<ClusterNode>>()
-        for (token in queryTokens) {
-            val lowerToken = token.lowercase()
-            for ((domainName, domainNode) in rootClusters) {
-                if (lowerToken == domainName || domainNode.keywords.contains(lowerToken)) {
-                    matched.getOrPut(domainName) { mutableSetOf() }.add(domainNode)
-                }
-                for ((subName, subNode) in domainNode.subClusters) {
-                    if (lowerToken == subName || subNode.keywords.contains(lowerToken)) {
-                        matched.getOrPut(domainName) { mutableSetOf() }.add(subNode)
-                    }
-                }
+        return queryTokens.asSequence()
+            .flatMap { token -> matchesForToken(token) }
+            .groupBy({ it.first }, { it.second })
+            .mapValues { (_, nodes) -> nodes.toSet() }
+    }
+
+    private fun matchesForToken(token: String): Sequence<Pair<String, ClusterNode>> {
+        val lowerToken = token.lowercase()
+        return rootClusters.asSequence().flatMap { (domainName, domainNode) ->
+            val domainMatch = if (lowerToken == domainName || domainNode.keywords.contains(lowerToken)) {
+                sequenceOf(domainName to domainNode)
+            } else {
+                emptySequence()
             }
+            val subMatches = domainNode.subClusters.asSequence()
+                .filter { (subName, subNode) ->
+                    lowerToken == subName || subNode.keywords.contains(lowerToken)
+                }
+                .map { (_, subNode) -> domainName to subNode }
+            domainMatch + subMatches
         }
-        return matched
     }
 }

@@ -12,6 +12,18 @@ import java.io.File
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
+/** Parameters for copying opened databases and optionally performing cutover. */
+data class MigrationRequest(
+  val source: SupportSQLiteDatabase,
+  val target: SupportSQLiteDatabase,
+  val plaintextFile: File,
+  val encryptedTempFile: File,
+  val quarantineFile: File,
+  val closeDatabases: () -> Unit,
+  val executeCutover: Boolean = false,
+  val batchSize: Int = 500
+)
+
 /**
  * Coordinates guarded legacy migration after the SQLCipher key and rollback protocol
  * have passed their validation gates.
@@ -59,16 +71,18 @@ class MigrationRunner(
             File(directory, "$databaseName$suffix.quarantine")
         }
         val result = migrateOpenedDatabases(
-          source = sourceHelper.writableDatabase,
-          target = target.openHelper.writableDatabase,
-          plaintextFile = diagnostics.plaintextDatabase,
-          encryptedTempFile = encryptedTemp,
-          quarantineFile = quarantine,
-          closeDatabases = {
+          MigrationRequest(
+            source = sourceHelper.writableDatabase,
+            target = target.openHelper.writableDatabase,
+            plaintextFile = diagnostics.plaintextDatabase,
+            encryptedTempFile = encryptedTemp,
+            quarantineFile = quarantine,
+            closeDatabases = {
             sourceHelper.close()
             target.close()
-          },
-          executeCutover = false
+            },
+            executeCutover = false
+          )
         )
         if (result.state != MigrationState.CUTOVER_PENDING) {
           result.state
@@ -158,21 +172,16 @@ class MigrationRunner(
     return FrameworkSQLiteOpenHelperFactory().create(configuration)
   }
 
-  fun migrateOpenedDatabases(
-    source: SupportSQLiteDatabase,
-    target: SupportSQLiteDatabase,
-    plaintextFile: File,
-    encryptedTempFile: File,
-    quarantineFile: File,
-    closeDatabases: () -> Unit,
-    executeCutover: Boolean = false,
-    batchSize: Int = 500
-  ): MigrationResult {
-    val copyResult = orchestrator.copyAndVerify(source, target, batchSize)
+  fun migrateOpenedDatabases(request: MigrationRequest): MigrationResult {
+    val copyResult = orchestrator.copyAndVerify(request.source, request.target, request.batchSize)
     if (copyResult.state != MigrationState.VERIFYING) return copyResult
-    if (!executeCutover) return copyResult.copy(state = MigrationState.CUTOVER_PENDING)
-    closeDatabases()
-    val cutoverResult = orchestrator.atomicCutover(plaintextFile, encryptedTempFile, quarantineFile)
+    if (!request.executeCutover) return copyResult.copy(state = MigrationState.CUTOVER_PENDING)
+    request.closeDatabases()
+    val cutoverResult = orchestrator.atomicCutover(
+      request.plaintextFile,
+      request.encryptedTempFile,
+      request.quarantineFile
+    )
     return orchestrator.finalizeSuccessfulCutover(cutoverResult)
   }
 
@@ -181,44 +190,56 @@ class MigrationRunner(
    * complete notifications rows in batches and never replaces or deletes source files.
    */
   fun performStreamingCopyForTest(sourceDb: AppDatabase, targetDb: AppDatabase, batchSize: Int = 50) {
-    val src = sourceDb.openHelper.readableDatabase
-    val dst = targetDb.openHelper.writableDatabase
+    val source = sourceDb.openHelper.readableDatabase
+    val target = targetDb.openHelper.writableDatabase
+    target.execSQL("PRAGMA foreign_keys = OFF;")
 
-    // Ensure target table exists (assumes schema-compatible AppDatabase)
-    dst.execSQL("PRAGMA foreign_keys = OFF;")
-
-    val countCursor = src.query("SELECT COUNT(*) FROM notifications")
-    val total = if (countCursor.moveToFirst()) countCursor.getLong(0) else 0L
-    countCursor.close()
-
+    val total = source.query("SELECT COUNT(*) FROM notifications").use { cursor ->
+      if (cursor.moveToFirst()) cursor.getLong(0) else 0L
+    }
     var offset = 0L
     while (offset < total) {
-      val sel = src.query(
-        "SELECT * FROM notifications LIMIT $batchSize OFFSET $offset"
-      )
-
-      dst.beginTransaction()
-      try {
-        while (sel.moveToNext()) {
-          val values = android.content.ContentValues()
-          for (columnIndex in 0 until sel.columnCount) {
-            val columnName = sel.getColumnName(columnIndex)
-            when (sel.getType(columnIndex)) {
-              android.database.Cursor.FIELD_TYPE_NULL -> values.putNull(columnName)
-              android.database.Cursor.FIELD_TYPE_INTEGER -> values.put(columnName, sel.getLong(columnIndex))
-              android.database.Cursor.FIELD_TYPE_FLOAT -> values.put(columnName, sel.getDouble(columnIndex))
-              android.database.Cursor.FIELD_TYPE_BLOB -> values.put(columnName, sel.getBlob(columnIndex))
-              else -> values.put(columnName, sel.getString(columnIndex))
-            }
-          }
-          dst.insert("notifications", android.database.sqlite.SQLiteDatabase.CONFLICT_IGNORE, values)
-        }
-        dst.setTransactionSuccessful()
-      } finally {
-        dst.endTransaction()
-        sel.close()
-      }
+      copyNotificationBatch(source, target, offset, batchSize)
       offset += batchSize
     }
   }
+
+  private fun copyNotificationBatch(
+    source: SupportSQLiteDatabase,
+    target: SupportSQLiteDatabase,
+    offset: Long,
+    batchSize: Int
+  ) {
+    source.query("SELECT * FROM notifications LIMIT $batchSize OFFSET $offset").use { cursor ->
+      target.beginTransaction()
+      try {
+        while (cursor.moveToNext()) {
+          target.insert(
+            "notifications",
+            android.database.sqlite.SQLiteDatabase.CONFLICT_IGNORE,
+            cursor.toContentValues()
+          )
+        }
+        target.setTransactionSuccessful()
+      } finally {
+        target.endTransaction()
+      }
+    }
+  }
+
+}
+
+private fun android.database.Cursor.toContentValues(): android.content.ContentValues {
+  val values = android.content.ContentValues()
+  for (columnIndex in 0 until columnCount) {
+    val columnName = getColumnName(columnIndex)
+    when (getType(columnIndex)) {
+      android.database.Cursor.FIELD_TYPE_NULL -> values.putNull(columnName)
+      android.database.Cursor.FIELD_TYPE_INTEGER -> values.put(columnName, getLong(columnIndex))
+      android.database.Cursor.FIELD_TYPE_FLOAT -> values.put(columnName, getDouble(columnIndex))
+      android.database.Cursor.FIELD_TYPE_BLOB -> values.put(columnName, getBlob(columnIndex))
+      else -> values.put(columnName, getString(columnIndex))
+    }
+  }
+  return values
 }

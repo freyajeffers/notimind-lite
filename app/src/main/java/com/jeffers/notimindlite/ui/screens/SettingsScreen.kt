@@ -16,8 +16,28 @@ import androidx.compose.material.icons.filled.Restore
 import androidx.compose.material.icons.automirrored.filled.Login
 import androidx.compose.material.icons.automirrored.filled.Logout
 import androidx.compose.material.icons.filled.Person
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.Switch
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -45,23 +65,10 @@ import java.io.FileOutputStream
 import javax.crypto.SecretKey
 
 @Composable
-@Suppress(
-    "CyclomaticComplexMethod",
-    "LongMethod",
-    "MaxLineLength",
-    "FunctionNaming"
-) // SettingsScreen composes the five sections (Account, Sync, Privacy, Listener, Restore)
-   // and the version footer in one screen Composable; splitting would fragment
-   // PreferenceManager + auth state lifetimes. Composable PascalCase is required by
-   // the Compose API and detekt's FunctionNaming rule does not exempt it.
 fun SettingsScreen(
     authManager: AuthManager,
-    db: AppDatabase,
-    preferencesRepository: com.jeffers.notimindlite.data.local.PreferencesRepository,
-    webClientId: String? = null
+    preferencesRepository: com.jeffers.notimindlite.data.local.PreferencesRepository
 ) {
-    val configuredWebClientId = webClientId?.takeIf { it.isNotBlank() }
-        ?: stringResource(R.string.default_web_client_id)
     val session by authManager.session.collectAsState()
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
@@ -151,7 +158,7 @@ fun SettingsScreen(
                     Button(
                         onClick = {
                             scope.launch {
-                                authManager.signInWithGoogle(configuredWebClientId)
+                                authManager.signInWithGoogle()
                                 SyncWorker.schedulePeriodicSync(context)
                             }
                         },

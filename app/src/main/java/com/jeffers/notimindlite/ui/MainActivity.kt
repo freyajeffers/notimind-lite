@@ -29,6 +29,7 @@ import com.jeffers.notimindlite.R
 import com.jeffers.notimindlite.data.local.AppDatabase
 import com.jeffers.notimindlite.data.local.PreferencesRepository
 import com.jeffers.notimindlite.data.local.DbEncryptionMode
+import com.jeffers.notimindlite.data.sync.FirebaseSettingsSyncRepository
 import com.jeffers.notimindlite.migration.EncryptionMigrationConsent
 import com.jeffers.notimindlite.migration.MigrationRunner
 import com.jeffers.notimindlite.service.NotificationLoggerService
@@ -205,7 +206,8 @@ class MainActivity : ComponentActivity() {
                 com.jeffers.notimindlite.data.auth.SupabaseAuthManager(applicationContext)
             ).restoreOrUpload(preferences, session.uid)
         } else {
-            com.jeffers.notimindlite.data.sync.FirebaseSettingsSyncRepository().restoreOrUpload(preferences, session.uid)
+            FirebaseSettingsSyncRepository()
+                .restoreOrUpload(preferences, session.uid)
         }
         result.exceptionOrNull()?.let { android.util.Log.w("MainActivity", "Settings restore deferred", it) }
     }
