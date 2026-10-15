@@ -65,7 +65,7 @@ import java.io.FileOutputStream
 import javax.crypto.SecretKey
 
 @Composable
-fun SettingsScreen(
+fun settingsScreen(
     authManager: AuthManager,
     preferencesRepository: com.jeffers.notimindlite.data.local.PreferencesRepository
 ) {

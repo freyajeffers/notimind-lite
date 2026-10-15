@@ -23,7 +23,7 @@ import com.jeffers.notimindlite.data.local.NotificationDao
 import com.jeffers.notimindlite.data.local.PreferencesRepository
 import com.jeffers.notimindlite.ui.screens.ActiveNotificationsScreen
 import com.jeffers.notimindlite.ui.screens.LogHistoryScreen
-import com.jeffers.notimindlite.ui.screens.SettingsScreen
+import com.jeffers.notimindlite.ui.screens.settingsScreen
 import com.jeffers.notimindlite.ui.screens.SplashScreen
 
 sealed class Screen(val route: String, val title: Int, val icon: @Composable () -> Unit) {
@@ -104,7 +104,7 @@ fun MainNavigation(
                 LogHistoryScreen(notificationDao, authManager, db, preferencesRepository)
             }
             composable(Screen.Settings.route) {
-                SettingsScreen(authManager = authManager, preferencesRepository = preferencesRepository)
+                settingsScreen(authManager = authManager, preferencesRepository = preferencesRepository)
             }
         }
     }
