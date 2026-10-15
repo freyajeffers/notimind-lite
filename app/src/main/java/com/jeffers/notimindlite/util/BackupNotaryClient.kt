@@ -40,8 +40,23 @@ object BackupNotaryClient {
             val signature = fetchSignatureFromServer(fileHash, integrityToken)
             
             signature
-        } catch (e: Exception) {
-            AppLogger.e(TAG, "Notary signature retrieval failed: ${e.message}", e)
+        } catch (e: java.net.SocketTimeoutException) {
+            AppLogger.e(TAG, "Notary signature retrieval timed out: ${e.message}", e)
+            throw SecurityException("Backup authorization failed: network timeout")
+        } catch (e: java.io.IOException) {
+            AppLogger.e(TAG, "Notary signature retrieval IO error: ${e.message}", e)
+            throw SecurityException("Could not verify app identity due to IO failure. Backup authorization failed.")
+        } catch (e: SecurityException) {
+            AppLogger.e(TAG, "Notary signature retrieval security failure: ${e.message}", e)
+            throw e
+        } catch (e: IllegalStateException) {
+            AppLogger.e(TAG, "Notary signature retrieval illegal state: ${e.message}", e)
+            throw SecurityException("Could not verify app identity. Backup authorization failed.")
+        } catch (e: IllegalArgumentException) {
+            AppLogger.e(TAG, "Notary signature retrieval invalid argument: ${e.message}", e)
+            throw SecurityException("Could not verify app identity. Backup authorization failed.")
+        } catch (e: ClassCastException) {
+            AppLogger.e(TAG, "Notary signature retrieval response type failure: ${e.message}", e)
             throw SecurityException("Could not verify app identity. Backup authorization failed.")
         }
     }
@@ -70,11 +85,14 @@ object BackupNotaryClient {
             if (connection.responseCode == 200) {
                 connection.inputStream.bufferedReader().use { it.readText().trim() }
             } else {
-                throw Exception("Notary server returned ${connection.responseCode}")
+                throw java.io.IOException("Notary server returned ${connection.responseCode}")
             }
-        } catch (e: Exception) {
-            Log.e(TAG, "Notary server unavailable. Backup authorization failed.")
-            throw SecurityException("Notary server unavailable. Cannot authorize backup.")
+        } catch (e: java.net.MalformedURLException) {
+            Log.e(TAG, "Notary URL invalid", e)
+            throw e
+        } catch (e: java.io.IOException) {
+            Log.e(TAG, "Notary server unavailable or IO error", e)
+            throw e
         }
     }
 }
