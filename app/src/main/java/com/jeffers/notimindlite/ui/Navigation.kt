@@ -24,7 +24,7 @@ import com.jeffers.notimindlite.data.local.PreferencesRepository
 import com.jeffers.notimindlite.ui.screens.activeNotificationsScreen
 import com.jeffers.notimindlite.ui.screens.logHistoryScreen
 import com.jeffers.notimindlite.ui.screens.settingsScreen
-import com.jeffers.notimindlite.ui.screens.SplashScreen
+import com.jeffers.notimindlite.ui.screens.splashScreen
 
 sealed class Screen(val route: String, val title: Int, val icon: @Composable () -> Unit) {
     object Active : Screen(
@@ -91,7 +91,7 @@ fun MainNavigation(
             modifier = modifier.padding(innerPadding)
         ) {
             composable("splash") {
-                SplashScreen(onTimeout = {
+                splashScreen(onTimeout = {
                     navController.navigate(Screen.Active.route) {
                         popUpTo("splash") { inclusive = true }
                     }
