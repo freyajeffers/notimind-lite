@@ -182,22 +182,7 @@ class PersistenceBoundaryTest : BaseRobolectricTest() {
     fun tc_R2_T2_008_fiftyThousandEntityQueryPerformanceBenchmark() = runTest {
         val count = 50_000
 
-        // Generate 50,000 entity dataset
-        val entities = (1..count).map { i ->
-            NotificationEntity(
-                id = i.toLong(),
-                key = "perf_key_$i",
-                packageName = "com.perf.app_${i % 20}",
-                appName = "Perf App ${i % 20}",
-                title = "Benchmark Notification $i",
-                content = "High-load dataset benchmark payload $i",
-                postTime = 1000000L + i,
-                isDismissed = i % 2 == 0,
-                isPinned = i % 500 == 0
-            )
-        }
-
-        // Fast batch insertion in single SQLite transaction
+        // Insert the benchmark dataset directly in one SQLite transaction.
         database.runInTransaction {
             val db = database.openHelper.writableDatabase
             val appStmt = db.compileStatement(

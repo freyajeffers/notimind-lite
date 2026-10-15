@@ -28,6 +28,8 @@ import org.json.JSONArray
 import android.os.Bundle
 import java.io.File
 import java.io.FileOutputStream
+import java.io.FileNotFoundException
+import java.io.IOException
 import java.util.Collections
 import java.util.LinkedHashMap
 
@@ -138,7 +140,17 @@ class NotificationLoggerService : NotificationListenerService() {
                 bitmap.compress(Bitmap.CompressFormat.PNG, 100, out)
             }
             iconFile.absolutePath
-        } catch (e: Exception) {
+        } catch (e: FileNotFoundException) {
+            Log.w(TAG, "Icon file unavailable for package=$packageName", e)
+            null
+        } catch (e: SecurityException) {
+            Log.w(TAG, "Icon access denied for package=$packageName", e)
+            null
+        } catch (e: IOException) {
+            Log.w(TAG, "Icon write failed for package=$packageName", e)
+            null
+        } catch (e: IllegalArgumentException) {
+            Log.w(TAG, "Invalid icon data for package=$packageName", e)
             null
         }
     }
@@ -165,7 +177,9 @@ class NotificationLoggerService : NotificationListenerService() {
                     indexEmbeddingsForBatch(dao, ids, entities)
                     Log.d(TAG, "onListenerConnected: successfully batch inserted ${entities.size} active notifications")
                 }
-            } catch (e: Exception) {
+            } catch (e: IllegalStateException) {
+                Log.e(TAG, "Invalid database state syncing active notifications", e)
+            } catch (e: android.database.sqlite.SQLiteException) {
                 Log.e(TAG, "Error syncing active notifications on listener connected", e)
             }
         }
@@ -223,7 +237,9 @@ class NotificationLoggerService : NotificationListenerService() {
                     // posted notification so semantic search can rank it.
                     indexEmbeddingForSingle(dao, finalEntity)
                     Log.d(TAG, "Inserted: ${finalEntity.title} (${finalEntity.appName})")
-                } catch (e: Exception) {
+                } catch (e: IllegalStateException) {
+                    Log.e(TAG, "Invalid database state inserting ${entity.title}", e)
+                } catch (e: android.database.sqlite.SQLiteException) {
                     Log.e(TAG, "DB insert failed for ${entity.title}", e)
                 }
             }
