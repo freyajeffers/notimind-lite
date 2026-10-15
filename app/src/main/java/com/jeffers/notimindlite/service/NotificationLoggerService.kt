@@ -429,6 +429,7 @@ class NotificationLoggerService : NotificationListenerService() {
             val appInfo = packageManager.getApplicationInfo(packageName, PackageManager.MATCH_UNINSTALLED_PACKAGES)
             packageManager.getApplicationLabel(appInfo).toString()
         } catch (e: PackageManager.NameNotFoundException) {
+            Log.w(TAG, "Application package no longer exists: $packageName", e)
             packageName
         } catch (e: SecurityException) {
             Log.w(TAG, "Application label access denied for $packageName", e)

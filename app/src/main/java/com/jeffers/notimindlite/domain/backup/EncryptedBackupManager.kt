@@ -166,7 +166,7 @@ object EncryptedBackupManager {
     private fun isFilePassphraseWrapped(bytes: ByteArray): Boolean =
         try {
             BackupFileFormat.parse(bytes).keySource == BackupFileFormat.KEY_SOURCE_PASSPHRASE_WRAPPED
-        } catch (_: Exception) {
+        } catch (_: IllegalArgumentException) {
             false
         }
 
@@ -178,7 +178,7 @@ object EncryptedBackupManager {
     ): SecretKey? {
         val header = try {
             BackupFileFormat.parse(bytes)
-        } catch (_: Exception) {
+        } catch (_: IllegalArgumentException) {
             null
         }
 
@@ -266,7 +266,7 @@ object EncryptedBackupManager {
         return try {
             val header = try {
                 BackupFileFormat.parse(bytes)
-            } catch (_: Exception) {
+            } catch (_: IllegalArgumentException) {
                 null
             }
 
@@ -307,14 +307,7 @@ object EncryptedBackupManager {
         hash: String,
         secretKey: SecretKey,
         context: Context,
-    ): String {
-        return try {
-            BackupNotaryClient.getSignature(context, hash)
-        } catch (e: Exception) {
-            Log.e(TAG, "Remote notary signing failed", e)
-            throw e
-        }
-    }
+    ): String = BackupNotaryClient.getSignature(context, hash)
 }
 
 /**
