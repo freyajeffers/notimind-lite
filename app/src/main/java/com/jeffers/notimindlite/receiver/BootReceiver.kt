@@ -143,8 +143,14 @@ class BootReceiver : BroadcastReceiver() {
                         restoredCount++
                     }
                     
-                } catch (e: Exception) {
-                    Log.e("BootReceiverLite", "Failed to restore notifications on boot: ${e.message}")
+                } catch (e: SecurityException) {
+                    Log.w("BootReceiverLite", "Permission denied restoring notifications on boot", e)
+                } catch (e: android.database.sqlite.SQLiteException) {
+                    Log.e("BootReceiverLite", "Database error during boot restoration", e)
+                } catch (e: IllegalStateException) {
+                    Log.e("BootReceiverLite", "Illegal state during boot restoration", e)
+                } catch (e: IllegalArgumentException) {
+                    Log.e("BootReceiverLite", "Invalid argument during boot restoration", e)
                 } finally {
                     pendingResult?.finish()
                 }
