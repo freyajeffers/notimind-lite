@@ -3,7 +3,9 @@ package com.notimind.lite.tier2_boundary
 import com.jeffers.notimindlite.util.DatabaseExporter
 import com.notimind.lite.base.BaseRobolectricTest
 import org.json.JSONArray
-import org.junit.Assert.*
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertTrue
 import org.junit.Test
 import java.io.File
 

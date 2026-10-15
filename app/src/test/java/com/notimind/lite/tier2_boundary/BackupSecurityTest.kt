@@ -3,7 +3,9 @@ package com.notimind.lite.tier2_boundary
 import android.content.Context
 import com.jeffers.notimindlite.domain.backup.EncryptedBackupManager
 import com.notimind.lite.base.BaseRobolectricTest
-import org.junit.Assert.*
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertNull
 import org.junit.Test
 import java.io.File
 import javax.crypto.KeyGenerator

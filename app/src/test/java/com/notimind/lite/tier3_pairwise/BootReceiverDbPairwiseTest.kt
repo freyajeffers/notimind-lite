@@ -8,7 +8,7 @@ import androidx.core.app.NotificationCompat
 import com.jeffers.notimindlite.receiver.BootReceiver
 import com.notimind.lite.base.BaseRobolectricTest
 import kotlinx.coroutines.test.runTest
-import org.junit.Assert.*
+import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.robolectric.Shadows
 import org.robolectric.annotation.Config
