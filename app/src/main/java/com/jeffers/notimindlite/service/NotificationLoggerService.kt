@@ -339,8 +339,17 @@ class NotificationLoggerService : NotificationListenerService() {
             return buildNotificationEntity(
                 NotificationBuildInput(sbn, notification, san, inboxLinesJson, postTime, now)
             )
-        } catch (e: Exception) {
-            Log.e(TAG, "Failed to extract notification entity", e)
+        } catch (e: SecurityException) {
+            Log.e(TAG, "Failed to extract notification entity - security", e)
+            null
+        } catch (e: IllegalArgumentException) {
+            Log.e(TAG, "Failed to extract notification entity - illegal arg", e)
+            null
+        } catch (e: IllegalStateException) {
+            Log.e(TAG, "Failed to extract notification entity - illegal state", e)
+            null
+        } catch (e: IndexOutOfBoundsException) {
+            Log.e(TAG, "Failed to extract notification entity - index error", e)
             null
         }
     }
