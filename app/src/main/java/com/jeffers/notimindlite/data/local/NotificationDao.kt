@@ -327,8 +327,11 @@ abstract class NotificationDao {
     @Query("UPDATE notifications SET isDismissed = 1, dismissReason = :reason, dismissTime = :dismissTime WHERE key = :key")
     abstract suspend fun markDismissedWithReason(key: String, reason: Int, dismissTime: Long = System.currentTimeMillis())
 
-    @Suppress("MaxLineLength") // @Query SQL string; Room requires literal SQL in annotation.
-    @Query("UPDATE notifications SET isDismissed = 1, dismissReason = :reason, dismissTime = :dismissTime WHERE key IN (:keys)")
+    @Query("""
+        UPDATE notifications
+        SET isDismissed = 1, dismissReason = :reason, dismissTime = :dismissTime
+        WHERE key IN (:keys)
+    """)
     abstract suspend fun markDismissedWithReasonBatch(keys: List<String>, reason: Int, dismissTime: Long = System.currentTimeMillis())
 
     @Query("SELECT COUNT(*) FROM notifications")
