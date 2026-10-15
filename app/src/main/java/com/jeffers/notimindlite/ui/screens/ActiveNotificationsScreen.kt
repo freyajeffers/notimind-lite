@@ -108,33 +108,38 @@ fun checkNotificationPermission(context: Context): Boolean {
     return flat != null && flat.contains(context.packageName)
 }
 
+private val REASON_LABELS = mapOf(
+    1 to R.string.reason_1,
+    2 to R.string.reason_2,
+    3 to R.string.reason_3,
+    4 to R.string.reason_4,
+    5 to R.string.reason_5,
+    6 to R.string.reason_6,
+    7 to R.string.reason_7,
+    8 to R.string.reason_8,
+    9 to R.string.reason_9,
+    10 to R.string.reason_10,
+    11 to R.string.reason_11,
+    12 to R.string.reason_12,
+    13 to R.string.reason_13,
+    14 to R.string.reason_14,
+    15 to R.string.reason_15,
+    16 to R.string.reason_16,
+    17 to R.string.reason_17,
+    18 to R.string.reason_18,
+    19 to R.string.reason_19,
+    20 to R.string.reason_20,
+    21 to R.string.reason_21,
+    22 to R.string.reason_22,
+    23 to R.string.reason_23,
+    24 to R.string.reason_24
+)
+
 fun getReasonLabel(reason: Int?): Int {
-    return when (reason) {
-        1 -> R.string.reason_1
-        2 -> R.string.reason_2
-        3 -> R.string.reason_3
-        4 -> R.string.reason_4
-        5 -> R.string.reason_5
-        6 -> R.string.reason_6
-        7 -> R.string.reason_7
-        8 -> R.string.reason_8
-        9 -> R.string.reason_9
-        10 -> R.string.reason_10
-        11 -> R.string.reason_11
-        12 -> R.string.reason_12
-        13 -> R.string.reason_13
-        14 -> R.string.reason_14
-        15 -> R.string.reason_15
-        16 -> R.string.reason_16
-        17 -> R.string.reason_17
-        18 -> R.string.reason_18
-        19 -> R.string.reason_19
-        20 -> R.string.reason_20
-        21 -> R.string.reason_21
-        22 -> R.string.reason_22
-        23 -> R.string.reason_23
-        24 -> R.string.reason_24
-        else -> if (reason != null) R.string.reason_unknown else R.string.reason_system
+    return reason?.let { REASON_LABELS[it] } ?: if (reason == null) {
+        R.string.reason_system
+    } else {
+        R.string.reason_unknown
     }
 }
 
