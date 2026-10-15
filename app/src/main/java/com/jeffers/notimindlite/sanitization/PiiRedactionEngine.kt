@@ -24,44 +24,37 @@ object PiiRedactionEngine {
         if (input == null) return null
         var out = input
 
-        try {
-            // Quick rejection: if the entire string looks like a single CC or OTP, drop (fail-closed)
-            val trimmed = out.trim()
-            if (ccCandidateRegex.matches(trimmed)) {
-                // If it's a single numeric token that is a valid CC (Luhn), drop
-                val digitsOnly = trimmed.filter { it.isDigit() }
-                if (isValidLuhn(digitsOnly)) return null
-                // otherwise mask
-                out = out.replace(ccCandidateRegex, CC_REPLACEMENT)
-            }
-
-            // Replace credit-card-like sequences within text (mask if Luhn-valid)
-            out = out.replace(ccCandidateRegex) { mr ->
-                val candidate = mr.value.replace(Regex("[ -]"), "")
-                if (isValidLuhn(candidate)) CC_REPLACEMENT else CC_REPLACEMENT
-            }
-
-            // Replace phone and currency first so their numeric fragments don't match OTP regex
-            out = out.replace(phoneRegex, PHONE_REPLACEMENT)
-            out = out.replace(currencyRegex, CURRENCY_REPLACEMENT)
-
-            // Short numeric tokens (OTP)
-            out = out.replace(otpRegex, OTP_REPLACEMENT)
-
-            // Emails
-            out = out.replace(emailRegex, EMAIL_REPLACEMENT)
-
-            // Post-process placeholders: collapse adjacent placeholder artifacts like "[REDACTED-PHONE]-[REDACTED-OTP]" -> "[REDACTED-PHONE]"
-            out = out.replace(Regex("""\[REDACTED-PHONE\][\s\p{Punct}]*\[REDACTED-OTP\]"""), PHONE_REPLACEMENT)
-
-            // Ensure CSV-safe output: remove newlines and double embedded quotes
-            out = escapeForCsv(out)
-
-            return out
-        } catch (e: Exception) {
-            // Any unexpected error => fail-closed: signal drop
-            return null
+        // Quick rejection: if the entire string looks like a single CC or OTP, drop (fail-closed)
+        val trimmed = out.trim()
+        if (ccCandidateRegex.matches(trimmed)) {
+            // If it's a single numeric token that is a valid CC (Luhn), drop
+            val digitsOnly = trimmed.filter { it.isDigit() }
+            if (isValidLuhn(digitsOnly)) return null
+            // otherwise mask
+            out = out.replace(ccCandidateRegex, CC_REPLACEMENT)
         }
+
+        // Replace credit-card-like sequences within text (mask if Luhn-valid)
+        out = out.replace(ccCandidateRegex) { mr ->
+            val candidate = mr.value.replace(Regex("[ -]"), "")
+            if (isValidLuhn(candidate)) CC_REPLACEMENT else CC_REPLACEMENT
+        }
+
+        // Replace phone and currency first so their numeric fragments don't match OTP regex
+        out = out.replace(phoneRegex, PHONE_REPLACEMENT)
+        out = out.replace(currencyRegex, CURRENCY_REPLACEMENT)
+
+        // Short numeric tokens (OTP)
+        out = out.replace(otpRegex, OTP_REPLACEMENT)
+
+        // Emails
+        out = out.replace(emailRegex, EMAIL_REPLACEMENT)
+
+        // Post-process placeholders: collapse adjacent placeholder artifacts like "[REDACTED-PHONE]-[REDACTED-OTP]" -> "[REDACTED-PHONE]"
+        out = out.replace(Regex("""\[REDACTED-PHONE\][\s\p{Punct}]*\[REDACTED-OTP\]"""), PHONE_REPLACEMENT)
+
+        // Ensure CSV-safe output: remove newlines and double embedded quotes
+        return escapeForCsv(out)
     }
 
     // Escape field for inclusion in a CSV cell: double quotes and remove newlines
