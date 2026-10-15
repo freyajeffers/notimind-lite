@@ -86,7 +86,7 @@ enum class SortMode(val label: String) {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun LogHistoryScreen(dao: NotificationDao, authManager: AuthManager, db: AppDatabase, preferences: com.jeffers.notimindlite.data.local.PreferencesRepository) {
+fun logHistoryScreen(dao: NotificationDao, authManager: AuthManager, db: AppDatabase, preferences: com.jeffers.notimindlite.data.local.PreferencesRepository) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     val listState = rememberLazyListState()
