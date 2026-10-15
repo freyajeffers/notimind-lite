@@ -17,7 +17,7 @@ import com.jeffers.notimindlite.R
 import com.jeffers.notimindlite.BuildConfig
 
 @Composable
-fun SettingsPreferencesSection(preferencesRepository: PreferencesRepository) {
+fun settingsPreferencesSection(preferencesRepository: PreferencesRepository) {
 
     val enableSync by preferencesRepository.enableSync.collectAsState(initial = true)
     val enableVector by preferencesRepository.enableVector.collectAsState(initial = true)
@@ -58,16 +58,16 @@ fun SettingsPreferencesSection(preferencesRepository: PreferencesRepository) {
             Text(text = stringResource(R.string.pref_data_search_title), style = MaterialTheme.typography.titleMedium)
 
             Text(stringResource(R.string.pref_display_title), style = MaterialTheme.typography.titleMedium)
-            PreferenceSwitchRow(stringResource(R.string.pref_compact_mode_title), stringResource(R.string.pref_compact_mode_summary), compactMode, preferencesRepository::setCompactMode)
-            PreferenceSwitchRow(stringResource(R.string.pref_show_app_icons_title), stringResource(R.string.pref_show_app_icons_summary), showAppIcons, preferencesRepository::setShowAppIcons)
-            PreferenceSwitchRow(stringResource(R.string.pref_group_by_app_title), stringResource(R.string.pref_group_by_app_summary), groupByApp, preferencesRepository::setGroupByApp)
-            PreferenceSelectRow(stringResource(R.string.pref_sort_order_title), sortOrder, listOf("newest" to stringResource(R.string.pref_sort_newest), "oldest" to stringResource(R.string.pref_sort_oldest), "app" to stringResource(R.string.pref_sort_app)), preferencesRepository::setSortOrder)
-            PreferenceSelectRow(stringResource(R.string.pref_theme_accent_title), themeAccent, listOf("system" to stringResource(R.string.pref_theme_system), "blue" to stringResource(R.string.pref_theme_blue), "green" to stringResource(R.string.pref_theme_green), "purple" to stringResource(R.string.pref_theme_purple), "orange" to stringResource(R.string.pref_theme_orange), "amoled" to "AMOLED black"), preferencesRepository::setThemeAccent)
+            preferenceSwitchRow(stringResource(R.string.pref_compact_mode_title), stringResource(R.string.pref_compact_mode_summary), compactMode, preferencesRepository::setCompactMode)
+            preferenceSwitchRow(stringResource(R.string.pref_show_app_icons_title), stringResource(R.string.pref_show_app_icons_summary), showAppIcons, preferencesRepository::setShowAppIcons)
+            preferenceSwitchRow(stringResource(R.string.pref_group_by_app_title), stringResource(R.string.pref_group_by_app_summary), groupByApp, preferencesRepository::setGroupByApp)
+            preferenceSelectRow(stringResource(R.string.pref_sort_order_title), sortOrder, listOf("newest" to stringResource(R.string.pref_sort_newest), "oldest" to stringResource(R.string.pref_sort_oldest), "app" to stringResource(R.string.pref_sort_app)), preferencesRepository::setSortOrder)
+            preferenceSelectRow(stringResource(R.string.pref_theme_accent_title), themeAccent, listOf("system" to stringResource(R.string.pref_theme_system), "blue" to stringResource(R.string.pref_theme_blue), "green" to stringResource(R.string.pref_theme_green), "purple" to stringResource(R.string.pref_theme_purple), "orange" to stringResource(R.string.pref_theme_orange), "amoled" to "AMOLED black"), preferencesRepository::setThemeAccent)
 
             Text(stringResource(R.string.pref_automation_title), style = MaterialTheme.typography.titleMedium)
-            PreferenceSwitchRow(stringResource(R.string.pref_auto_act_title), stringResource(R.string.pref_auto_act_summary), autoActOnNotification, preferencesRepository::setAutoActOnNotification, enabled = !BuildConfig.DEBUG)
-            PreferenceSelectRow(stringResource(R.string.pref_default_reply_title), defaultReplyMethod, listOf("inline" to stringResource(R.string.pref_reply_inline), "open_app" to stringResource(R.string.pref_reply_open_app), "copy" to stringResource(R.string.pref_reply_copy)), preferencesRepository::setDefaultReplyMethod, enabled = !BuildConfig.DEBUG)
-            PreferenceSelectRow(stringResource(R.string.pref_long_press_title), longPressAction, listOf("open" to stringResource(R.string.pref_action_open), "reply" to stringResource(R.string.pref_action_reply), "dismiss" to stringResource(R.string.pref_action_dismiss)), preferencesRepository::setLongPressAction, enabled = !BuildConfig.DEBUG)
+            preferenceSwitchRow(stringResource(R.string.pref_auto_act_title), stringResource(R.string.pref_auto_act_summary), autoActOnNotification, preferencesRepository::setAutoActOnNotification, enabled = !BuildConfig.DEBUG)
+            preferenceSelectRow(stringResource(R.string.pref_default_reply_title), defaultReplyMethod, listOf("inline" to stringResource(R.string.pref_reply_inline), "open_app" to stringResource(R.string.pref_reply_open_app), "copy" to stringResource(R.string.pref_reply_copy)), preferencesRepository::setDefaultReplyMethod, enabled = !BuildConfig.DEBUG)
+            preferenceSelectRow(stringResource(R.string.pref_long_press_title), longPressAction, listOf("open" to stringResource(R.string.pref_action_open), "reply" to stringResource(R.string.pref_action_reply), "dismiss" to stringResource(R.string.pref_action_dismiss)), preferencesRepository::setLongPressAction, enabled = !BuildConfig.DEBUG)
             Text(stringResource(R.string.pref_auto_rules_title), style = MaterialTheme.typography.bodyLarge)
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
                 OutlinedTextField(rulePackage, { rulePackage = it }, Modifier.weight(1f), singleLine = true, enabled = !BuildConfig.DEBUG, label = { Text(stringResource(R.string.pref_auto_rule_package)) })
@@ -86,11 +86,11 @@ fun SettingsPreferencesSection(preferencesRepository: PreferencesRepository) {
             }
 
             Text(stringResource(R.string.pref_security_local_title), style = MaterialTheme.typography.titleMedium)
-            PreferenceSwitchRow(stringResource(R.string.pref_export_biometric_title), stringResource(R.string.pref_export_biometric_summary), exportRequiresBiometric, preferencesRepository::setExportRequiresBiometric)
-            PreferenceSwitchRow(stringResource(R.string.pref_app_lock_title), stringResource(R.string.pref_app_lock_summary), appLockEnabled, preferencesRepository::setAppLockEnabled)
-            PreferenceSwitchRow(stringResource(R.string.pref_encrypt_database_title), stringResource(R.string.pref_encrypt_database_summary), dbEncrypted, preferencesRepository::setDbEncrypted)
-            PreferenceSelectRow(stringResource(R.string.pref_database_key_mode_title), dbEncryptionMode.persisted, listOf("none" to stringResource(R.string.pref_key_none), "keystore" to stringResource(R.string.pref_key_keystore), "local_key" to stringResource(R.string.pref_key_local)), { preferencesRepository.setDbEncryptionMode(DbEncryptionMode.fromPersisted(it)) })
-            PreferenceSwitchRow(stringResource(R.string.pref_keystore_title), stringResource(R.string.pref_keystore_summary), useKeystore, preferencesRepository::setUseKeystore, enabled = dbEncrypted)
+            preferenceSwitchRow(stringResource(R.string.pref_export_biometric_title), stringResource(R.string.pref_export_biometric_summary), exportRequiresBiometric, preferencesRepository::setExportRequiresBiometric)
+            preferenceSwitchRow(stringResource(R.string.pref_app_lock_title), stringResource(R.string.pref_app_lock_summary), appLockEnabled, preferencesRepository::setAppLockEnabled)
+            preferenceSwitchRow(stringResource(R.string.pref_encrypt_database_title), stringResource(R.string.pref_encrypt_database_summary), dbEncrypted, preferencesRepository::setDbEncrypted)
+            preferenceSelectRow(stringResource(R.string.pref_database_key_mode_title), dbEncryptionMode.persisted, listOf("none" to stringResource(R.string.pref_key_none), "keystore" to stringResource(R.string.pref_key_keystore), "local_key" to stringResource(R.string.pref_key_local)), { preferencesRepository.setDbEncryptionMode(DbEncryptionMode.fromPersisted(it)) })
+            preferenceSwitchRow(stringResource(R.string.pref_keystore_title), stringResource(R.string.pref_keystore_summary), useKeystore, preferencesRepository::setUseKeystore, enabled = dbEncrypted)
             Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
                 Column(modifier = Modifier.weight(1f)) {
                     Text(stringResource(R.string.pref_preview_length_title), style = MaterialTheme.typography.bodyLarge)
@@ -136,11 +136,11 @@ fun SettingsPreferencesSection(preferencesRepository: PreferencesRepository) {
                     preferencesRepository.setAutoDeleteOnRead(false)
                     preferencesRepository.setAnonymizeTitles(false)
                 }
-                DisabledPreferenceRow(
+                disabledPreferenceRow(
                     title = stringResource(R.string.pref_auto_delete_on_read_title),
                     summary = stringResource(R.string.pref_disabled_in_debug)
                 )
-                DisabledPreferenceRow(
+                disabledPreferenceRow(
                     title = stringResource(R.string.pref_anonymize_titles_title),
                     summary = stringResource(R.string.pref_disabled_in_debug)
                 )
@@ -168,13 +168,13 @@ fun SettingsPreferencesSection(preferencesRepository: PreferencesRepository) {
                     Switch(checked = true, onCheckedChange = { /* disabled in debug */ }, enabled = false)
                 }
             } else {
-                PreferenceSwitchRow(
+                preferenceSwitchRow(
                     title = stringResource(R.string.pref_auto_delete_on_read_title),
                     summary = stringResource(R.string.pref_auto_delete_on_read_summary),
                     checked = autoDeleteOnRead,
                     onCheckedChange = preferencesRepository::setAutoDeleteOnRead
                 )
-                PreferenceSwitchRow(
+                preferenceSwitchRow(
                     title = stringResource(R.string.pref_anonymize_titles_title),
                     summary = stringResource(R.string.pref_anonymize_titles_summary),
                     checked = anonymizeTitles,
@@ -227,12 +227,12 @@ fun SettingsPreferencesSection(preferencesRepository: PreferencesRepository) {
 
 
 @Composable
-private fun DisabledPreferenceRow(title: String, summary: String) {
-    PreferenceSwitchRow(title, summary, checked = false, onCheckedChange = {}, enabled = false)
+private fun disabledPreferenceRow(title: String, summary: String) {
+    preferenceSwitchRow(title, summary, checked = false, onCheckedChange = {}, enabled = false)
 }
 
 @Composable
-private fun PreferenceSwitchRow(
+private fun preferenceSwitchRow(
     title: String,
     summary: String,
     checked: Boolean,
@@ -249,7 +249,7 @@ private fun PreferenceSwitchRow(
 }
 
 @Composable
-private fun PreferenceSelectRow(title: String, selected: String, options: List<Pair<String, String>>, onSelected: (String) -> Unit, enabled: Boolean = true) {
+private fun preferenceSelectRow(title: String, selected: String, options: List<Pair<String, String>>, onSelected: (String) -> Unit, enabled: Boolean = true) {
     var expanded by remember { mutableStateOf(false) }
     Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
         Text(title, style = MaterialTheme.typography.bodyLarge, modifier = Modifier.weight(1f))
