@@ -35,7 +35,9 @@ object IntelligentSuggestionEngine {
      * @param dismissedNotifications The set of all dismissed notifications to consider.
      * @return A list of suggested notifications ranked by predicted relevance.
      */
-    suspend fun predictSuggestions(dismissedNotifications: List<NotificationEntity>): List<NotificationEntity> = withContext(Dispatchers.Default) {
+    suspend fun predictSuggestions(
+        dismissedNotifications: List<NotificationEntity>
+    ): List<NotificationEntity> = withContext(Dispatchers.Default) {
         if (dismissedNotifications.isEmpty()) return@withContext emptyList<NotificationEntity>()
 
         val currentHour = Calendar.getInstance().get(Calendar.HOUR_OF_DAY)
@@ -63,7 +65,10 @@ object IntelligentSuggestionEngine {
             
             // Find notifications that match this query (simplified keyword match for prototype)
             dismissedNotifications.forEach { entity ->
-                if (entity.content.contains(query, ignoreCase = true) || entity.appName.contains(query, ignoreCase = true)) {
+                if (
+                    entity.content.contains(query, ignoreCase = true) ||
+                    entity.appName.contains(query, ignoreCase = true)
+                ) {
                     scores[entity.id] = scores.getOrDefault(entity.id, 0.0) + weight
                 }
             }
@@ -86,7 +91,10 @@ object IntelligentSuggestionEngine {
         globalQueries.forEachIndexed { index, (query, frequency) ->
             val weight = (1.0 / (index + 1)) * frequency
             notifications.forEach { entity ->
-                if (entity.content.contains(query, ignoreCase = true) || entity.appName.contains(query, ignoreCase = true)) {
+                if (
+                    entity.content.contains(query, ignoreCase = true) ||
+                    entity.appName.contains(query, ignoreCase = true)
+                ) {
                     scores[entity.id] = scores.getOrDefault(entity.id, 0.0) + weight
                 }
             }
