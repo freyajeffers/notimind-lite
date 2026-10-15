@@ -2,20 +2,29 @@ package com.jeffers.notimindlite.domain.clustering
 
 import android.content.pm.ApplicationInfo
 import android.content.pm.PackageManager
+import android.util.Log
+
+private const val TAG_HELPERS = "DynamicClusterHelpers"
 
 internal fun applicationLabel(packageManager: PackageManager, app: ApplicationInfo): String? {
     return try {
         packageManager.getApplicationLabel(app).toString().lowercase()
     } catch (e: PackageManager.NameNotFoundException) {
+        Log.w(TAG_HELPERS, "Application label lookup failed for ${app.packageName}", e)
         null
     }
 }
 
 internal fun appDomain(app: ApplicationInfo, packageName: String, label: String?): String? {
-    return if (app.category != ApplicationInfo.CATEGORY_UNDEFINED) {
-        DynamicClusterManager.OS_CATEGORY_MAPPING[app.category]
-    } else {
-        inferDomainFromPackageName(packageName, label)
+    return try {
+        if (app.category != ApplicationInfo.CATEGORY_UNDEFINED) {
+            DynamicClusterManager.OS_CATEGORY_MAPPING[app.category]
+        } else {
+            inferDomainFromPackageName(packageName, label)
+        }
+    } catch (e: Exception) {
+        Log.w(TAG_HELPERS, "Failed to infer domain for $packageName", e)
+        null
     }
 }
 
