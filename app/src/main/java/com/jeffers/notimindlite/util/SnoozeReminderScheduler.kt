@@ -52,11 +52,14 @@ object SnoozeReminderScheduler {
             } else {
                 alarmManager.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, triggerAt, pendingIntent)
             }
-            
-            
-            
-        } catch (e: Exception) {
-            Log.e(TAG, "Failed to schedule snooze reminder", e)
+        } catch (e: SecurityException) {
+            Log.e(TAG, "Permission denied scheduling snooze reminder for $notificationId", e)
+        } catch (e: IllegalArgumentException) {
+            Log.e(TAG, "Invalid argument scheduling snooze reminder for $notificationId", e)
+        } catch (e: ClassCastException) {
+            Log.e(TAG, "System service type mismatch scheduling snooze reminder", e)
+        } catch (e: NullPointerException) {
+            Log.e(TAG, "Missing system service scheduling snooze reminder", e)
         }
     }
 
@@ -72,10 +75,15 @@ object SnoozeReminderScheduler {
             if (pendingIntent != null) {
                 val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
                 alarmManager.cancel(pendingIntent)
-                
             }
-        } catch (e: Exception) {
-            Log.e(TAG, "Failed to cancel snooze reminder", e)
+        } catch (e: SecurityException) {
+            Log.e(TAG, "Permission denied cancelling snooze reminder for $notificationId", e)
+        } catch (e: IllegalArgumentException) {
+            Log.e(TAG, "Invalid argument cancelling snooze reminder for $notificationId", e)
+        } catch (e: ClassCastException) {
+            Log.e(TAG, "System service type mismatch cancelling snooze reminder", e)
+        } catch (e: NullPointerException) {
+            Log.e(TAG, "Missing system service cancelling snooze reminder", e)
         }
     }
 }
