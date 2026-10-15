@@ -16,15 +16,10 @@ internal fun applicationLabel(packageManager: PackageManager, app: ApplicationIn
 }
 
 internal fun appDomain(app: ApplicationInfo, packageName: String, label: String?): String? {
-    return try {
-        if (app.category != ApplicationInfo.CATEGORY_UNDEFINED) {
-            DynamicClusterManager.OS_CATEGORY_MAPPING[app.category]
-        } else {
-            inferDomainFromPackageName(packageName, label)
-        }
-    } catch (e: Exception) {
-        Log.w(TAG_HELPERS, "Failed to infer domain for $packageName", e)
-        null
+    return if (app.category != ApplicationInfo.CATEGORY_UNDEFINED) {
+        DynamicClusterManager.OS_CATEGORY_MAPPING[app.category]
+    } else {
+        inferDomainFromPackageName(packageName, label)
     }
 }
 
