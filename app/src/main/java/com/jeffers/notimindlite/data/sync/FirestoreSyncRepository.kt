@@ -20,7 +20,10 @@ class FirestoreSyncRepository(
     private val firestore: FirebaseFirestore = FirebaseFirestore.getInstance(),
     private val profileId: String = "default"
 ) {
-    private val TAG = "FirestoreSyncRepo"
+    private companion object {
+        const val TAG = "FirestoreSyncRepo"
+        const val FIRESTORE_BATCH_LIMIT = 500
+    }
 
     /**
      * Synchronizes local notifications with the cloud.
@@ -30,9 +33,7 @@ class FirestoreSyncRepository(
     // Firestore limits batch writes to 500 operations per commit. SCREAMING_SNAKE_CASE is forbidden
     // for class members by detekt's VariableNaming rule; this is a class member, so camelCase.
     private val firestoreBatchSize: Int = FIRESTORE_BATCH_LIMIT
-    private companion object {
-        const val FIRESTORE_BATCH_LIMIT = 500
-    }
+
 
     @Suppress(
         "NestedBlockDepth"

@@ -43,14 +43,15 @@ import java.util.LinkedHashMap
 // across files would fragment directBootAware service registration. See BootRestoreManager for the
 // boot-restore subset already extracted.
 class NotificationLoggerService : NotificationListenerService() {
-    private val TAG = "NotificationLoggerSrv"
 
+    // Service-level tag and helpers
     private fun getDb(): AppDatabase = AppDatabase.getDatabase(applicationContext)
     private val serviceJob = SupervisorJob()
     private val scope = CoroutineScope(Dispatchers.IO + serviceJob)
     private val actionExecutor by lazy { NotificationActionExecutor(PreferencesRepository(applicationContext)) }
 
     companion object {
+        private const val TAG = "NotificationLoggerSrv"
         private const val MAX_CACHE_CAPACITY = 500
 
         private val recentLogs: MutableMap<String, Long> = Collections.synchronizedMap(

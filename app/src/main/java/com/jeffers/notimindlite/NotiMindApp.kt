@@ -50,14 +50,12 @@ class NotiMindApp : Application(), android.content.ComponentCallbacks2 {
             android.content.ComponentCallbacks2.TRIM_MEMORY_RUNNING_CRITICAL -> {
                 AppIconCache.clearCache()
                 com.jeffers.notimindlite.util.VectorEmbeddingHelper.clearCache()
-                System.gc()
-                Log.w(TAG, "Running Low/Critical: Forced cache clear and GC")
+                Log.w(TAG, "Running Low/Critical: Forced cache clear")
             }
             android.content.ComponentCallbacks2.TRIM_MEMORY_COMPLETE -> {
                 AppIconCache.clearCache()
                 com.jeffers.notimindlite.util.VectorEmbeddingHelper.clearCache()
-                System.gc()
-                Log.w(TAG, "Trim Memory Complete: Final cache clear and GC")
+                Log.w(TAG, "Trim Memory Complete: Final cache clear")
             }
         }
     }
