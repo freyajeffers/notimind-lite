@@ -41,7 +41,7 @@ import com.jeffers.notimindlite.BuildConfig
 import com.jeffers.notimindlite.R
 
 @Composable
-fun SettingsAdvancedSection(
+fun settingsAdvancedSection(
     preferencesRepository: PreferencesRepository,
     onMigrationCompleted: () -> Unit
 ) {

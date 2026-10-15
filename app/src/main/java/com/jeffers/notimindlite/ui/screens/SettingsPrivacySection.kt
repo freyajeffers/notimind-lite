@@ -31,7 +31,7 @@ import com.jeffers.notimindlite.R
 import kotlinx.coroutines.launch
 
 @Composable
-fun SettingsPrivacySection(preferencesRepository: PreferencesRepository) {
+fun settingsPrivacySection(preferencesRepository: PreferencesRepository) {
     val scope = rememberCoroutineScope()
     val autoDelete by preferencesRepository.autoDeleteOnRead.collectAsState(initial = false)
     val anonymizeTitles by preferencesRepository.anonymizeTitles.collectAsState(initial = false)

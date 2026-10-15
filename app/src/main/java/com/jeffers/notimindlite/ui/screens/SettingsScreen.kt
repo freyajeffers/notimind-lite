@@ -259,8 +259,8 @@ fun settingsScreen(
         settingsCaptureSection(preferencesRepository = preferencesRepository)
         profileManagerSection(repository = preferencesRepository)
         settingsPreferencesSection(preferencesRepository = preferencesRepository)
-        SettingsPrivacySection(preferencesRepository = preferencesRepository)
-        SettingsAdvancedSection(
+        settingsPrivacySection(preferencesRepository = preferencesRepository)
+        settingsAdvancedSection(
             preferencesRepository = preferencesRepository,
             onMigrationCompleted = { (context as? android.app.Activity)?.recreate() }
         )
