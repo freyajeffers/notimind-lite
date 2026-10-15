@@ -303,41 +303,10 @@ class NotificationLoggerService : NotificationListenerService() {
     }
 
     private fun extractNotificationEntity(sbn: StatusBarNotification): NotificationEntity? {
-        if (!shouldCaptureNotification(sbn)) return null
-        if (sbn.packageName == applicationContext.packageName) return null
+        if (!shouldCaptureNotification(sbn) || sbn.packageName == applicationContext.packageName) return null
         val notification = sbn.notification ?: return null
-        val packageName = sbn.packageName
-
         return try {
-            // Parse and sanitize fields in small focused helpers to reduce cyclomatic
-            // complexity and make individual behaviors testable.
-            val extras = notification.extras
-            val (title, content, subText, bigText) = parseTitleAndContent(extras)
-            val inboxLinesJson = extractInboxLinesJson(extras)
-            val category = notification.category
-            @Suppress("DEPRECATION")
-            val priority = notification.priority
-            val postTime = sbn.postTime
-            val now = System.currentTimeMillis()
-
-            val pipeline = com.jeffers.notimindlite.sanitization.SanitizationPipeline(applicationContext)
-            val san = pipeline.sanitize(packageName, title, content, subText, bigText) ?: return null
-
-            val finalTitle = if (PreferencesRepository(applicationContext).anonymizeTitles.value) "[REDACTED-TITLE]" else san.title
-            val finalContent = san.content
-            val finalSubText = san.subText
-            val finalBigText = san.bigText
-
-            if (finalTitle.isBlank() && finalContent.isBlank()) return null
-            val summaryRegex = Regex("""\d+\s+more\s+notifications?""", RegexOption.IGNORE_CASE)
-            if (summaryRegex.matches(finalTitle) || summaryRegex.matches(finalContent) || (finalSubText != null && summaryRegex.matches(finalSubText))) return null
-
-            val maxAgeMs = 30L * 24 * 60 * 60 * 1000L
-            if (postTime > 0 && (now - postTime) > maxAgeMs) return null
-
-            return buildNotificationEntity(
-                NotificationBuildInput(sbn, notification, san, inboxLinesJson, postTime, now)
-            )
+            buildSanitizedNotificationEntity(sbn, notification)
         } catch (e: SecurityException) {
             Log.e(TAG, "Failed to extract notification entity - security", e)
             null
@@ -348,6 +317,41 @@ class NotificationLoggerService : NotificationListenerService() {
             Log.e(TAG, "Failed to extract notification entity - illegal state", e)
             null
         }
+    }
+
+    private fun buildSanitizedNotificationEntity(
+        sbn: StatusBarNotification,
+        notification: Notification,
+    ): NotificationEntity? {
+        val extras = notification.extras
+        val (title, content, subText, bigText) = parseTitleAndContent(extras)
+        val inboxLinesJson = extractInboxLinesJson(extras)
+        val postTime = sbn.postTime
+        val now = System.currentTimeMillis()
+        val san = com.jeffers.notimindlite.sanitization.SanitizationPipeline(applicationContext)
+            .sanitize(sbn.packageName, title, content, subText, bigText) ?: return null
+        val finalTitle = if (PreferencesRepository(applicationContext).anonymizeTitles.value) {
+            "[REDACTED-TITLE]"
+        } else {
+            san.title
+        }
+        if (finalTitle.isBlank() && san.content.isBlank()) return null
+        if (isNotificationSummary(finalTitle, san.content, san.subText)) return null
+        if (isNotificationStale(postTime, now)) return null
+        return buildNotificationEntity(
+            NotificationBuildInput(sbn, notification, san, inboxLinesJson, postTime, now)
+        )
+    }
+
+    private fun isNotificationSummary(title: String, content: String, subText: String?): Boolean {
+        val summaryRegex = Regex("""\d+\s+more\s+notifications?""", RegexOption.IGNORE_CASE)
+        return summaryRegex.matches(title) || summaryRegex.matches(content) ||
+            (subText != null && summaryRegex.matches(subText))
+    }
+
+    private fun isNotificationStale(postTime: Long, now: Long): Boolean {
+        val maxAgeMs = 30L * 24 * 60 * 60 * 1000L
+        return postTime > 0 && now - postTime > maxAgeMs
     }
 
     private fun buildNotificationEntity(input: NotificationBuildInput): NotificationEntity {
