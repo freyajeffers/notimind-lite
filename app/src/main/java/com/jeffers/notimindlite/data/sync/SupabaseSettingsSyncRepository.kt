@@ -11,10 +11,22 @@ import java.net.HttpURLConnection
 import java.net.URL
 
 class SupabaseSettingsSyncRepository(private val auth: SupabaseAuthManager) : SettingsSyncRepository {
-    override suspend fun restoreOrUpload(preferences: PreferencesRepository, userId: String): Result<Unit> = withContext(Dispatchers.IO) {
+    private companion object {
+        const val HTTP_SUCCESS_MIN = 200
+        const val HTTP_SUCCESS_MAX = 299
+    }
+
+    override suspend fun restoreOrUpload(
+        preferences: PreferencesRepository,
+        userId: String
+    ): Result<Unit> = withContext(Dispatchers.IO) {
         try {
-            val token = auth.accessToken() ?: return@withContext Result.failure(IllegalStateException("Supabase session required"))
-            val path = "/rest/v1/user_settings?user_id=eq.${java.net.URLEncoder.encode(userId, "UTF-8")}&select=settings"
+            val token = auth.accessToken()
+                ?: return@withContext Result.failure(
+                    IllegalStateException("Supabase session required")
+                )
+            val encodedUserId = java.net.URLEncoder.encode(userId, "UTF-8")
+            val path = "/rest/v1/user_settings?user_id=eq.$encodedUserId&select=settings"
             val response = try {
                 request("GET", path, token)
             } catch (e: IllegalStateException) {
@@ -25,15 +37,33 @@ class SupabaseSettingsSyncRepository(private val auth: SupabaseAuthManager) : Se
             val rows = JSONArray(if (response.isBlank()) "[]" else response)
             val local = preferences.exportSyncableSettings()
             if (rows.length() == 0) {
-                request("POST", "/rest/v1/user_settings", token, JSONObject().put("user_id", userId).put("settings", local).toString(), "return=minimal")
+                request(
+                    "POST",
+                    "/rest/v1/user_settings",
+                    token,
+                    JSONObject().put("user_id", userId).put("settings", local).toString(),
+                    "return=minimal"
+                )
             } else {
                 preferences.importSyncableSettings(rows.getJSONObject(0).optJSONObject("settings") ?: JSONObject())
             }
             Result.success(Unit)
-        } catch (e: Exception) { Result.failure(e) }
+        } catch (e: java.io.IOException) {
+            Result.failure(e)
+        } catch (e: org.json.JSONException) {
+            Result.failure(e)
+        } catch (e: IllegalStateException) {
+            Result.failure(e)
+        }
     }
 
-    private fun request(method: String, path: String, token: String, body: String? = null, prefer: String? = null): String {
+    private fun request(
+        method: String,
+        path: String,
+        token: String,
+        body: String? = null,
+        prefer: String? = null
+    ): String {
         val c = URL(BuildConfig.SUPABASE_URL + path).openConnection() as HttpURLConnection
         c.requestMethod = method
         c.setRequestProperty("apikey", BuildConfig.SUPABASE_ANON_KEY)
@@ -41,9 +71,16 @@ class SupabaseSettingsSyncRepository(private val auth: SupabaseAuthManager) : Se
         c.setRequestProperty("Content-Type", "application/json")
         prefer?.let { c.setRequestProperty("Prefer", it) }
         if (body != null) { c.doOutput = true; c.outputStream.use { it.write(body.toByteArray()) } }
-        val stream = if (c.responseCode in 200..299) c.inputStream else c.errorStream
+        val responseCode = c.responseCode
+        val stream = if (responseCode in HTTP_SUCCESS_MIN..HTTP_SUCCESS_MAX) {
+            c.inputStream
+        } else {
+            c.errorStream
+        }
         val result = stream.bufferedReader().use { it.readText() }
-        if (c.responseCode !in 200..299) error("Supabase HTTP ${c.responseCode}: $result")
+        if (responseCode !in HTTP_SUCCESS_MIN..HTTP_SUCCESS_MAX) {
+            error("Supabase HTTP $responseCode: $result")
+        }
         return result
     }
 }

@@ -20,5 +20,5 @@ class FirebaseSettingsSyncRepository(
             ref.set(mapOf("settings" to remoteSettings.toString(), "updatedAt" to System.currentTimeMillis())).await()
         }
         Result.success(Unit)
-    } catch (e: Exception) { Result.failure(e) }
+    } catch (e: IllegalStateException) { Result.failure(e) }
 }

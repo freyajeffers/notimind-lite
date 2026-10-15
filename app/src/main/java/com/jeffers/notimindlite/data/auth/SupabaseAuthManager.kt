@@ -8,6 +8,7 @@ import com.jeffers.notimindlite.BuildConfig
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.json.JSONObject
+import java.io.IOException
 import java.net.HttpURLConnection
 import java.net.URL
 import java.net.URLEncoder
@@ -16,6 +17,12 @@ import java.security.SecureRandom
 
 /** Temporary PKCE Google authentication through Supabase Auth. */
 class SupabaseAuthManager(private val context: Context) {
+    private companion object {
+        const val PKCE_VERIFIER_BYTES = 32
+        const val HTTP_SUCCESS_MIN = 200
+        const val HTTP_SUCCESS_MAX = 299
+        const val JWT_PAYLOAD_INDEX = 1
+    }
     private val prefs = context.getSharedPreferences("supabase_auth", Context.MODE_PRIVATE)
     private val sessionStore = SupabaseSessionStore(context)
     private var verifier: String?
@@ -30,7 +37,7 @@ class SupabaseAuthManager(private val context: Context) {
         ?: UserSession()
 
     fun beginGoogleSignIn() {
-        val bytes = ByteArray(32).also { SecureRandom().nextBytes(it) }
+        val bytes = ByteArray(PKCE_VERIFIER_BYTES).also { SecureRandom().nextBytes(it) }
         val value = Base64.encodeToString(bytes, Base64.URL_SAFE or Base64.NO_WRAP or Base64.NO_PADDING)
         verifier = value
         val digest = MessageDigest.getInstance("SHA-256").digest(value.toByteArray())
@@ -47,26 +54,40 @@ class SupabaseAuthManager(private val context: Context) {
         val code = uri.getQueryParameter("code") ?: return@withContext Result.failure(
             IllegalArgumentException(uri.getQueryParameter("error_description") ?: "Supabase sign-in was canceled")
         )
-        val currentVerifier = verifier ?: return@withContext Result.failure(IllegalStateException("Missing PKCE verifier"))
+        val currentVerifier = verifier ?: return@withContext Result.failure(
+            IllegalStateException("Missing PKCE verifier")
+        )
         try {
-            val connection = (URL(BuildConfig.SUPABASE_URL + "/auth/v1/token?grant_type=pkce").openConnection() as HttpURLConnection)
+            val endpoint = BuildConfig.SUPABASE_URL + "/auth/v1/token?grant_type=pkce"
+            val connection = URL(endpoint).openConnection() as HttpURLConnection
             connection.requestMethod = "POST"
             connection.doOutput = true
             connection.setRequestProperty("apikey", BuildConfig.SUPABASE_ANON_KEY)
             connection.setRequestProperty("Content-Type", "application/json")
-            connection.outputStream.use {
-                it.write(JSONObject().put("auth_code", code).put("code_verifier", currentVerifier).toString().toByteArray())
+            val payload = JSONObject()
+                .put("auth_code", code)
+                .put("code_verifier", currentVerifier)
+                .toString()
+            connection.outputStream.use { it.write(payload.toByteArray()) }
+            val responseCode = connection.responseCode
+            val responseStream = if (responseCode in HTTP_SUCCESS_MIN..HTTP_SUCCESS_MAX) {
+                connection.inputStream
+            } else {
+                connection.errorStream
             }
-            val body = (if (connection.responseCode in 200..299) connection.inputStream else connection.errorStream)
-                .bufferedReader().use { it.readText() }
-            if (connection.responseCode !in 200..299) error(JSONObject(body).optString("msg", "Supabase sign-in failed"))
+            val body = responseStream.bufferedReader().use { it.readText() }
+            if (responseCode !in HTTP_SUCCESS_MIN..HTTP_SUCCESS_MAX) {
+                error(JSONObject(body).optString("msg", "Supabase sign-in failed"))
+            }
             val response = JSONObject(body)
             val token = response.getString("access_token")
             sessionStore.saveAccessToken(token)
             sessionStore.saveRefreshToken(response.optString("refresh_token"))
             verifier = null
             Result.success(decodeUser(token).copy(isAuthenticated = true))
-        } catch (e: Exception) {
+        } catch (e: IOException) {
+            Result.failure(e)
+        } catch (e: org.json.JSONException) {
             Result.failure(e)
         }
     }
@@ -78,8 +99,11 @@ class SupabaseAuthManager(private val context: Context) {
 
     private fun decodeUser(token: String): UserSession {
         val parts = token.split('.')
-        if (parts.size < 2) return UserSession(error = "Invalid Supabase session")
-        val payload = String(Base64.decode(parts[1], Base64.URL_SAFE or Base64.NO_WRAP), Charsets.UTF_8)
+        if (parts.size < JWT_PAYLOAD_INDEX + 1) return UserSession(error = "Invalid Supabase session")
+        val payload = String(
+            Base64.decode(parts[JWT_PAYLOAD_INDEX], Base64.URL_SAFE or Base64.NO_WRAP),
+            Charsets.UTF_8
+        )
         val claims = JSONObject(payload)
         return UserSession(
             uid = claims.optString("sub").takeIf { it.isNotBlank() },
