@@ -47,7 +47,7 @@ import com.jeffers.notimindlite.R
 import com.jeffers.notimindlite.domain.entity.ActionableEntityExtractor
 
 @Composable
-fun ActionableChips(
+fun actionableChips(
     text: String,
     modifier: Modifier = Modifier
 ) {
@@ -62,14 +62,14 @@ fun ActionableChips(
         verticalAlignment = Alignment.CenterVertically
     ) {
         entities.forEach { entity ->
-            ActionChip(entity = entity)
+            actionChip(entity = entity)
             Spacer(modifier = Modifier.width(8.dp))
         }
     }
 }
 
 @Composable
-private fun ActionChip(
+private fun actionChip(
     entity: ActionableEntityExtractor.ActionableEntity
 ) {
     var expanded by remember { mutableStateOf(false) }

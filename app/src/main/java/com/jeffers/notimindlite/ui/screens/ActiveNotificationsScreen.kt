@@ -78,13 +78,13 @@ import com.jeffers.notimindlite.data.local.NotificationEntity
 import com.jeffers.notimindlite.data.local.PreferenceManager
 import com.jeffers.notimindlite.data.local.PreferencesRepository
 import com.jeffers.notimindlite.service.NotificationLoggerService
-import com.jeffers.notimindlite.ui.dialogs.AppPackageSelectorDialog
+import com.jeffers.notimindlite.ui.dialogs.appPackageSelectorDialog
 import com.jeffers.notimindlite.ui.components.ActiveFilterChip
 import com.jeffers.notimindlite.ui.components.activeFilterChipsRow
 import com.jeffers.notimindlite.ui.components.ActiveFirstRunEmptyState
 import com.jeffers.notimindlite.ui.components.ActivePermissionEmptyState
 import com.jeffers.notimindlite.ui.components.ActiveSearchEmptyState
-import com.jeffers.notimindlite.ui.components.ActionableChips
+import com.jeffers.notimindlite.ui.components.actionableChips
 
 import com.jeffers.notimindlite.domain.search.HybridSearchEngine
 import com.jeffers.notimindlite.util.NotificationLauncher
@@ -746,7 +746,7 @@ fun activeNotificationsScreen(dao: NotificationDao, authManager: AuthManager, db
     }
 
     if (showPackagePicker) {
-        AppPackageSelectorDialog(
+        appPackageSelectorDialog(
             selectedPackages = selectedPackages ?: emptyList(),
             availableApps = availableApps,
             onDismiss = { showPackagePicker = false },

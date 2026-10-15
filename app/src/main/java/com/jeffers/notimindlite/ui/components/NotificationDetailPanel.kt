@@ -25,7 +25,7 @@ import java.time.format.DateTimeFormatter
  * It is displayed when a notification card in the LogHistoryScreen is expanded.
  */
 @Composable
-fun NotificationDetailPanel(
+fun notificationDetailPanel(
     item: NotificationEntity,
     dateTimeFormatter: DateTimeFormatter
 ) {
@@ -40,25 +40,25 @@ fun NotificationDetailPanel(
             .padding(12.dp),
         verticalArrangement = Arrangement.spacedBy(6.dp)
     ) {
-        DetailRow(label = stringResource(R.string.notification_detail_package), value = item.packageName)
-        DetailRow(label = stringResource(R.string.notification_detail_app_name), value = item.appName)
-        DetailRow(label = stringResource(R.string.notification_detail_priority), value = item.priority.toString())
-        DetailRow(
+        detailRow(label = stringResource(R.string.notification_detail_package), value = item.packageName)
+        detailRow(label = stringResource(R.string.notification_detail_app_name), value = item.appName)
+        detailRow(label = stringResource(R.string.notification_detail_priority), value = item.priority.toString())
+        detailRow(
             label = stringResource(R.string.notification_detail_channel_id),
             value = item.channelId ?: stringResource(R.string.notification_detail_unknown)
         )
-        DetailRow(
+        detailRow(
             label = stringResource(R.string.notification_detail_post_time),
             value = dateTimeFormatter.format(java.time.Instant.ofEpochMilli(item.postTime))
         )
-        DetailRow(label = stringResource(R.string.notification_detail_dismiss_time), value = item.dismissTime?.let {
+        detailRow(label = stringResource(R.string.notification_detail_dismiss_time), value = item.dismissTime?.let {
             dateTimeFormatter.format(java.time.Instant.ofEpochMilli(it))
         } ?: stringResource(R.string.notification_detail_not_available))
     }
 }
 
 @Composable
-private fun DetailRow(label: String, value: String) {
+private fun detailRow(label: String, value: String) {
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.SpaceBetween,

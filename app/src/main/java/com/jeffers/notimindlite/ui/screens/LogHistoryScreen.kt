@@ -50,8 +50,8 @@ import com.jeffers.notimindlite.R
 import androidx.compose.foundation.background
 import com.jeffers.notimindlite.data.local.NotificationDao
 import com.jeffers.notimindlite.data.local.NotificationEntity
-import com.jeffers.notimindlite.ui.dialogs.AppPackageSelectorDialog
-import com.jeffers.notimindlite.ui.components.NotificationDetailPanel
+import com.jeffers.notimindlite.ui.dialogs.appPackageSelectorDialog
+import com.jeffers.notimindlite.ui.components.notificationDetailPanel
 import com.jeffers.notimindlite.domain.search.HybridSearchEngine
 import com.jeffers.notimindlite.util.NotificationLauncher
 import com.jeffers.notimindlite.data.auth.AuthManager
@@ -587,7 +587,7 @@ fun logHistoryScreen(dao: NotificationDao, authManager: AuthManager, db: AppData
                 }
             }
             if (showPackagePicker) {
-                AppPackageSelectorDialog(
+                appPackageSelectorDialog(
                     selectedPackages = selectedPackages ?: emptyList(),
                     availableApps = availableApps,
                     onDismiss = { showPackagePicker = false },

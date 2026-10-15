@@ -32,7 +32,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 
 @Composable
-fun AppPackageSelectorDialog(
+fun appPackageSelectorDialog(
     selectedPackages: List<String>,
     availableApps: List<Pair<String, String>>, // (packageName, appName)
     onDismiss: () -> Unit,
