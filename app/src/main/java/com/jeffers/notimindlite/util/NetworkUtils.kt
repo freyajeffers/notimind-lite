@@ -21,8 +21,14 @@ object NetworkUtils {
             val networkCapabilities = connectivityManager.getNetworkCapabilities(activeNetwork) ?: return false
             
             networkCapabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
-        } catch (e: Exception) {
-            AppLogger.w(TAG, "Failed to evaluate network capabilities: ${e.message}", e)
+        } catch (e: SecurityException) {
+            AppLogger.w(TAG, "Missing network permission when evaluating connectivity: ${e.message}", e)
+            false
+        } catch (e: ClassCastException) {
+            AppLogger.w(TAG, "ConnectivityManager type mismatch: ${e.message}", e)
+            false
+        } catch (e: IllegalStateException) {
+            AppLogger.w(TAG, "Network subsystem in illegal state: ${e.message}", e)
             false
         }
     }
