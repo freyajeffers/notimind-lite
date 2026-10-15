@@ -68,16 +68,24 @@ object AppInitializer {
             kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.Dispatchers.IO).launch {
                 try {
                     AuditLogger.checkAndLogAppDataCleared(context)
-                } catch (e: Exception) {
-                    Log.w(TAG, "AuditLogger check failed on startup", e)
+                } catch (e: java.io.IOException) {
+                    Log.w(TAG, "AuditLogger IO check failed on startup", e)
+                } catch (e: SecurityException) {
+                    Log.w(TAG, "AuditLogger permission denied on startup", e)
                 }
             }
 
             Log.i(TAG, "AppInitializer: System initialization complete.")
-        } catch (e: Exception) {
-            Log.e(TAG, "AppInitializer: Critical failure during initialization: ${e.message}", e)
-            // We don't crash the app here to allow partial functionality, 
-            // but we log the error for debugging.
+        } catch (e: com.google.firebase.FirebaseException) {
+            Log.e(TAG, "AppInitializer: Firebase initialization failed: ${e.message}", e)
+        } catch (e: java.io.IOException) {
+            Log.e(TAG, "AppInitializer: IO failure during initialization: ${e.message}", e)
+        } catch (e: IllegalStateException) {
+            Log.e(TAG, "AppInitializer: Illegal state during initialization: ${e.message}", e)
+        } catch (e: IllegalArgumentException) {
+            Log.e(TAG, "AppInitializer: Invalid argument during initialization: ${e.message}", e)
+        } catch (e: SecurityException) {
+            Log.e(TAG, "AppInitializer: Security exception during initialization: ${e.message}", e)
         }
     }
 
