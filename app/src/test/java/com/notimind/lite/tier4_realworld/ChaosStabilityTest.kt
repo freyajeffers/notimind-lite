@@ -15,9 +15,11 @@ import com.jeffers.notimindlite.data.local.SyncStatus
 import com.jeffers.notimindlite.domain.backup.generateBackupKey
 import com.jeffers.notimindlite.data.sync.FirestoreSyncRepository
 import android.database.sqlite.SQLiteFullException
-import io.mockk.*
+import io.mockk.coEvery
+import io.mockk.every
+import io.mockk.mockk
+import org.junit.Assert.assertTrue
 import kotlinx.coroutines.runBlocking
-import org.junit.Assert.*
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith

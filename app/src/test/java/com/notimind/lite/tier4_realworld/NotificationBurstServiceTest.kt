@@ -6,7 +6,7 @@ import android.service.notification.StatusBarNotification
 import com.jeffers.notimindlite.data.local.NotificationEntity
 import com.jeffers.notimindlite.service.NotificationLoggerService
 import com.notimind.lite.base.BaseRobolectricTest
-import io.mockk.*
+
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals

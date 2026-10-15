@@ -111,8 +111,7 @@ class NotificationLoggerService : NotificationListenerService() {
         }
     }
 
-    @Suppress("TooGenericExceptionCaught", "SwallowedException") // Icon capture is best-effort; any
-    // failure (decode, IO, security) returns null and the caller falls back to no icon.
+    // Icon capture is best-effort; failures return null and callers fall back to no icon.
     private fun getOrSaveAppIconUri(packageName: String): String? {
         val iconsDir = File(cacheDir, "app_icons")
         if (!iconsDir.exists()) iconsDir.mkdirs()
@@ -272,7 +271,7 @@ class NotificationLoggerService : NotificationListenerService() {
     }
 
     @Suppress(
-        "TooGenericExceptionCaught", "SwallowedException", "ReturnCount", "LongMethod", "CyclomaticComplexMethod"
+        "ReturnCount", "LongMethod", "CyclomaticComplexMethod"
     ) // PackageManager lookups (app label, launch intent) intentionally return null on any failure so
     // extraction stays resilient across OEM variants; this method has 10 returns because each guard
     // returns early (blank content, summary, stale, missing app, etc.) — the function is intentionally
@@ -348,9 +347,6 @@ class NotificationLoggerService : NotificationListenerService() {
         } catch (e: IllegalStateException) {
             Log.e(TAG, "Failed to extract notification entity - illegal state", e)
             null
-        } catch (e: IndexOutOfBoundsException) {
-            Log.e(TAG, "Failed to extract notification entity - index error", e)
-            null
         }
     }
 
@@ -422,6 +418,7 @@ class NotificationLoggerService : NotificationListenerService() {
             val textLines = extras?.getCharSequenceArray(Notification.EXTRA_TEXT_LINES)
             if (!textLines.isNullOrEmpty()) JSONArray(textLines.map { it.toString() }).toString() else null
         } catch (e: ClassCastException) {
+            Log.w(TAG, "Notification inbox lines were not CharSequence[]; trying String[]", e)
             val stringLines = extras?.getStringArray(Notification.EXTRA_TEXT_LINES)
             if (!stringLines.isNullOrEmpty()) JSONArray(stringLines.toList()).toString() else null
         }
@@ -431,7 +428,10 @@ class NotificationLoggerService : NotificationListenerService() {
         return try {
             val appInfo = packageManager.getApplicationInfo(packageName, PackageManager.MATCH_UNINSTALLED_PACKAGES)
             packageManager.getApplicationLabel(appInfo).toString()
-        } catch (e: Exception) {
+        } catch (e: PackageManager.NameNotFoundException) {
+            packageName
+        } catch (e: SecurityException) {
+            Log.w(TAG, "Application label access denied for $packageName", e)
             packageName
         }
     }
@@ -440,6 +440,7 @@ class NotificationLoggerService : NotificationListenerService() {
         return try {
             notification.smallIcon?.resId ?: 0
         } catch (e: IllegalStateException) {
+            Log.w(TAG, "Notification small icon is unavailable", e)
             0
         }
     }
@@ -456,7 +457,11 @@ class NotificationLoggerService : NotificationListenerService() {
     private fun safeLaunchIntentUri(packageName: String): String? {
         return try {
             packageManager.getLaunchIntentForPackage(packageName)?.toUri(Intent.URI_INTENT_SCHEME)
-        } catch (e: Exception) {
+        } catch (e: SecurityException) {
+            Log.w(TAG, "Launch intent unavailable for package=$packageName", e)
+            null
+        } catch (e: IllegalArgumentException) {
+            Log.w(TAG, "Invalid package name for launch intent: $packageName", e)
             null
         }
     }
@@ -509,8 +514,10 @@ class NotificationLoggerService : NotificationListenerService() {
                     reason = effectiveReason,
                     dismissTime = dismissTime
                 )
-            } catch (e: Exception) {
-                Log.e(TAG, "Failed to mark notification dismissed for $key", e)
+            } catch (e: IllegalStateException) {
+                Log.e(TAG, "Invalid database state marking notification dismissed for $key", e)
+            } catch (e: android.database.sqlite.SQLiteException) {
+                Log.e(TAG, "Database error marking notification dismissed for $key", e)
             }
         }
     }
@@ -530,8 +537,10 @@ class NotificationLoggerService : NotificationListenerService() {
             // same TypeConverter that the entity's `embedding` column uses,
             // so writes and reads round-trip through the same byte order.
             dao.updateEmbedding(entity.id, Converters().fromFloatArray(embedding) ?: return)
-        } catch (e: Exception) {
-            Log.w(TAG, "Embedding compute skipped for ${entity.key}: ${e.message}")
+        } catch (e: IllegalStateException) {
+            Log.w(TAG, "Embedding compute skipped for ${entity.key}: invalid state", e)
+        } catch (e: android.database.sqlite.SQLiteException) {
+            Log.w(TAG, "Embedding write skipped for ${entity.key}: database error", e)
         }
     }
 
