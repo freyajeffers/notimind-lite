@@ -14,6 +14,8 @@ import java.io.ByteArrayOutputStream
 import java.io.File
 import java.io.FileInputStream
 import java.io.FileOutputStream
+import java.io.IOException
+import java.security.GeneralSecurityException
 import java.security.MessageDigest
 import java.security.SecureRandom
 import javax.crypto.AEADBadTagException
@@ -67,17 +69,19 @@ object EncryptedBackupManager {
                 signature = signature,
                 fileName = destinationFile.name,
                 logMessage = if (passphrase != null) "Passphrase-wrapped export" else "KeyStore-bound export"
-                // M4: removed `encryptionKeyBase64 = encryptionKeyBase64` — the deprecated
-                // field is retained in BackupRecord strictly for Room schema compatibility
-                // (see AppDatabase migration ALTER TABLE) but no caller may persist plaintext
-                // keys. Tests asserting on this column should be migrated separately.
             )
 
             AppDatabase.getDatabase(context).backupDao().insertRecord(record)
             AuditLogger.logBackupEvent(context, record)
             true
-        } catch (e: Exception) {
-            Log.e(TAG, "Authorized backup failed: Security operation error", e)
+        } catch (e: IOException) {
+            Log.e(TAG, "Authorized backup failed: IO error", e)
+            false
+        } catch (e: GeneralSecurityException) {
+            Log.e(TAG, "Authorized backup failed: crypto error", e)
+            false
+        } catch (e: SecurityException) {
+            Log.e(TAG, "Authorized backup failed: security exception", e)
             false
         }
     }
@@ -130,8 +134,14 @@ object EncryptedBackupManager {
                 AuditLogger.logBackupEvent(context, importRecord)
             }
             success
-        } catch (e: Exception) {
-            Log.e(TAG, "Authorized restore failed: ${e.message}", e)
+        } catch (e: IOException) {
+            Log.e(TAG, "Authorized restore failed: IO error", e)
+            false
+        } catch (e: AEADBadTagException) {
+            Log.e(TAG, "Authorized restore failed: authentication error (wrong passphrase or corrupted file)", e)
+            false
+        } catch (e: GeneralSecurityException) {
+            Log.e(TAG, "Authorized restore failed: crypto error", e)
             false
         }
     }
