@@ -47,7 +47,7 @@ object DatabaseExporter {
             }
 
             val dbFile = context.getDatabasePath("notifications.db")
-            if (!dbFile.exists()) return Result.failure(Exception("Database file not found"))
+            if (!dbFile.exists()) return Result.failure(IllegalStateException("Database file not found"))
 
             val backupFile = File(context.cacheDir, "notimind_backup_${System.currentTimeMillis()}.enc")
 
@@ -61,8 +61,17 @@ object DatabaseExporter {
 
             if (success) Result.success(backupFile)
             else Result.failure(Exception("Backup encryption or notary authorization failed"))
-        } catch (e: Exception) {
-            Log.e(TAG, "Backup process failed", e)
+        } catch (e: java.io.IOException) {
+            Log.e(TAG, "Backup process failed: IO error", e)
+            Result.failure(e)
+        } catch (e: java.security.GeneralSecurityException) {
+            Log.e(TAG, "Backup process failed: crypto error", e)
+            Result.failure(e)
+        } catch (e: SecurityException) {
+            Log.e(TAG, "Backup process failed: security exception", e)
+            Result.failure(e)
+        } catch (e: IllegalArgumentException) {
+            Log.e(TAG, "Backup process failed: invalid argument", e)
             Result.failure(e)
         }
     }
@@ -103,8 +112,17 @@ object DatabaseExporter {
             )
             if (success) Result.success(Unit)
             else Result.failure(IllegalStateException("Backup restoration or authorization failed"))
-        } catch (e: Exception) {
-            Log.e(TAG, "Restore process failed", e)
+        } catch (e: java.io.IOException) {
+            Log.e(TAG, "Restore process failed: IO error", e)
+            Result.failure(e)
+        } catch (e: javax.crypto.AEADBadTagException) {
+            Log.e(TAG, "Restore process failed: authentication error (wrong passphrase or corrupted file)", e)
+            Result.failure(e)
+        } catch (e: java.security.GeneralSecurityException) {
+            Log.e(TAG, "Restore process failed: crypto error", e)
+            Result.failure(e)
+        } catch (e: SecurityException) {
+            Log.e(TAG, "Restore process failed: security exception", e)
             Result.failure(e)
         }
     }
@@ -263,8 +281,10 @@ object DatabaseExporter {
                     }
                 }
             }
-        } catch (e: Exception) {
-            Log.e(TAG, "Failed to clean up temporary export files", e)
+        } catch (e: SecurityException) {
+            Log.e(TAG, "Failed to clean up temporary export files: permission denied", e)
+        } catch (e: java.io.IOException) {
+            Log.e(TAG, "Failed to clean up temporary export files: IO error", e)
         }
     }
 
@@ -326,8 +346,14 @@ object DatabaseExporter {
                 ).apply {
                 addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
             })
-        } catch (e: Exception) {
-            Log.e(TAG, "Failed to export database", e)
+        } catch (e: IllegalArgumentException) {
+            Log.e(TAG, "Failed to export database: invalid argument", e)
+        } catch (e: SecurityException) {
+            Log.e(TAG, "Failed to export database: security exception", e)
+        } catch (e: java.io.IOException) {
+            Log.e(TAG, "Failed to export database: IO error", e)
+        } catch (e: java.security.GeneralSecurityException) {
+            Log.e(TAG, "Failed to export database: crypto error", e)
         }
     }
 
