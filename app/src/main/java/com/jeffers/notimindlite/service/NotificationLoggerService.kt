@@ -49,8 +49,6 @@ class NotificationLoggerService : NotificationListenerService() {
     private val actionExecutor by lazy { NotificationActionExecutor(PreferencesRepository(applicationContext)) }
 
     companion object {
-        @Suppress("UnusedPrivateProperty") // Reserved for future debounce/filter tuning per F-A audit.
-        private const val DEBOUNCE_MS = 30000L
         private const val MAX_CACHE_CAPACITY = 500
 
         private val recentLogs: MutableMap<String, Long> = Collections.synchronizedMap(

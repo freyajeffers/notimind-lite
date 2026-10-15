@@ -20,9 +20,7 @@ class BackupSecurityTest : BaseRobolectricTest() {
         val sourceFile = File.createTempFile("source_db", ".db")
         sourceFile.writeText("This is sensitive database content that must remain intact.")
         
-        val encryptedFile = File.createTempFile("backup", ".enc")
-        
-        // Use the manager's internal logic via a test-accessible route if possible, 
+        // Use the manager's internal logic via a test-accessible route if possible,
         // but since we need to modify the ciphertext, we use a helper to create the initial blob.
         val encryptedData = encryptSimple(sourceFile.readBytes(), secretKey)
         

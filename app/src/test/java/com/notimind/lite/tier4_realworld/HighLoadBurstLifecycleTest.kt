@@ -23,8 +23,8 @@ class HighLoadBurstLifecycleTest : BaseRobolectricTest() {
         val count = 10_000
 
         // Measure batch insertion of 10,000 entities
-        val durationMs = measureTimeMillis {
-            val entities = (1..count).map { i ->
+        measureTimeMillis {
+            (1..count).map { i ->
                 NotificationEntity(
                     key = "stress_key_$i",
                     packageName = "com.stress.app_${i % 10}",
