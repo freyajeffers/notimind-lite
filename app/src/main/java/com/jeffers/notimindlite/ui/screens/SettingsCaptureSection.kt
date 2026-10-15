@@ -14,7 +14,7 @@ import com.jeffers.notimindlite.R
 import kotlinx.coroutines.launch
 
 @Composable
-fun SettingsCaptureSection(preferencesRepository: PreferencesRepository) {
+fun settingsCaptureSection(preferencesRepository: PreferencesRepository) {
     val scope = rememberCoroutineScope()
     val captureEnabled by preferencesRepository.captureNotifications.collectAsState(initial = true)
     val foregroundOnly by preferencesRepository.captureForegroundOnly.collectAsState(initial = false)
