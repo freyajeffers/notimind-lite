@@ -23,10 +23,6 @@ import kotlinx.coroutines.launch
  * BroadcastReceiver responsible for Direct Boot (LOCKED_BOOT_COMPLETED),
  * standard boot completion (BOOT_COMPLETED), and package update events.
  */
-@Suppress(
-    "CyclomaticComplexMethod"
-) // Three action branches (REPLACED / BOOT / QUICKBOOT) share a restoration pipeline; merging
-// them into helpers would lose the early-return ordering required by goAsync()/pendingResult.
 class BootReceiver : BroadcastReceiver() {
 
     private val receiverScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
@@ -34,126 +30,111 @@ class BootReceiver : BroadcastReceiver() {
     companion object {
         const val CHANNEL_ID_RESTORED = "restored_notifications_channel"
         const val CHANNEL_NAME = "Restored Active Notifications"
+        private const val QUICKBOOT_ACTION = "android.intent.action.QUICKBOOT_POWERON"
+        private const val RESTORED_NOTIFICATION_OFFSET = 1000
     }
 
     override fun onReceive(context: Context?, intent: Intent?) {
-        context ?: return
-        val action = intent?.action ?: return
+        if (context == null || intent?.action == null) return
+        val action = intent.action ?: return
+        if (action == Intent.ACTION_MY_PACKAGE_REPLACED) {
+            com.jeffers.notimindlite.data.local.PreferenceManager(context)
+                .setLastUpdateTime(System.currentTimeMillis())
+            return
+        }
+        if (!isBootAction(action)) return
 
         val userManager = context.getSystemService(Context.USER_SERVICE) as? UserManager
-        val isUserUnlocked = userManager?.isUserUnlocked ?: true
+        scheduleBootRestore(context, userManager?.isUserUnlocked ?: true)
+    }
 
-        if (action == Intent.ACTION_MY_PACKAGE_REPLACED) {
-            val prefMgr = com.jeffers.notimindlite.data.local.PreferenceManager(context)
-            prefMgr.setLastUpdateTime(System.currentTimeMillis())
-            
-            return
-        } else if (action == Intent.ACTION_LOCKED_BOOT_COMPLETED ||
-            action == Intent.ACTION_BOOT_COMPLETED ||
-            action == "android.intent.action.QUICKBOOT_POWERON"
-        ) {
-            
-            val pendingResult = goAsync()
+    private fun isBootAction(action: String): Boolean = action == Intent.ACTION_LOCKED_BOOT_COMPLETED ||
+        action == Intent.ACTION_BOOT_COMPLETED || action == QUICKBOOT_ACTION
 
-            receiverScope.launch {
-                try {
-                    // Attempt notification listener rebind as early as Direct Boot
-                    try {
-                        NotificationListenerService.requestRebind(
-                            ComponentName(context, NotificationLoggerService::class.java)
-                        )
-                        
-                    } catch (e: SecurityException) {
-                        Log.w("BootReceiverLite", "Notification listener rebind was denied", e)
-                    }
-
-                    // Check preferences
-                    val prefManager = com.jeffers.notimindlite.data.local.PreferenceManager(context)
-                    if (!prefManager.isRestoreOnBootEnabled()) {
-                        
-                        return@launch
-                    }
-
-                    // F-L fix [2026-09-02 audit]: The previous comment said
-                    // "Only query credential-encrypted Room database if user is unlocked."
-                    // That was misleading — `AppDatabase.getDatabase()` already routes to
-                    // the correct DE/CE database via `isUserUnlocked`. The skip here is
-                    // NOT a technical limitation; it is an intentional security policy:
-                    // pre-unlock restoration would surface captured notification content
-                    // on the lockscreen before the user authenticates, defeating the
-                    // device-encrypted privacy boundary.
-                    //
-                    // To change this behavior, also:
-                    //   1. Verify the DE Room database has rows to restore at
-                    //      LOCKED_BOOT_COMPLETED (listener service must be directBootAware).
-                    //   2. Audit NotificationCompat.Builder for FLAG_SECURE if sensitive.
-                    //   3. Update user-facing docs (RESTORE_ON_BOOT pref description).
-                    // Reference: docs/audit/2026-09-02-notimind-lite-integration.md F-L.
-                    if (!isUserUnlocked) {
-                        Log.i(
-                            "BootReceiverLite",
-                            "Pre-unlock boot restoration skipped (security policy, F-L). " +
-                                "Notification listener rebind already requested above."
-                        )
-                        return@launch
-                    }
-
-                    val db = AppDatabase.getDatabase(context.applicationContext)
-                    val activeNotifs = db.notificationDao().getActiveNotificationsList()
-
-                    // apply intelligent grouping if count > 45
-                    val consolidatedNotifs = BootRestoreManager.consolidateForBoot(activeNotifs)
-
-                    val notificationManager =
-                        context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-
-                    val channel = NotificationChannel(
-                        CHANNEL_ID_RESTORED,
-                        CHANNEL_NAME,
-                        NotificationManager.IMPORTANCE_DEFAULT
-                    ).apply {
-                        description = "Restored active status bar notifications on boot"
-                    }
-                    notificationManager.createNotificationChannel(channel)
-
-                    var restoredCount = 0
-                    for (item in consolidatedNotifs) {
-                        val firstId = item.originalIds.first()
-                        val notifId = (firstId.hashCode() and 0x7FFFFFFF) + 1000
-
-                        val builder = NotificationCompat.Builder(context, CHANNEL_ID_RESTORED)
-                            .setSmallIcon(android.R.drawable.stat_notify_chat)
-                            .setContentTitle("${item.appName}: ${item.summaryTitle}")
-                            .setContentText(item.summaryContent)
-                            .setSubText(context.getString(R.string.restored_after_reboot))
-                            .setPriority(NotificationCompat.PRIORITY_DEFAULT)
-                            .setAutoCancel(true)
-
-                        notificationManager.notify(notifId, builder.build())
-                        for (origId in item.originalIds) {
-                            val origNotif = activeNotifs.find { it.id == origId }
-                            if (origNotif != null) {
-                                com.jeffers.notimindlite.service.RestoredNotificationManager.markAsRestored(
-                                    origNotif.key,
-                                    origNotif.packageName,
-                                    notifId
-                                )
-                            }
-                        }
-                        restoredCount++
-                    }
-                    
-                } catch (e: SecurityException) {
-                    Log.w("BootReceiverLite", "Permission denied restoring notifications on boot", e)
-                } catch (e: android.database.sqlite.SQLiteException) {
-                    Log.e("BootReceiverLite", "Database error during boot restoration", e)
-                } catch (e: IllegalStateException) {
-                    Log.e("BootReceiverLite", "Illegal state during boot restoration", e)
-                } catch (e: IllegalArgumentException) {
-                    Log.e("BootReceiverLite", "Invalid argument during boot restoration", e)
-                } finally {
-                    pendingResult?.finish()
+    private fun scheduleBootRestore(context: Context, isUserUnlocked: Boolean) {
+        val pendingResult = goAsync()
+        receiverScope.launch {
+            try {
+                requestListenerRebind(context)
+                val preferences = com.jeffers.notimindlite.data.local.PreferenceManager(context)
+                if (!preferences.isRestoreOnBootEnabled() || !isUserUnlocked) {
+                    logRestoreSkipped(isUserUnlocked)
+                    return@launch
                 }
+                restoreActiveNotifications(context)
+            } catch (e: SecurityException) {
+                Log.w("BootReceiverLite", "Permission denied restoring notifications on boot", e)
+            } catch (e: android.database.sqlite.SQLiteException) {
+                Log.e("BootReceiverLite", "Database error during boot restoration", e)
+            } catch (e: IllegalStateException) {
+                Log.e("BootReceiverLite", "Illegal state during boot restoration", e)
+            } catch (e: IllegalArgumentException) {
+                Log.e("BootReceiverLite", "Invalid argument during boot restoration", e)
+            } finally {
+                pendingResult?.finish()
+            }
+        }
+    }
+
+    private fun requestListenerRebind(context: Context) {
+        try {
+            NotificationListenerService.requestRebind(
+                ComponentName(context, NotificationLoggerService::class.java)
+            )
+        } catch (e: SecurityException) {
+            Log.w("BootReceiverLite", "Notification listener rebind was denied", e)
+        }
+    }
+
+    private fun logRestoreSkipped(isUserUnlocked: Boolean) {
+        if (!isUserUnlocked) {
+            Log.i(
+                "BootReceiverLite",
+                "Pre-unlock boot restoration skipped (security policy, F-L). " +
+                    "Notification listener rebind already requested above."
+            )
+        }
+    }
+
+    private suspend fun restoreActiveNotifications(context: Context) {
+        val db = AppDatabase.getDatabase(context.applicationContext)
+        val activeNotifications = db.notificationDao().getActiveNotificationsList()
+        val consolidatedNotifications = BootRestoreManager.consolidateForBoot(activeNotifications)
+        val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        notificationManager.createNotificationChannel(
+            NotificationChannel(
+                CHANNEL_ID_RESTORED,
+                CHANNEL_NAME,
+                NotificationManager.IMPORTANCE_DEFAULT
+            ).apply { description = "Restored active status bar notifications on boot" }
+        )
+        consolidatedNotifications.forEach { item ->
+            restoreNotificationGroup(context, notificationManager, activeNotifications, item)
+        }
+    }
+
+    private fun restoreNotificationGroup(
+        context: Context,
+        notificationManager: NotificationManager,
+        activeNotifications: List<com.jeffers.notimindlite.data.local.NotificationEntity>,
+        item: com.jeffers.notimindlite.service.BootConsolidationResult,
+    ) {
+        val firstId = item.originalIds.first()
+        val notificationId = (firstId.hashCode() and 0x7FFFFFFF) + RESTORED_NOTIFICATION_OFFSET
+        val notification = NotificationCompat.Builder(context, CHANNEL_ID_RESTORED)
+            .setSmallIcon(android.R.drawable.stat_notify_chat)
+            .setContentTitle("${item.appName}: ${item.summaryTitle}")
+            .setContentText(item.summaryContent)
+            .setSubText(context.getString(R.string.restored_after_reboot))
+            .setPriority(NotificationCompat.PRIORITY_DEFAULT)
+            .setAutoCancel(true)
+            .build()
+        notificationManager.notify(notificationId, notification)
+        item.originalIds.forEach { originalId ->
+            activeNotifications.find { it.id == originalId }?.let { original ->
+                com.jeffers.notimindlite.service.RestoredNotificationManager.markAsRestored(
+                    original.key, original.packageName, notificationId
+                )
             }
         }
     }
