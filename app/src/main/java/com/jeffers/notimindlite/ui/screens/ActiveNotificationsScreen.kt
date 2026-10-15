@@ -186,7 +186,7 @@ fun appIconImage(appIconUri: String?, modifier: Modifier = Modifier.size(20.dp))
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class, ExperimentalLayoutApi::class)
 @Composable
-fun ActiveNotificationsScreen(dao: NotificationDao, authManager: AuthManager, db: AppDatabase, preferences: PreferencesRepository) {
+fun activeNotificationsScreen(dao: NotificationDao, authManager: AuthManager, db: AppDatabase, preferences: PreferencesRepository) {
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
     val prefManager = remember { PreferenceManager(context) }
