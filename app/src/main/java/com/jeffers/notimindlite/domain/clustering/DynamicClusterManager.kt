@@ -96,7 +96,7 @@ object DynamicClusterManager {
         )
     )
 
-    private val PACKAGE_DOMAIN_MARKERS: List<Pair<String, List<String>>> = listOf(
+    internal val PACKAGE_DOMAIN_MARKERS: List<Pair<String, List<String>>> = listOf(
         "finance" to listOf("bank", "pay", "wallet", "money", "finance", "crypto"),
         "delivery" to listOf("food", "eat", "delivery", "order", "courier", "transit"),
         "security" to listOf("auth", "otp", "pass", "secure", "vpn"),
@@ -179,53 +179,7 @@ object DynamicClusterManager {
         addMatchingSubcategoryKeywords(domainNode, combined, appLabel, meaningfulParts)
     }
 
-    private fun applicationLabel(packageManager: PackageManager, app: ApplicationInfo): String? {
-        return try {
-            packageManager.getApplicationLabel(app).toString().lowercase()
-        } catch (e: PackageManager.NameNotFoundException) {
-            null
-        }
-    }
-
-    private fun appDomain(app: ApplicationInfo, packageName: String, label: String?): String? {
-        return if (app.category != ApplicationInfo.CATEGORY_UNDEFINED) {
-            OS_CATEGORY_MAPPING[app.category]
-        } else {
-            inferDomainFromPackageName(packageName, label)
-        }
-    }
-
-    private fun meaningfulPackageParts(packageName: String): List<String> {
-        return packageName.split(".").filter {
-            it !in setOf("com", "android", "app", "mobile", "apps") && it.length > 2
-        }
-    }
-
-    private fun appKeywords(label: String?, meaningfulParts: List<String>): List<String> {
-        val labelWords = label?.split("\\s+".toRegex())?.filter { it.length > 2 }.orEmpty()
-        return listOfNotNull(label) + labelWords + meaningfulParts
-    }
-
-    private fun addMatchingSubcategoryKeywords(
-        domainNode: ClusterNode,
-        combined: String,
-        appLabel: String?,
-        meaningfulParts: List<String>
-    ) {
-        domainNode.subClusters.values
-            .filter { subNode -> subNode.keywords.any(combined::contains) }
-            .forEach { subNode ->
-                appLabel?.let(subNode.keywords::add)
-                subNode.keywords.addAll(meaningfulParts)
-            }
-    }
-
-    private fun inferDomainFromPackageName(pkgName: String, appLabel: String?): String? {
-        val combined = "$pkgName ${appLabel ?: ""}".lowercase()
-        return PACKAGE_DOMAIN_MARKERS.firstOrNull { (_, markers) ->
-            markers.any(combined::contains)
-        }?.first
-    }
+    // Helper functions moved to DynamicClusterHelpers.kt to reduce object size
 
     fun getDynamicClusters(): Map<String, Set<String>> {
         val flatMap = mutableMapOf<String, Set<String>>()
