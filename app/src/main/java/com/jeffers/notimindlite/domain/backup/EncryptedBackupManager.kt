@@ -256,8 +256,17 @@ object EncryptedBackupManager {
                 }
             }
             true
-        } catch (e: Exception) {
-            Log.e(TAG, "Encryption failed: ${e.message}", e)
+        } catch (e: IOException) {
+            Log.e(TAG, "Encryption failed: IO error", e)
+            false
+        } catch (e: GeneralSecurityException) {
+            Log.e(TAG, "Encryption failed: crypto error", e)
+            false
+        } catch (e: IllegalArgumentException) {
+            Log.e(TAG, "Encryption failed: invalid argument", e)
+            false
+        } catch (e: IllegalStateException) {
+            Log.e(TAG, "Encryption failed: illegal state", e)
             false
         }
     }
@@ -285,8 +294,17 @@ object EncryptedBackupManager {
             val plaintext = cipher.doFinal(ciphertext)
             dest.writeBytes(plaintext)
             true
-        } catch (e: Exception) {
-            Log.e(TAG, "Decryption failed: ${e.message}", e)
+        } catch (e: IOException) {
+            Log.e(TAG, "Decryption failed: IO error", e)
+            false
+        } catch (e: GeneralSecurityException) {
+            Log.e(TAG, "Decryption failed: crypto error", e)
+            false
+        } catch (e: IllegalArgumentException) {
+            Log.e(TAG, "Decryption failed: invalid argument", e)
+            false
+        } catch (e: IllegalStateException) {
+            Log.e(TAG, "Decryption failed: illegal state", e)
             false
         }
     }
