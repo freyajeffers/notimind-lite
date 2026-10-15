@@ -67,66 +67,19 @@ object DatabaseMigrator {
     fun executeRawDbMergeAndRebuildFts(context: Context, ceDatabase: AppDatabase) {
         val deContext = context.createDeviceProtectedStorageContext()
         val deDbFile = deContext.getDatabasePath(AppDatabase.DE_DATABASE_NAME)
-        if (!deDbFile.exists()) {
-            
-            return
-        }
+        if (!deDbFile.exists()) return
 
         val deDbPath = deDbFile.absolutePath
         val db: SupportSQLiteDatabase = ceDatabase.openHelper.writableDatabase
 
         db.beginTransaction()
         try {
-            db.execSQL("ATTACH DATABASE '$deDbPath' AS de_db;")
-
-            // 1. Merge normalized apps table
-            db.execSQL(
-                """
-                INSERT OR IGNORE INTO apps (packageName, appName, firstSeenTime, lastSeenTime, appIconUri, statusBarIconRes, statusBarIconPackage)
-                SELECT packageName, appName, firstSeenTime, lastSeenTime, appIconUri, statusBarIconRes, statusBarIconPackage
-                FROM de_db.apps;
-                """.trimIndent()
-            )
-
-            // 2. Merge notifications table
-            db.execSQL(
-                """
-                INSERT OR IGNORE INTO notifications (
-                    `key`, `packageName`, `appName`, `appIconUri`, `title`, `content`,
-                    `postTime`, `lastUpdatedTime`, `updateCount`, `isDismissed`, `isPersistent`,
-                    `isRead`, `isGroupSummary`, `category`, `channelId`, `subText`, `bigText`,
-                    `inboxLinesJson`, `priority`, `groupKey`, `isOngoing`, `isClearable`,
-                    `actionsCount`, `dismissReason`, `dismissTime`, `intentUri`, `isPinned`,
-                    `actionLabels`, `smallIconRes`
-                )
-                SELECT 
-                    `key`, `packageName`, `appName`, `appIconUri`, `title`, `content`,
-                    `postTime`, `lastUpdatedTime`, `updateCount`, `isDismissed`, `isPersistent`,
-                    `isRead`, `isGroupSummary`, `category`, `channelId`, `subText`, `bigText`,
-                    `inboxLinesJson`, `priority`, `groupKey`, `isOngoing`, `isClearable`,
-                    `actionsCount`, `dismissReason`, `dismissTime`, `intentUri`, `isPinned`,
-                    `actionLabels`, `smallIconRes`
-                FROM de_db.notifications;
-                """.trimIndent()
-            )
-
-            // 3. Rebuild full-text search index
-            try {
-                db.execSQL("INSERT INTO notifications_fts(notifications_fts) VALUES('rebuild');")
-            } catch (e: android.database.SQLException) {
-                Log.e(TAG, "Failed rebuilding FTS index during merge: ${e.message}", e)
-            }
-
-            // 4. Clear merged records from DE database staging buffer
-            try {
-                db.execSQL("DELETE FROM de_db.notifications;")
-                db.execSQL("DELETE FROM de_db.apps;")
-            } catch (e: android.database.SQLException) {
-                Log.e(TAG, "Failed clearing DE staging tables: ${e.message}", e)
-            }
-
+            attachDeDatabase(db, deDbPath)
+            mergeAppsTable(db)
+            mergeNotificationsTable(db)
+            rebuildFtsIndex(db)
+            clearDeStagingTables(db)
             db.setTransactionSuccessful()
-            
         } catch (e: android.database.SQLException) {
             Log.e(TAG, "Error during cross-database merge: ${e.message}", e)
         } catch (e: java.lang.IllegalStateException) {
@@ -140,4 +93,59 @@ object DatabaseMigrator {
             }
         }
     }
+
+    private fun attachDeDatabase(db: SupportSQLiteDatabase, deDbPath: String) {
+        db.execSQL("ATTACH DATABASE '$deDbPath' AS de_db;")
+    }
+
+    private fun mergeAppsTable(db: SupportSQLiteDatabase) {
+        db.execSQL(
+            """
+            INSERT OR IGNORE INTO apps (packageName, appName, firstSeenTime, lastSeenTime, appIconUri, statusBarIconRes, statusBarIconPackage)
+            SELECT packageName, appName, firstSeenTime, lastSeenTime, appIconUri, statusBarIconRes, statusBarIconPackage
+            FROM de_db.apps;
+            """.trimIndent()
+        )
+    }
+
+    private fun mergeNotificationsTable(db: SupportSQLiteDatabase) {
+        db.execSQL(
+            """
+            INSERT OR IGNORE INTO notifications (
+                `key`, `packageName`, `appName`, `appIconUri`, `title`, `content`,
+                `postTime`, `lastUpdatedTime`, `updateCount`, `isDismissed`, `isPersistent`,
+                `isRead`, `isGroupSummary`, `category`, `channelId`, `subText`, `bigText`,
+                `inboxLinesJson`, `priority`, `groupKey`, `isOngoing`, `isClearable`,
+                `actionsCount`, `dismissReason`, `dismissTime`, `intentUri`, `isPinned`,
+                `actionLabels`, `smallIconRes`
+            )
+            SELECT 
+                `key`, `packageName`, `appName`, `appIconUri`, `title`, `content`,
+                `postTime`, `lastUpdatedTime`, `updateCount`, `isDismissed`, `isPersistent`,
+                `isRead`, `isGroupSummary`, `category`, `channelId`, `subText`, `bigText`,
+                `inboxLinesJson`, `priority`, `groupKey`, `isOngoing`, `isClearable`,
+                `actionsCount`, `dismissReason`, `dismissTime`, `intentUri`, `isPinned`,
+                `actionLabels`, `smallIconRes`
+            FROM de_db.notifications;
+            """.trimIndent()
+        )
+    }
+
+    private fun rebuildFtsIndex(db: SupportSQLiteDatabase) {
+        try {
+            db.execSQL("INSERT INTO notifications_fts(notifications_fts) VALUES('rebuild');")
+        } catch (e: android.database.SQLException) {
+            Log.e(TAG, "Failed rebuilding FTS index during merge: ${e.message}", e)
+        }
+    }
+
+    private fun clearDeStagingTables(db: SupportSQLiteDatabase) {
+        try {
+            db.execSQL("DELETE FROM de_db.notifications;")
+            db.execSQL("DELETE FROM de_db.apps;")
+        } catch (e: android.database.SQLException) {
+            Log.e(TAG, "Failed clearing DE staging tables: ${e.message}", e)
+        }
+    }
 }
+
