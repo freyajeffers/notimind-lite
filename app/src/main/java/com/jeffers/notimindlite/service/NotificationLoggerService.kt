@@ -73,16 +73,20 @@ class NotificationLoggerService : NotificationListenerService() {
         fun dismissNotification(key: String) {
             try {
                 instance?.cancelNotification(key)
-            } catch (e: Exception) {
-                Log.e("NotificationLoggerSrv", "Failed to cancel notification with key: $key", e)
+            } catch (e: SecurityException) {
+                Log.w("NotificationLoggerSrv", "Permission denied cancelling notification: $key", e)
+            } catch (e: IllegalArgumentException) {
+                Log.w("NotificationLoggerSrv", "Invalid notification key when cancelling: $key", e)
             }
         }
 
         fun rebindService(context: Context) {
             try {
                 requestRebind(ComponentName(context, NotificationLoggerService::class.java))
-            } catch (e: Exception) {
-                Log.e("NotificationLoggerSrv", "Failed to rebind notification listener service", e)
+            } catch (e: SecurityException) {
+                Log.w("NotificationLoggerSrv", "Permission denied when rebinding notification listener service", e)
+            } catch (e: IllegalArgumentException) {
+                Log.w("NotificationLoggerSrv", "Invalid component when rebinding notification listener service", e)
             }
         }
 
