@@ -40,7 +40,7 @@ import com.jeffers.notimindlite.R
  * a set of quick-action sub-buttons (Sync, Backup, Settings).
  */
 @Composable
-fun SpeedDialSettingsFab(
+fun speedDialSettingsFab(
     onSyncClick: () -> Unit,
     onBackupClick: () -> Unit,
     onSettingsClick: () -> Unit,
@@ -66,7 +66,7 @@ fun SpeedDialSettingsFab(
                 horizontalAlignment = Alignment.End,
                 modifier = Modifier.padding(bottom = 72.dp)
             ) {
-                SpeedDialItem(
+                speedDialItem(
                     icon = Icons.Default.Sync,
                     label = stringResource(R.string.quick_actions_sync),
                     scale = scale,
@@ -75,7 +75,7 @@ fun SpeedDialSettingsFab(
                         onSyncClick()
                     }
                 )
-                SpeedDialItem(
+                speedDialItem(
                     icon = Icons.Default.Backup,
                     label = stringResource(R.string.quick_actions_backup),
                     scale = scale,
@@ -84,7 +84,7 @@ fun SpeedDialSettingsFab(
                         onBackupClick()
                     }
                 )
-                SpeedDialItem(
+                speedDialItem(
                     icon = Icons.Default.Settings,
                     label = stringResource(R.string.quick_actions_settings),
                     scale = scale,
@@ -120,7 +120,7 @@ fun SpeedDialSettingsFab(
 }
 
 @Composable
-private fun SpeedDialItem(
+private fun speedDialItem(
     icon: ImageVector,
     label: String,
     scale: Float,
