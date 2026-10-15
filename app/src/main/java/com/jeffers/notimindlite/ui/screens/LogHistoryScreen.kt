@@ -668,7 +668,7 @@ fun LogHistoryCard(
                     verticalAlignment = Alignment.CenterVertically,
                     modifier = Modifier.weight(1f)
                 ) {
-                    AppIconImage(appIconUri = item.appIconUri)
+                    appIconImage(appIconUri = item.appIconUri)
                     if (!item.appIconUri.isNullOrEmpty()) {
                         Spacer(modifier = Modifier.width(6.dp))
                     }

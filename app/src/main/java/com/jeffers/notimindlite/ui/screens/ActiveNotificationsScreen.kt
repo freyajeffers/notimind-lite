@@ -158,12 +158,16 @@ enum class NotificationSection(val keyName: String, val title: String, val subti
 }
 
 @Composable
-fun AppIconImage(appIconUri: String?, modifier: Modifier = Modifier.size(20.dp)) {
+fun appIconImage(appIconUri: String?, modifier: Modifier = Modifier.size(20.dp)) {
     val imageBitmap = remember(appIconUri) {
         if (!appIconUri.isNullOrEmpty()) {
             try {
                 BitmapFactory.decodeFile(appIconUri)?.asImageBitmap()
-            } catch (e: Exception) {
+            } catch (e: SecurityException) {
+                Log.w("ActiveNotifications", "Unable to read notification icon", e)
+                null
+            } catch (e: IllegalArgumentException) {
+                Log.w("ActiveNotifications", "Invalid notification icon path", e)
                 null
             }
         } else {
@@ -797,7 +801,7 @@ fun LogNotificationCard(
                     verticalAlignment = Alignment.CenterVertically,
                     modifier = Modifier.weight(1f)
                 ) {
-                    if (showAppIcon) AppIconImage(appIconUri = item.appIconUri)
+                    if (showAppIcon) appIconImage(appIconUri = item.appIconUri)
                     if (showAppIcon && !item.appIconUri.isNullOrEmpty()) {
                         Spacer(modifier = Modifier.width(6.dp))
                     }

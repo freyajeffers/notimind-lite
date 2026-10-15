@@ -50,7 +50,7 @@ import androidx.compose.ui.unit.sp
 import com.jeffers.notimindlite.R
 import com.jeffers.notimindlite.data.local.NotificationDao
 import com.jeffers.notimindlite.data.local.NotificationEntity
-import com.jeffers.notimindlite.ui.screens.AppIconImage
+import com.jeffers.notimindlite.ui.screens.appIconImage
 import kotlinx.coroutines.launch
 import java.time.Instant
 import java.time.format.DateTimeFormatter
@@ -142,7 +142,7 @@ fun NotificationGroupCard(
                     verticalAlignment = Alignment.CenterVertically,
                     modifier = Modifier.weight(1f)
                 ) {
-                    if (showAppIcons) AppIconImage(appIconUri = group.appIconUri)
+                    if (showAppIcons) appIconImage(appIconUri = group.appIconUri)
                     Spacer(modifier = Modifier.width(8.dp))
                     Column(modifier = Modifier.weight(1f)) {
                         Row(verticalAlignment = Alignment.CenterVertically) {

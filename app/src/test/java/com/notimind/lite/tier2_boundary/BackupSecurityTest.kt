@@ -73,7 +73,11 @@ class BackupSecurityTest : BaseRobolectricTest() {
             val cipher = javax.crypto.Cipher.getInstance("AES/GCM/NoPadding")
             cipher.init(javax.crypto.Cipher.DECRYPT_MODE, key, javax.crypto.spec.GCMParameterSpec(128, iv))
             cipher.doFinal(ciphertext)
-        } catch (e: Exception) {
+        } catch (e: java.security.GeneralSecurityException) {
+            System.err.println("Expected decryption failure: ${e::class.simpleName}")
+            null
+        } catch (e: IndexOutOfBoundsException) {
+            System.err.println("Invalid encrypted payload: ${e::class.simpleName}")
             null
         }
     }

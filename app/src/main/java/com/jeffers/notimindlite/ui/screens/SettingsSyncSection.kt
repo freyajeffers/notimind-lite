@@ -19,7 +19,7 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
 @Composable
-fun SettingsSyncSection(preferencesRepository: PreferencesRepository) {
+fun settingsSyncSection(preferencesRepository: PreferencesRepository) {
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
     val syncInterval by preferencesRepository.syncInterval.collectAsState(initial = 60)
