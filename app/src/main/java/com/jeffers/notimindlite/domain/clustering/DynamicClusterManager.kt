@@ -120,7 +120,7 @@ object DynamicClusterManager {
         "career" to listOf("job", "career", "hire", "workplace")
     )
 
-    private val OS_CATEGORY_MAPPING: Map<Int, String> = mapOf(
+    internal val OS_CATEGORY_MAPPING: Map<Int, String> = mapOf(
         ApplicationInfo.CATEGORY_GAME to "game",
         ApplicationInfo.CATEGORY_AUDIO to "media",
         ApplicationInfo.CATEGORY_VIDEO to "media",
