@@ -297,55 +297,10 @@ object DatabaseExporter {
     ) {
         try {
             val preferences = PreferencesRepository(context.applicationContext)
-            val requestedFormat = if (isJson) "json" else "csv"
-            val allowedFormats = preferences.exportFormats.value.split(',').map(String::trim).toSet()
-            check(requestedFormat in allowedFormats) { "Export format '$requestedFormat' is disabled in Settings" }
-            check(!preferences.exportRequiresBiometric.value || biometricAuthenticated) {
-                "Biometric authentication is required before exporting"
-            }
-            if (preferences.requirePassphrase.value && (passphrase == null || passphrase.isEmpty())) {
-                throw IllegalArgumentException("A passphrase is required for exports")
-            }
+            validateExportRequest(preferences, isJson, passphrase, biometricAuthenticated)
             cleanupExportFiles(context)
-
-            val encrypted = preferences.encryptedExports.value
-            val extension = if (encrypted) "enc" else if (isJson) "json" else "csv"
-            val fileName = "notimind_export_${System.currentTimeMillis()}.$extension"
-
-            val cacheDir = File(context.cacheDir, "exports")
-            if (!cacheDir.exists()) cacheDir.mkdirs()
-
-            val file = File(cacheDir, fileName)
-            file.setReadable(true, true)
-            file.setWritable(true, true)
-            if (encrypted) {
-                val plain = if (isJson) exportToJsonString(notifications, context) else exportToCsvString(notifications, context)
-                file.writeBytes(encryptExport(plain.toByteArray(Charsets.UTF_8), context, passphrase))
-            } else if (isJson) {
-                exportToJsonFile(file, notifications, context)
-            } else {
-                val fileContent = exportToCsvString(notifications, context)
-                FileWriter(file).use { writer ->
-                    writer.write(fileContent)
-                }
-            }
-
-            val uri: Uri = getExportFileUri(context, file)
-
-            val shareIntent = Intent(Intent.ACTION_SEND).apply {
-                type = if (encrypted) "application/octet-stream" else if (isJson) "application/json" else "text/csv"
-                putExtra(Intent.EXTRA_STREAM, uri)
-                addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-            }
-
-            context.startActivity(
-                Intent.createChooser(
-                    shareIntent,
-                    context.getString(R.string.export_notifications_chooser)
-                ).apply {
-                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-            })
+            val file = createExportFile(context, notifications, isJson, passphrase, preferences)
+            context.startActivity(buildShareIntent(context, file, isJson, preferences.encryptedExports.value))
         } catch (e: IllegalArgumentException) {
             Log.e(TAG, "Failed to export database: invalid argument", e)
         } catch (e: SecurityException) {
@@ -355,6 +310,67 @@ object DatabaseExporter {
         } catch (e: java.security.GeneralSecurityException) {
             Log.e(TAG, "Failed to export database: crypto error", e)
         }
+    }
+
+    private fun validateExportRequest(
+        preferences: PreferencesRepository,
+        isJson: Boolean,
+        passphrase: CharArray?,
+        biometricAuthenticated: Boolean,
+    ) {
+        val requestedFormat = if (isJson) "json" else "csv"
+        val allowedFormats = preferences.exportFormats.value.split(',').map(String::trim).toSet()
+        check(requestedFormat in allowedFormats) { "Export format '$requestedFormat' is disabled in Settings" }
+        check(!preferences.exportRequiresBiometric.value || biometricAuthenticated) {
+            "Biometric authentication is required before exporting"
+        }
+        check(!preferences.requirePassphrase.value || (passphrase != null && passphrase.isNotEmpty())) {
+            "A passphrase is required for exports"
+        }
+    }
+
+    private fun createExportFile(
+        context: Context,
+        notifications: List<NotificationEntity>,
+        isJson: Boolean,
+        passphrase: CharArray?,
+        preferences: PreferencesRepository,
+    ): File {
+        val encrypted = preferences.encryptedExports.value
+        val extension = if (encrypted) "enc" else if (isJson) "json" else "csv"
+        val file = File(context.cacheDir, "exports/notimind_export_${System.currentTimeMillis()}.$extension")
+        file.parentFile?.mkdirs()
+        file.setReadable(true, true)
+        file.setWritable(true, true)
+        when {
+            encrypted -> {
+                val plain = if (isJson) exportToJsonString(notifications, context) else exportToCsvString(notifications, context)
+                file.writeBytes(encryptExport(plain.toByteArray(Charsets.UTF_8), context, passphrase))
+            }
+            isJson -> exportToJsonFile(file, notifications, context)
+            else -> FileWriter(file).use { it.write(exportToCsvString(notifications, context)) }
+        }
+        return file
+    }
+
+    private fun buildShareIntent(
+        context: Context,
+        file: File,
+        isJson: Boolean,
+        encrypted: Boolean,
+    ): Intent {
+        val uri = getExportFileUri(context, file)
+        val mimeType = if (encrypted) "application/octet-stream" else if (isJson) "application/json" else "text/csv"
+        val shareIntent = Intent(Intent.ACTION_SEND).apply {
+            type = mimeType
+            putExtra(Intent.EXTRA_STREAM, uri)
+            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        }
+        return Intent.createChooser(
+            shareIntent,
+            context.getString(R.string.export_notifications_chooser)
+        ).apply { addFlags(Intent.FLAG_ACTIVITY_NEW_TASK) }
     }
 
     /** AES-GCM envelope; without a passphrase the AES key is backed by Android Keystore. */
