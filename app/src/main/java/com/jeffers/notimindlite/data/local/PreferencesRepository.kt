@@ -8,6 +8,21 @@ import kotlinx.coroutines.flow.asStateFlow
 import org.json.JSONArray
 import org.json.JSONObject
 
+private const val DEFAULT_MAX_CACHE_MB = 50
+private const val DEFAULT_SEMANTIC_WEIGHT = 50
+private const val DEFAULT_MAX_DB_MB = 512
+private const val DEFAULT_VECTOR_CACHE_MAX = 1000
+private const val MIN_RETENTION_DAYS = 1
+private const val MAX_RETENTION_DAYS = 3650
+private const val MIN_CACHE_SIZE_MB = 1
+private const val MAX_CACHE_SIZE_MB = 1024
+private const val MIN_SEMANTIC_WEIGHT = 0
+private const val MAX_SEMANTIC_WEIGHT = 100
+private const val MIN_DB_SIZE_MB = 1
+private const val MAX_DB_SIZE_MB = 4096
+private const val MIN_VECTOR_CACHE_SIZE = 1
+private const val MAX_VECTOR_CACHE_SIZE = 10000
+
 data class AutoExecuteRule(
     val id: String = java.util.UUID.randomUUID().toString(),
     val packageName: String = "",
@@ -90,8 +105,8 @@ class PreferencesRepository(context: Context) :
     private val _exportFormats = MutableStateFlow(backing.getString("config_export_formats", "json,csv") ?: "json,csv")
     private val _exportAnonymize = MutableStateFlow(backing.getBoolean("config_export_anonymize", false))
     private val _anonymizeTitles = MutableStateFlow(backing.getBoolean(KEY_ANONYMIZE_TITLES, false))
-    private val _maxCacheSizeMb = MutableStateFlow(backing.getInt(KEY_MAX_CACHE_MB, 50))
-    private val _semanticWeight = MutableStateFlow(backing.getInt(KEY_SEMANTIC_WEIGHT, 50))
+    private val _maxCacheSizeMb = MutableStateFlow(backing.getInt(KEY_MAX_CACHE_MB, DEFAULT_MAX_CACHE_MB))
+    private val _semanticWeight = MutableStateFlow(backing.getInt(KEY_SEMANTIC_WEIGHT, DEFAULT_SEMANTIC_WEIGHT))
     private val _compactMode = MutableStateFlow(backing.getBoolean(KEY_COMPACT_MODE, false))
 
     val enableSemanticRanking: StateFlow<Boolean> = _enableSemanticRanking
@@ -106,9 +121,9 @@ class PreferencesRepository(context: Context) :
 
     private val _enableTelemetry = MutableStateFlow(backing.getBoolean(KEY_ENABLE_TELEMETRY, true))
     private val _telemetryLevel = MutableStateFlow(backing.getString(KEY_TELEMETRY_LEVEL, "minimal") ?: "minimal")
-    private val _maxDbMb = MutableStateFlow(backing.getInt(KEY_MAX_DB_MB, 512))
+    private val _maxDbMb = MutableStateFlow(backing.getInt(KEY_MAX_DB_MB, DEFAULT_MAX_DB_MB))
     private val _lowMemoryMode = MutableStateFlow(backing.getBoolean(KEY_LOW_MEMORY_MODE, false))
-    private val _vectorCacheMax = MutableStateFlow(backing.getInt(KEY_VECTOR_CACHE_MAX, 1000))
+    private val _vectorCacheMax = MutableStateFlow(backing.getInt(KEY_VECTOR_CACHE_MAX, DEFAULT_VECTOR_CACHE_MAX))
     val enableTelemetry: StateFlow<Boolean> = _enableTelemetry
     val telemetryLevel: StateFlow<String> = _telemetryLevel
     val maxDbMb: StateFlow<Int> = _maxDbMb
@@ -151,16 +166,16 @@ class PreferencesRepository(context: Context) :
         _exportAnonymize.value = backing.getBoolean("config_export_anonymize", false)
         _anonymizeTitles.value = backing.getBoolean(KEY_ANONYMIZE_TITLES, false)
 
-        _maxCacheSizeMb.value = backing.getInt(KEY_MAX_CACHE_MB, 50)
-        _semanticWeight.value = backing.getInt(KEY_SEMANTIC_WEIGHT, 50)
+        _maxCacheSizeMb.value = backing.getInt(KEY_MAX_CACHE_MB, DEFAULT_MAX_CACHE_MB)
+        _semanticWeight.value = backing.getInt(KEY_SEMANTIC_WEIGHT, DEFAULT_SEMANTIC_WEIGHT)
 
         _compactMode.value = backing.getBoolean(KEY_COMPACT_MODE, false)
         _enableTelemetry.value = backing.getBoolean(KEY_ENABLE_TELEMETRY, true)
         _telemetryLevel.value = backing.getString(KEY_TELEMETRY_LEVEL, "minimal") ?: "minimal"
 
-        _maxDbMb.value = backing.getInt(KEY_MAX_DB_MB, 512)
+        _maxDbMb.value = backing.getInt(KEY_MAX_DB_MB, DEFAULT_MAX_DB_MB)
         _lowMemoryMode.value = backing.getBoolean(KEY_LOW_MEMORY_MODE, false)
-        _vectorCacheMax.value = backing.getInt(KEY_VECTOR_CACHE_MAX, 1000)
+        _vectorCacheMax.value = backing.getInt(KEY_VECTOR_CACHE_MAX, DEFAULT_VECTOR_CACHE_MAX)
 
 
 
@@ -219,7 +234,7 @@ class PreferencesRepository(context: Context) :
     }
 
     fun setRetentionDays(value: Int) {
-        val safe = value.coerceIn(1, 3650)
+        val safe = value.coerceIn(MIN_RETENTION_DAYS, MAX_RETENTION_DAYS)
         backing.edit().putInt(KEY_RETENTION_DAYS, safe).apply()
         _retentionDays.value = safe
     }
@@ -266,13 +281,13 @@ class PreferencesRepository(context: Context) :
         _anonymizeTitles.value = value
     }
     fun setMaxCacheSizeMb(value: Int) {
-        val safe = value.coerceIn(1, 1024)
+        val safe = value.coerceIn(MIN_CACHE_SIZE_MB, MAX_CACHE_SIZE_MB)
         backing.edit().putInt(KEY_MAX_CACHE_MB, safe).apply()
         _maxCacheSizeMb.value = safe
     }
 
     fun setSemanticWeight(value: Int) {
-        val safe = value.coerceIn(0, 100)
+        val safe = value.coerceIn(MIN_SEMANTIC_WEIGHT, MAX_SEMANTIC_WEIGHT)
         backing.edit().putInt(KEY_SEMANTIC_WEIGHT, safe).apply()
         _semanticWeight.value = safe
     }
@@ -294,7 +309,7 @@ class PreferencesRepository(context: Context) :
     }
 
     fun setMaxDbMb(value: Int) {
-        val safe = value.coerceIn(1, 4096)
+        val safe = value.coerceIn(MIN_DB_SIZE_MB, MAX_DB_SIZE_MB)
         backing.edit().putInt(KEY_MAX_DB_MB, safe).apply()
         _maxDbMb.value = safe
     }
@@ -306,7 +321,7 @@ class PreferencesRepository(context: Context) :
     }
 
     fun setVectorCacheMax(value: Int) {
-        val safe = value.coerceIn(1, 10000)
+        val safe = value.coerceIn(MIN_VECTOR_CACHE_SIZE, MAX_VECTOR_CACHE_SIZE)
         backing.edit().putInt(KEY_VECTOR_CACHE_MAX, safe).apply()
         _vectorCacheMax.value = safe
         com.jeffers.notimindlite.util.VectorEmbeddingHelper.updateCacheSize(safe)
