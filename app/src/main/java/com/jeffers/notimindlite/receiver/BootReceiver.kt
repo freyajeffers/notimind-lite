@@ -32,20 +32,28 @@ class BootReceiver : BroadcastReceiver() {
         const val CHANNEL_NAME = "Restored Active Notifications"
         private const val QUICKBOOT_ACTION = "android.intent.action.QUICKBOOT_POWERON"
         private const val RESTORED_NOTIFICATION_OFFSET = 1000
+        private const val POSITIVE_INT_MASK = 0x7FFFFFFF
     }
 
     override fun onReceive(context: Context?, intent: Intent?) {
-        if (context == null || intent?.action == null) return
-        val action = intent.action ?: return
-        if (action == Intent.ACTION_MY_PACKAGE_REPLACED) {
-            com.jeffers.notimindlite.data.local.PreferenceManager(context)
-                .setLastUpdateTime(System.currentTimeMillis())
-            return
+        context?.let { receiverContext ->
+            intent?.action?.let { action ->
+                handleAction(receiverContext, action)
+            }
         }
-        if (!isBootAction(action)) return
+    }
 
-        val userManager = context.getSystemService(Context.USER_SERVICE) as? UserManager
-        scheduleBootRestore(context, userManager?.isUserUnlocked ?: true)
+    private fun handleAction(context: Context, action: String) {
+        when {
+            action == Intent.ACTION_MY_PACKAGE_REPLACED -> {
+                com.jeffers.notimindlite.data.local.PreferenceManager(context)
+                    .setLastUpdateTime(System.currentTimeMillis())
+            }
+            isBootAction(action) -> {
+                val userManager = context.getSystemService(Context.USER_SERVICE) as? UserManager
+                scheduleBootRestore(context, userManager?.isUserUnlocked ?: true)
+            }
+        }
     }
 
     private fun isBootAction(action: String): Boolean = action == Intent.ACTION_LOCKED_BOOT_COMPLETED ||
@@ -120,7 +128,7 @@ class BootReceiver : BroadcastReceiver() {
         item: com.jeffers.notimindlite.service.BootConsolidationResult,
     ) {
         val firstId = item.originalIds.first()
-        val notificationId = (firstId.hashCode() and 0x7FFFFFFF) + RESTORED_NOTIFICATION_OFFSET
+        val notificationId = (firstId.hashCode() and POSITIVE_INT_MASK) + RESTORED_NOTIFICATION_OFFSET
         val notification = NotificationCompat.Builder(context, CHANNEL_ID_RESTORED)
             .setSmallIcon(android.R.drawable.stat_notify_chat)
             .setContentTitle("${item.appName}: ${item.summaryTitle}")
