@@ -287,7 +287,11 @@ class PreferencesRepository(context: Context) {
         val id = source.optString("id").takeIf { it.matches(PROFILE_ID) }
             ?.takeIf { _profiles.value.none { profile -> profile.id == it } }
             ?: java.util.UUID.randomUUID().toString()
-        val profile = Profile(id, source.optString("name", "Imported profile").take(80), source.optLong("createdAt", System.currentTimeMillis()))
+        val profile = Profile(
+            id,
+            source.optString("name", "Imported profile").take(80),
+            source.optLong("createdAt", System.currentTimeMillis())
+        )
         val editor = appContext.getSharedPreferences("notimind_lite_prefs_$id", Context.MODE_PRIVATE).edit()
         val settings = root.optJSONObject("settings")
         settings?.keys()?.forEach { key ->
@@ -310,7 +314,14 @@ class PreferencesRepository(context: Context) {
             val default = Profile(DEFAULT_PROFILE_ID, "Default", System.currentTimeMillis())
             profileStore.edit().putString(
                 KEY_PROFILES,
-                JSONArray().put(JSONObject().put("id", default.id).put("name", default.name).put("createdAt", default.createdAt)).toString()
+                JSONArray()
+                    .put(
+                        JSONObject()
+                            .put("id", default.id)
+                            .put("name", default.name)
+                            .put("createdAt", default.createdAt)
+                    )
+                    .toString()
             ).apply()
             return listOf(default)
         }
@@ -344,8 +355,20 @@ class PreferencesRepository(context: Context) {
     }
 
     private fun writeProfiles(value: List<Profile>) {
-        val safe = if (value.any { it.id == DEFAULT_PROFILE_ID }) value else listOf(Profile(DEFAULT_PROFILE_ID, "Default", 0L)) + value
-        profileStore.edit().putString(KEY_PROFILES, JSONArray(safe.map { JSONObject().put("id", it.id).put("name", it.name).put("createdAt", it.createdAt) }).toString()).apply()
+        val safe = if (value.any { it.id == DEFAULT_PROFILE_ID }) {
+            value
+        } else {
+            listOf(Profile(DEFAULT_PROFILE_ID, "Default", 0L)) + value
+        }
+        val serialized = JSONArray(
+            safe.map {
+                JSONObject()
+                    .put("id", it.id)
+                    .put("name", it.name)
+                    .put("createdAt", it.createdAt)
+            }
+        ).toString()
+        profileStore.edit().putString(KEY_PROFILES, serialized).apply()
         _profiles.value = safe
     }
 
