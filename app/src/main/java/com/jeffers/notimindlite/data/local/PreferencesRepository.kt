@@ -24,6 +24,7 @@ class PreferencesRepository(context: Context) :
     val profileManager = ProfilePreferencesManager(context)
     val sharedSearchManager = SharedSearchStateManager(context, profileManager)
     val automationManager = AutomationPreferencesManager(context, profileManager)
+    val captureManager = CapturePreferencesManager(context, profileManager)
     private val backing: android.content.SharedPreferences
         get() = deContext.getSharedPreferences(profileManager.activePreferencesName, Context.MODE_PRIVATE)
 
@@ -34,6 +35,7 @@ class PreferencesRepository(context: Context) :
             reloadProfileFlows()
             sharedSearchManager.reload()
             automationManager.reload()
+            captureManager.reload()
         }
     }
 
