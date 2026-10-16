@@ -42,7 +42,7 @@ object SyncEncryptionHelper {
      */
     fun decrypt(encryptedBase64: String, secretKey: SecretKey): String {
         val combined = Base64.decode(encryptedBase64, Base64.NO_WRAP)
-        if (combined.size < IV_LENGTH) throw IllegalArgumentException("Invalid encrypted data: too short")
+        require(combined.size >= IV_LENGTH) { "Invalid encrypted data: too short" }
         
         val iv = combined.sliceArray(0 until IV_LENGTH)
         val ciphertext = combined.sliceArray(IV_LENGTH until combined.size)
