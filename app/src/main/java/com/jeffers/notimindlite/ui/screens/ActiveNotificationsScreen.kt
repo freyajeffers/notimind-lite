@@ -475,51 +475,31 @@ fun activeNotificationsScreen(dao: NotificationDao, preferences: PreferencesRepo
                     }
                 )
 
-                sectionOrder.forEach { section ->
-                    val isExpanded = expandedSection == section.keyName
-                    val rawItemsList = when (section) {
-                        NotificationSection.PINNED -> pinnedNotifs
-                        NotificationSection.ACTIVE -> activeNotifs
-                        NotificationSection.FILTERED -> filteredNotifs
-                        NotificationSection.DISMISSED -> recentlyDismissed
-                            .sortedByDescending { it.dismissTime ?: it.postTime }
-                        NotificationSection.LOST -> lostNotifs
-                    }.distinctBy { "${it.packageName}_${it.title}_${it.content}" }
-                    val filteredList = if (!selectedPackages.isNullOrEmpty()) {
-                        rawItemsList.filter { selectedPackages!!.contains(it.packageName) }
-                    } else rawItemsList
-                    val itemsList = if (debouncedSearchQuery.isBlank()) {
-                        filteredList
-                    } else {
-                        HybridSearchEngine.searchAndRankBlocking(filteredList, debouncedSearchQuery)
-                    }
-                    notificationSection(
-                        NotificationSectionRenderConfig(
-                            section = section,
-                            isExpanded = isExpanded,
-                            itemsList = itemsList,
-                            groupByApp = groupByApp,
-                            sortOrder = sortOrder,
-                            collapsedGroups = collapsedGroups,
-                            onToggleSection = ::toggleSection,
-                            onToggleGroupExpand = { groupKey ->
-                                collapsedGroups = if (collapsedGroups.contains(groupKey)) {
-                                    collapsedGroups - groupKey
-                                } else {
-                                    collapsedGroups + groupKey
-                                }
-                            },
-                            expandedCards = expandedCards,
-                            expandedCardsUpdater = { expandedCards = it },
-                            dateTimeFormatter = dateTimeFormatter,
-                            dao = dao,
-                            highlightQuery = debouncedSearchQuery,
-                            showAppIcon = showAppIcons,
-                            compactMode = compactMode,
-                            previewLength = previewLength
-                        )
+                renderNotificationSections(
+                    ActiveNotificationSectionsConfig(
+                        sectionOrder = sectionOrder,
+                        expandedSection = expandedSection,
+                        pinnedNotifs = pinnedNotifs,
+                        activeNotifs = activeNotifs,
+                        filteredNotifs = filteredNotifs,
+                        recentlyDismissed = recentlyDismissed,
+                        lostNotifs = lostNotifs,
+                        selectedPackages = selectedPackages,
+                        debouncedSearchQuery = debouncedSearchQuery,
+                        groupByApp = groupByApp,
+                        sortOrder = sortOrder,
+                        collapsedGroups = collapsedGroups,
+                        setCollapsedGroups = { collapsedGroups = it },
+                        expandedCards = expandedCards,
+                        setExpandedCards = { expandedCards = it },
+                        dateTimeFormatter = dateTimeFormatter,
+                        dao = dao,
+                        showAppIcons = showAppIcons,
+                        compactMode = compactMode,
+                        previewLength = previewLength,
+                        toggleSection = ::toggleSection
                     )
-                }
+                )
             }
         }
     }
