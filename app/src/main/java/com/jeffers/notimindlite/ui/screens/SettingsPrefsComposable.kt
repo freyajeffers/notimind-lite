@@ -41,27 +41,6 @@ import com.jeffers.notimindlite.BuildConfig
 @Composable
 fun settingsPreferencesSection(preferencesRepository: PreferencesRepository) {
 
-    val autoActOnNotification by preferencesRepository.autoActOnNotification.collectAsState(initial = false)
-    val defaultReplyMethod by preferencesRepository.defaultReplyMethod.collectAsState(initial = "inline")
-    val longPressAction by preferencesRepository.longPressAction.collectAsState(initial = "open")
-    val autoExecuteRules by preferencesRepository.autoExecuteRules.collectAsState(initial = emptyList())
-    var rulePackage by remember { mutableStateOf("") }
-    var ruleTitle by remember { mutableStateOf("") }
-    var ruleAction by remember { mutableStateOf("0") }
-
-    // display options moved to DisplaySettingsSection
-
-    val replyOptions = listOf(
-        "inline" to stringResource(R.string.pref_reply_inline),
-        "open_app" to stringResource(R.string.pref_reply_open_app),
-        "copy" to stringResource(R.string.pref_reply_copy)
-    )
-
-    val longPressOptions = listOf(
-        "open" to stringResource(R.string.pref_action_open),
-        "reply" to stringResource(R.string.pref_action_reply),
-        "dismiss" to stringResource(R.string.pref_action_dismiss)
-    )
 
     Card(
         modifier = Modifier.fillMaxWidth(),
@@ -71,38 +50,7 @@ fun settingsPreferencesSection(preferencesRepository: PreferencesRepository) {
             searchSyncSection(preferencesRepository)
             displaySettingsSection(preferencesRepository)
 
-            Text(stringResource(R.string.pref_automation_title), style = MaterialTheme.typography.titleMedium)
-            preferenceSwitchRow(
-                stringResource(R.string.pref_auto_act_title),
-                stringResource(R.string.pref_auto_act_summary), autoActOnNotification,
-                preferencesRepository::setAutoActOnNotification, enabled = !BuildConfig.DEBUG
-            )
-            preferenceSelectRow(
-                stringResource(R.string.pref_default_reply_title),
-                defaultReplyMethod,
-                replyOptions,
-                preferencesRepository::setDefaultReplyMethod,
-                enabled = !BuildConfig.DEBUG
-            )
-            preferenceSelectRow(
-                stringResource(R.string.pref_long_press_title),
-                longPressAction,
-                longPressOptions,
-                preferencesRepository::setLongPressAction,
-                enabled = !BuildConfig.DEBUG
-            )
-            autoRulesSection(
-                preferencesRepository = preferencesRepository,
-                config = AutoRulesConfig(
-                    autoExecuteRules = autoExecuteRules,
-                    rulePackage = rulePackage,
-                    onRulePackageChange = { rulePackage = it },
-                    ruleTitle = ruleTitle,
-                    onRuleTitleChange = { ruleTitle = it },
-                    ruleAction = ruleAction,
-                    onRuleActionChange = { ruleAction = it }
-                )
-            )
+            automationSettingsSection(preferencesRepository)
 
             settingsSecuritySection(preferencesRepository)
 
