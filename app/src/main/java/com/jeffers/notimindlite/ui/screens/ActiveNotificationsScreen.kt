@@ -88,8 +88,6 @@ import com.jeffers.notimindlite.ui.components.actionableChips
 
 import com.jeffers.notimindlite.domain.search.HybridSearchEngine
 import com.jeffers.notimindlite.util.NotificationLauncher
-import com.jeffers.notimindlite.data.auth.AuthManager
-import com.jeffers.notimindlite.data.local.AppDatabase
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch

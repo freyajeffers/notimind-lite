@@ -48,7 +48,6 @@ fun mainNavigation(
     modifier: Modifier = Modifier,
     notificationDao: NotificationDao,
     authManager: AuthManager,
-    db: AppDatabase,
     preferencesRepository: com.jeffers.notimindlite.data.local.PreferencesRepository
 ) {
     val navController = rememberNavController()
