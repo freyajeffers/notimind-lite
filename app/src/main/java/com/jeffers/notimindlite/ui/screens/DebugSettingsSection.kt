@@ -25,7 +25,7 @@ import com.jeffers.notimindlite.data.local.PreferencesRepository
 fun debugSettingsSection(preferencesRepository: PreferencesRepository) {
     val retentionDays by preferencesRepository.retentionDays.collectAsState(initial = 30)
     val exportEncryption by preferencesRepository.exportEncryption.collectAsState(initial = true)
-    val captureNotifications by preferencesRepository.captureNotifications.collectAsState(initial = true)
+    val captureNotifications by preferencesRepository.captureManager.enabled.collectAsState(initial = true)
     val autoDeleteOnRead by preferencesRepository.autoDeleteOnRead.collectAsState(initial = false)
     val anonymizeTitles by preferencesRepository.anonymizeTitles.collectAsState(initial = false)
 
@@ -149,6 +149,6 @@ private fun captureRow(preferencesRepository: PreferencesRepository, enabled: Bo
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
-        Switch(checked = enabled, onCheckedChange = preferencesRepository::setCaptureNotifications)
+        Switch(checked = enabled, onCheckedChange = preferencesRepository.captureManager::setEnabled)
     }
 }

@@ -254,7 +254,7 @@ class NotificationLoggerService : NotificationListenerService() {
 
     private fun isNotificationCaptureEnabled(): Boolean =
         com.jeffers.notimindlite.data.local.PreferencesRepository(applicationContext)
-            .captureNotifications.value
+            .captureManager.enabled.value
 
     private fun isNotificationListenerActive(): Boolean {
         val componentName = ComponentName(applicationContext, NotificationLoggerService::class.java)
@@ -281,11 +281,11 @@ class NotificationLoggerService : NotificationListenerService() {
     private fun shouldCaptureNotification(sbn: StatusBarNotification): Boolean {
         if (sbn.packageName == applicationContext.packageName) return false
         val preferences = com.jeffers.notimindlite.data.local.PreferencesRepository(applicationContext)
-        if (!preferences.captureOngoing.value && sbn.isOngoing) return false
+        if (!preferences.captureManager.ongoing.value && sbn.isOngoing) return false
         val notification = sbn.notification ?: return false
-        if (preferences.captureActionsOnly.value && notification.actions.isNullOrEmpty()) return false
-        val allow = parsePackageList(preferences.capturePackageAllowlist.value)
-        val block = parsePackageList(preferences.capturePackageBlocklist.value)
+        if (preferences.captureManager.actionsOnly.value && notification.actions.isNullOrEmpty()) return false
+        val allow = parsePackageList(preferences.captureManager.allowlist.value)
+        val block = parsePackageList(preferences.captureManager.blocklist.value)
         if (allow.isNotEmpty() && sbn.packageName !in allow) return false
         if (sbn.packageName in block) return false
         val importance = notification.channelId?.let {
@@ -293,7 +293,7 @@ class NotificationLoggerService : NotificationListenerService() {
                 ?.getNotificationChannel(it)
                 ?.importance
         } ?: android.app.NotificationManager.IMPORTANCE_DEFAULT
-        return importance >= preferences.minImportance.value
+        return importance >= preferences.captureManager.minImportance.value
     }
 
     private fun parsePackageList(raw: String): Set<String> {

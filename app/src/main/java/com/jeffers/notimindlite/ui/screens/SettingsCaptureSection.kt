@@ -50,29 +50,29 @@ fun settingsCaptureSection(preferencesRepository: PreferencesRepository) {
 @Composable
 private fun captureToggleSection(preferencesRepository: PreferencesRepository) {
     val scope = rememberCoroutineScope()
-    val captureEnabled by preferencesRepository.captureNotifications.collectAsState(initial = true)
-    val foregroundOnly by preferencesRepository.captureForegroundOnly.collectAsState(initial = false)
-    val attachments by preferencesRepository.captureAttachments.collectAsState(initial = true)
-    val ongoing by preferencesRepository.captureOngoing.collectAsState(initial = true)
-    val actionsOnly by preferencesRepository.captureActionsOnly.collectAsState(initial = false)
+    val captureEnabled by preferencesRepository.captureManager.enabled.collectAsState(initial = true)
+    val foregroundOnly by preferencesRepository.captureManager.foregroundOnly.collectAsState(initial = false)
+    val attachments by preferencesRepository.captureManager.attachments.collectAsState(initial = true)
+    val ongoing by preferencesRepository.captureManager.ongoing.collectAsState(initial = true)
+    val actionsOnly by preferencesRepository.captureManager.actionsOnly.collectAsState(initial = false)
 
-    captureToggleRow(stringResource(R.string.pref_capture_enabled_title), stringResource(R.string.pref_capture_enabled_summary), captureEnabled, { scope.launch { preferencesRepository.setCaptureNotifications(it) } }, !BuildConfig.DEBUG)
-    captureToggleRow(stringResource(R.string.pref_capture_foreground_title), stringResource(R.string.pref_capture_foreground_summary), foregroundOnly, { scope.launch { preferencesRepository.setCaptureForegroundOnly(it) } }, !BuildConfig.DEBUG)
-    captureToggleRow(stringResource(R.string.pref_capture_attachments_title), stringResource(R.string.pref_capture_attachments_summary), attachments, { scope.launch { preferencesRepository.setCaptureAttachments(it) } }, !BuildConfig.DEBUG)
-    captureToggleRow(stringResource(R.string.pref_capture_ongoing_title), stringResource(R.string.pref_capture_ongoing_summary), ongoing, { scope.launch { preferencesRepository.setCaptureOngoing(it) } }, !BuildConfig.DEBUG)
-    captureToggleRow(stringResource(R.string.pref_capture_actions_only_title), stringResource(R.string.pref_capture_actions_only_summary), actionsOnly, { scope.launch { preferencesRepository.setCaptureActionsOnly(it) } }, !BuildConfig.DEBUG)
+    captureToggleRow(stringResource(R.string.pref_capture_enabled_title), stringResource(R.string.pref_capture_enabled_summary), captureEnabled, { scope.launch { preferencesRepository.captureManager.setEnabled(it) } }, !BuildConfig.DEBUG)
+    captureToggleRow(stringResource(R.string.pref_capture_foreground_title), stringResource(R.string.pref_capture_foreground_summary), foregroundOnly, { scope.launch { preferencesRepository.captureManager.setForegroundOnly(it) } }, !BuildConfig.DEBUG)
+    captureToggleRow(stringResource(R.string.pref_capture_attachments_title), stringResource(R.string.pref_capture_attachments_summary), attachments, { scope.launch { preferencesRepository.captureManager.setAttachments(it) } }, !BuildConfig.DEBUG)
+    captureToggleRow(stringResource(R.string.pref_capture_ongoing_title), stringResource(R.string.pref_capture_ongoing_summary), ongoing, { scope.launch { preferencesRepository.captureManager.setOngoing(it) } }, !BuildConfig.DEBUG)
+    captureToggleRow(stringResource(R.string.pref_capture_actions_only_title), stringResource(R.string.pref_capture_actions_only_summary), actionsOnly, { scope.launch { preferencesRepository.captureManager.setActionsOnly(it) } }, !BuildConfig.DEBUG)
 }
 
 @Composable
 private fun captureTextFieldSection(preferencesRepository: PreferencesRepository) {
     val scope = rememberCoroutineScope()
-    val allowlist by preferencesRepository.capturePackageAllowlist.collectAsState(initial = "")
-    val blocklist by preferencesRepository.capturePackageBlocklist.collectAsState(initial = "")
-    val minImportance by preferencesRepository.minImportance.collectAsState(initial = 0)
+    val allowlist by preferencesRepository.captureManager.allowlist.collectAsState(initial = "")
+    val blocklist by preferencesRepository.captureManager.blocklist.collectAsState(initial = "")
+    val minImportance by preferencesRepository.captureManager.minImportance.collectAsState(initial = 0)
 
-    captureTextFieldRow(CaptureTextFieldConfig(stringResource(R.string.pref_capture_allowlist_title), stringResource(R.string.pref_capture_allowlist_summary), allowlist, { scope.launch { preferencesRepository.setCapturePackageAllowlist(it) } }, 200.dp, !BuildConfig.DEBUG))
-    captureTextFieldRow(CaptureTextFieldConfig(stringResource(R.string.pref_capture_blocklist_title), stringResource(R.string.pref_capture_blocklist_summary), blocklist, { scope.launch { preferencesRepository.setCapturePackageBlocklist(it) } }, 200.dp, !BuildConfig.DEBUG))
-    captureTextFieldRow(CaptureTextFieldConfig(stringResource(R.string.pref_capture_min_importance_title), stringResource(R.string.pref_capture_min_importance_summary), minImportance.toString(), { it.toIntOrNull()?.let { v -> scope.launch { preferencesRepository.setMinImportance(v) } } }, 120.dp, !BuildConfig.DEBUG))
+    captureTextFieldRow(CaptureTextFieldConfig(stringResource(R.string.pref_capture_allowlist_title), stringResource(R.string.pref_capture_allowlist_summary), allowlist, { scope.launch { preferencesRepository.captureManager.setAllowlist(it) } }, 200.dp, !BuildConfig.DEBUG))
+    captureTextFieldRow(CaptureTextFieldConfig(stringResource(R.string.pref_capture_blocklist_title), stringResource(R.string.pref_capture_blocklist_summary), blocklist, { scope.launch { preferencesRepository.captureManager.setBlocklist(it) } }, 200.dp, !BuildConfig.DEBUG))
+    captureTextFieldRow(CaptureTextFieldConfig(stringResource(R.string.pref_capture_min_importance_title), stringResource(R.string.pref_capture_min_importance_summary), minImportance.toString(), { it.toIntOrNull()?.let { v -> scope.launch { preferencesRepository.captureManager.setMinImportance(v) } } }, 120.dp, !BuildConfig.DEBUG))
 }
 
 @Composable

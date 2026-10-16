@@ -67,14 +67,14 @@ class PreferencesRepository(context: Context) :
         backing.getInt(KEY_RETENTION_DAYS, if (BuildConfig.DEBUG) RETAIN_ALL_DAYS else DEFAULT_RETENTION_DAYS)
     )
     private val _exportEncryption = MutableStateFlow(backing.getBoolean(KEY_EXPORT_ENCRYPTION, true))
-    private val _captureNotifications = MutableStateFlow(backing.getBoolean(KEY_CAPTURE_NOTIFICATIONS, true))
+
 
     val enableSync: StateFlow<Boolean> = _enableSync
     val enableVector: StateFlow<Boolean> = _enableVector
     val enableFts4: StateFlow<Boolean> = _enableFts4
     val retentionDays: StateFlow<Int> = _retentionDays
     val exportEncryption: StateFlow<Boolean> = _exportEncryption
-    val captureNotifications: StateFlow<Boolean> = _captureNotifications
+
 
     private val _enableSemanticRanking = MutableStateFlow(backing.getBoolean(KEY_ENABLE_SEMANTIC_RANKING, true))
     private val _autoDeleteOnRead = MutableStateFlow(backing.getBoolean(KEY_AUTO_DELETE_ON_READ, false))
@@ -131,36 +131,6 @@ class PreferencesRepository(context: Context) :
     val useFts5: StateFlow<Boolean> = _useFts5
     val vectorGpu: StateFlow<Boolean> = _vectorGpu
 
-    private val _captureForegroundOnly = MutableStateFlow(
-        backing.getBoolean("config_capture_foreground_only", false)
-    )
-    private val _captureAttachments = MutableStateFlow(
-        backing.getBoolean("config_capture_attachments", true)
-    )
-    private val _captureOngoing = MutableStateFlow(
-        backing.getBoolean("config_capture_ongoing", true)
-    )
-    private val _capturePackageAllowlist = MutableStateFlow(
-        backing.getString(
-            "config_capture_package_allowlist",
-            backing.getString("config_capture_allowlist", "")
-        ) ?: ""
-    )
-    private val _capturePackageBlocklist = MutableStateFlow(
-        backing.getString(
-            "config_capture_package_blocklist",
-            backing.getString("config_capture_blocklist", "")
-        ) ?: ""
-    )
-    private val _minImportance = MutableStateFlow(backing.getInt("config_min_importance", 0))
-    private val _captureActionsOnly = MutableStateFlow(backing.getBoolean("config_capture_actions_only", false))
-    val captureForegroundOnly: StateFlow<Boolean> = _captureForegroundOnly
-    val captureAttachments: StateFlow<Boolean> = _captureAttachments
-    val captureOngoing: StateFlow<Boolean> = _captureOngoing
-    val capturePackageAllowlist: StateFlow<String> = _capturePackageAllowlist
-    val capturePackageBlocklist: StateFlow<String> = _capturePackageBlocklist
-    val minImportance: StateFlow<Int> = _minImportance
-    val captureActionsOnly: StateFlow<Boolean> = _captureActionsOnly
 
     private val _redactPii = MutableStateFlow(
         backing.getBoolean("config_pii_redaction", backing.getBoolean("config_redact_pii", false))
@@ -224,7 +194,7 @@ class PreferencesRepository(context: Context) :
         _retentionDays.value = backing.getInt(KEY_RETENTION_DAYS, DEFAULT_RETENTION_DAYS)
 
         _exportEncryption.value = backing.getBoolean(KEY_EXPORT_ENCRYPTION, true)
-        _captureNotifications.value = backing.getBoolean(KEY_CAPTURE_NOTIFICATIONS, true)
+
 
         _enableSemanticRanking.value = backing.getBoolean(KEY_ENABLE_SEMANTIC_RANKING, true)
         _autoDeleteOnRead.value = backing.getBoolean(KEY_AUTO_DELETE_ON_READ, false)
@@ -288,40 +258,6 @@ class PreferencesRepository(context: Context) :
         automationManager.reload()
     }
 
-    fun setCaptureForegroundOnly(v: Boolean) {
-        backing.edit().putBoolean("config_capture_foreground_only", v).apply()
-        _captureForegroundOnly.value = v
-    }
-
-    fun setCaptureAttachments(v: Boolean) {
-        backing.edit().putBoolean("config_capture_attachments", v).apply()
-        _captureAttachments.value = v
-    }
-
-    fun setCaptureOngoing(v: Boolean) {
-        backing.edit().putBoolean("config_capture_ongoing", v).apply()
-        _captureOngoing.value = v
-    }
-
-    fun setCapturePackageAllowlist(v: String) {
-        backing.edit().putString("config_capture_package_allowlist", v).apply()
-        _capturePackageAllowlist.value = v
-    }
-
-    fun setCapturePackageBlocklist(v: String) {
-        backing.edit().putString("config_capture_package_blocklist", v).apply()
-        _capturePackageBlocklist.value = v
-    }
-    fun setMinImportance(v: Int) {
-        val n = v.coerceIn(0, 5)
-        backing.edit().putInt("config_min_importance", n).apply()
-        _minImportance.value = n
-    }
-
-    fun setCaptureActionsOnly(v: Boolean) {
-        backing.edit().putBoolean("config_capture_actions_only", v).apply()
-        _captureActionsOnly.value = v
-    }
 
     fun setRedactPii(v: Boolean) {
         backing.edit().putBoolean("config_pii_redaction", v).apply()
@@ -448,10 +384,6 @@ class PreferencesRepository(context: Context) :
         _exportEncryption.value = value
     }
 
-    fun setCaptureNotifications(value: Boolean) {
-        backing.edit().putBoolean(KEY_CAPTURE_NOTIFICATIONS, value).apply()
-        _captureNotifications.value = value
-    }
 
     fun setEnableSemanticRanking(value: Boolean) {
         backing.edit().putBoolean(KEY_ENABLE_SEMANTIC_RANKING, value).apply()
