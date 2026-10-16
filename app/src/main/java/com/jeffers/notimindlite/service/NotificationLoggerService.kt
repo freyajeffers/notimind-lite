@@ -42,7 +42,7 @@ class NotificationLoggerService : NotificationListenerService() {
 
     // Service-level tag and helpers
     private fun getDb(): AppDatabase = AppDatabase.getDatabase(applicationContext)
-    private val parsingHelper by lazy { com.jeffers.notimindlite.util.NotificationParsingHelper(packageManager) }
+
     private val serviceJob = SupervisorJob()
     private val scope = CoroutineScope(Dispatchers.IO + serviceJob)
     private val actionExecutor by lazy { NotificationActionExecutor(PreferencesRepository(applicationContext)) }
@@ -53,11 +53,7 @@ class NotificationLoggerService : NotificationListenerService() {
         private const val CACHE_INITIAL_CAPACITY = 16
         private const val CACHE_LOAD_FACTOR = 0.75f
         private const val ICON_COMPRESSION_QUALITY = 100
-        private const val STALE_NOTIFICATION_DAYS = 30L
-        private const val HOURS_PER_DAY = 24L
-        private const val MINUTES_PER_HOUR = 60L
-        private const val SECONDS_PER_MINUTE = 60L
-        private const val MILLIS_PER_SECOND = 1000L
+
 
         private val recentLogs: MutableMap<String, Long> = Collections.synchronizedMap(
             object : LinkedHashMap<String, Long>(CACHE_INITIAL_CAPACITY, CACHE_LOAD_FACTOR, true) {
@@ -309,107 +305,28 @@ class NotificationLoggerService : NotificationListenerService() {
     }
 
     private fun extractNotificationEntity(sbn: StatusBarNotification): NotificationEntity? {
-        if (!shouldCaptureNotification(sbn) || sbn.packageName == applicationContext.packageName) return null
-        val notification = sbn.notification ?: return null
-        return try {
-            buildSanitizedNotificationEntity(sbn, notification)
-        } catch (e: SecurityException) {
-            Log.e(TAG, "Failed to extract notification entity - security", e)
+        val shouldSkip = !shouldCaptureNotification(sbn) || sbn.packageName == applicationContext.packageName
+        val notification = sbn.notification
+        return if (shouldSkip || notification == null) {
             null
-        } catch (e: IllegalArgumentException) {
-            Log.e(TAG, "Failed to extract notification entity - illegal arg", e)
-            null
-        } catch (e: IllegalStateException) {
-            Log.e(TAG, "Failed to extract notification entity - illegal state", e)
-            null
-        }
-    }
-
-    private fun buildSanitizedNotificationEntity(
-        sbn: StatusBarNotification,
-        notification: Notification,
-    ): NotificationEntity? {
-        val extras = notification.extras
-        val parsed = parsingHelper.parseTitleAndContent(extras)
-        val title = parsed.title
-        val content = parsed.content
-        val subText = parsed.subText
-        val bigText = parsed.bigText
-        val inboxLinesJson = parsingHelper.extractInboxLinesJson(extras)
-        val postTime = sbn.postTime
-        val now = System.currentTimeMillis()
-        val san = com.jeffers.notimindlite.sanitization.SanitizationPipeline(applicationContext)
-            .sanitize(sbn.packageName, title, content, subText, bigText) ?: return null
-        val finalTitle = if (PreferencesRepository(applicationContext).anonymizeTitles.value) {
-            "[REDACTED-TITLE]"
         } else {
-            san.title
+            try {
+                com.jeffers.notimindlite.util.NotificationSanitizer(
+                    applicationContext,
+                    ::getOrSaveAppIconUri
+                ).sanitizeAndBuild(sbn, notification)
+            } catch (e: SecurityException) {
+                Log.e(TAG, "Failed to extract notification entity - security", e)
+                null
+            } catch (e: IllegalArgumentException) {
+                Log.e(TAG, "Failed to extract notification entity - illegal argument", e)
+                null
+            } catch (e: IllegalStateException) {
+                Log.e(TAG, "Failed to extract notification entity - illegal state", e)
+                null
+            }
         }
-        if (finalTitle.isBlank() && san.content.isBlank()) return null
-        if (isNotificationSummary(finalTitle, san.content, san.subText)) return null
-        if (isNotificationStale(postTime, now)) return null
-        return buildNotificationEntity(
-            NotificationBuildInput(sbn, notification, san, inboxLinesJson, postTime, now)
-        )
     }
-
-    private fun isNotificationSummary(title: String, content: String, subText: String?): Boolean {
-        val summaryRegex = Regex("""\d+\s+more\s+notifications?""", RegexOption.IGNORE_CASE)
-        return summaryRegex.matches(title) || summaryRegex.matches(content) ||
-            (subText != null && summaryRegex.matches(subText))
-    }
-
-    private fun isNotificationStale(postTime: Long, now: Long): Boolean {
-        val maxAgeMs = STALE_NOTIFICATION_DAYS * HOURS_PER_DAY * MINUTES_PER_HOUR *
-            SECONDS_PER_MINUTE * MILLIS_PER_SECOND
-        return postTime > 0 && now - postTime > maxAgeMs
-    }
-
-    private fun buildNotificationEntity(input: NotificationBuildInput): NotificationEntity {
-        val sbn = input.sbn
-        val notification = input.notification
-        val san = input.san
-        val packageName = sbn.packageName
-        val isOngoing = sbn.isOngoing
-        return NotificationEntity(
-            key = "${sbn.packageName}|${sbn.id}|${sbn.tag ?: ""}",
-            packageName = packageName,
-            appName = parsingHelper.resolveAppName(packageName),
-            appIconUri = getOrSaveAppIconUri(packageName),
-            title = san.title,
-            content = san.content,
-            postTime = input.postTime,
-            lastUpdatedTime = input.now,
-            updateCount = 1,
-            isDismissed = false,
-            isPersistent = isOngoing,
-            isRead = false,
-            isGroupSummary = (notification.flags and Notification.FLAG_GROUP_SUMMARY) != 0,
-            category = notification.category,
-            channelId = notification.channelId,
-            subText = san.subText,
-            bigText = san.bigText,
-            inboxLinesJson = input.inboxLinesJson,
-            priority = notification.priority,
-            groupKey = sbn.groupKey,
-            isOngoing = isOngoing,
-            isClearable = sbn.isClearable,
-            actionsCount = notification.actions?.size ?: 0,
-            intentUri = parsingHelper.safeLaunchIntentUri(packageName),
-            isPinned = false,
-            actionLabels = parsingHelper.buildActionLabelsJson(notification.actions),
-            smallIconRes = parsingHelper.safeSmallIconRes(notification)
-        )
-    }
-
-    private data class NotificationBuildInput(
-        val sbn: StatusBarNotification,
-        val notification: Notification,
-        val san: com.jeffers.notimindlite.sanitization.SanitizationResult,
-        val inboxLinesJson: String?,
-        val postTime: Long,
-        val now: Long
-    )
 
 
     override fun onNotificationRemoved(sbn: StatusBarNotification) {
