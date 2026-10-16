@@ -17,34 +17,40 @@ import java.io.IOException
  */
 object AppIconCache {
     private const val TAG = "AppIconCache"
+    private const val KIBIBYTE = 1024
+    private const val CACHE_MEMORY_FRACTION = 8
+    private const val DEFAULT_TARGET_SIZE = 64
     
-    private val cacheSize = (Runtime.getRuntime().maxMemory() / 1024).toInt() / 8
+    private val cacheSize = (Runtime.getRuntime().maxMemory() / KIBIBYTE).toInt() /
+        CACHE_MEMORY_FRACTION
     
     private val iconCache = object : LruCache<String, Bitmap>(cacheSize) {
         override fun sizeOf(key: String, value: Bitmap): Int {
-            return value.byteCount / 1024
+            return value.byteCount / KIBIBYTE
         }
     }
 
-    fun getIcon(context: Context, uri: String?, targetSize: Int = 64): Bitmap? {
-        if (uri == null) return null
-        iconCache.get(uri)?.let { return it }
-        
-        try {
-            val bitmap = decodeSampledBitmapFromUri(context, uri, targetSize)
-            if (bitmap != null) {
-                iconCache.put(uri, bitmap)
+    fun getIcon(context: Context, uri: String?, targetSize: Int = DEFAULT_TARGET_SIZE): Bitmap? {
+        val cached = uri?.let { iconCache.get(it) }
+        return if (uri == null || cached != null) {
+            cached
+        } else {
+            try {
+                val bitmap = decodeSampledBitmapFromUri(context, uri, targetSize)
+                if (bitmap != null) {
+                    iconCache.put(uri, bitmap)
+                }
+                bitmap
+            } catch (e: FileNotFoundException) {
+                Log.w(TAG, "Icon not found for uri=$uri", e)
+                null
+            } catch (e: SecurityException) {
+                Log.e(TAG, "Security exception reading icon for uri=$uri", e)
+                null
+            } catch (e: IOException) {
+                Log.e(TAG, "I/O error decoding icon for uri=$uri", e)
+                null
             }
-            return bitmap
-        } catch (e: FileNotFoundException) {
-            Log.w(TAG, "Icon not found for uri=$uri", e)
-            return null
-        } catch (e: SecurityException) {
-            Log.e(TAG, "Security exception reading icon for uri=$uri", e)
-            return null
-        } catch (e: IOException) {
-            Log.e(TAG, "I/O error decoding icon for uri=$uri", e)
-            return null
         }
     }
 

@@ -15,6 +15,7 @@ import kotlinx.coroutines.withContext
 object HybridSearchEngine {
 
     private const val RRF_K = 60.0
+    private const val RECENT_CANDIDATE_LIMIT = 1_000
 
     /** Splits user input into normalized tokens for AND matching. */
     fun tokenizeQuery(query: String): List<String> = query.trim().split(Regex("\\s+"))
@@ -136,7 +137,7 @@ object HybridSearchEngine {
         
         // OPTIMIZATION: Limit vector scoring to prevent OOM and latency.
         // We score the union of FTS results and the most recent notifications.
-        val recentNotifications = dao.getRecentNotificationsList(1000)
+        val recentNotifications = dao.getRecentNotificationsList(RECENT_CANDIDATE_LIMIT)
         val candidateSet = (ftsResults + recentNotifications).distinctBy { it.id }
         
         val semanticResults = candidateSet.mapNotNull { entity ->
