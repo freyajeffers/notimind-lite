@@ -1,5 +1,6 @@
 package com.jeffers.notimindlite.ui.screens
 
+import android.content.Context
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -35,6 +36,7 @@ import com.jeffers.notimindlite.migration.EncryptionMigrationConsent
 import com.jeffers.notimindlite.migration.MigrationRunner
 import com.jeffers.notimindlite.migration.MigrationState
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import com.jeffers.notimindlite.BuildConfig
@@ -93,6 +95,17 @@ private fun advancedNumberRow(
     }
 }
 
+private data class MigrationDialogConfig(
+    val visible: Boolean,
+    val context: Context,
+    val scope: CoroutineScope,
+    val databaseName: String,
+    val failureMessage: String,
+    val onDismiss: () -> Unit,
+    val onMessage: (String?) -> Unit,
+    val onMigrationCompleted: () -> Unit
+)
+
 @Composable
 fun settingsAdvancedSection(
     preferencesRepository: PreferencesRepository,
@@ -147,52 +160,78 @@ fun settingsAdvancedSection(
                 preferencesRepository::setMaxDbMb
             )
 
-            if (encryptionEnabled && preflight.plaintextExists) {
-                Text(stringResource(R.string.migration_settings_pending), style = MaterialTheme.typography.bodyMedium)
-                Button(onClick = { showMigrationConfirmation = true }) {
-                    Text(stringResource(R.string.migration_settings_button))
-                }
-                migrationMessage?.let { Text(it, color = MaterialTheme.colorScheme.error) }
-            }
-
-            advancedNumberRow(
-                R.string.pref_vector_cache_max_title,
-                R.string.pref_vector_cache_max_summary,
-                vectorCacheMax,
-                120.dp,
-                preferencesRepository::setVectorCacheMax
+            migrationControls(
+                visible = encryptionEnabled && preflight.plaintextExists,
+                migrationMessage = migrationMessage,
+                onShowMigration = { showMigrationConfirmation = true },
+                vectorCacheMax = vectorCacheMax,
+                preferencesRepository = preferencesRepository
             )
         }
     }
 
-    if (showMigrationConfirmation) {
-        AlertDialog(
-            onDismissRequest = { showMigrationConfirmation = false },
-            title = { Text(stringResource(R.string.migration_settings_confirm_title)) },
-            text = { Text(stringResource(R.string.migration_settings_confirm_description)) },
-            confirmButton = {
-                Button(onClick = {
-                    showMigrationConfirmation = false
-                    scope.launch {
-                        migrationMessage = withContext(Dispatchers.IO) {
-                            EncryptionMigrationConsent.set(context, EncryptionMigrationConsent.Decision.ACCEPTED)
-                            AppDatabase.resetInstance()
-                            val state = MigrationRunner(context).migrateLegacyDatabase(databaseName)
-                            if (state == MigrationState.COMPLETE) {
-                                null
-                            } else {
-                                migrationFailureMessage
-                            }
-                        }
-                        if (migrationMessage == null) onMigrationCompleted()
-                    }
-                }) { Text(stringResource(R.string.migration_settings_confirm)) }
-            },
-            dismissButton = {
-                TextButton(onClick = { showMigrationConfirmation = false }) {
-                    Text(stringResource(R.string.migration_settings_cancel))
-                }
-            }
-        )
+    migrationConfirmationDialog(MigrationDialogConfig(
+        visible = showMigrationConfirmation,
+        context = context,
+        scope = scope,
+        databaseName = databaseName,
+        failureMessage = migrationFailureMessage,
+        onDismiss = { showMigrationConfirmation = false },
+        onMessage = { migrationMessage = it },
+        onMigrationCompleted = onMigrationCompleted
+    ))
+}
+
+@Composable
+private fun migrationControls(
+    visible: Boolean,
+    migrationMessage: String?,
+    onShowMigration: () -> Unit,
+    vectorCacheMax: Int,
+    preferencesRepository: PreferencesRepository
+) {
+    if (visible) {
+        Text(stringResource(R.string.migration_settings_pending), style = MaterialTheme.typography.bodyMedium)
+        Button(onClick = onShowMigration) {
+            Text(stringResource(R.string.migration_settings_button))
+        }
+        migrationMessage?.let { Text(it, color = MaterialTheme.colorScheme.error) }
     }
+    advancedNumberRow(
+        R.string.pref_vector_cache_max_title,
+        R.string.pref_vector_cache_max_summary,
+        vectorCacheMax,
+        120.dp,
+        preferencesRepository::setVectorCacheMax
+    )
+}
+
+@Composable
+private fun migrationConfirmationDialog(config: MigrationDialogConfig) {
+    if (!config.visible) return
+    AlertDialog(
+        onDismissRequest = config.onDismiss,
+        title = { Text(stringResource(R.string.migration_settings_confirm_title)) },
+        text = { Text(stringResource(R.string.migration_settings_confirm_description)) },
+        confirmButton = {
+            Button(onClick = {
+                config.onDismiss()
+                config.scope.launch {
+                    val message = withContext(Dispatchers.IO) {
+                        EncryptionMigrationConsent.set(config.context, EncryptionMigrationConsent.Decision.ACCEPTED)
+                        AppDatabase.resetInstance()
+                        val state = MigrationRunner(config.context).migrateLegacyDatabase(config.databaseName)
+                        if (state == MigrationState.COMPLETE) null else config.failureMessage
+                    }
+                    config.onMessage(message)
+                    if (message == null) config.onMigrationCompleted()
+                }
+            }) { Text(stringResource(R.string.migration_settings_confirm)) }
+        },
+        dismissButton = {
+            TextButton(onClick = config.onDismiss) {
+                Text(stringResource(R.string.migration_settings_cancel))
+            }
+        }
+    )
 }
