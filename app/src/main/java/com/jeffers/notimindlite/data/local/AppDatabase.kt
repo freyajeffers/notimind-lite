@@ -14,7 +14,6 @@ import androidx.room.TypeConverters
 import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
 
-@Suppress("MaxLineLength") // Entities list is exhaustive; cannot be split across annotation arrays.
 @Database(
     entities = [
         NotificationEntity::class,
