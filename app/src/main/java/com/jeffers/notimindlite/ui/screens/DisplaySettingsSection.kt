@@ -75,22 +75,29 @@ fun displaySettingsSection(preferencesRepository: PreferencesRepository) {
             preferencesRepository::setThemeAccent
         )
 
-        Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
-            Column(modifier = Modifier.fillMaxWidth(0.7f)) {
-                Text(stringResource(R.string.pref_preview_length_title), style = MaterialTheme.typography.bodyLarge)
-                Text(
-                    stringResource(R.string.pref_preview_length_summary),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
-            OutlinedTextField(
-                value = previewLength.toString(),
-                onValueChange = { it.toIntOrNull()?.let(preferencesRepository::setPreviewLength) },
-                modifier = Modifier.width(110.dp), singleLine = true,
-                label = { Text(stringResource(R.string.pref_preview_length_label)) },
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+        previewLengthRow(previewLength, preferencesRepository)
+    }
+}
+
+private const val PREVIEW_TEXT_WEIGHT = 0.7f
+
+@Composable
+private fun previewLengthRow(previewLength: Int, preferencesRepository: PreferencesRepository) {
+    Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
+        Column(modifier = Modifier.fillMaxWidth(PREVIEW_TEXT_WEIGHT)) {
+            Text(stringResource(R.string.pref_preview_length_title), style = MaterialTheme.typography.bodyLarge)
+            Text(
+                stringResource(R.string.pref_preview_length_summary),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
+        OutlinedTextField(
+            value = previewLength.toString(),
+            onValueChange = { it.toIntOrNull()?.let(preferencesRepository::setPreviewLength) },
+            modifier = Modifier.width(110.dp), singleLine = true,
+            label = { Text(stringResource(R.string.pref_preview_length_label)) },
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+        )
     }
 }
