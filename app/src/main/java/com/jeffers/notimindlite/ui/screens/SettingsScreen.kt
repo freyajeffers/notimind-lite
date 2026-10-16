@@ -257,7 +257,7 @@ fun settingsScreen(
 
         // Continue with other sections
         settingsCaptureSection(preferencesRepository = preferencesRepository)
-        profileManagerSection(repository = preferencesRepository)
+        profileManagerSection(repository = preferencesRepository.profileManager)
         settingsPreferencesSection(preferencesRepository = preferencesRepository)
         settingsPrivacySection(preferencesRepository = preferencesRepository)
         settingsAdvancedSection(

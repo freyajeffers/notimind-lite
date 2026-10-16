@@ -15,12 +15,12 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
-import com.jeffers.notimindlite.data.local.PreferencesRepository
+import com.jeffers.notimindlite.data.local.ProfilePreferencesManager
 import com.jeffers.notimindlite.BuildConfig
 
 /** Compose-only profile manager. Each profile has independent settings and Room storage. */
 @Composable
-fun profileManagerSection(repository: PreferencesRepository) {
+fun profileManagerSection(repository: ProfilePreferencesManager) {
     val context = LocalContext.current
     val profiles by repository.profiles.collectAsState()
     val activeId by repository.activeProfileId.collectAsState()

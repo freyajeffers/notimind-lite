@@ -21,14 +21,14 @@ class PreferencesRepository(context: Context) :
     PreferencesPerformanceOperations by PreferencesPerformanceOperationsImpl(context) {
     private val appContext = context.applicationContext
     private val deContext = appContext.createDeviceProtectedStorageContext()
+    val profileManager = ProfilePreferencesManager(context)
     private val profileStore = deContext.getSharedPreferences(PROFILE_STORE, Context.MODE_PRIVATE)
-    private var activeId = profileStore.getString(KEY_ACTIVE_PROFILE, DEFAULT_PROFILE_ID) ?: DEFAULT_PROFILE_ID
     private val backing: android.content.SharedPreferences
-        get() = deContext.getSharedPreferences("notimind_lite_prefs_$activeId", Context.MODE_PRIVATE)
+        get() = deContext.getSharedPreferences(profileManager.activePreferencesName, Context.MODE_PRIVATE)
 
     init {
         migrateRenamedKeys()
-        ExhaustivePreferencesRepository(context).initializeDefaults(activeId)
+        ExhaustivePreferencesRepository(context).initializeDefaults(profileManager.activeProfileId.value)
     }
 
     private fun migrateRenamedKeys() {
@@ -52,7 +52,7 @@ class PreferencesRepository(context: Context) :
     }
 
     private val _profiles = MutableStateFlow(readProfiles())
-    private val _activeProfileId = MutableStateFlow(activeId)
+    private val _activeProfileId = MutableStateFlow(profileManager.activeProfileId.value)
     val profiles: StateFlow<List<Profile>> = _profiles.asStateFlow()
     val activeProfileId: StateFlow<String> = _activeProfileId.asStateFlow()
 
@@ -245,7 +245,7 @@ class PreferencesRepository(context: Context) :
     }
 
     fun deleteProfile(id: String): Boolean {
-        if (id == DEFAULT_PROFILE_ID || id == activeId) return false
+        if (id == DEFAULT_PROFILE_ID || id == profileManager.activeProfileId.value) return false
         val updated = _profiles.value.filterNot { it.id == id }
         if (updated.size == _profiles.value.size) return false
         writeProfiles(updated)
@@ -255,14 +255,13 @@ class PreferencesRepository(context: Context) :
     /** Switches both preferences and Room database selection for subsequent calls. */
     fun setActiveProfile(id: String): Boolean {
         if (_profiles.value.none { it.id == id }) return false
-        activeId = id
         profileStore.edit().putString(KEY_ACTIVE_PROFILE, id).apply()
         _activeProfileId.value = id
         reloadProfileFlows()
         return true
     }
 
-    fun exportProfile(id: String = activeId): String {
+    fun exportProfile(id: String = profileManager.activeProfileId.value): String {
         require(_profiles.value.any { it.id == id }) { "Unknown profile" }
         val source = appContext.getSharedPreferences("notimind_lite_prefs_$id", Context.MODE_PRIVATE)
         val values = JSONObject()
