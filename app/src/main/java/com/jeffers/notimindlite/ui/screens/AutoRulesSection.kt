@@ -38,7 +38,7 @@ fun autoRulesSection(preferencesRepository: PreferencesRepository, config: AutoR
             )
         }
         Button(onClick = {
-            preferencesRepository.addAutoExecuteRule(
+            preferencesRepository.automationManager.addRule(
                 AutoExecuteRule(
                     packageName = config.rulePackage.trim(), titleContains = config.ruleTitle.trim(),
                     actionIndex = config.ruleAction.toIntOrNull()?.coerceAtLeast(0) ?: 0
@@ -59,7 +59,7 @@ fun autoRulesSection(preferencesRepository: PreferencesRepository, config: AutoR
                     Modifier.weight(1f), style = androidx.compose.material3.MaterialTheme.typography.bodySmall
                 )
                 androidx.compose.material3.TextButton(
-                    onClick = { preferencesRepository.removeAutoExecuteRule(rule.id) },
+                    onClick = { preferencesRepository.automationManager.removeRule(rule.id) },
                     enabled = !BuildConfig.DEBUG
                 ) { Text(stringResource(R.string.pref_auto_rule_remove)) }
             }

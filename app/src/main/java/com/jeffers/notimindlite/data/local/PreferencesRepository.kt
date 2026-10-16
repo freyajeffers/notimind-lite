@@ -23,6 +23,7 @@ class PreferencesRepository(context: Context) :
     private val deContext = appContext.createDeviceProtectedStorageContext()
     val profileManager = ProfilePreferencesManager(context)
     val sharedSearchManager = SharedSearchStateManager(context, profileManager)
+    val automationManager = AutomationPreferencesManager(context, profileManager)
     private val backing: android.content.SharedPreferences
         get() = deContext.getSharedPreferences(profileManager.activePreferencesName, Context.MODE_PRIVATE)
 
@@ -32,6 +33,7 @@ class PreferencesRepository(context: Context) :
         profileManager.onProfileChanged = {
             reloadProfileFlows()
             sharedSearchManager.reload()
+            automationManager.reload()
         }
     }
 
@@ -204,11 +206,11 @@ class PreferencesRepository(context: Context) :
     private val _longPressAction = MutableStateFlow(
         backing.getString(KEY_LONG_PRESS_ACTION, "open") ?: "open"
     )
-    private val _autoExecuteRules = MutableStateFlow(readAutoExecuteRules())
+
     val autoActOnNotification: StateFlow<Boolean> = _autoActOnNotification
     val defaultReplyMethod: StateFlow<String> = _defaultReplyMethod
     val longPressAction: StateFlow<String> = _longPressAction
-    val autoExecuteRules: StateFlow<List<AutoExecuteRule>> = _autoExecuteRules
+    val autoExecuteRules: StateFlow<List<AutoExecuteRule>> = automationManager.rules
 
 
 
@@ -281,7 +283,7 @@ class PreferencesRepository(context: Context) :
 
         _longPressAction.value = backing.getString(KEY_LONG_PRESS_ACTION, "open") ?: "open"
 
-        _autoExecuteRules.value = readAutoExecuteRules()
+        automationManager.reload()
     }
 
     fun setCaptureForegroundOnly(v: Boolean) {
@@ -605,39 +607,6 @@ class PreferencesRepository(context: Context) :
         backing.edit().putString(KEY_LONG_PRESS_ACTION, safe).apply()
         _longPressAction.value = safe
     }
-    fun addAutoExecuteRule(rule: AutoExecuteRule) { setAutoExecuteRules(_autoExecuteRules.value + rule) }
-    fun removeAutoExecuteRule(id: String) { setAutoExecuteRules(_autoExecuteRules.value.filterNot { it.id == id }) }
-    fun setAutoExecuteRules(rules: List<AutoExecuteRule>) {
-        val safe = rules.distinctBy { it.id }
-        backing.edit().putString(KEY_AUTO_EXECUTE_RULES, encodeAutoExecuteRules(safe)).apply()
-        _autoExecuteRules.value = safe
-    }
-
-    private fun readAutoExecuteRules(): List<AutoExecuteRule> = runCatching {
-        val array = JSONArray(backing.getString(KEY_AUTO_EXECUTE_RULES, "[]"))
-        (0 until array.length()).map { index ->
-            val value = array.getJSONObject(index)
-            AutoExecuteRule(
-                id = value.optString("id"),
-                packageName = value.optString("packageName"),
-                titleContains = value.optString("titleContains"),
-                actionIndex = value.optInt("actionIndex", 0).coerceAtLeast(0),
-                enabled = value.optBoolean("enabled", true)
-            )
-        }
-    }.getOrDefault(emptyList())
-
-    private fun encodeAutoExecuteRules(rules: List<AutoExecuteRule>): String = JSONArray(rules.map { rule ->
-        JSONObject()
-            .put("id", rule.id)
-            .put("packageName", rule.packageName)
-            .put("titleContains", rule.titleContains)
-            .put("actionIndex", rule.actionIndex)
-            .put("enabled", rule.enabled)
-    }).toString()
-
-
-
 
     companion object {
 
