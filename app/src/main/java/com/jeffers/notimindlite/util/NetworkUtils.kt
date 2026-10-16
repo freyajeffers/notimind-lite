@@ -15,12 +15,12 @@ object NetworkUtils {
      */
     fun isInternetAvailable(context: Context): Boolean {
         return try {
-            val connectivityManager = context.getSystemService(Context.CONNECTIVITY_SERVICE) as? ConnectivityManager
-                ?: return false
-            val activeNetwork = connectivityManager.activeNetwork ?: return false
-            val networkCapabilities = connectivityManager.getNetworkCapabilities(activeNetwork) ?: return false
-            
-            networkCapabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
+            val connectivityManager = context
+                .getSystemService(Context.CONNECTIVITY_SERVICE) as? ConnectivityManager
+            val networkCapabilities = connectivityManager?.activeNetwork?.let {
+                connectivityManager.getNetworkCapabilities(it)
+            }
+            networkCapabilities?.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET) == true
         } catch (e: SecurityException) {
             AppLogger.w(TAG, "Missing network permission when evaluating connectivity: ${e.message}", e)
             false
