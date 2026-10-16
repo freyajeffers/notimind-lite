@@ -817,7 +817,7 @@ fun LogHistoryCard(
                         }
                     }
                     Spacer(modifier = Modifier.height(8.dp))
-                    NotificationExpandedAttributes(
+                    notificationExpandedAttributes(
                         item = item,
                         dateTimeFormatter = dateTimeFormatter
                     )

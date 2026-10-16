@@ -945,7 +945,6 @@ fun logNotificationCard(config: LogNotificationCardConfig) {
                             color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.85f)
                         )
                     }
-                    @Suppress("SwallowedException")
                     val inboxLines = remember(item.inboxLinesJson) {
                         if (item.inboxLinesJson.isNullOrBlank()) {
                             emptyList()
@@ -956,7 +955,8 @@ fun logNotificationCard(config: LogNotificationCardConfig) {
                                     val str = array.optString(idx)
                                     str.takeIf { it.isNotBlank() }
                                 }
-                            } catch (_: org.json.JSONException) {
+                            } catch (e: org.json.JSONException) {
+                                Log.w("ActiveNotifications", "Invalid inbox lines JSON", e)
                                 emptyList()
                             }
                         }
@@ -999,7 +999,7 @@ fun logNotificationCard(config: LogNotificationCardConfig) {
                         }
                     }
                     Spacer(modifier = Modifier.height(8.dp))
-                    NotificationExpandedAttributes(
+                    notificationExpandedAttributes(
                         item = item,
                         dateTimeFormatter = dateTimeFormatter
                     )
@@ -1010,8 +1010,7 @@ fun logNotificationCard(config: LogNotificationCardConfig) {
 }
 
 @Composable
-@Suppress("FunctionNaming", "LongMethod", "CyclomaticComplexMethod")
-fun NotificationExpandedAttributes(
+fun notificationExpandedAttributes(
     item: NotificationEntity,
     dateTimeFormatter: DateTimeFormatter,
     modifier: Modifier = Modifier
