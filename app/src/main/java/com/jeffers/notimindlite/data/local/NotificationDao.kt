@@ -20,13 +20,10 @@ private const val LOST_NOTIFICATIONS_QUERY =
         "ORDER BY COALESCE(dismissTime, postTime) DESC"
 
 @Dao
-abstract class NotificationDao : NotificationSyncOperations, NotificationStorageOperations {
-
-    @Insert(onConflict = OnConflictStrategy.REPLACE)
-    abstract suspend fun insertNotificationDirect(entity: NotificationEntity): Long
-
-    @Insert(onConflict = OnConflictStrategy.REPLACE)
-    abstract suspend fun insertNotificationsDirect(entities: List<NotificationEntity>): List<Long>
+abstract class NotificationDao :
+    NotificationSyncOperations,
+    NotificationStorageOperations,
+    NotificationInsertOperations {
 
     @Transaction
     open suspend fun insert(entity: NotificationEntity): Long {
