@@ -127,6 +127,15 @@ enum class SortMode(val label: String) {
     TITLE("Title")
 }
 
+data class LogHistoryCardState(
+    val item: NotificationEntity,
+    val dateTimeFormatter: DateTimeFormatter,
+    val dao: NotificationDao,
+    val isExpanded: Boolean,
+    val highlightQuery: String = "",
+    val onToggleExpand: () -> Unit
+)
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun logHistoryScreen(dao: NotificationDao, preferences: com.jeffers.notimindlite.data.local.PreferencesRepository) {
@@ -581,18 +590,20 @@ fun logHistoryScreen(dao: NotificationDao, preferences: com.jeffers.notimindlite
                             val item = group.items[0]
                             val cardExpanded = expandedCards.contains(item.key)
                             logHistoryCard(
-                                item = item,
-                                dateTimeFormatter = dateTimeFormatter,
-                                dao = dao,
-                                isExpanded = cardExpanded,
-                                highlightQuery = debouncedSearchQuery,
-                                onToggleExpand = {
+                                LogHistoryCardState(
+                                    item = item,
+                                    dateTimeFormatter = dateTimeFormatter,
+                                    dao = dao,
+                                    isExpanded = cardExpanded,
+                                    highlightQuery = debouncedSearchQuery,
+                                    onToggleExpand = {
                                     expandedCards = if (cardExpanded) {
                                         expandedCards - item.key
                                     } else {
                                         expandedCards + item.key
                                     }
-                                }
+                                    }
+                                )
                             )
                         } else {
                             NotificationGroupCard(
@@ -610,18 +621,20 @@ fun logHistoryScreen(dao: NotificationDao, preferences: com.jeffers.notimindlite
                                 renderChildCard = { childItem ->
                                     val cardExpanded = expandedCards.contains(childItem.key)
                                     logHistoryCard(
-                                        item = childItem,
-                                        dateTimeFormatter = dateTimeFormatter,
-                                        dao = dao,
-                                        isExpanded = cardExpanded,
-                                highlightQuery = debouncedSearchQuery,
-                                        onToggleExpand = {
+                                        LogHistoryCardState(
+                                            item = childItem,
+                                            dateTimeFormatter = dateTimeFormatter,
+                                            dao = dao,
+                                            isExpanded = cardExpanded,
+                                            highlightQuery = debouncedSearchQuery,
+                                            onToggleExpand = {
                                             expandedCards = if (cardExpanded) {
                                                 expandedCards - childItem.key
                                             } else {
                                                 expandedCards + childItem.key
                                             }
-                                        }
+                                            }
+                                        )
                                     )
                                 }
                             )
@@ -680,15 +693,13 @@ private fun dismissStatusBadge(item: NotificationEntity) {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-@Suppress("CyclomaticComplexMethod", "LongMethod", "FunctionNaming")
-fun logHistoryCard(
-    item: NotificationEntity,
-    dateTimeFormatter: DateTimeFormatter,
-    dao: NotificationDao,
-    isExpanded: Boolean,
-    highlightQuery: String = "",
-    onToggleExpand: () -> Unit
-) {
+fun logHistoryCard(state: LogHistoryCardState) {
+    val item = state.item
+    val dateTimeFormatter = state.dateTimeFormatter
+    val dao = state.dao
+    val isExpanded = state.isExpanded
+    val highlightQuery = state.highlightQuery
+    val onToggleExpand = state.onToggleExpand
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
 
