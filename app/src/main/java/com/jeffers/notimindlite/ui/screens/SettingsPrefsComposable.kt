@@ -161,7 +161,16 @@ fun settingsPreferencesSection(preferencesRepository: PreferencesRepository) {
             preferenceSwitchRow(stringResource(R.string.pref_export_biometric_title), stringResource(R.string.pref_export_biometric_summary), exportRequiresBiometric, preferencesRepository::setExportRequiresBiometric)
             preferenceSwitchRow(stringResource(R.string.pref_app_lock_title), stringResource(R.string.pref_app_lock_summary), appLockEnabled, preferencesRepository::setAppLockEnabled)
             preferenceSwitchRow(stringResource(R.string.pref_encrypt_database_title), stringResource(R.string.pref_encrypt_database_summary), dbEncrypted, preferencesRepository::setDbEncrypted)
-            preferenceSelectRow(stringResource(R.string.pref_database_key_mode_title), dbEncryptionMode.persisted, listOf("none" to stringResource(R.string.pref_key_none), "keystore" to stringResource(R.string.pref_key_keystore), "local_key" to stringResource(R.string.pref_key_local)), { preferencesRepository.setDbEncryptionMode(DbEncryptionMode.fromPersisted(it)) })
+            preferenceSelectRow(
+                stringResource(R.string.pref_database_key_mode_title),
+                dbEncryptionMode.persisted,
+                listOf(
+                    "none" to stringResource(R.string.pref_key_none),
+                    "keystore" to stringResource(R.string.pref_key_keystore),
+                    "local_key" to stringResource(R.string.pref_key_local)
+                ),
+                { preferencesRepository.setDbEncryptionMode(DbEncryptionMode.fromPersisted(it)) }
+            )
             preferenceSwitchRow(stringResource(R.string.pref_keystore_title), stringResource(R.string.pref_keystore_summary), useKeystore, preferencesRepository::setUseKeystore, enabled = dbEncrypted)
             Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
                 Column(modifier = Modifier.weight(1f)) {
@@ -321,7 +330,13 @@ private fun preferenceSwitchRow(
 }
 
 @Composable
-private fun preferenceSelectRow(title: String, selected: String, options: List<Pair<String, String>>, onSelected: (String) -> Unit, enabled: Boolean = true) {
+private fun preferenceSelectRow(
+    title: String,
+    selected: String,
+    options: List<Pair<String, String>>,
+    onSelected: (String) -> Unit,
+    enabled: Boolean = true
+) {
     var expanded by remember { mutableStateOf(false) }
     Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
         Text(title, style = MaterialTheme.typography.bodyLarge, modifier = Modifier.weight(1f))
