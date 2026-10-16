@@ -10,9 +10,13 @@ import com.jeffers.notimindlite.data.local.NotificationDao
 import com.jeffers.notimindlite.data.local.NotificationEntity
 import com.jeffers.notimindlite.data.local.SyncStatus
 import com.jeffers.notimindlite.data.sync.FirestoreSyncRepository
-import io.mockk.*
+import io.mockk.any
+import io.mockk.every
+import io.mockk.exactly
+import io.mockk.mockk
+import io.mockk.verify
 import kotlinx.coroutines.runBlocking
-import org.junit.Assert.*
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import javax.crypto.spec.SecretKeySpec
