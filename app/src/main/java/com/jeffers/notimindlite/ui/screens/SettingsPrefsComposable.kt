@@ -83,8 +83,7 @@ fun settingsPreferencesSection(preferencesRepository: PreferencesRepository) {
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
     ) {
         Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-            Text(text = stringResource(R.string.pref_data_search_title), style = MaterialTheme.typography.titleMedium)
-
+            searchSyncSection(preferencesRepository)
             displaySettingsSection(preferencesRepository)
 
             Text(stringResource(R.string.pref_automation_title), style = MaterialTheme.typography.titleMedium)
