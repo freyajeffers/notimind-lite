@@ -28,6 +28,8 @@ import androidx.sqlite.db.SupportSQLiteDatabase
 @TypeConverters(Converters::class)
 abstract class AppDatabase : RoomDatabase() {
     abstract fun notificationDao(): NotificationDao
+
+    abstract fun notificationGroupDao(): NotificationGroupDao
     abstract fun appDao(): AppDao
     abstract fun backupDao(): BackupDao
 
