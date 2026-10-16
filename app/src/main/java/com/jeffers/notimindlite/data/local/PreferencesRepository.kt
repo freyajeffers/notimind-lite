@@ -468,13 +468,41 @@ class PreferencesRepository(context: Context) {
         backing.edit().putString("config_capture_package_blocklist", v).apply()
         _capturePackageBlocklist.value = v
     }
-    fun setMinImportance(v: Int) { val n = v.coerceIn(0, 5); backing.edit().putInt("config_min_importance", n).apply(); _minImportance.value = n }
-    fun setCaptureActionsOnly(v: Boolean) { backing.edit().putBoolean("config_capture_actions_only", v).apply(); _captureActionsOnly.value = v }
-    fun setRedactPii(v: Boolean) { backing.edit().putBoolean("config_pii_redaction", v).apply(); _redactPii.value = v }
-    fun setEncryptedExports(v: Boolean) { backing.edit().putBoolean("config_encrypted_exports", v).apply(); _encryptedExports.value = v }
-    fun setRequirePassphrase(v: Boolean) { backing.edit().putBoolean("config_require_passphrase", v).apply(); _requirePassphrase.value = v }
-    fun setAutoLockDb(v: Boolean) { backing.edit().putBoolean("config_auto_lock_db", v).apply(); _autoLockDb.value = v }
-    fun setExportRequiresBiometric(value: Boolean) { backing.edit().putBoolean(KEY_EXPORT_REQUIRES_BIOMETRIC, value).apply(); _exportRequiresBiometric.value = value }
+    fun setMinImportance(v: Int) {
+        val n = v.coerceIn(0, 5)
+        backing.edit().putInt("config_min_importance", n).apply()
+        _minImportance.value = n
+    }
+
+    fun setCaptureActionsOnly(v: Boolean) {
+        backing.edit().putBoolean("config_capture_actions_only", v).apply()
+        _captureActionsOnly.value = v
+    }
+
+    fun setRedactPii(v: Boolean) {
+        backing.edit().putBoolean("config_pii_redaction", v).apply()
+        _redactPii.value = v
+    }
+
+    fun setEncryptedExports(v: Boolean) {
+        backing.edit().putBoolean("config_encrypted_exports", v).apply()
+        _encryptedExports.value = v
+    }
+
+    fun setRequirePassphrase(v: Boolean) {
+        backing.edit().putBoolean("config_require_passphrase", v).apply()
+        _requirePassphrase.value = v
+    }
+
+    fun setAutoLockDb(v: Boolean) {
+        backing.edit().putBoolean("config_auto_lock_db", v).apply()
+        _autoLockDb.value = v
+    }
+
+    fun setExportRequiresBiometric(value: Boolean) {
+        backing.edit().putBoolean(KEY_EXPORT_REQUIRES_BIOMETRIC, value).apply()
+        _exportRequiresBiometric.value = value
+    }
     fun setAppLockEnabled(value: Boolean) { backing.edit().putBoolean(KEY_APP_LOCK_ENABLED, value).apply(); _appLockEnabled.value = value }
     fun setUseKeystore(value: Boolean) { backing.edit().putBoolean(KEY_USE_KEYSTORE, value).apply(); _useKeystore.value = value }
     fun setDbEncrypted(value: Boolean) { backing.edit().putBoolean(KEY_DB_ENCRYPTED, value).apply(); _dbEncrypted.value = value }
