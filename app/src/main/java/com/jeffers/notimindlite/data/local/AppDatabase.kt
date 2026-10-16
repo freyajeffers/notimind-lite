@@ -505,28 +505,7 @@ abstract class AppDatabase : RoomDatabase() {
                     }
                     val useEncryption = encryptionRequested &&
                         (!legacyPlaintextPending || consent == EncryptionMigrationConsent.Decision.ACCEPTED)
-                    val instance = Room.databaseBuilder(
-                        appContext,
-                        AppDatabase::class.java,
-                        databaseName
-                    )
-                    .apply {
-                        if (useEncryption) {
-                            EncryptedDatabaseFactory.openHelperFactory(
-                                appContext,
-                                databaseName
-                            )?.let(::openHelperFactory)
-                        }
-                    }
-                    .addMigrations(
-                        MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7,
-                        MIGRATION_7_8, MIGRATION_8_9, MIGRATION_9_10,
-                        MIGRATION_10_11, MIGRATION_11_12, MIGRATION_12_13, MIGRATION_13_14, MIGRATION_14_15,
-                        MIGRATION_15_16, MIGRATION_16_17, MIGRATION_17_18, MIGRATION_18_19
-                    )
-                    .addCallback(DB_CALLBACK)
-                    .setJournalMode(JournalMode.WRITE_AHEAD_LOGGING)
-                    .build()
+                    val instance = buildCeInstance(appContext, profileId)
                     ceInstance = instance
                     ceProfileId = profileId
                     INSTANCE = instance
@@ -534,6 +513,56 @@ abstract class AppDatabase : RoomDatabase() {
                 }
             }
         }
+
+    /**
+     * Extracted CE instance builder to satisfy detekt LongMethod rule on getCeInstance.
+     */
+    private fun buildCeInstance(appContext: Context, profileId: String): AppDatabase {
+        val databaseName = databaseName(CE_DATABASE_NAME, profileId)
+        val preferences = PreferencesRepository(appContext)
+        val encryptionRequested =
+            preferences.dbEncrypted.value && preferences.dbEncryptionMode.value != DbEncryptionMode.NONE
+        val legacyPlaintextPending = MigrationRunner(appContext).preflight(databaseName).plaintextExists
+        val consent = EncryptionMigrationConsent.get(appContext)
+        val migrationState = if (
+            encryptionRequested &&
+            legacyPlaintextPending &&
+            consent == EncryptionMigrationConsent.Decision.ACCEPTED
+        ) {
+            MigrationRunner(appContext).migrateLegacyDatabase(databaseName)
+        } else {
+            MigrationState.NOT_REQUIRED
+        }
+        when (migrationState) {
+            MigrationState.NOT_REQUIRED, MigrationState.COMPLETE -> Unit
+            else -> error("Legacy database migration did not complete safely")
+        }
+        val useEncryption = encryptionRequested &&
+            (!legacyPlaintextPending || consent == EncryptionMigrationConsent.Decision.ACCEPTED)
+
+        return Room.databaseBuilder(
+            appContext,
+            AppDatabase::class.java,
+            databaseName
+        )
+            .apply {
+                if (useEncryption) {
+                    EncryptedDatabaseFactory.openHelperFactory(
+                        appContext,
+                        databaseName
+                    )?.let(::openHelperFactory)
+                }
+            }
+            .addMigrations(
+                MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7,
+                MIGRATION_7_8, MIGRATION_8_9, MIGRATION_9_10,
+                MIGRATION_10_11, MIGRATION_11_12, MIGRATION_12_13, MIGRATION_13_14, MIGRATION_14_15,
+                MIGRATION_15_16, MIGRATION_16_17, MIGRATION_17_18, MIGRATION_18_19
+            )
+            .addCallback(DB_CALLBACK)
+            .setJournalMode(JournalMode.WRITE_AHEAD_LOGGING)
+            .build()
+    }
 
         private fun databaseName(base: String, profileId: String): String =
             if (profileId == PreferencesRepository.DEFAULT_PROFILE_ID) base else "${base}_$profileId"
