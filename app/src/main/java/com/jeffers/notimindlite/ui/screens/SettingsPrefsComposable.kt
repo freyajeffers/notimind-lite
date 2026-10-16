@@ -108,9 +108,21 @@ fun settingsPreferencesSection(preferencesRepository: PreferencesRepository) {
             Text(text = stringResource(R.string.pref_data_search_title), style = MaterialTheme.typography.titleMedium)
 
             Text(stringResource(R.string.pref_display_title), style = MaterialTheme.typography.titleMedium)
-            preferenceSwitchRow(stringResource(R.string.pref_compact_mode_title), stringResource(R.string.pref_compact_mode_summary), compactMode, preferencesRepository::setCompactMode)
-            preferenceSwitchRow(stringResource(R.string.pref_show_app_icons_title), stringResource(R.string.pref_show_app_icons_summary), showAppIcons, preferencesRepository::setShowAppIcons)
-            preferenceSwitchRow(stringResource(R.string.pref_group_by_app_title), stringResource(R.string.pref_group_by_app_summary), groupByApp, preferencesRepository::setGroupByApp)
+            preferenceSwitchRow(
+                stringResource(R.string.pref_compact_mode_title),
+                stringResource(R.string.pref_compact_mode_summary), compactMode,
+                preferencesRepository::setCompactMode
+            )
+            preferenceSwitchRow(
+                stringResource(R.string.pref_show_app_icons_title),
+                stringResource(R.string.pref_show_app_icons_summary), showAppIcons,
+                preferencesRepository::setShowAppIcons
+            )
+            preferenceSwitchRow(
+                stringResource(R.string.pref_group_by_app_title),
+                stringResource(R.string.pref_group_by_app_summary), groupByApp,
+                preferencesRepository::setGroupByApp
+            )
             preferenceSelectRow(
                 stringResource(R.string.pref_sort_order_title),
                 sortOrder,
@@ -125,7 +137,11 @@ fun settingsPreferencesSection(preferencesRepository: PreferencesRepository) {
             )
 
             Text(stringResource(R.string.pref_automation_title), style = MaterialTheme.typography.titleMedium)
-            preferenceSwitchRow(stringResource(R.string.pref_auto_act_title), stringResource(R.string.pref_auto_act_summary), autoActOnNotification, preferencesRepository::setAutoActOnNotification, enabled = !BuildConfig.DEBUG)
+            preferenceSwitchRow(
+                stringResource(R.string.pref_auto_act_title),
+                stringResource(R.string.pref_auto_act_summary), autoActOnNotification,
+                preferencesRepository::setAutoActOnNotification, enabled = !BuildConfig.DEBUG
+            )
             preferenceSelectRow(
                 stringResource(R.string.pref_default_reply_title),
                 defaultReplyMethod,
@@ -142,12 +158,27 @@ fun settingsPreferencesSection(preferencesRepository: PreferencesRepository) {
             )
             Text(stringResource(R.string.pref_auto_rules_title), style = MaterialTheme.typography.bodyLarge)
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
-                OutlinedTextField(rulePackage, { rulePackage = it }, Modifier.weight(1f), singleLine = true, enabled = !BuildConfig.DEBUG, label = { Text(stringResource(R.string.pref_auto_rule_package)) })
-                OutlinedTextField(ruleTitle, { ruleTitle = it }, Modifier.weight(1f), singleLine = true, enabled = !BuildConfig.DEBUG, label = { Text(stringResource(R.string.pref_auto_rule_title)) })
-                OutlinedTextField(ruleAction, { ruleAction = it }, Modifier.width(72.dp), singleLine = true, enabled = !BuildConfig.DEBUG, label = { Text(stringResource(R.string.pref_auto_rule_action)) }, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number))
+                OutlinedTextField(
+                    rulePackage, { rulePackage = it }, Modifier.weight(1f), singleLine = true,
+                    enabled = !BuildConfig.DEBUG, label = { Text(stringResource(R.string.pref_auto_rule_package)) }
+                )
+                OutlinedTextField(
+                    ruleTitle, { ruleTitle = it }, Modifier.weight(1f), singleLine = true,
+                    enabled = !BuildConfig.DEBUG, label = { Text(stringResource(R.string.pref_auto_rule_title)) }
+                )
+                OutlinedTextField(
+                    ruleAction, { ruleAction = it }, Modifier.width(72.dp), singleLine = true,
+                    enabled = !BuildConfig.DEBUG, label = { Text(stringResource(R.string.pref_auto_rule_action)) },
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+                )
             }
             Button(onClick = {
-                preferencesRepository.addAutoExecuteRule(AutoExecuteRule(packageName = rulePackage.trim(), titleContains = ruleTitle.trim(), actionIndex = ruleAction.toIntOrNull()?.coerceAtLeast(0) ?: 0))
+                preferencesRepository.addAutoExecuteRule(
+                    AutoExecuteRule(
+                        packageName = rulePackage.trim(), titleContains = ruleTitle.trim(),
+                        actionIndex = ruleAction.toIntOrNull()?.coerceAtLeast(0) ?: 0
+                    )
+                )
                 rulePackage = ""; ruleTitle = ""; ruleAction = "0"
             }, enabled = !BuildConfig.DEBUG) { Text(stringResource(R.string.pref_auto_rule_add)) }
             autoExecuteRules.forEach { rule ->
