@@ -40,9 +40,6 @@ import java.util.LinkedHashMap
  */
 class NotificationLoggerService : NotificationListenerService() {
 
-    // Service-level tag and helpers
-    private fun getDb(): AppDatabase = AppDatabase.getDatabase(applicationContext)
-
     private val serviceJob = SupervisorJob()
     private val scope = CoroutineScope(Dispatchers.IO + serviceJob)
     private val actionExecutor by lazy { NotificationActionExecutor(PreferencesRepository(applicationContext)) }
@@ -168,7 +165,7 @@ class NotificationLoggerService : NotificationListenerService() {
                 Log.d(TAG, "onListenerConnected: processing ${activeNotifs.size} active notifications in batch")
                 val entities = activeNotifs.mapNotNull { extractNotificationEntity(it) }
                 if (entities.isNotEmpty()) {
-                    val dao = getDb().notificationDao()
+                    val dao = database().notificationDao()
                     val ids = dao.insertNotifications(entities)
                     // F-G fix [2026-09-02 audit]: populate embeddings inline so the
                     // HybridSearchEngine (read-path) can rank new notifications
@@ -194,7 +191,7 @@ class NotificationLoggerService : NotificationListenerService() {
     }
 
     override fun onNotificationPosted(sbn: StatusBarNotification) {
-        if (!BuildConfig.DEBUG && !isNotificationCaptureEnabled()) {
+        if (!BuildConfig.DEBUG && !isCaptureEnabled()) {
             Log.d(TAG, "Ignoring notification post event: capture disabled")
             return
         }
@@ -214,7 +211,7 @@ class NotificationLoggerService : NotificationListenerService() {
             actionExecutor.executeOnNotification(entity.key, entity.packageName, entity.title)
             scope.launch {
                 try {
-                    val dao = getDb().notificationDao()
+                    val dao = database().notificationDao()
                     val existing = dao.getNotificationByKey(entity.key)
                     
                     // Logic: Only treat as a "new notification" (new row) if the content has changed significantly.
@@ -248,15 +245,6 @@ class NotificationLoggerService : NotificationListenerService() {
         }
     }
 
-    private fun registerNotificationActions(sbn: StatusBarNotification, key: String) {
-        sbn.notification?.actions?.forEachIndexed { index, action ->
-            NotificationLauncher.registerActionIntent(key, index, action.actionIntent)
-        }
-    }
-
-    private fun isNotificationCaptureEnabled(): Boolean =
-        com.jeffers.notimindlite.data.local.PreferencesRepository(applicationContext)
-            .captureManager.enabled.value
 
     private fun isNotificationListenerActive(): Boolean {
         val componentName = ComponentName(applicationContext, NotificationLoggerService::class.java)
@@ -286,8 +274,8 @@ class NotificationLoggerService : NotificationListenerService() {
         if (!preferences.captureManager.ongoing.value && sbn.isOngoing) return false
         val notification = sbn.notification ?: return false
         if (preferences.captureManager.actionsOnly.value && notification.actions.isNullOrEmpty()) return false
-        val allow = parsePackageList(preferences.captureManager.allowlist.value)
-        val block = parsePackageList(preferences.captureManager.blocklist.value)
+        val allow = parseNotificationPackageList(preferences.captureManager.allowlist.value)
+        val block = parseNotificationPackageList(preferences.captureManager.blocklist.value)
         if (allow.isNotEmpty() && sbn.packageName !in allow) return false
         if (sbn.packageName in block) return false
         val importance = notification.channelId?.let {
@@ -298,12 +286,6 @@ class NotificationLoggerService : NotificationListenerService() {
         return importance >= preferences.captureManager.minImportance.value
     }
 
-    private fun parsePackageList(raw: String): Set<String> {
-        return raw.split(',', '\n', ' ', '\t')
-            .map { it.trim() }
-            .filter { it.isNotEmpty() }
-            .toSet()
-    }
 
     private fun extractNotificationEntity(sbn: StatusBarNotification): NotificationEntity? {
         val shouldSkip = !shouldCaptureNotification(sbn) || sbn.packageName == applicationContext.packageName
@@ -365,7 +347,7 @@ class NotificationLoggerService : NotificationListenerService() {
 
         scope.launch {
             try {
-                val dao = getDb().notificationDao()
+                val dao = database().notificationDao()
                 dao.markDismissedWithReasonByMatching(
                     key = key,
                     packageName = sbn.packageName,
