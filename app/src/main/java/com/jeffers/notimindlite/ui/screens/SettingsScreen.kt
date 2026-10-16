@@ -272,7 +272,7 @@ fun settingsScreen(
             preferencesRepository = preferencesRepository,
             onMigrationCompleted = { (context as? android.app.Activity)?.recreate() }
         )
-        SettingsPreferencesBackupSection()
+        settingsPreferencesBackupSection()
 
 
         // F-N usability [2026-09-06]: version footer — gives users a build identifier
