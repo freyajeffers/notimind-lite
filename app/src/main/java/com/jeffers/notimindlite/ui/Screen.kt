@@ -5,7 +5,11 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.NotificationsActive
 import androidx.compose.material.icons.filled.Settings
-import androidx.compose.material3.*
+import androidx.compose.material3.Icon
+import androidx.compose.material3.NavigationBar
+import androidx.compose.material3.NavigationBarItem
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
@@ -29,17 +33,32 @@ sealed class Screen(val route: String, val title: Int, val icon: @Composable () 
     object Active : Screen(
         route = "active",
         title = R.string.nav_active_title,
-        icon = { Icon(Icons.Default.NotificationsActive, contentDescription = stringResource(id = R.string.nav_active_title)) }
+        icon = {
+            Icon(
+                Icons.Default.NotificationsActive,
+                contentDescription = stringResource(id = R.string.nav_active_title)
+            )
+        }
     )
     object History : Screen(
         route = "history",
         title = R.string.nav_history_title,
-        icon = { Icon(Icons.Default.History, contentDescription = stringResource(id = R.string.nav_history_title)) }
+        icon = {
+            Icon(
+                Icons.Default.History,
+                contentDescription = stringResource(id = R.string.nav_history_title)
+            )
+        }
     )
     object Settings : Screen(
         route = "settings",
         title = R.string.nav_settings_title,
-        icon = { Icon(Icons.Default.Settings, contentDescription = stringResource(id = R.string.nav_settings_title)) }
+        icon = {
+            Icon(
+                Icons.Default.Settings,
+                contentDescription = stringResource(id = R.string.nav_settings_title)
+            )
+        }
     )
 }
 
