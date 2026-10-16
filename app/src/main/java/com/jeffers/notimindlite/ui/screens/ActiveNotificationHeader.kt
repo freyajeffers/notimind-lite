@@ -36,9 +36,6 @@ import kotlinx.coroutines.launch
 @Composable
 internal fun activeNotificationHeader(config: com.jeffers.notimindlite.ui.screens.LogNotificationCardConfig) {
     val item = config.item
-    val dao = config.dao
-    val context = androidx.compose.ui.platform.LocalContext.current
-    val scope = rememberCoroutineScope()
 
     Row(
         modifier = Modifier.fillMaxWidth(),
@@ -59,51 +56,91 @@ internal fun activeNotificationHeader(config: com.jeffers.notimindlite.ui.screen
             )
         }
 
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            TooltipBox(
-                positionProvider = TooltipDefaults.rememberTooltipPositionProvider(
-                    androidx.compose.material3.TooltipAnchorPosition.Above
-                ),
-                tooltip = { PlainTooltip { Text(if (item.isPinned) "Unpin notification" else "Pin notification") } },
-                state = rememberTooltipState()
-            ) {
-                IconButton(onClick = { scope.launch { dao.updatePinnedStatus(item.key, !item.isPinned) } }, modifier = Modifier.size(24.dp)) {
-                    Icon(
-                        imageVector = if (item.isPinned) Icons.Default.Bookmark else Icons.Outlined.BookmarkBorder,
-                        contentDescription = if (item.isPinned) "Unpin" else "Pin",
-                        tint = if (item.isPinned) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-            }
+        notificationHeaderActions(config)
+    }
+}
 
-            Spacer(modifier = Modifier.width(6.dp))
-            if (item.isDismissed) {
-                Surface(
-                    color = MaterialTheme.colorScheme.secondary.copy(alpha = 0.2f),
-                    shape = MaterialTheme.shapes.extraSmall
-                ) {
-                    Text(
-                        text = stringResource(id = getReasonLabel(item.dismissReason)),
-                        fontSize = 10.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.secondary,
-                        modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
-                    )
-                }
-                Spacer(modifier = Modifier.width(6.dp))
-            }
+@Composable
+private fun notificationHeaderActions(config: LogNotificationCardConfig) {
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        notificationPinButton(config)
+        Spacer(modifier = Modifier.width(6.dp))
+        notificationDismissedStatus(config.item)
+        if (config.item.isDismissed) Spacer(modifier = Modifier.width(6.dp))
+        notificationOpenButton(config.item)
+    }
+}
 
-            TooltipBox(
-                positionProvider = TooltipDefaults.rememberTooltipPositionProvider(
-                    androidx.compose.material3.TooltipAnchorPosition.Above
-                ),
-                tooltip = { PlainTooltip { Text("Open notification") } },
-                state = rememberTooltipState()
-            ) {
-                IconButton(onClick = { com.jeffers.notimindlite.util.NotificationLauncher.launchNotification(context, item.packageName, item.key, item.intentUri) }, modifier = Modifier.size(24.dp)) {
-                    Icon(imageVector = Icons.AutoMirrored.Filled.OpenInNew, contentDescription = "Open notification")
+@Composable
+private fun notificationPinButton(config: LogNotificationCardConfig) {
+    val item = config.item
+    val scope = rememberCoroutineScope()
+    TooltipBox(
+        positionProvider = TooltipDefaults.rememberTooltipPositionProvider(
+            androidx.compose.material3.TooltipAnchorPosition.Above
+        ),
+        tooltip = { PlainTooltip { Text(if (item.isPinned) "Unpin notification" else "Pin notification") } },
+        state = rememberTooltipState()
+    ) {
+        IconButton(
+            onClick = { scope.launch { config.dao.updatePinnedStatus(item.key, !item.isPinned) } },
+            modifier = Modifier.size(24.dp)
+        ) {
+            Icon(
+                imageVector = if (item.isPinned) Icons.Default.Bookmark else Icons.Outlined.BookmarkBorder,
+                contentDescription = if (item.isPinned) "Unpin" else "Pin",
+                tint = if (item.isPinned) {
+                    MaterialTheme.colorScheme.primary
+                } else {
+                    MaterialTheme.colorScheme.onSurfaceVariant
                 }
-            }
+            )
+        }
+    }
+}
+
+@Composable
+private fun notificationDismissedStatus(item: com.jeffers.notimindlite.data.local.NotificationEntity) {
+    if (!item.isDismissed) return
+    Surface(
+        color = MaterialTheme.colorScheme.secondary.copy(alpha = 0.2f),
+        shape = MaterialTheme.shapes.extraSmall
+    ) {
+        Text(
+            text = stringResource(id = getReasonLabel(item.dismissReason)),
+            fontSize = 10.sp,
+            fontWeight = FontWeight.Bold,
+            color = MaterialTheme.colorScheme.secondary,
+            modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+        )
+    }
+}
+
+@Composable
+private fun notificationOpenButton(item: com.jeffers.notimindlite.data.local.NotificationEntity) {
+    val context = androidx.compose.ui.platform.LocalContext.current
+    TooltipBox(
+        positionProvider = TooltipDefaults.rememberTooltipPositionProvider(
+            androidx.compose.material3.TooltipAnchorPosition.Above
+        ),
+        tooltip = { PlainTooltip { Text("Open notification") } },
+        state = rememberTooltipState()
+    ) {
+        IconButton(
+            onClick = {
+                com.jeffers.notimindlite.util.NotificationLauncher.launchNotification(
+                    context,
+                    item.packageName,
+                    item.key,
+                    item.intentUri
+                )
+            },
+            modifier = Modifier.size(24.dp)
+        ) {
+            Icon(
+                imageVector = Icons.AutoMirrored.Filled.OpenInNew,
+                contentDescription = "Open notification"
+            )
         }
     }
 }
