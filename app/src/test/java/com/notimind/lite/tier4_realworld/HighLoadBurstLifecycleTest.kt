@@ -58,7 +58,8 @@ class HighLoadBurstLifecycleTest : BaseRobolectricTest() {
                     "INSERT INTO notifications (key, packageName, appName, title, content, postTime, "
                         + "lastUpdatedTime, updateCount, isDismissed, isPinned, isPersistent, isRead, "
                         + "isGroupSummary, priority, isOngoing, isClearable, actionsCount, smallIconRes, "
-                        + "syncStatus, lastSyncedAt) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
+                        + "syncStatus, lastSyncedAt) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, "
+                        + "?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
                 )
                 val stmt = db.compileStatement(notifSql)
                 for (i in 1..count) {
