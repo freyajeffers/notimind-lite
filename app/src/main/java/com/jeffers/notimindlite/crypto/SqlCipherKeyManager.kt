@@ -31,11 +31,11 @@ object SqlCipherKeyManager {
         val encoded = prefs.getString(VALUE, null)
         if (encoded != null) {
             val payload = Base64.decode(encoded, Base64.NO_WRAP)
-            return if (useKeystore) decrypt(appContext, databaseName, payload) else payload
+            return if (useKeystore) decrypt(databaseName, payload) else payload
         }
 
         val passphrase = ByteArray(PASSPHRASE_BYTES).also { java.security.SecureRandom().nextBytes(it) }
-        val encrypted = if (useKeystore) encrypt(appContext, databaseName, passphrase) else passphrase
+        val encrypted = if (useKeystore) encrypt(databaseName, passphrase) else passphrase
         check(prefs.edit().putString(VALUE, Base64.encodeToString(encrypted, Base64.NO_WRAP)).commit()) {
             "Unable to persist SQLCipher passphrase"
         }
@@ -95,7 +95,7 @@ object SqlCipherKeyManager {
         }
     }
 
-    private fun encrypt(context: Context, databaseName: String, plaintext: ByteArray): ByteArray {
+    private fun encrypt(databaseName: String, plaintext: ByteArray): ByteArray {
         val cipher = Cipher.getInstance(TRANSFORMATION)
         cipher.init(Cipher.ENCRYPT_MODE, keyFor(databaseName))
         val ciphertext = cipher.doFinal(plaintext)
@@ -105,7 +105,7 @@ object SqlCipherKeyManager {
             .array()
     }
 
-    private fun decrypt(context: Context, databaseName: String, payload: ByteArray): ByteArray {
+    private fun decrypt(databaseName: String, payload: ByteArray): ByteArray {
         require(payload.size > IV_BYTES) { "Invalid SQLCipher key payload" }
         val iv = payload.copyOfRange(0, IV_BYTES)
         val ciphertext = payload.copyOfRange(IV_BYTES, payload.size)

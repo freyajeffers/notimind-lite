@@ -209,7 +209,7 @@ class NotificationLoggerService : NotificationListenerService() {
         val entity = extractNotificationEntity(sbn)
         if (entity != null) {
             registerNotificationActions(sbn, entity.key)
-            actionExecutor.executeOnNotification(applicationContext, entity.key, entity.packageName, entity.title)
+            actionExecutor.executeOnNotification(entity.key, entity.packageName, entity.title)
             scope.launch {
                 try {
                     val dao = getDb().notificationDao()

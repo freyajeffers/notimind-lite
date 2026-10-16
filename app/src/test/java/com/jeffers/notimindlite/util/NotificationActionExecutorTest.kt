@@ -32,6 +32,6 @@ class NotificationActionExecutorTest {
         preferences.setAutoActOnNotification(false)
         preferences.setAutoExecuteRules(emptyList())
         val executor = NotificationActionExecutor(preferences)
-        assertFalse(executor.executeOnNotification(context, "missing", "com.chat", "hello"))
+        assertFalse(executor.executeOnNotification("missing", "com.chat", "hello"))
     }
 }

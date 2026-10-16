@@ -9,11 +9,10 @@ import com.jeffers.notimindlite.service.NotificationLoggerService
 class NotificationActionExecutor(
     private val preferences: PreferencesRepository
 ) {
-    fun executeOnNotification(context: Context, key: String, packageName: String, title: String): Boolean {
+    fun executeOnNotification(key: String, packageName: String, title: String): Boolean {
         val rule = matchingRule(packageName, title)
-        if (rule != null) return NotificationLauncher.triggerAction(key, rule.actionIndex)
-        if (!preferences.autoActOnNotification.value) return false
-        return NotificationLauncher.triggerAction(key, 0)
+        val actionIndex = rule?.actionIndex ?: if (preferences.autoActOnNotification.value) 0 else return false
+        return NotificationLauncher.triggerAction(key, actionIndex)
     }
 
     fun executeLongPress(context: Context, key: String, packageName: String): Boolean = when (preferences.longPressAction.value) {
