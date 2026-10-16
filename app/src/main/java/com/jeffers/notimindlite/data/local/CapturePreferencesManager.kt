@@ -5,6 +5,8 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 
+import android.content.SharedPreferences
+
 class CapturePreferencesManager(context: Context, private val profileManager: ProfilePreferencesManager) {
     private val appContext = context.applicationContext
     private val preferences get() = appContext.createDeviceProtectedStorageContext()
@@ -13,8 +15,8 @@ class CapturePreferencesManager(context: Context, private val profileManager: Pr
     private val _foregroundOnly = MutableStateFlow(preferences.getBoolean(KEY_FOREGROUND_ONLY, false))
     private val _attachments = MutableStateFlow(preferences.getBoolean(KEY_ATTACHMENTS, true))
     private val _ongoing = MutableStateFlow(preferences.getBoolean(KEY_ONGOING, true))
-    private val _allowlist = MutableStateFlow(readString(KEY_ALLOWLIST, "config_capture_allowlist"))
-    private val _blocklist = MutableStateFlow(readString(KEY_BLOCKLIST, "config_capture_blocklist"))
+    private val _allowlist = MutableStateFlow(readString(preferences, KEY_ALLOWLIST, "config_capture_allowlist"))
+    private val _blocklist = MutableStateFlow(readString(preferences, KEY_BLOCKLIST, "config_capture_blocklist"))
     private val _minImportance = MutableStateFlow(preferences.getInt(KEY_MIN_IMPORTANCE, 0))
     private val _actionsOnly = MutableStateFlow(preferences.getBoolean(KEY_ACTIONS_ONLY, false))
 
@@ -32,34 +34,20 @@ class CapturePreferencesManager(context: Context, private val profileManager: Pr
         _foregroundOnly.value = preferences.getBoolean(KEY_FOREGROUND_ONLY, false)
         _attachments.value = preferences.getBoolean(KEY_ATTACHMENTS, true)
         _ongoing.value = preferences.getBoolean(KEY_ONGOING, true)
-        _allowlist.value = readString(KEY_ALLOWLIST, "config_capture_allowlist")
-        _blocklist.value = readString(KEY_BLOCKLIST, "config_capture_blocklist")
+        _allowlist.value = readString(preferences, KEY_ALLOWLIST, "config_capture_allowlist")
+        _blocklist.value = readString(preferences, KEY_BLOCKLIST, "config_capture_blocklist")
         _minImportance.value = preferences.getInt(KEY_MIN_IMPORTANCE, 0)
         _actionsOnly.value = preferences.getBoolean(KEY_ACTIONS_ONLY, false)
     }
 
-    fun setEnabled(value: Boolean) = update(KEY_ENABLED, value) { _enabled.value = value }
-    fun setForegroundOnly(value: Boolean) = update(KEY_FOREGROUND_ONLY, value) { _foregroundOnly.value = value }
-    fun setAttachments(value: Boolean) = update(KEY_ATTACHMENTS, value) { _attachments.value = value }
-    fun setOngoing(value: Boolean) = update(KEY_ONGOING, value) { _ongoing.value = value }
-    fun setAllowlist(value: String) = update(KEY_ALLOWLIST, value) { _allowlist.value = value }
-    fun setBlocklist(value: String) = update(KEY_BLOCKLIST, value) { _blocklist.value = value }
-    fun setMinImportance(value: Int) = update(KEY_MIN_IMPORTANCE, value) { _minImportance.value = value }
-    fun setActionsOnly(value: Boolean) = update(KEY_ACTIONS_ONLY, value) { _actionsOnly.value = value }
-
-    private fun readString(key: String, legacyKey: String): String =
-        preferences.getString(key, preferences.getString(legacyKey, "")) ?: ""
-
-    private inline fun <reified T> update(key: String, value: T, state: () -> Unit) {
-        val editor = preferences.edit()
-        when (value) {
-            is Boolean -> editor.putBoolean(key, value)
-            is Int -> editor.putInt(key, value)
-            is String -> editor.putString(key, value)
-        }
-        editor.apply()
-        state()
-    }
+    fun setEnabled(value: Boolean) = prefsUpdate(preferences, KEY_ENABLED, value) { _enabled.value = value }
+    fun setForegroundOnly(value: Boolean) = prefsUpdate(preferences, KEY_FOREGROUND_ONLY, value) { _foregroundOnly.value = value }
+    fun setAttachments(value: Boolean) = prefsUpdate(preferences, KEY_ATTACHMENTS, value) { _attachments.value = value }
+    fun setOngoing(value: Boolean) = prefsUpdate(preferences, KEY_ONGOING, value) { _ongoing.value = value }
+    fun setAllowlist(value: String) = prefsUpdate(preferences, KEY_ALLOWLIST, value) { _allowlist.value = value }
+    fun setBlocklist(value: String) = prefsUpdate(preferences, KEY_BLOCKLIST, value) { _blocklist.value = value }
+    fun setMinImportance(value: Int) = prefsUpdate(preferences, KEY_MIN_IMPORTANCE, value) { _minImportance.value = value }
+    fun setActionsOnly(value: Boolean) = prefsUpdate(preferences, KEY_ACTIONS_ONLY, value) { _actionsOnly.value = value }
 
     private companion object {
         const val KEY_ENABLED = "config_capture_notifications"
@@ -71,4 +59,18 @@ class CapturePreferencesManager(context: Context, private val profileManager: Pr
         const val KEY_MIN_IMPORTANCE = "config_min_importance"
         const val KEY_ACTIONS_ONLY = "config_capture_actions_only"
     }
+}
+
+private fun readString(preferences: SharedPreferences, key: String, legacyKey: String): String =
+    preferences.getString(key, preferences.getString(legacyKey, "")) ?: ""
+
+private inline fun <reified T> prefsUpdate(preferences: SharedPreferences, key: String, value: T, state: () -> Unit) {
+    val editor = preferences.edit()
+    when (value) {
+        is Boolean -> editor.putBoolean(key, value)
+        is Int -> editor.putInt(key, value)
+        is String -> editor.putString(key, value)
+    }
+    editor.apply()
+    state()
 }
