@@ -48,25 +48,23 @@ fun speedDialSettingsFab(
 ) {
     var expanded by remember { mutableStateOf(false) }
 
-    SpeedDialFabContent(
+    speedDialFabContent(
         expanded = expanded,
-        onToggle = { expanded = !expanded },
-        onClose = { expanded = false },
-        onSyncClick = onSyncClick,
-        onBackupClick = onBackupClick,
-        onSettingsClick = onSettingsClick,
+        callbacks = SpeedDialCallbacks(
+            onToggle = { expanded = !expanded },
+            onClose = { expanded = false },
+            onSyncClick = onSyncClick,
+            onBackupClick = onBackupClick,
+            onSettingsClick = onSettingsClick
+        ),
         modifier = modifier
     )
 }
 
 @Composable
-private fun SpeedDialFabContent(
+private fun speedDialFabContent(
     expanded: Boolean,
-    onToggle: () -> Unit,
-    onClose: () -> Unit,
-    onSyncClick: () -> Unit,
-    onBackupClick: () -> Unit,
-    onSettingsClick: () -> Unit,
+    callbacks: SpeedDialCallbacks,
     modifier: Modifier = Modifier
 ) {
     val animationSpec = spring<Float>(
@@ -95,15 +93,15 @@ private fun SpeedDialFabContent(
         if (expanded || scale > 0f) {
             speedDialActions(
                 scale = scale,
-                close = onClose,
-                onSyncClick = onSyncClick,
-                onBackupClick = onBackupClick,
-                onSettingsClick = onSettingsClick
+                close = callbacks.onClose,
+                onSyncClick = callbacks.onSyncClick,
+                onBackupClick = callbacks.onBackupClick,
+                onSettingsClick = callbacks.onSettingsClick
             )
         }
 
         FloatingActionButton(
-            onClick = onToggle,
+            onClick = callbacks.onToggle,
             modifier = Modifier.rotate(rotation),
             containerColor = MaterialTheme.colorScheme.primary,
             contentColor = MaterialTheme.colorScheme.onPrimary
@@ -124,6 +122,14 @@ private fun SpeedDialFabContent(
         }
     }
 }
+
+private data class SpeedDialCallbacks(
+    val onToggle: () -> Unit,
+    val onClose: () -> Unit,
+    val onSyncClick: () -> Unit,
+    val onBackupClick: () -> Unit,
+    val onSettingsClick: () -> Unit
+)
 
 @Composable
 private fun speedDialActions(
