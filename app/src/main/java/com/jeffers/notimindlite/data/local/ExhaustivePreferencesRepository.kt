@@ -76,14 +76,90 @@ class ExhaustivePreferencesRepository(context: Context) {
         bool(KEY_REDACT_CARDS, true)
         int(KEY_RAW_HOLD_DAYS, 0)
         bool(KEY_EXPORT_PII_CONFIRM, true)
-        bool(KEY_SHOW_APP_ICONS, true); bool(KEY_COMPACT_MODE, false); text(KEY_SORT_ORDER, "newest"); bool(KEY_GROUP_BY_APP, false); bool(KEY_SHOW_DISMISSED_BADGE, true); int(KEY_PREVIEW_LENGTH, 240); text(KEY_THEME_ACCENT, "default"); bool(KEY_DYNAMIC_THEME, true)
-        bool(KEY_CONFIRM_EXTERNAL_INTENT, true); bool(KEY_OPEN_IN_APP, false); bool(KEY_AUTO_ACT_ON_NOTIFICATION, false); text(KEY_DEFAULT_REPLY_METHOD, "system"); text(KEY_LONG_PRESS_ACTION, "menu")
-        int(KEY_CLEANUP_HOUR, 3); int(KEY_DB_COMPACT_DAYS, 30); int(KEY_REINDEX_DAYS, 7); bool(KEY_AUTO_REEMBED, false); text(KEY_EXPORT_CRON, "")
-        bool(KEY_USE_KEYSTORE, true); bool(KEY_DB_ENCRYPTED, true); text(KEY_DB_KEY_MODE, "keystore"); bool(KEY_APP_LOCK_ENABLED, false); bool(KEY_EXPORT_REQUIRES_BIOMETRIC, false)
-        int(KEY_VECTOR_CACHE_MAX, 1000); int(KEY_EMBEDDING_RATE_MS, 100); int(KEY_THREAD_POOL_SIZE, 2); bool(KEY_LOW_MEMORY_MODE, false); int(KEY_ICON_CACHE_SIZE, 128)
-        bool(KEY_ENABLE_TELEMETRY, true); text(KEY_TELEMETRY_LEVEL, "minimal"); text(KEY_FEATURE_FLAGS_URL, ""); bool(KEY_MOCK_DATA_ENABLED, false); text(KEY_TEST_MODE_FLAGS, ""); text(KEY_LOG_LEVEL, "info"); bool(KEY_CRASH_REPORTING, true)
-        text(KEY_KEY_DERIVATION, "HKDF-SHA256"); bool(KEY_USE_FTS5, false); bool(KEY_OFFLOAD_EMBEDDINGS, false); text(KEY_ACTIVE_PROFILE, "default"); bool(KEY_VECTOR_GPU, false); int(KEY_AUDIT_SAMPLING_PCT, 100)
+        // Apply grouped defaults via helpers to keep this method within length limits.
+        applyDisplayDefaults(backing, edit)
+        applyActionDefaults(backing, edit)
+        applyAutomationDefaults(backing, edit)
+        applySecurityDefaults(backing, edit)
+        applyPerformanceDefaults(backing, edit)
+        applyDevDefaults(backing, edit)
+        applyAdvancedDefaults(backing, edit)
+
         edit.apply()
+    }
+
+    private fun putIfAbsentBoolean(backing: android.content.SharedPreferences, edit: android.content.SharedPreferences.Editor, key: String, value: Boolean) {
+        if (!backing.contains(key)) edit.putBoolean(key, value)
+    }
+
+    private fun putIfAbsentInt(backing: android.content.SharedPreferences, edit: android.content.SharedPreferences.Editor, key: String, value: Int) {
+        if (!backing.contains(key)) edit.putInt(key, value)
+    }
+
+    private fun putIfAbsentText(backing: android.content.SharedPreferences, edit: android.content.SharedPreferences.Editor, key: String, value: String) {
+        if (!backing.contains(key)) edit.putString(key, value)
+    }
+
+    private fun applyDisplayDefaults(backing: android.content.SharedPreferences, edit: android.content.SharedPreferences.Editor) {
+        putIfAbsentBoolean(backing, edit, KEY_SHOW_APP_ICONS, true)
+        putIfAbsentBoolean(backing, edit, KEY_COMPACT_MODE, false)
+        putIfAbsentText(backing, edit, KEY_SORT_ORDER, "newest")
+        putIfAbsentBoolean(backing, edit, KEY_GROUP_BY_APP, false)
+        putIfAbsentBoolean(backing, edit, KEY_SHOW_DISMISSED_BADGE, true)
+        putIfAbsentInt(backing, edit, KEY_PREVIEW_LENGTH, 240)
+        putIfAbsentText(backing, edit, KEY_THEME_ACCENT, "default")
+        putIfAbsentBoolean(backing, edit, KEY_DYNAMIC_THEME, true)
+    }
+
+    private fun applyActionDefaults(backing: android.content.SharedPreferences, edit: android.content.SharedPreferences.Editor) {
+        putIfAbsentBoolean(backing, edit, KEY_CONFIRM_EXTERNAL_INTENT, true)
+        putIfAbsentBoolean(backing, edit, KEY_OPEN_IN_APP, false)
+        putIfAbsentBoolean(backing, edit, KEY_AUTO_ACT_ON_NOTIFICATION, false)
+        putIfAbsentText(backing, edit, KEY_DEFAULT_REPLY_METHOD, "system")
+        putIfAbsentText(backing, edit, KEY_LONG_PRESS_ACTION, "menu")
+    }
+
+    private fun applyAutomationDefaults(backing: android.content.SharedPreferences, edit: android.content.SharedPreferences.Editor) {
+        putIfAbsentInt(backing, edit, KEY_CLEANUP_HOUR, 3)
+        putIfAbsentInt(backing, edit, KEY_DB_COMPACT_DAYS, 30)
+        putIfAbsentInt(backing, edit, KEY_REINDEX_DAYS, 7)
+        putIfAbsentBoolean(backing, edit, KEY_AUTO_REEMBED, false)
+        putIfAbsentText(backing, edit, KEY_EXPORT_CRON, "")
+    }
+
+    private fun applySecurityDefaults(backing: android.content.SharedPreferences, edit: android.content.SharedPreferences.Editor) {
+        putIfAbsentBoolean(backing, edit, KEY_USE_KEYSTORE, true)
+        putIfAbsentBoolean(backing, edit, KEY_DB_ENCRYPTED, true)
+        putIfAbsentText(backing, edit, KEY_DB_KEY_MODE, "keystore")
+        putIfAbsentBoolean(backing, edit, KEY_APP_LOCK_ENABLED, false)
+        putIfAbsentBoolean(backing, edit, KEY_EXPORT_REQUIRES_BIOMETRIC, false)
+    }
+
+    private fun applyPerformanceDefaults(backing: android.content.SharedPreferences, edit: android.content.SharedPreferences.Editor) {
+        putIfAbsentInt(backing, edit, KEY_VECTOR_CACHE_MAX, 1000)
+        putIfAbsentInt(backing, edit, KEY_EMBEDDING_RATE_MS, 100)
+        putIfAbsentInt(backing, edit, KEY_THREAD_POOL_SIZE, 2)
+        putIfAbsentBoolean(backing, edit, KEY_LOW_MEMORY_MODE, false)
+        putIfAbsentInt(backing, edit, KEY_ICON_CACHE_SIZE, 128)
+    }
+
+    private fun applyDevDefaults(backing: android.content.SharedPreferences, edit: android.content.SharedPreferences.Editor) {
+        putIfAbsentBoolean(backing, edit, KEY_ENABLE_TELEMETRY, true)
+        putIfAbsentText(backing, edit, KEY_TELEMETRY_LEVEL, "minimal")
+        putIfAbsentText(backing, edit, KEY_FEATURE_FLAGS_URL, "")
+        putIfAbsentBoolean(backing, edit, KEY_MOCK_DATA_ENABLED, false)
+        putIfAbsentText(backing, edit, KEY_TEST_MODE_FLAGS, "")
+        putIfAbsentText(backing, edit, KEY_LOG_LEVEL, "info")
+        putIfAbsentBoolean(backing, edit, KEY_CRASH_REPORTING, true)
+    }
+
+    private fun applyAdvancedDefaults(backing: android.content.SharedPreferences, edit: android.content.SharedPreferences.Editor) {
+        putIfAbsentText(backing, edit, KEY_KEY_DERIVATION, "HKDF-SHA256")
+        putIfAbsentBoolean(backing, edit, KEY_USE_FTS5, false)
+        putIfAbsentBoolean(backing, edit, KEY_OFFLOAD_EMBEDDINGS, false)
+        putIfAbsentText(backing, edit, KEY_ACTIVE_PROFILE, "default")
+        putIfAbsentBoolean(backing, edit, KEY_VECTOR_GPU, false)
+        putIfAbsentInt(backing, edit, KEY_AUDIT_SAMPLING_PCT, 100)
     }
 
     companion object {
