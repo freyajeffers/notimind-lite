@@ -26,17 +26,24 @@ object PiiRedactionEngine {
     // Public API: return sanitized string, or null to indicate a fail-closed drop.
     // Deterministic: same input -> same output.
     fun redact(input: String?): String? {
-        if (input == null) return null
-        var out = input
+        // Fail-closed flag: when true the final result must be null
+        var failClosed = false
+        var out = input ?: run {
+            // treat null input as a fail-closed drop but continue to the unified return
+            failClosed = true
+            ""
+        }
 
-        // Quick rejection: if the entire string looks like a single CC or OTP, drop (fail-closed)
+        // Quick rejection: if the entire string looks like a single CC or OTP, mark for drop
         val trimmed = out.trim()
-        if (ccCandidateRegex.matches(trimmed)) {
-            // If it's a single numeric token that is a valid CC (Luhn), drop
+        if (trimmed.isNotEmpty() && ccCandidateRegex.matches(trimmed)) {
             val digitsOnly = trimmed.filter { it.isDigit() }
-            if (isValidLuhn(digitsOnly)) return null
-            // otherwise mask
-            out = out.replace(ccCandidateRegex, CC_REPLACEMENT)
+            if (isValidLuhn(digitsOnly)) {
+                failClosed = true
+            } else {
+                // otherwise mask in-place
+                out = out.replace(ccCandidateRegex, CC_REPLACEMENT)
+            }
         }
 
         // Replace credit-card-like sequences within text (mask if Luhn-valid)
@@ -59,7 +66,7 @@ object PiiRedactionEngine {
         out = out.replace(Regex("""\[REDACTED-PHONE\][\s\p{Punct}]*\[REDACTED-OTP\]"""), PHONE_REPLACEMENT)
 
         // Ensure CSV-safe output: remove newlines and double embedded quotes
-        return escapeForCsv(out)
+        return if (failClosed) null else escapeForCsv(out)
     }
 
     // Escape field for inclusion in a CSV cell: double quotes and remove newlines
