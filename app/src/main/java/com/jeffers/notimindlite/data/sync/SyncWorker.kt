@@ -22,7 +22,7 @@ class SyncWorker(
     override suspend fun doWork(): Result {
         val db = AppDatabase.getDatabase(applicationContext)
         val preferences = PreferencesRepository(applicationContext)
-        return if (preferences.useSupabaseSync.value) {
+        return if (preferences.syncManager.useSupabaseSync.value) {
             syncSupabase(db, preferences)
         } else {
             syncFirebase(db, preferences)
@@ -50,7 +50,7 @@ class SyncWorker(
 
     private suspend fun finishSync(preferences: PreferencesRepository, result: kotlin.Result<Int>): Result {
         return if (result.isSuccess) {
-            preferences.setLastSyncTs(System.currentTimeMillis())
+            preferences.syncManager.setLastSyncTs(System.currentTimeMillis())
             Result.success()
         } else {
             Result.retry()

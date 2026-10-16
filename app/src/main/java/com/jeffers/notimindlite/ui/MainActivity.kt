@@ -201,7 +201,7 @@ class MainActivity : ComponentActivity() {
     private suspend fun restoreSettingsAfterLogin(preferences: PreferencesRepository) {
         val session = authManager.session.value
         if (!session.isAuthenticated || session.uid == null) return
-        val result = if (preferences.useSupabaseSync.value) {
+        val result = if (preferences.syncManager.useSupabaseSync.value) {
             com.jeffers.notimindlite.data.sync.SupabaseSettingsSyncRepository(
                 com.jeffers.notimindlite.data.auth.SupabaseAuthManager(applicationContext)
             ).restoreOrUpload(preferences, session.uid)

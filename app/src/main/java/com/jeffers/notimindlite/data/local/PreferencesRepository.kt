@@ -25,6 +25,7 @@ class PreferencesRepository(context: Context) :
     val sharedSearchManager = SharedSearchStateManager(context, profileManager)
     val automationManager = AutomationPreferencesManager(context, profileManager)
     val captureManager = CapturePreferencesManager(context, profileManager)
+    val syncManager = SyncPreferencesManager(context, profileManager)
     private val backing: android.content.SharedPreferences
         get() = deContext.getSharedPreferences(profileManager.activePreferencesName, Context.MODE_PRIVATE)
 
@@ -36,6 +37,7 @@ class PreferencesRepository(context: Context) :
             sharedSearchManager.reload()
             automationManager.reload()
             captureManager.reload()
+            syncManager.reload()
         }
     }
 
@@ -157,17 +159,6 @@ class PreferencesRepository(context: Context) :
     val dbEncrypted: StateFlow<Boolean> = _dbEncrypted
     val dbEncryptionMode: StateFlow<DbEncryptionMode> = _dbEncryptionMode
 
-    private val _syncInterval = MutableStateFlow(backing.getInt("config_sync_interval_min", 360))
-    private val _syncWifiOnly = MutableStateFlow(backing.getBoolean("config_sync_wifi_only", true))
-    private val _syncChargingOnly = MutableStateFlow(backing.getBoolean("config_sync_charging_only", true))
-    private val _lastSyncTs = MutableStateFlow(backing.getLong("config_last_sync_ts", 0L))
-    private val _useSupabaseSync = MutableStateFlow(backing.getBoolean("config_use_supabase_sync", true))
-    val syncInterval: StateFlow<Int> = _syncInterval
-    val syncWifiOnly: StateFlow<Boolean> = _syncWifiOnly
-    val syncChargingOnly: StateFlow<Boolean> = _syncChargingOnly
-    val lastSyncTs: StateFlow<Long> = _lastSyncTs
-    val useSupabaseSync: StateFlow<Boolean> = _useSupabaseSync
-
 
     private val _autoActOnNotification = MutableStateFlow(
         backing.getBoolean(KEY_AUTO_ACT_ON_NOTIFICATION, false)
@@ -244,10 +235,6 @@ class PreferencesRepository(context: Context) :
             backing.getString(KEY_DB_ENCRYPTION_MODE, DbEncryptionMode.KEYSTORE.persisted)
         )
 
-        _syncInterval.value = backing.getInt("config_sync_interval_min", 360)
-        _syncWifiOnly.value = backing.getBoolean("config_sync_wifi_only", true)
-        _syncChargingOnly.value = backing.getBoolean("config_sync_charging_only", true)
-        _lastSyncTs.value = backing.getLong("config_last_sync_ts", 0L)
 
         _autoActOnNotification.value = backing.getBoolean(KEY_AUTO_ACT_ON_NOTIFICATION, false)
 
@@ -300,34 +287,6 @@ class PreferencesRepository(context: Context) :
     fun setDbEncryptionMode(value: DbEncryptionMode) {
         backing.edit().putString(KEY_DB_ENCRYPTION_MODE, value.persisted).apply()
         _dbEncryptionMode.value = value
-    }
-    fun setSyncInterval(v: Int) {
-        val n = v.coerceIn(15, 1440)
-        backing.edit().putInt("config_sync_interval_min", n).apply()
-        _syncInterval.value = n
-    }
-
-    fun setSyncWifiOnly(v: Boolean) {
-        backing.edit().putBoolean("config_sync_wifi_only", v).apply()
-        _syncWifiOnly.value = v
-    }
-
-    fun setSyncChargingOnly(v: Boolean) {
-        backing.edit().putBoolean("config_sync_charging_only", v).apply()
-        _syncChargingOnly.value = v
-    }
-
-    fun setLastSyncTs(v: Long) {
-        backing.edit().putLong("config_last_sync_ts", v).apply()
-        _lastSyncTs.value = v
-    }
-    fun refreshLastSyncTs() {
-        _lastSyncTs.value = backing.getLong("config_last_sync_ts", 0L)
-    }
-
-    fun setUseSupabaseSync(v: Boolean) {
-        backing.edit().putBoolean("config_use_supabase_sync", v).apply()
-        _useSupabaseSync.value = v
     }
 
     /** Export only user-facing settings; auth tokens and local sync metadata are excluded. */

@@ -40,14 +40,29 @@ class CapturePreferencesManager(context: Context, private val profileManager: Pr
         _actionsOnly.value = preferences.getBoolean(KEY_ACTIONS_ONLY, false)
     }
 
-    fun setEnabled(value: Boolean) = prefsUpdate(preferences, KEY_ENABLED, value) { _enabled.value = value }
-    fun setForegroundOnly(value: Boolean) = prefsUpdate(preferences, KEY_FOREGROUND_ONLY, value) { _foregroundOnly.value = value }
-    fun setAttachments(value: Boolean) = prefsUpdate(preferences, KEY_ATTACHMENTS, value) { _attachments.value = value }
-    fun setOngoing(value: Boolean) = prefsUpdate(preferences, KEY_ONGOING, value) { _ongoing.value = value }
-    fun setAllowlist(value: String) = prefsUpdate(preferences, KEY_ALLOWLIST, value) { _allowlist.value = value }
-    fun setBlocklist(value: String) = prefsUpdate(preferences, KEY_BLOCKLIST, value) { _blocklist.value = value }
-    fun setMinImportance(value: Int) = prefsUpdate(preferences, KEY_MIN_IMPORTANCE, value) { _minImportance.value = value }
-    fun setActionsOnly(value: Boolean) = prefsUpdate(preferences, KEY_ACTIONS_ONLY, value) { _actionsOnly.value = value }
+    fun setEnabled(value: Boolean) =
+        prefsUpdate(preferences, KEY_ENABLED, value) { _enabled.value = value }
+
+    fun setForegroundOnly(value: Boolean) =
+        prefsUpdate(preferences, KEY_FOREGROUND_ONLY, value) { _foregroundOnly.value = value }
+
+    fun setAttachments(value: Boolean) =
+        prefsUpdate(preferences, KEY_ATTACHMENTS, value) { _attachments.value = value }
+
+    fun setOngoing(value: Boolean) =
+        prefsUpdate(preferences, KEY_ONGOING, value) { _ongoing.value = value }
+
+    fun setAllowlist(value: String) =
+        prefsUpdate(preferences, KEY_ALLOWLIST, value) { _allowlist.value = value }
+
+    fun setBlocklist(value: String) =
+        prefsUpdate(preferences, KEY_BLOCKLIST, value) { _blocklist.value = value }
+
+    fun setMinImportance(value: Int) =
+        prefsUpdate(preferences, KEY_MIN_IMPORTANCE, value) { _minImportance.value = value }
+
+    fun setActionsOnly(value: Boolean) =
+        prefsUpdate(preferences, KEY_ACTIONS_ONLY, value) { _actionsOnly.value = value }
 
     private companion object {
         const val KEY_ENABLED = "config_capture_notifications"
