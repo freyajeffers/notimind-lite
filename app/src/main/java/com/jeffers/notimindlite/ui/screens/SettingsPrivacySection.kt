@@ -47,43 +47,35 @@ fun settingsPrivacySection(preferencesRepository: PreferencesRepository) {
         Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
             Text(text = stringResource(R.string.pref_privacy_title), style = MaterialTheme.typography.titleMedium)
 
-            Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(stringResource(R.string.pref_auto_delete_title), style = MaterialTheme.typography.bodyLarge)
-                    Text(stringResource(R.string.pref_auto_delete_summary), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                }
-                Switch(
-                    checked = autoDelete, 
-                    onCheckedChange = { scope.launch { preferencesRepository.setAutoDeleteOnRead(it) } },
-                    enabled = !BuildConfig.DEBUG,
-                    modifier = Modifier
-                )
-            }
+            val autoDeleteTitle = stringResource(R.string.pref_auto_delete_title)
+            val autoDeleteSummary = stringResource(R.string.pref_auto_delete_summary)
+            preferenceToggleRow(
+                title = autoDeleteTitle,
+                summary = autoDeleteSummary,
+                checked = autoDelete,
+                onChanged = { scope.launch { preferencesRepository.setAutoDeleteOnRead(it) } },
+                enabled = !BuildConfig.DEBUG
+            )
 
-            Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(stringResource(R.string.pref_anonymize_title), style = MaterialTheme.typography.bodyLarge)
-                    Text(stringResource(R.string.pref_anonymize_summary), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                }
-                Switch(
-                    checked = anonymizeTitles, 
-                    onCheckedChange = { scope.launch { preferencesRepository.setAnonymizeTitles(it) } },
-                    enabled = !BuildConfig.DEBUG,
-                    modifier = Modifier
-                )
-            }
+            val anonymizeTitle = stringResource(R.string.pref_anonymize_title)
+            val anonymizeSummary = stringResource(R.string.pref_anonymize_summary)
+            preferenceToggleRow(
+                title = anonymizeTitle,
+                summary = anonymizeSummary,
+                checked = anonymizeTitles,
+                onChanged = { scope.launch { preferencesRepository.setAnonymizeTitles(it) } },
+                enabled = !BuildConfig.DEBUG
+            )
 
-            Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(stringResource(R.string.pref_redact_pii_title), style = MaterialTheme.typography.bodyLarge)
-                    Text(stringResource(R.string.pref_redact_pii_summary), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                }
-                Switch(
-                    checked = redactPii,
-                    onCheckedChange = { scope.launch { preferencesRepository.securityManager.setRedactPii(it) } },
-                    enabled = !BuildConfig.DEBUG
-                )
-            }
+            val redactTitle = stringResource(R.string.pref_redact_pii_title)
+            val redactSummary = stringResource(R.string.pref_redact_pii_summary)
+            preferenceToggleRow(
+                title = redactTitle,
+                summary = redactSummary,
+                checked = redactPii,
+                onChanged = { scope.launch { preferencesRepository.securityManager.setRedactPii(it) } },
+                enabled = !BuildConfig.DEBUG
+            )
 
             strictPrivacyRow(
                 enabled = strictPrivacyEnabled,
@@ -97,16 +89,32 @@ fun settingsPrivacySection(preferencesRepository: PreferencesRepository) {
 }
 
 @Composable
-private fun strictPrivacyRow(enabled: Boolean, onChanged: (Boolean) -> Unit) {
+private fun preferenceToggleRow(
+    title: String,
+    summary: String,
+    checked: Boolean,
+    onChanged: (Boolean) -> Unit,
+    enabled: Boolean = true
+) {
     Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
         Column(modifier = Modifier.weight(1f)) {
-            Text("Strict Privacy Mode", style = MaterialTheme.typography.bodyLarge)
+            Text(title, style = MaterialTheme.typography.bodyLarge)
             Text(
-                "Disable all crash reporting and anonymous usage telemetry.",
+                summary,
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
-        Switch(checked = enabled, onCheckedChange = onChanged)
+        Switch(checked = checked, onCheckedChange = onChanged, enabled = enabled)
     }
+}
+
+@Composable
+private fun strictPrivacyRow(enabled: Boolean, onChanged: (Boolean) -> Unit) {
+    preferenceToggleRow(
+        title = "Strict Privacy Mode",
+        summary = "Disable all crash reporting and anonymous usage telemetry.",
+        checked = enabled,
+        onChanged = onChanged
+    )
 }
