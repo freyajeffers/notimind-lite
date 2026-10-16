@@ -31,7 +31,6 @@ object DatabaseExporter {
      * When [passphrase] is supplied, the backup is wrapped so it can be restored on
      * other devices or after app reinstall.
      */
-    @Suppress("ReturnCount")
     suspend fun performEncryptedBackup(
         context: Context,
         secretKey: SecretKey,
@@ -39,15 +38,15 @@ object DatabaseExporter {
     ): Result<File> {
         return try {
             val preferences = PreferencesRepository(context.applicationContext)
-            if (preferences.requirePassphrase.value && (passphrase == null || passphrase.isEmpty())) {
-                return Result.failure(IllegalArgumentException("A passphrase is required for encrypted exports"))
+            require(!preferences.requirePassphrase.value || passphrase != null && passphrase.isNotEmpty()) {
+                "A passphrase is required for encrypted exports"
             }
-            if (!NetworkUtils.isInternetAvailable(context)) {
-                return Result.failure(IllegalStateException("Active internet connection is required to create a backup"))
+            check(NetworkUtils.isInternetAvailable(context)) {
+                "Active internet connection is required to create a backup"
             }
 
             val dbFile = context.getDatabasePath("notifications.db")
-            if (!dbFile.exists()) return Result.failure(IllegalStateException("Database file not found"))
+            check(dbFile.exists()) { "Database file not found" }
 
             val backupFile = File(context.cacheDir, "notimind_backup_${System.currentTimeMillis()}.enc")
 
@@ -59,8 +58,8 @@ object DatabaseExporter {
                 passphrase = passphrase,
             )
 
-            if (success) Result.success(backupFile)
-            else Result.failure(Exception("Backup encryption or notary authorization failed"))
+            check(success) { "Backup encryption or notary authorization failed" }
+            Result.success(backupFile)
         } catch (e: java.io.IOException) {
             Log.e(TAG, "Backup process failed: IO error", e)
             Result.failure(e)
@@ -72,6 +71,9 @@ object DatabaseExporter {
             Result.failure(e)
         } catch (e: IllegalArgumentException) {
             Log.e(TAG, "Backup process failed: invalid argument", e)
+            Result.failure(e)
+        } catch (e: IllegalStateException) {
+            Log.e(TAG, "Backup process failed: invalid state", e)
             Result.failure(e)
         }
     }
