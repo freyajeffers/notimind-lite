@@ -50,6 +50,34 @@ fun settingsPreferencesSection(preferencesRepository: PreferencesRepository) {
     var ruleTitle by remember { mutableStateOf("") }
     var ruleAction by remember { mutableStateOf("0") }
 
+    // Local option lists split across multiple lines to satisfy MaxLineLength rules
+    val sortOptions = listOf(
+        "newest" to stringResource(R.string.pref_sort_newest),
+        "oldest" to stringResource(R.string.pref_sort_oldest),
+        "app" to stringResource(R.string.pref_sort_app)
+    )
+
+    val themeOptions = listOf(
+        "system" to stringResource(R.string.pref_theme_system),
+        "blue" to stringResource(R.string.pref_theme_blue),
+        "green" to stringResource(R.string.pref_theme_green),
+        "purple" to stringResource(R.string.pref_theme_purple),
+        "orange" to stringResource(R.string.pref_theme_orange),
+        "amoled" to "AMOLED black"
+    )
+
+    val replyOptions = listOf(
+        "inline" to stringResource(R.string.pref_reply_inline),
+        "open_app" to stringResource(R.string.pref_reply_open_app),
+        "copy" to stringResource(R.string.pref_reply_copy)
+    )
+
+    val longPressOptions = listOf(
+        "open" to stringResource(R.string.pref_action_open),
+        "reply" to stringResource(R.string.pref_action_reply),
+        "dismiss" to stringResource(R.string.pref_action_dismiss)
+    )
+
     Card(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
@@ -61,13 +89,35 @@ fun settingsPreferencesSection(preferencesRepository: PreferencesRepository) {
             preferenceSwitchRow(stringResource(R.string.pref_compact_mode_title), stringResource(R.string.pref_compact_mode_summary), compactMode, preferencesRepository::setCompactMode)
             preferenceSwitchRow(stringResource(R.string.pref_show_app_icons_title), stringResource(R.string.pref_show_app_icons_summary), showAppIcons, preferencesRepository::setShowAppIcons)
             preferenceSwitchRow(stringResource(R.string.pref_group_by_app_title), stringResource(R.string.pref_group_by_app_summary), groupByApp, preferencesRepository::setGroupByApp)
-            preferenceSelectRow(stringResource(R.string.pref_sort_order_title), sortOrder, listOf("newest" to stringResource(R.string.pref_sort_newest), "oldest" to stringResource(R.string.pref_sort_oldest), "app" to stringResource(R.string.pref_sort_app)), preferencesRepository::setSortOrder)
-            preferenceSelectRow(stringResource(R.string.pref_theme_accent_title), themeAccent, listOf("system" to stringResource(R.string.pref_theme_system), "blue" to stringResource(R.string.pref_theme_blue), "green" to stringResource(R.string.pref_theme_green), "purple" to stringResource(R.string.pref_theme_purple), "orange" to stringResource(R.string.pref_theme_orange), "amoled" to "AMOLED black"), preferencesRepository::setThemeAccent)
+            preferenceSelectRow(
+                stringResource(R.string.pref_sort_order_title),
+                sortOrder,
+                sortOptions,
+                preferencesRepository::setSortOrder
+            )
+            preferenceSelectRow(
+                stringResource(R.string.pref_theme_accent_title),
+                themeAccent,
+                themeOptions,
+                preferencesRepository::setThemeAccent
+            )
 
             Text(stringResource(R.string.pref_automation_title), style = MaterialTheme.typography.titleMedium)
             preferenceSwitchRow(stringResource(R.string.pref_auto_act_title), stringResource(R.string.pref_auto_act_summary), autoActOnNotification, preferencesRepository::setAutoActOnNotification, enabled = !BuildConfig.DEBUG)
-            preferenceSelectRow(stringResource(R.string.pref_default_reply_title), defaultReplyMethod, listOf("inline" to stringResource(R.string.pref_reply_inline), "open_app" to stringResource(R.string.pref_reply_open_app), "copy" to stringResource(R.string.pref_reply_copy)), preferencesRepository::setDefaultReplyMethod, enabled = !BuildConfig.DEBUG)
-            preferenceSelectRow(stringResource(R.string.pref_long_press_title), longPressAction, listOf("open" to stringResource(R.string.pref_action_open), "reply" to stringResource(R.string.pref_action_reply), "dismiss" to stringResource(R.string.pref_action_dismiss)), preferencesRepository::setLongPressAction, enabled = !BuildConfig.DEBUG)
+            preferenceSelectRow(
+                stringResource(R.string.pref_default_reply_title),
+                defaultReplyMethod,
+                replyOptions,
+                preferencesRepository::setDefaultReplyMethod,
+                enabled = !BuildConfig.DEBUG
+            )
+            preferenceSelectRow(
+                stringResource(R.string.pref_long_press_title),
+                longPressAction,
+                longPressOptions,
+                preferencesRepository::setLongPressAction,
+                enabled = !BuildConfig.DEBUG
+            )
             Text(stringResource(R.string.pref_auto_rules_title), style = MaterialTheme.typography.bodyLarge)
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
                 OutlinedTextField(rulePackage, { rulePackage = it }, Modifier.weight(1f), singleLine = true, enabled = !BuildConfig.DEBUG, label = { Text(stringResource(R.string.pref_auto_rule_package)) })
