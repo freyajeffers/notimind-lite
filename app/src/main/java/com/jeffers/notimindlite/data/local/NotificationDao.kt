@@ -10,6 +10,15 @@ import kotlinx.coroutines.flow.Flow
 
 import androidx.room.Transaction
 
+private const val DISMISS_REASON_LIST = "1, 2, 3, 12, 19, 23"
+private const val RECENT_DISMISSED_QUERY =
+    "SELECT * FROM notifications WHERE isDismissed = 1 AND dismissReason IN ($DISMISS_REASON_LIST) " +
+        "ORDER BY COALESCE(dismissTime, postTime) DESC"
+private const val LOST_NOTIFICATIONS_QUERY =
+    "SELECT * FROM notifications WHERE isDismissed = 1 AND " +
+        "(dismissReason NOT IN ($DISMISS_REASON_LIST) OR dismissReason IS NULL) " +
+        "ORDER BY COALESCE(dismissTime, postTime) DESC"
+
 @Dao
 abstract class NotificationDao {
 
@@ -180,16 +189,10 @@ abstract class NotificationDao {
     @Query("SELECT * FROM notifications WHERE isDismissed = 0 ORDER BY isOngoing DESC, postTime DESC")
     abstract suspend fun getActiveNotificationsList(): List<NotificationEntity>
 
-    @Suppress("MaxLineLength") // @Query SQL string; Room requires literal SQL in annotation.
-    // Dismiss reason list (1, 2, 3, 12, 19, 23) is duplicated here and in getLostNotificationsFlow().
-    // Room's @Query annotation requires a compile-time constant string and does not accept
-    // string interpolation with another const val, so the codeline cannot be deduped via
-    // `private const val`. See DAO_MIGRATION_NOTES.md for the canonical reason list.
-    @Query("SELECT * FROM notifications WHERE isDismissed = 1 AND dismissReason IN (1, 2, 3, 12, 19, 23) ORDER BY COALESCE(dismissTime, postTime) DESC")
+    @Query(RECENT_DISMISSED_QUERY)
     abstract fun getRecentlyDismissedFlow(): Flow<List<NotificationEntity>>
 
-    @Suppress("MaxLineLength") // @Query SQL string; Room requires literal SQL in annotation.
-    @Query("SELECT * FROM notifications WHERE isDismissed = 1 AND (dismissReason NOT IN (1, 2, 3, 12, 19, 23) OR dismissReason IS NULL) ORDER BY COALESCE(dismissTime, postTime) DESC")
+    @Query(LOST_NOTIFICATIONS_QUERY)
     abstract fun getLostNotificationsFlow(): Flow<List<NotificationEntity>>
 
     @Query("""
