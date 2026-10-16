@@ -73,7 +73,7 @@ class MainActivity : ComponentActivity() {
         if (migrationConsentRequired) {
             setContent {
                 com.jeffers.notimindlite.ui.theme.notiMindLiteTheme {
-                    EncryptionMigrationConsentDialog(
+                    encryptionMigrationConsentDialog(
                         onDecision = { decision ->
                             EncryptionMigrationConsent.set(applicationContext, decision)
                             recreate()
@@ -224,9 +224,8 @@ class MainActivity : ComponentActivity() {
     }
 }
 
-@Suppress("FunctionNaming")
 @Composable
-private fun EncryptionMigrationConsentDialog(
+private fun encryptionMigrationConsentDialog(
     onDecision: (EncryptionMigrationConsent.Decision) -> Unit
 ) {
     AlertDialog(
