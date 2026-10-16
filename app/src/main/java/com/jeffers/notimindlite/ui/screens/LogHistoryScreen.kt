@@ -693,7 +693,7 @@ fun logHistoryScreen(dao: NotificationDao, preferences: com.jeffers.notimindlite
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun dismissStatusBadge(item: NotificationEntity) {
+internal fun dismissStatusBadge(item: NotificationEntity) {
     if (item.isDismissed && item.dismissReason != null) {
         Spacer(modifier = Modifier.width(6.dp))
         Surface(
@@ -746,76 +746,7 @@ fun logHistoryCard(state: LogHistoryCardState) {
         )
     ) {
         Column(modifier = Modifier.padding(14.dp)) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier.weight(1f)
-                ) {
-                    appIconImage(appIconUri = item.appIconUri)
-                    if (!item.appIconUri.isNullOrEmpty()) {
-                        Spacer(modifier = Modifier.width(6.dp))
-                    }
-                    Text(
-                        text = item.appName,
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 13.sp,
-                        color = MaterialTheme.colorScheme.primary
-                    )
-                }
-
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    TooltipBox(
-                        positionProvider = TooltipDefaults.rememberTooltipPositionProvider(TooltipAnchorPosition.Above),
-                        tooltip = { PlainTooltip { Text(if (item.isPinned) "Unpin notification" else "Pin notification") } },
-                        state = rememberTooltipState()
-                    ) {
-                        IconButton(
-                            onClick = {
-                                scope.launch {
-                                    dao.updatePinnedStatus(item.key, !item.isPinned)
-                                }
-                            },
-                            modifier = Modifier.size(24.dp)
-                        ) {
-                            Icon(
-                                imageVector = if (item.isPinned) Icons.Default.Bookmark else Icons.Outlined.BookmarkBorder,
-                                contentDescription = if (item.isPinned) "Unpin" else "Pin",
-                                tint = if (item.isPinned) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                        }
-                    }
-
-                    dismissStatusBadge(item)
-
-                    Spacer(modifier = Modifier.width(6.dp))
-                    TooltipBox(
-                        positionProvider = TooltipDefaults.rememberTooltipPositionProvider(TooltipAnchorPosition.Above),
-                        tooltip = { PlainTooltip { Text(stringResource(R.string.notification_open_tooltip)) } },
-                        state = rememberTooltipState()
-                    ) {
-                        IconButton(
-                            onClick = {
-                                NotificationLauncher.launchNotification(
-                                    context,
-                                    item.packageName,
-                                    item.key,
-                                    item.intentUri
-                                )
-                            },
-                            modifier = Modifier.size(24.dp)
-                        ) {
-                            Icon(
-                                imageVector = Icons.AutoMirrored.Filled.OpenInNew,
-                                contentDescription = "Open notification"
-                            )
-                        }
-                    }
-                }
-            }
+            logHistoryCardHeader(state)
 
             if (isExpanded) {
                 Column(modifier = Modifier.padding(top = 8.dp)) {
