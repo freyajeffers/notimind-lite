@@ -126,11 +126,27 @@ class PreferencesRepository(context: Context) {
     val useFts5: StateFlow<Boolean> = _useFts5
     val vectorGpu: StateFlow<Boolean> = _vectorGpu
 
-    private val _captureForegroundOnly = MutableStateFlow(backing.getBoolean("config_capture_foreground_only", false))
-    private val _captureAttachments = MutableStateFlow(backing.getBoolean("config_capture_attachments", true))
-    private val _captureOngoing = MutableStateFlow(backing.getBoolean("config_capture_ongoing", true))
-    private val _capturePackageAllowlist = MutableStateFlow(backing.getString("config_capture_package_allowlist", backing.getString("config_capture_allowlist", "")) ?: "")
-    private val _capturePackageBlocklist = MutableStateFlow(backing.getString("config_capture_package_blocklist", backing.getString("config_capture_blocklist", "")) ?: "")
+    private val _captureForegroundOnly = MutableStateFlow(
+        backing.getBoolean("config_capture_foreground_only", false)
+    )
+    private val _captureAttachments = MutableStateFlow(
+        backing.getBoolean("config_capture_attachments", true)
+    )
+    private val _captureOngoing = MutableStateFlow(
+        backing.getBoolean("config_capture_ongoing", true)
+    )
+    private val _capturePackageAllowlist = MutableStateFlow(
+        backing.getString(
+            "config_capture_package_allowlist",
+            backing.getString("config_capture_allowlist", "")
+        ) ?: ""
+    )
+    private val _capturePackageBlocklist = MutableStateFlow(
+        backing.getString(
+            "config_capture_package_blocklist",
+            backing.getString("config_capture_blocklist", "")
+        ) ?: ""
+    )
     private val _minImportance = MutableStateFlow(backing.getInt("config_min_importance", 0))
     private val _captureActionsOnly = MutableStateFlow(backing.getBoolean("config_capture_actions_only", false))
     val captureForegroundOnly: StateFlow<Boolean> = _captureForegroundOnly
