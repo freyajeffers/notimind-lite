@@ -116,6 +116,7 @@ private const val SEARCH_DEBOUNCE_MILLIS = 100L
 private const val MAX_SEARCH_SUGGESTIONS = 4
 private const val MAX_RECENT_SEARCHES = 9
 private const val SEARCH_FIELD_CORNER_RADIUS = 12
+private const val SEARCH_MENU_WIDTH_FRACTION = 0.9f
 
 enum class SortMode(val label: String) {
     DISMISSED("Time Dismissed"),
@@ -561,7 +562,7 @@ fun logHistoryScreen(dao: NotificationDao, preferences: com.jeffers.notimindlite
                     expanded = expandedDropdown && (searchSuggestions.isNotEmpty() || (searchQuery.isBlank() && recentSearches.isNotEmpty())),
                     onDismissRequest = { expandedDropdown = false },
                     properties = androidx.compose.ui.window.PopupProperties(focusable = false),
-                    modifier = Modifier.fillMaxWidth(0.9f)
+                    modifier = Modifier.fillMaxWidth(SEARCH_MENU_WIDTH_FRACTION)
                 ) {
                     val matchingRecent = if (searchQuery.isBlank()) {
                         recentSearches
