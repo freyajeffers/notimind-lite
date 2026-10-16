@@ -1,4 +1,4 @@
-package com.notimind.lite.tier3_pairwise
+package com.notimind.lite.tier3pairwise
 
 import com.notimind.lite.base.BaseRobolectricTest
 import kotlinx.coroutines.flow.first

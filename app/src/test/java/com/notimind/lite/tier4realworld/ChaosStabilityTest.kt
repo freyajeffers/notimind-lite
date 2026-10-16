@@ -1,4 +1,4 @@
-package com.notimind.lite.tier4_realworld
+package com.notimind.lite.tier4realworld
 
 import com.google.android.gms.tasks.Tasks
 import com.google.firebase.firestore.CollectionReference

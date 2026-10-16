@@ -1,4 +1,4 @@
-package com.notimind.lite.tier2_boundary
+package com.notimind.lite.tier2boundary
 
 import com.google.android.gms.tasks.Tasks
 import com.google.firebase.firestore.CollectionReference

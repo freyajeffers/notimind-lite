@@ -1,4 +1,4 @@
-package com.notimind.lite.tier3_pairwise
+package com.notimind.lite.tier3pairwise
 
 import android.app.NotificationManager
 import android.content.Context

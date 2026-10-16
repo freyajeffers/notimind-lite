@@ -1,4 +1,4 @@
-package com.jeffers.notimindlite.migration
+package com.notimind.lite.tier1feature
 
 import androidx.room.Room
 import com.jeffers.notimindlite.data.local.AppDatabase

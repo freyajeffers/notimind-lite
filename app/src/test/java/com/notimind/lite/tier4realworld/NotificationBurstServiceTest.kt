@@ -1,4 +1,4 @@
-package com.notimind.lite.tier4_realworld
+package com.notimind.lite.tier4realworld
 
 import android.app.Notification
 import android.os.Bundle

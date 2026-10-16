@@ -1,6 +1,6 @@
 @file:Suppress("PackageNaming")
 
-package com.notimind.lite.tier2_boundary
+package com.notimind.lite.tier2boundary
 
 import com.jeffers.notimindlite.util.BackupFileFormat
 import com.jeffers.notimindlite.util.BackupKeyWrap

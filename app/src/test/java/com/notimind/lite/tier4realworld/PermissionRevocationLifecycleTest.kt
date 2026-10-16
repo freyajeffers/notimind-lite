@@ -1,4 +1,4 @@
-package com.notimind.lite.tier4_realworld
+package com.notimind.lite.tier4realworld
 
 import android.content.Context
 import android.provider.Settings

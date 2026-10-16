@@ -1,4 +1,4 @@
-package com.notimind.lite.tier2_boundary
+package com.notimind.lite.tier2boundary
 
 import android.content.Context
 import androidx.test.core.app.ApplicationProvider

@@ -1,4 +1,4 @@
-package com.notimind.lite.tier3_pairwise
+package com.notimind.lite.tier3pairwise
 
 import com.google.android.gms.tasks.Tasks
 import com.google.firebase.firestore.CollectionReference

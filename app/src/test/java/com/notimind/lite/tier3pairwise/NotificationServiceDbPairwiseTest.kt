@@ -1,4 +1,4 @@
-package com.notimind.lite.tier3_pairwise
+package com.notimind.lite.tier3pairwise
 
 import com.jeffers.notimindlite.service.NotificationLoggerService
 import com.notimind.lite.base.BaseRobolectricTest

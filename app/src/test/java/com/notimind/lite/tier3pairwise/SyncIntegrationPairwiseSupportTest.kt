@@ -1,4 +1,4 @@
-package com.notimind.lite.tier3_pairwise
+package com.notimind.lite.tier3pairwise
 
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.CollectionReference
@@ -17,7 +17,7 @@ import org.junit.Before
 import org.junit.Test
 import javax.crypto.spec.SecretKeySpec
 
-class SyncIntegrationPairwiseTest {
+class SyncIntegrationPairwiseSupportTest {
 
     private lateinit var mockDb: AppDatabase
     private lateinit var mockDao: NotificationDao
