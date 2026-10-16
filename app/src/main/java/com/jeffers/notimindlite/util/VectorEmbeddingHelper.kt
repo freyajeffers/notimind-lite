@@ -59,10 +59,11 @@ object VectorEmbeddingHelper {
     /** Computes a normalized dense vector embedding for arbitrary text. */
     fun computeEmbedding(text: String, lowMemoryMode: Boolean = this.lowMemoryMode): FloatArray {
         if (lowMemoryMode != this.lowMemoryMode) configure(lowMemoryMode)
-        if (text.isBlank()) return FloatArray(EMBEDDING_DIM)
-        val cached = embeddingCache.get(text)
-        if (cached != null) return cached
+        return embeddingCache.get(text) ?: computeAndCacheEmbedding(text)
+    }
 
+    private fun computeAndCacheEmbedding(text: String): FloatArray {
+        if (text.isBlank()) return FloatArray(EMBEDDING_DIM)
         val vector = FloatArray(EMBEDDING_DIM)
         val cleanText = text.lowercase()
         val words = cleanText.split("\\s+".toRegex()).filter { it.isNotBlank() }
@@ -105,7 +106,6 @@ object VectorEmbeddingHelper {
             val b = vecB[i]
             if (isFinite(a) && isFinite(b)) dotProduct += a * b
         }
-        if (dotProduct.isNaN() || dotProduct.isInfinite()) return 0f
-        return dotProduct.coerceIn(0f, 1f)
+        return if (isFinite(dotProduct)) dotProduct.coerceIn(0f, 1f) else 0f
     }
 }
