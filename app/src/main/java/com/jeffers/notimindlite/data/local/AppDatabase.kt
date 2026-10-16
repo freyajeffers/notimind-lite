@@ -120,10 +120,22 @@ abstract class AppDatabase : RoomDatabase() {
                 db.execSQL("ALTER TABLE `notifications` ADD COLUMN `smallIconRes` INTEGER NOT NULL DEFAULT 0")
 
                 // Add performance composite indices
-                db.execSQL("CREATE INDEX IF NOT EXISTS `index_notifications_isDismissed_postTime` ON `notifications` (`isDismissed`, `postTime`)")
-                db.execSQL("CREATE INDEX IF NOT EXISTS `index_notifications_isDismissed_dismissTime` ON `notifications` (`isDismissed`, `dismissTime`)")
-                db.execSQL("CREATE INDEX IF NOT EXISTS `index_notifications_packageName_isDismissed` ON `notifications` (`packageName`, `isDismissed`)")
-                db.execSQL("CREATE INDEX IF NOT EXISTS `index_notifications_isPinned_postTime` ON `notifications` (`isPinned`, `postTime`)")
+                db.execSQL("""
+                    CREATE INDEX IF NOT EXISTS `index_notifications_isDismissed_postTime`
+                    ON `notifications` (`isDismissed`, `postTime`)
+                """.trimIndent())
+                db.execSQL("""
+                    CREATE INDEX IF NOT EXISTS `index_notifications_isDismissed_dismissTime`
+                    ON `notifications` (`isDismissed`, `dismissTime`)
+                """.trimIndent())
+                db.execSQL("""
+                    CREATE INDEX IF NOT EXISTS `index_notifications_packageName_isDismissed`
+                    ON `notifications` (`packageName`, `isDismissed`)
+                """.trimIndent())
+                db.execSQL("""
+                    CREATE INDEX IF NOT EXISTS `index_notifications_isPinned_postTime`
+                    ON `notifications` (`isPinned`, `postTime`)
+                """.trimIndent())
                 db.execSQL("CREATE INDEX IF NOT EXISTS `index_notifications_isRead` ON `notifications` (`isRead`)")
             }
         }
@@ -154,7 +166,10 @@ abstract class AppDatabase : RoomDatabase() {
 
         val MIGRATION_10_11 = object : Migration(10, 11) {
             override fun migrate(db: SupportSQLiteDatabase) {
-                db.execSQL("CREATE INDEX IF NOT EXISTS `index_notifications_packageName` ON `notifications` (`packageName`)")
+                db.execSQL("""
+                    CREATE INDEX IF NOT EXISTS `index_notifications_packageName`
+                    ON `notifications` (`packageName`)
+                """.trimIndent())
             }
         }
 
@@ -434,9 +449,18 @@ abstract class AppDatabase : RoomDatabase() {
             return deInstance ?: synchronized(this) {
                 deInstance ?: run {
                     val appContext = context.applicationContext
-                    val deContext = if (appContext.isDeviceProtectedStorage) appContext else appContext.createDeviceProtectedStorageContext()
+                    val deContext = if (appContext.isDeviceProtectedStorage) {
+                        appContext
+                    } else {
+                        appContext.createDeviceProtectedStorageContext()
+                    }
                     Room.databaseBuilder(deContext, AppDatabase::class.java, DE_DATABASE_NAME)
-                        .apply { EncryptedDatabaseFactory.openHelperFactory(deContext, DE_DATABASE_NAME)?.let(::openHelperFactory) }
+                        .apply {
+                            EncryptedDatabaseFactory.openHelperFactory(
+                                deContext,
+                                DE_DATABASE_NAME
+                            )?.let(::openHelperFactory)
+                        }
                         .addCallback(DB_CALLBACK)
                         .setJournalMode(JournalMode.WRITE_AHEAD_LOGGING)
                         .build().also { deInstance = it }
@@ -466,7 +490,11 @@ abstract class AppDatabase : RoomDatabase() {
                         preferences.dbEncrypted.value && preferences.dbEncryptionMode.value != DbEncryptionMode.NONE
                     val legacyPlaintextPending = MigrationRunner(appContext).preflight(databaseName).plaintextExists
                     val consent = EncryptionMigrationConsent.get(appContext)
-                    val migrationState = if (encryptionRequested && legacyPlaintextPending && consent == EncryptionMigrationConsent.Decision.ACCEPTED) {
+                    val migrationState = if (
+                        encryptionRequested &&
+                        legacyPlaintextPending &&
+                        consent == EncryptionMigrationConsent.Decision.ACCEPTED
+                    ) {
                         MigrationRunner(appContext).migrateLegacyDatabase(databaseName)
                     } else {
                         MigrationState.NOT_REQUIRED
@@ -484,7 +512,10 @@ abstract class AppDatabase : RoomDatabase() {
                     )
                     .apply {
                         if (useEncryption) {
-                            EncryptedDatabaseFactory.openHelperFactory(appContext, databaseName)?.let(::openHelperFactory)
+                            EncryptedDatabaseFactory.openHelperFactory(
+                                appContext,
+                                databaseName
+                            )?.let(::openHelperFactory)
                         }
                     }
                     .addMigrations(
