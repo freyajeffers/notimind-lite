@@ -47,7 +47,28 @@ fun speedDialSettingsFab(
     modifier: Modifier = Modifier
 ) {
     var expanded by remember { mutableStateOf(false) }
-    
+
+    SpeedDialFabContent(
+        expanded = expanded,
+        onToggle = { expanded = !expanded },
+        onClose = { expanded = false },
+        onSyncClick = onSyncClick,
+        onBackupClick = onBackupClick,
+        onSettingsClick = onSettingsClick,
+        modifier = modifier
+    )
+}
+
+@Composable
+private fun SpeedDialFabContent(
+    expanded: Boolean,
+    onToggle: () -> Unit,
+    onClose: () -> Unit,
+    onSyncClick: () -> Unit,
+    onBackupClick: () -> Unit,
+    onSettingsClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
     val animationSpec = spring<Float>(
         dampingRatio = Spring.DampingRatioMediumBouncy,
         stiffness = Spring.StiffnessLow
@@ -74,7 +95,7 @@ fun speedDialSettingsFab(
         if (expanded || scale > 0f) {
             speedDialActions(
                 scale = scale,
-                close = { expanded = false },
+                close = onClose,
                 onSyncClick = onSyncClick,
                 onBackupClick = onBackupClick,
                 onSettingsClick = onSettingsClick
@@ -82,7 +103,7 @@ fun speedDialSettingsFab(
         }
 
         FloatingActionButton(
-            onClick = { expanded = !expanded },
+            onClick = onToggle,
             modifier = Modifier.rotate(rotation),
             containerColor = MaterialTheme.colorScheme.primary,
             contentColor = MaterialTheme.colorScheme.onPrimary
