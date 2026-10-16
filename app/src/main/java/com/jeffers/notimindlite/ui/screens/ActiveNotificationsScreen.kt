@@ -872,97 +872,11 @@ fun logNotificationCard(config: LogNotificationCardConfig) {
             }
 
             if (isExpanded) {
-                Column(modifier = Modifier.padding(top = 8.dp)) {
-                    Text(
-                        text = highlightSearchText(item.title, highlightQuery),
-                        style = MaterialTheme.typography.bodyLarge,
-                        fontWeight = FontWeight.SemiBold,
-                        maxLines = 3,
-                        overflow = TextOverflow.Ellipsis
-                    )
-                    Spacer(modifier = Modifier.height(4.dp))
-                    Text(
-                        text = item.content,
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        maxLines = 10,
-                        overflow = TextOverflow.Ellipsis
-                    )
-                    if (!item.subText.isNullOrEmpty()) {
-                        Spacer(modifier = Modifier.height(2.dp))
-                        Text(
-                            text = item.subText,
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.75f)
-                        )
-                    }
-                    if (!item.bigText.isNullOrEmpty() && item.bigText != item.content) {
-                        Spacer(modifier = Modifier.height(4.dp))
-                        Text(
-                            text = item.bigText,
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.85f)
-                        )
-                    }
-                    val inboxLines = remember(item.inboxLinesJson) {
-                        if (item.inboxLinesJson.isNullOrBlank()) {
-                            emptyList()
-                        } else {
-                            try {
-                                val array = JSONArray(item.inboxLinesJson)
-                                (0 until array.length()).mapNotNull { idx ->
-                                    val str = array.optString(idx)
-                                    str.takeIf { it.isNotBlank() }
-                                }
-                            } catch (e: org.json.JSONException) {
-                                Log.w("ActiveNotifications", "Invalid inbox lines JSON", e)
-                                emptyList()
-                            }
-                        }
-                    }
-                    if (inboxLines.isNotEmpty()) {
-                        Spacer(modifier = Modifier.height(6.dp))
-                        Surface(
-                            shape = RoundedCornerShape(6.dp),
-                            color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.35f),
-                            modifier = Modifier.fillMaxWidth()
-                        ) {
-                            Column(
-                                modifier = Modifier.padding(8.dp),
-                                verticalArrangement = Arrangement.spacedBy(2.dp)
-                            ) {
-                                Text(
-                                    text = "Inbox Lines (${inboxLines.size})",
-                                    style = MaterialTheme.typography.labelSmall,
-                                    fontWeight = FontWeight.Bold,
-                                    color = MaterialTheme.colorScheme.primary
-                                )
-                                inboxLines.forEach { line ->
-                                    Row(
-                                        modifier = Modifier.fillMaxWidth(),
-                                        verticalAlignment = Alignment.Top
-                                    ) {
-                                        Text(
-                                            text = "• ",
-                                            style = MaterialTheme.typography.bodySmall,
-                                            color = MaterialTheme.colorScheme.primary
-                                        )
-                                        Text(
-                                            text = line,
-                                            style = MaterialTheme.typography.bodySmall,
-                                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                                        )
-                                    }
-                                }
-                            }
-                        }
-                    }
-                    Spacer(modifier = Modifier.height(8.dp))
-                    notificationExpandedAttributes(
-                        item = item,
-                        dateTimeFormatter = dateTimeFormatter
-                    )
-                }
+                activeNotificationExpandedContent(
+                    item = item,
+                    dateTimeFormatter = dateTimeFormatter,
+                    highlightQuery = highlightQuery
+                )
             }
         }
     }
