@@ -337,51 +337,26 @@ fun activeNotificationsScreen(dao: NotificationDao, preferences: PreferencesRepo
 
     Scaffold(
         topBar = {
-            TopAppBar(
-                title = {},
-                actions = {
-                    if (!selectedPackages.isNullOrEmpty() || searchQuery.isNotBlank()) {
-                        IconButton(onClick = {
-                            selectedPackages = null
-                            searchQuery = ""
-                            isSearchFocused = false
-                            isSearchExplicitlyOpened = false
-                            focusManager.clearFocus(force = true)
-                            keyboardController?.hide()
-                        }) {
-                            Icon(Icons.Default.FilterAltOff, contentDescription = "Clear filters")
-                        }
-                    }
-                    TooltipBox(
-                        positionProvider = TooltipDefaults.rememberTooltipPositionProvider(TooltipAnchorPosition.Above),
-                        tooltip = { PlainTooltip { Text(stringResource(id = R.string.active_notifications_filter_apps)) } },
-                        state = rememberTooltipState()
-                    ) {
-                        IconButton(onClick = { showPackagePicker = true }) {
-                            Icon(
-                                Icons.Default.FilterList,
-                                contentDescription = stringResource(id = R.string.active_notifications_filter_apps),
-                                tint = if (!selectedPackages.isNullOrEmpty()) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
-                            )
-                        }
-                    }
-                    TooltipBox(
-                        positionProvider = TooltipDefaults.rememberTooltipPositionProvider(TooltipAnchorPosition.Above),
-                        tooltip = { PlainTooltip { Text(stringResource(id = R.string.common_search)) } },
-                        state = rememberTooltipState()
-                    ) {
-                        IconButton(onClick = {
-                            if (isSearchExplicitlyOpened || searchQuery.isNotEmpty() || isSearchFocused) {
-                                isSearchExplicitlyOpened = false
-                                isSearchFocused = false
-                                searchQuery = ""
-                            } else {
-                                isSearchExplicitlyOpened = true
-                                scope.launch { listState.animateScrollToItem(0); searchFocusRequester.requestFocus() }
-                            }
-                        }) {
-                            Icon(Icons.Default.Search, contentDescription = stringResource(id = R.string.common_search))
-                        }
+            activeNotificationsTopBar(
+                selectedPackages = selectedPackages,
+                searchQuery = searchQuery,
+                onClearFilters = {
+                    selectedPackages = null
+                    searchQuery = ""
+                    isSearchFocused = false
+                    isSearchExplicitlyOpened = false
+                    focusManager.clearFocus(force = true)
+                    keyboardController?.hide()
+                },
+                onOpenPackagePicker = { showPackagePicker = true },
+                onToggleSearch = {
+                    if (isSearchExplicitlyOpened || searchQuery.isNotEmpty() || isSearchFocused) {
+                        isSearchExplicitlyOpened = false
+                        isSearchFocused = false
+                        searchQuery = ""
+                    } else {
+                        isSearchExplicitlyOpened = true
+                        scope.launch { listState.animateScrollToItem(0); searchFocusRequester.requestFocus() }
                     }
                 }
             )
