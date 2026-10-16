@@ -106,6 +106,17 @@ private data class MigrationDialogConfig(
     val onMigrationCompleted: () -> Unit
 )
 
+private data class AdvancedSettingsConfig(
+    val preferencesRepository: PreferencesRepository,
+    val enableTelemetry: Boolean,
+    val lowMemoryMode: Boolean,
+    val maxDbMb: Int,
+    val migrationVisible: Boolean,
+    val migrationMessage: String?,
+    val onShowMigration: () -> Unit,
+    val vectorCacheMax: Int
+)
+
 @Composable
 fun settingsAdvancedSection(
     preferencesRepository: PreferencesRepository,
@@ -132,43 +143,16 @@ fun settingsAdvancedSection(
     val lowMemoryMode by preferencesRepository.lowMemoryMode.collectAsState(initial = false)
     val vectorCacheMax by preferencesRepository.vectorCacheMax.collectAsState(initial = 1000)
 
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
-    ) {
-        Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-            Text(text = stringResource(R.string.pref_advanced_title), style = MaterialTheme.typography.titleMedium)
-
-            advancedSwitchRow(
-                R.string.pref_enable_telemetry_title,
-                R.string.pref_enable_telemetry_summary,
-                enableTelemetry,
-                !BuildConfig.DEBUG,
-                preferencesRepository::setEnableTelemetry
-            )
-            advancedSwitchRow(
-                R.string.pref_low_memory_mode_title,
-                R.string.pref_low_memory_mode_summary,
-                lowMemoryMode,
-                onCheckedChange = preferencesRepository::setLowMemoryMode
-            )
-            advancedNumberRow(
-                R.string.pref_max_db_mb_title,
-                R.string.pref_max_db_mb_summary,
-                maxDbMb,
-                120.dp,
-                preferencesRepository::setMaxDbMb
-            )
-
-            migrationControls(
-                visible = encryptionEnabled && preflight.plaintextExists,
-                migrationMessage = migrationMessage,
-                onShowMigration = { showMigrationConfirmation = true },
-                vectorCacheMax = vectorCacheMax,
-                preferencesRepository = preferencesRepository
-            )
-        }
-    }
+    advancedSettingsCard(AdvancedSettingsConfig(
+        preferencesRepository,
+        enableTelemetry,
+        lowMemoryMode,
+        maxDbMb,
+        encryptionEnabled && preflight.plaintextExists,
+        migrationMessage,
+        { showMigrationConfirmation = true },
+        vectorCacheMax
+    ))
 
     migrationConfirmationDialog(MigrationDialogConfig(
         visible = showMigrationConfirmation,
@@ -180,6 +164,47 @@ fun settingsAdvancedSection(
         onMessage = { migrationMessage = it },
         onMigrationCompleted = onMigrationCompleted
     ))
+}
+
+@Composable
+private fun advancedSettingsCard(
+    config: AdvancedSettingsConfig
+) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
+    ) {
+        Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            Text(text = stringResource(R.string.pref_advanced_title), style = MaterialTheme.typography.titleMedium)
+            advancedSwitchRow(
+                R.string.pref_enable_telemetry_title,
+                R.string.pref_enable_telemetry_summary,
+                config.enableTelemetry,
+                !BuildConfig.DEBUG,
+                config.preferencesRepository::setEnableTelemetry
+            )
+            advancedSwitchRow(
+                R.string.pref_low_memory_mode_title,
+                R.string.pref_low_memory_mode_summary,
+                config.lowMemoryMode,
+                onCheckedChange = config.preferencesRepository::setLowMemoryMode
+            )
+            advancedNumberRow(
+                R.string.pref_max_db_mb_title,
+                R.string.pref_max_db_mb_summary,
+                config.maxDbMb,
+                120.dp,
+                config.preferencesRepository::setMaxDbMb
+            )
+            migrationControls(
+                config.migrationVisible,
+                config.migrationMessage,
+                config.onShowMigration,
+                config.vectorCacheMax,
+                config.preferencesRepository
+            )
+        }
+    }
 }
 
 @Composable
