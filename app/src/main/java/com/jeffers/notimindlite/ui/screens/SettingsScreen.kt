@@ -66,6 +66,7 @@ import com.jeffers.notimindlite.util.DatabaseExporter
 import com.jeffers.notimindlite.domain.backup.generateBackupKey
 import com.jeffers.notimindlite.util.NetworkUtils
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.File
@@ -112,86 +113,12 @@ fun settingsScreen(
     ) {
         Spacer(modifier = Modifier.height(0.dp))
 
-        Card(
-            modifier = Modifier.fillMaxWidth(),
-            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
-        ) {
-            Column(
-                modifier = Modifier.padding(16.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                Text(
-                    text = "Account",
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.SemiBold
-                )
-
-                if (session.isAuthenticated) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(12.dp)
-                    ) {
-                        Icon(Icons.Default.Person, contentDescription = "Profile")
-                        Column {
-                            Text(
-                                text = session.displayName
-                                    ?: stringResource(id = R.string.settings_default_display_name),
-                                style = MaterialTheme.typography.bodyLarge,
-                                fontWeight = FontWeight.Medium
-                            )
-                            Text(
-                                text = session.email ?: "",
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                        }
-                    }
-
-                    Button(
-                        onClick = {
-                            authManager.signOut()
-                            SyncWorker.cancelPeriodicSync(context)
-                        },
-                        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
-                    ) {
-                        Icon(Icons.AutoMirrored.Filled.Logout, contentDescription = "Sign out")
-                        Spacer(Modifier.width(8.dp))
-                        Text("Sign Out")
-                    }
-                } else {
-                    Text(
-                        text = "Sign in with Google to enable cloud backup & multi-device sync.",
-                        style = MaterialTheme.typography.bodyMedium
-                    )
-
-                    Button(
-                        onClick = {
-                            scope.launch {
-                                authManager.signInWithGoogle()
-                                SyncWorker.schedulePeriodicSync(context)
-                            }
-                        },
-                        enabled = !session.isAuthenticating,
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = MaterialTheme.colorScheme.primaryContainer,
-                            contentColor = MaterialTheme.colorScheme.onPrimaryContainer
-                        )
-                    ) {
-                        Icon(Icons.AutoMirrored.Filled.Login, contentDescription = "Sign in")
-                        Spacer(Modifier.width(8.dp))
-                        Text(if (session.isAuthenticating) "Signing In..." else "Sign in with Google")
-                    }
-
-                    session.error?.let { err ->
-                        Text(
-                            text = err,
-                            color = MaterialTheme.colorScheme.error,
-                            style = MaterialTheme.typography.bodySmall
-                        )
-                    }
-                }
-            }
-        }
+        accountSection(
+            session = session,
+            authManager = authManager,
+            scope = scope,
+            context = context
+        )
 
         // Notification Access card moved to top for discoverability
         val prefMgrTop = remember { PreferenceManager(context) }
@@ -206,83 +133,7 @@ fun settingsScreen(
             lifecycleOwnerTop.lifecycle.addObserver(observer)
             onDispose { lifecycleOwnerTop.lifecycle.removeObserver(observer) }
         }
-        Card(
-            modifier = Modifier.fillMaxWidth(),
-            colors = CardDefaults.cardColors(
-                containerColor = if (listenerGrantedTop)
-                    MaterialTheme.colorScheme.surfaceVariant
-                else
-                    MaterialTheme.colorScheme.errorContainer
-            )
-        ) {
-            Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                Text(
-                    text = stringResource(id = R.string.settings_section_listener),
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.SemiBold
-                )
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    val listenerIcon = if (listenerGrantedTop) {
-                        Icons.Default.Notifications
-                    } else {
-                        Icons.Default.NotificationsOff
-                    }
-                    Icon(
-                        imageVector = listenerIcon,
-                        contentDescription = if (listenerGrantedTop) {
-                            "Notification access enabled"
-                        } else {
-                            "Notification access disabled"
-                        },
-                        tint = if (listenerGrantedTop) {
-                            MaterialTheme.colorScheme.primary
-                        } else {
-                            MaterialTheme.colorScheme.error
-                        }
-                    )
-                    Text(
-                        text = stringResource(
-                            id = if (listenerGrantedTop) {
-                                R.string.settings_listener_granted_desc
-                            } else {
-                                R.string.settings_listener_missing_desc
-                            }
-                        ),
-                        style = MaterialTheme.typography.bodyMedium,
-                        modifier = Modifier.weight(1f)
-                    )
-                }
-                Button(
-                    onClick = {
-                        val intent = Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS)
-                        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                        context.startActivity(intent)
-                    },
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = if (listenerGrantedTop) {
-                            MaterialTheme.colorScheme.primaryContainer
-                        } else {
-                            MaterialTheme.colorScheme.error
-                        },
-                        contentColor = if (listenerGrantedTop) {
-                            MaterialTheme.colorScheme.onPrimaryContainer
-                        } else {
-                            MaterialTheme.colorScheme.onError
-                        }
-                    )
-                ) {
-                    val listenerActionLabel = if (listenerGrantedTop) {
-                        R.string.settings_listener_open
-                    } else {
-                        R.string.settings_listener_grant
-                    }
-                    Text(stringResource(id = listenerActionLabel))
-                }
-            }
-        }
+        notificationAccessCard(context, listenerGrantedTop)
 
         settingsSyncSection(preferencesRepository = preferencesRepository)
 
@@ -440,6 +291,201 @@ fun settingsScreen(
         }
 
         SnackbarHost(hostState = snackbarHostState)
+    }
+}
+
+@Composable
+private fun notificationAccessCard(context: Context, listenerGranted: Boolean) {
+    val cardColor = if (listenerGranted) {
+        MaterialTheme.colorScheme.surfaceVariant
+    } else {
+        MaterialTheme.colorScheme.errorContainer
+    }
+    val listenerIcon = if (listenerGranted) {
+        Icons.Default.Notifications
+    } else {
+        Icons.Default.NotificationsOff
+    }
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(containerColor = cardColor)
+    ) {
+        Column(
+            modifier = Modifier.padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            Text(
+                text = stringResource(id = R.string.settings_section_listener),
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.SemiBold
+            )
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                Icon(
+                    imageVector = listenerIcon,
+                    contentDescription = if (listenerGranted) {
+                        "Notification access enabled"
+                    } else {
+                        "Notification access disabled"
+                    },
+                    tint = if (listenerGranted) {
+                        MaterialTheme.colorScheme.primary
+                    } else {
+                        MaterialTheme.colorScheme.error
+                    }
+                )
+                Text(
+                    text = stringResource(
+                        id = if (listenerGranted) {
+                            R.string.settings_listener_granted_desc
+                        } else {
+                            R.string.settings_listener_missing_desc
+                        }
+                    ),
+                    style = MaterialTheme.typography.bodyMedium,
+                    modifier = Modifier.weight(1f)
+                )
+            }
+            notificationAccessButton(context, listenerGranted)
+        }
+    }
+}
+
+@Composable
+private fun notificationAccessButton(context: Context, listenerGranted: Boolean) {
+    val containerColor = if (listenerGranted) {
+        MaterialTheme.colorScheme.primaryContainer
+    } else {
+        MaterialTheme.colorScheme.error
+    }
+    val contentColor = if (listenerGranted) {
+        MaterialTheme.colorScheme.onPrimaryContainer
+    } else {
+        MaterialTheme.colorScheme.onError
+    }
+    val actionLabel = if (listenerGranted) {
+        R.string.settings_listener_open
+    } else {
+        R.string.settings_listener_grant
+    }
+    Button(
+        onClick = {
+            val intent = Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS)
+            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            context.startActivity(intent)
+        },
+        colors = ButtonDefaults.buttonColors(
+            containerColor = containerColor,
+            contentColor = contentColor
+        )
+    ) {
+        Text(stringResource(id = actionLabel))
+    }
+}
+
+@Composable
+private fun accountSection(
+    session: UserSession,
+    authManager: AuthManager,
+    scope: CoroutineScope,
+    context: Context
+) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
+    ) {
+        Column(
+            modifier = Modifier.padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            Text(
+                text = "Account",
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.SemiBold
+            )
+            if (session.isAuthenticated) {
+                authenticatedAccount(session, authManager, context)
+            } else {
+                unauthenticatedAccount(session, authManager, scope, context)
+            }
+        }
+    }
+}
+
+@Composable
+private fun authenticatedAccount(
+    session: UserSession,
+    authManager: AuthManager,
+    context: Context
+) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        Icon(Icons.Default.Person, contentDescription = "Profile")
+        Column {
+            Text(
+                text = session.displayName
+                    ?: stringResource(id = R.string.settings_default_display_name),
+                style = MaterialTheme.typography.bodyLarge,
+                fontWeight = FontWeight.Medium
+            )
+            Text(
+                text = session.email ?: "",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+    }
+    Button(
+        onClick = {
+            authManager.signOut()
+            SyncWorker.cancelPeriodicSync(context)
+        },
+        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
+    ) {
+        Icon(Icons.AutoMirrored.Filled.Logout, contentDescription = "Sign out")
+        Spacer(Modifier.width(8.dp))
+        Text("Sign Out")
+    }
+}
+
+@Composable
+private fun unauthenticatedAccount(
+    session: UserSession,
+    authManager: AuthManager,
+    scope: CoroutineScope,
+    context: Context
+) {
+    Text(
+        text = "Sign in with Google to enable cloud backup & multi-device sync.",
+        style = MaterialTheme.typography.bodyMedium
+    )
+    Button(
+        onClick = {
+            scope.launch {
+                authManager.signInWithGoogle()
+                SyncWorker.schedulePeriodicSync(context)
+            }
+        },
+        enabled = !session.isAuthenticating,
+        colors = ButtonDefaults.buttonColors(
+            containerColor = MaterialTheme.colorScheme.primaryContainer,
+            contentColor = MaterialTheme.colorScheme.onPrimaryContainer
+        )
+    ) {
+        Icon(Icons.AutoMirrored.Filled.Login, contentDescription = "Sign in")
+        Spacer(Modifier.width(8.dp))
+        Text(if (session.isAuthenticating) "Signing In..." else "Sign in with Google")
+    }
+    session.error?.let { error ->
+        Text(
+            text = error,
+            color = MaterialTheme.colorScheme.error,
+            style = MaterialTheme.typography.bodySmall
+        )
     }
 }
 
