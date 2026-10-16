@@ -88,31 +88,16 @@ fun settingsPreferencesBackupSection() {
     val exportFormats by preferences.exportFormats.collectAsState()
     val exportAnonymize by preferences.exportAnonymize.collectAsState()
 
-    Card(modifier = Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)) {
-        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-            Text(stringResource(R.string.pref_backup_settings_title), style = MaterialTheme.typography.titleMedium)
-            Text(stringResource(R.string.pref_backup_settings_summary), style = MaterialTheme.typography.bodySmall)
-            OutlinedTextField(
-                value = exportFormats,
-                onValueChange = preferences::setExportFormats,
-                label = { Text(stringResource(R.string.pref_export_formats)) },
-                supportingText = { Text(stringResource(R.string.pref_export_formats_summary)) },
-                singleLine = true,
-                modifier = Modifier.fillMaxWidth(),
-                enabled = !BuildConfig.DEBUG
-            )
-            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                Column(Modifier.weight(1f)) {
-                    Text(stringResource(R.string.pref_export_anonymize), style = MaterialTheme.typography.bodyLarge)
-                    Text(stringResource(R.string.pref_export_anonymize_summary), style = MaterialTheme.typography.bodySmall)
-                }
-                Switch(checked = exportAnonymize, onCheckedChange = preferences::setExportAnonymize, enabled = !BuildConfig.DEBUG)
-            }
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                Button(onClick = { exportLauncher.launch("notimind-preferences.json") }, enabled = !BuildConfig.DEBUG) { Text(stringResource(R.string.pref_backup_export)) }
-                OutlinedButton(onClick = { importLauncher.launch(arrayOf("application/json", "text/json", "*/*")) }, enabled = !BuildConfig.DEBUG) { Text(stringResource(R.string.pref_backup_import)) }
-            }
-            message?.let { Text(it, style = MaterialTheme.typography.bodySmall) }
-        }
-    }
+    preferencesBackupCard(
+        PreferencesBackupCardConfig(
+            exportFormats = exportFormats,
+            exportAnonymize = exportAnonymize,
+            onFormatsChange = preferences::setExportFormats,
+            onAnonymizeChange = preferences::setExportAnonymize,
+            onExport = { exportLauncher.launch("notimind-preferences.json") },
+            onImport = { importLauncher.launch(arrayOf("application/json", "text/json", "*/*")) },
+            message = message,
+            enabled = !BuildConfig.DEBUG
+        )
+    )
 }
