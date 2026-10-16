@@ -3,6 +3,8 @@ package com.jeffers.notimindlite.util
 import android.util.LruCache
 import kotlin.math.sqrt
 
+private fun isFinite(value: Float): Boolean = !value.isNaN() && !value.isInfinite()
+
 /**
  * On-device vector embedding generator with a tunable memory footprint.
  */
@@ -87,7 +89,7 @@ object VectorEmbeddingHelper {
         for (i in vecA.indices) {
             val a = vecA[i]
             val b = vecB[i]
-            if (!a.isNaN() && !b.isNaN() && !a.isInfinite() && !b.isInfinite()) dotProduct += a * b
+            if (isFinite(a) && isFinite(b)) dotProduct += a * b
         }
         if (dotProduct.isNaN() || dotProduct.isInfinite()) return 0f
         return dotProduct.coerceIn(0f, 1f)
