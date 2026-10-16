@@ -191,7 +191,7 @@ fun appIconImage(appIconUri: String?, modifier: Modifier = Modifier.size(20.dp))
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class, ExperimentalLayoutApi::class)
 @Composable
-fun activeNotificationsScreen(dao: NotificationDao, authManager: AuthManager, db: AppDatabase, preferences: PreferencesRepository) {
+fun activeNotificationsScreen(dao: NotificationDao, preferences: PreferencesRepository) {
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
     val prefManager = remember { PreferenceManager(context) }
@@ -262,7 +262,6 @@ fun activeNotificationsScreen(dao: NotificationDao, authManager: AuthManager, db
         allActiveList.map { it.packageName to it.appName }
     }
 
-    var dismissingKeys by remember { mutableStateOf(setOf<String>()) }
     val scope = rememberCoroutineScope()
 
     val sectionOrder = remember(expandedSection, pinnedNotifs.size) {
@@ -305,18 +304,6 @@ fun activeNotificationsScreen(dao: NotificationDao, authManager: AuthManager, db
                     HybridSearchEngine.searchAndRankBlocking(filtered, debouncedSearchQuery)
                 }
             }
-        }
-    }
-
-    val totalLazyItemCount by remember {
-        derivedStateOf {
-            var count = 2
-            sectionOrder.forEach { section ->
-                count += 1
-                val items = notificationsBySection[section] ?: emptyList()
-                count += if (items.isEmpty()) 1 else items.size
-            }
-            count
         }
     }
 
