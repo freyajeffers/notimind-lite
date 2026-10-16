@@ -302,7 +302,13 @@ abstract class NotificationDao {
                AND content != ''
            )
     """)
-    abstract suspend fun markDismissedByMatching(key: String, packageName: String, title: String, content: String, dismissTime: Long = System.currentTimeMillis())
+    abstract suspend fun markDismissedByMatching(
+        key: String,
+        packageName: String,
+        title: String,
+        content: String,
+        dismissTime: Long = System.currentTimeMillis()
+    )
 
     @Query("""
         UPDATE notifications 
@@ -316,7 +322,14 @@ abstract class NotificationDao {
                AND content != ''
            )
     """)
-    abstract suspend fun markDismissedWithReasonByMatching(key: String, packageName: String, title: String, content: String, reason: Int, dismissTime: Long = System.currentTimeMillis())
+    abstract suspend fun markDismissedWithReasonByMatching(
+        key: String,
+        packageName: String,
+        title: String,
+        content: String,
+        reason: Int,
+        dismissTime: Long = System.currentTimeMillis()
+    )
 
     @Query("UPDATE notifications SET isDismissed = 1, dismissTime = :dismissTime WHERE key = :key")
     abstract suspend fun markDismissed(key: String, dismissTime: Long = System.currentTimeMillis())
