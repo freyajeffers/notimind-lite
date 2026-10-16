@@ -41,6 +41,59 @@ import com.jeffers.notimindlite.BuildConfig
 import com.jeffers.notimindlite.R
 
 @Composable
+private fun advancedSwitchRow(
+    titleRes: Int,
+    summaryRes: Int,
+    checked: Boolean,
+    enabled: Boolean = true,
+    onCheckedChange: (Boolean) -> Unit
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        verticalAlignment = androidx.compose.ui.Alignment.CenterVertically
+    ) {
+        Column(modifier = Modifier.weight(1f)) {
+            Text(stringResource(titleRes), style = MaterialTheme.typography.bodyLarge)
+            Text(
+                stringResource(summaryRes),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+        Switch(checked = checked, onCheckedChange = onCheckedChange, enabled = enabled)
+    }
+}
+
+@Composable
+private fun advancedNumberRow(
+    titleRes: Int,
+    summaryRes: Int,
+    value: Int,
+    width: androidx.compose.ui.unit.Dp,
+    onValueChange: (Int) -> Unit
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        verticalAlignment = androidx.compose.ui.Alignment.CenterVertically
+    ) {
+        Column(modifier = Modifier.weight(1f)) {
+            Text(stringResource(titleRes), style = MaterialTheme.typography.bodyLarge)
+            Text(
+                stringResource(summaryRes),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+        OutlinedTextField(
+            value = value.toString(),
+            onValueChange = { it.toIntOrNull()?.let(onValueChange) },
+            modifier = Modifier.width(width),
+            singleLine = true
+        )
+    }
+}
+
+@Composable
 fun settingsAdvancedSection(
     preferencesRepository: PreferencesRepository,
     onMigrationCompleted: () -> Unit
@@ -73,68 +126,26 @@ fun settingsAdvancedSection(
         Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
             Text(text = stringResource(R.string.pref_advanced_title), style = MaterialTheme.typography.titleMedium)
 
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = androidx.compose.ui.Alignment.CenterVertically
-            ) {
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(
-                        stringResource(R.string.pref_enable_telemetry_title),
-                        style = MaterialTheme.typography.bodyLarge
-                    )
-                    Text(
-                        stringResource(R.string.pref_enable_telemetry_summary),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-                Switch(
-                    checked = enableTelemetry,
-                    onCheckedChange = preferencesRepository::setEnableTelemetry,
-                    enabled = !BuildConfig.DEBUG
-                )
-            }
-
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = androidx.compose.ui.Alignment.CenterVertically
-            ) {
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(
-                        stringResource(R.string.pref_low_memory_mode_title),
-                        style = MaterialTheme.typography.bodyLarge
-                    )
-                    Text(
-                        stringResource(R.string.pref_low_memory_mode_summary),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-                Switch(checked = lowMemoryMode, onCheckedChange = preferencesRepository::setLowMemoryMode)
-            }
-
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = androidx.compose.ui.Alignment.CenterVertically
-            ) {
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(
-                        stringResource(R.string.pref_max_db_mb_title),
-                        style = MaterialTheme.typography.bodyLarge
-                    )
-                    Text(
-                        stringResource(R.string.pref_max_db_mb_summary),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-                OutlinedTextField(
-                    value = maxDbMb.toString(),
-                    onValueChange = { it.toIntOrNull()?.let(preferencesRepository::setMaxDbMb) },
-                    modifier = Modifier.width(120.dp),
-                    singleLine = true
-                )
-            }
+            advancedSwitchRow(
+                R.string.pref_enable_telemetry_title,
+                R.string.pref_enable_telemetry_summary,
+                enableTelemetry,
+                !BuildConfig.DEBUG,
+                preferencesRepository::setEnableTelemetry
+            )
+            advancedSwitchRow(
+                R.string.pref_low_memory_mode_title,
+                R.string.pref_low_memory_mode_summary,
+                lowMemoryMode,
+                onCheckedChange = preferencesRepository::setLowMemoryMode
+            )
+            advancedNumberRow(
+                R.string.pref_max_db_mb_title,
+                R.string.pref_max_db_mb_summary,
+                maxDbMb,
+                120.dp,
+                preferencesRepository::setMaxDbMb
+            )
 
             if (encryptionEnabled && preflight.plaintextExists) {
                 Text(stringResource(R.string.migration_settings_pending), style = MaterialTheme.typography.bodyMedium)
@@ -144,28 +155,13 @@ fun settingsAdvancedSection(
                 migrationMessage?.let { Text(it, color = MaterialTheme.colorScheme.error) }
             }
 
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = androidx.compose.ui.Alignment.CenterVertically
-            ) {
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(
-                        stringResource(R.string.pref_vector_cache_max_title),
-                        style = MaterialTheme.typography.bodyLarge
-                    )
-                    Text(
-                        stringResource(R.string.pref_vector_cache_max_summary),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-                OutlinedTextField(
-                    value = vectorCacheMax.toString(),
-                    onValueChange = { it.toIntOrNull()?.let(preferencesRepository::setVectorCacheMax) },
-                    modifier = Modifier.width(120.dp),
-                    singleLine = true
-                )
-            }
+            advancedNumberRow(
+                R.string.pref_vector_cache_max_title,
+                R.string.pref_vector_cache_max_summary,
+                vectorCacheMax,
+                120.dp,
+                preferencesRepository::setVectorCacheMax
+            )
         }
     }
 
