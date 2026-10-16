@@ -16,6 +16,8 @@ import javax.crypto.spec.SecretKeySpec
  * it runs on the JVM for unit tests and on Android at runtime.
  */
 object CryptoUtils {
+    private const val SHA256_BYTES = 32
+    private const val AES_KEY_BYTES = 32
     private val RNG = SecureRandom()
     private const val HKDF_HASH = "HmacSHA256"
     private const val AES_GCM = "AES/GCM/NoPadding"
@@ -23,12 +25,17 @@ object CryptoUtils {
     private const val GCM_IV_LEN = 12 // 96 bits
 
     /** Derive key material using HKDF-SHA256. Returns exactly length bytes. */
-    fun hkdfSha256ExtractAndExpand(salt: ByteArray?, ikm: ByteArray, info: ByteArray?, length: Int): ByteArray {
+    fun hkdfSha256ExtractAndExpand(
+        salt: ByteArray?,
+        ikm: ByteArray,
+        info: ByteArray?,
+        length: Int
+    ): ByteArray {
         // HKDF-Extract
         // RFC 5869 specifies an all-zero hash-length salt when no salt is supplied.
-        val prk = hmacSha256(salt ?: ByteArray(32), ikm)
+        val prk = hmacSha256(salt ?: ByteArray(SHA256_BYTES), ikm)
         // HKDF-Expand
-        val hashLen = 32
+        val hashLen = SHA256_BYTES
         val n = (length + hashLen - 1) / hashLen
         val okm = ByteArray(length)
         var previous = ByteArray(0)
@@ -56,7 +63,7 @@ object CryptoUtils {
 
     /** AES-256-GCM encrypt. Returns iv||ciphertext (iv length = 12 bytes). */
     fun aesGcmEncrypt(key: ByteArray, plaintext: ByteArray, aad: ByteArray? = null): ByteArray {
-        require(key.size == 32) { "AES-256 key required (32 bytes)" }
+        require(key.size == AES_KEY_BYTES) { "AES-256 key required (32 bytes)" }
         val iv = ByteArray(GCM_IV_LEN)
         RNG.nextBytes(iv)
         val cipher = Cipher.getInstance(AES_GCM)
@@ -70,7 +77,7 @@ object CryptoUtils {
 
     /** AES-256-GCM decrypt. Accepts iv||ciphertext and returns plaintext. */
     fun aesGcmDecrypt(key: ByteArray, ivAndCiphertext: ByteArray, aad: ByteArray? = null): ByteArray {
-        require(key.size == 32) { "AES-256 key required (32 bytes)" }
+        require(key.size == AES_KEY_BYTES) { "AES-256 key required (32 bytes)" }
         require(ivAndCiphertext.size > GCM_IV_LEN) { "ciphertext too short" }
         val iv = ivAndCiphertext.copyOfRange(0, GCM_IV_LEN)
         val ct = ivAndCiphertext.copyOfRange(GCM_IV_LEN, ivAndCiphertext.size)
