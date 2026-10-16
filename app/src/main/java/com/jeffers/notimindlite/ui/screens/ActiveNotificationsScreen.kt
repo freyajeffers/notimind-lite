@@ -986,93 +986,92 @@ fun notificationExpandedAttributes(
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.primary
             )
-            AttributeRow(label = "Package", value = item.packageName)
+            attributeRow(label = "Package", value = item.packageName)
             if (item.appName.isNotBlank() && item.appName != item.packageName) {
-                AttributeRow(label = "App Name", value = item.appName)
+                attributeRow(label = "App Name", value = item.appName)
             }
             if (!item.channelId.isNullOrEmpty()) {
-                AttributeRow(label = "Channel ID", value = item.channelId)
+                attributeRow(label = "Channel ID", value = item.channelId)
             }
             if (!item.category.isNullOrEmpty()) {
-                AttributeRow(label = "Category", value = item.category)
+                attributeRow(label = "Category", value = item.category)
             }
-            AttributeRow(label = "Priority", value = getPriorityLabel(item.priority))
-            AttributeRow(label = "Time Received", value = dateTimeFormatter.format(Instant.ofEpochMilli(item.postTime)))
+            attributeRow(label = "Priority", value = getPriorityLabel(item.priority))
+            attributeRow(label = "Time Received", value = dateTimeFormatter.format(Instant.ofEpochMilli(item.postTime)))
             if (item.lastUpdatedTime > 0 && item.lastUpdatedTime != item.postTime) {
-                AttributeRow(
+                attributeRow(
                     label = "Last Updated",
                     value = dateTimeFormatter.format(Instant.ofEpochMilli(item.lastUpdatedTime))
                 )
             }
             if (item.updateCount > 1) {
-                AttributeRow(label = "Update Count", value = "${item.updateCount}")
+                attributeRow(label = "Update Count", value = "${item.updateCount}")
             }
             if (item.dismissTime != null && item.dismissTime > 0) {
-                AttributeRow(
+                attributeRow(
                     label = "Time Dismissed",
                     value = dateTimeFormatter.format(Instant.ofEpochMilli(item.dismissTime))
                 )
             }
             if (item.dismissReason != null) {
-                AttributeRow(label = "Dismiss Reason", value = stringResource(id = getReasonLabel(item.dismissReason)))
+                attributeRow(label = "Dismiss Reason", value = stringResource(id = getReasonLabel(item.dismissReason)))
             }
             if (item.isOngoing) {
-                AttributeRow(label = "Ongoing", value = "Yes")
+                attributeRow(label = "Ongoing", value = "Yes")
             }
             if (item.isPersistent) {
-                AttributeRow(label = "Persistent", value = "Yes")
+                attributeRow(label = "Persistent", value = "Yes")
             }
             if (!item.isClearable) {
-                AttributeRow(label = "Clearable", value = "No")
+                attributeRow(label = "Clearable", value = "No")
             }
             if (item.isPinned) {
-                AttributeRow(label = "Pinned", value = "Yes")
+                attributeRow(label = "Pinned", value = "Yes")
             }
             if (item.isRead) {
-                AttributeRow(label = "Read Status", value = "Read")
+                attributeRow(label = "Read Status", value = "Read")
             }
             if (item.isGroupSummary) {
-                AttributeRow(label = "Group Summary", value = "Yes")
+                attributeRow(label = "Group Summary", value = "Yes")
             }
             if (!item.groupKey.isNullOrEmpty()) {
-                AttributeRow(label = "Group Key", value = item.groupKey)
+                attributeRow(label = "Group Key", value = item.groupKey)
             }
             if (item.actionsCount > 0) {
-                AttributeRow(label = "Actions Count", value = "${item.actionsCount}")
+                attributeRow(label = "Actions Count", value = "${item.actionsCount}")
             }
             if (!item.actionLabels.isNullOrEmpty()) {
-                AttributeRow(label = "Action Labels", value = item.actionLabels)
+                attributeRow(label = "Action Labels", value = item.actionLabels)
             }
             if (!item.intentUri.isNullOrEmpty()) {
-                AttributeRow(label = "Intent URI", value = item.intentUri)
+                attributeRow(label = "Intent URI", value = item.intentUri)
             }
             if (item.smallIconRes != 0) {
-                AttributeRow(label = "Small Icon Res", value = "0x${item.smallIconRes.toString(16).uppercase()}")
+                attributeRow(label = "Small Icon Res", value = "0x${item.smallIconRes.toString(16).uppercase()}")
             }
             if (!item.appIconUri.isNullOrEmpty()) {
-                AttributeRow(label = "App Icon URI", value = item.appIconUri)
+                attributeRow(label = "App Icon URI", value = item.appIconUri)
             }
-            AttributeRow(label = "Sync Status", value = item.syncStatus.name)
+            attributeRow(label = "Sync Status", value = item.syncStatus.name)
             if (item.lastSyncedAt > 0) {
-                AttributeRow(
+                attributeRow(
                     label = "Last Synced",
                     value = dateTimeFormatter.format(Instant.ofEpochMilli(item.lastSyncedAt))
                 )
             }
             if (item.embedding != null) {
-                AttributeRow(label = "Vector Embedding", value = "128-dim Indexed")
+                attributeRow(label = "Vector Embedding", value = "128-dim Indexed")
             }
             if (item.id > 0) {
-                AttributeRow(label = "Database ID", value = "#${item.id}")
+                attributeRow(label = "Database ID", value = "#${item.id}")
             }
-            AttributeRow(label = "Key", value = item.key)
+            attributeRow(label = "Key", value = item.key)
         }
     }
 }
 
 @Composable
-@Suppress("FunctionNaming") // Composable PascalCase required by Compose API; detekt rule does not exempt.
-fun AttributeRow(label: String, value: String) {
+fun attributeRow(label: String, value: String) {
     // Column weights: label column gets 35%, value column gets 65% of the row width.
     val (labelWeight, valueWeight) = labelValueWeights
     Row(
@@ -1096,7 +1095,7 @@ fun AttributeRow(label: String, value: String) {
     }
 }
 
-// Pair of (label column weight, value column weight) used by AttributeRow.
+// Pair of (label column weight, value column weight) used by attributeRow.
 // Defined at file scope so detekt's MagicNumber rule does not fire inside the Composable.
 // Weights are required by Compose's Modifier.weight(...) signature and cannot be hidden behind a
 // factory without changing the call shape.
