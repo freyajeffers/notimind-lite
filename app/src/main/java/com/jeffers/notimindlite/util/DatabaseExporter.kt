@@ -145,7 +145,10 @@ object DatabaseExporter {
                 put("channelId", notif.channelId ?: "")
                 put("priority", notif.priority)
                 put("postTime", notif.postTime)
-                put("postTimeFormatted", SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).format(Date(notif.postTime)))
+                put(
+                    "postTimeFormatted",
+                    SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).format(Date(notif.postTime))
+                )
                 put("isDismissed", notif.isDismissed)
                 put("dismissTime", notif.dismissTime ?: 0L)
                 put("dismissReason", notif.dismissReason ?: -1)
@@ -175,7 +178,10 @@ object DatabaseExporter {
                 put("channelId", notif.channelId ?: "")
                 put("priority", notif.priority)
                 put("postTime", notif.postTime)
-                put("postTimeFormatted", SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).format(Date(notif.postTime)))
+                put(
+                    "postTimeFormatted",
+                    SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).format(Date(notif.postTime))
+                )
                 put("isDismissed", notif.isDismissed)
                 put("dismissTime", notif.dismissTime ?: 0L)
                 put("dismissReason", notif.dismissReason ?: -1)
@@ -234,7 +240,10 @@ object DatabaseExporter {
             val escapedTitle = sanitizeCsvField(n.title)
             val escapedContent = sanitizeCsvField(n.content)
             val postTimeStr = dateFormat.format(Date(n.postTime))
-            sb.append("${n.id},${n.packageName},$escapedAppName,$escapedTitle,$escapedContent,$postTimeStr,${n.isDismissed},${n.dismissReason ?: ""},${n.isPinned}\n")
+            sb.append(
+                "${n.id},${n.packageName},$escapedAppName,$escapedTitle,$escapedContent," +
+                    "$postTimeStr,${n.isDismissed},${n.dismissReason ?: ""},${n.isPinned}\n"
+            )
         }
         return sb.toString()
     }
@@ -243,19 +252,24 @@ object DatabaseExporter {
         if (value == null) return "\"\""
         var sanitized = value.replace("\"", "\"\"")
         val trimmedSpace = sanitized.trimStart(' ')
-        if (trimmedSpace.startsWith("=") || trimmedSpace.startsWith("+") ||
-            trimmedSpace.startsWith("-") || trimmedSpace.startsWith("@") ||
-            trimmedSpace.startsWith("\t") || trimmedSpace.startsWith("\r")
-        ) {
+        if (isSpreadsheetFormula(trimmedSpace)) {
             sanitized = "'$sanitized"
         }
         return "\"$sanitized\""
     }
 
+    private fun isSpreadsheetFormula(value: String): Boolean =
+        value.startsWith("=") || value.startsWith("+") || value.startsWith("-") ||
+            value.startsWith("@") || value.startsWith("\t") || value.startsWith("\r")
+
     private fun applyPrivacy(notification: NotificationEntity, context: Context?): NotificationEntity {
         val preferences = context?.let { PreferencesRepository(it.applicationContext) } ?: return notification
         fun redact(value: String): String = PiiRedactionEngine.redact(value) ?: "[REDACTED]"
-        val title = if (preferences.exportAnonymize.value || preferences.anonymizeTitles.value) "[REDACTED-TITLE]" else notification.title
+        val title = if (preferences.exportAnonymize.value || preferences.anonymizeTitles.value) {
+            "[REDACTED-TITLE]"
+        } else {
+            notification.title
+        }
         return notification.copy(
             title = if (preferences.redactPii.value) redact(title) else title,
             content = if (preferences.redactPii.value) redact(notification.content) else notification.content,
@@ -275,14 +289,11 @@ object DatabaseExporter {
     fun cleanupExportFiles(context: Context, maxAgeMillis: Long = 3600_000L) {
         try {
             val cacheDir = File(context.cacheDir, "exports")
-            if (cacheDir.exists()) {
-                val now = System.currentTimeMillis()
-                cacheDir.listFiles()?.forEach { file ->
-                    if (now - file.lastModified() > maxAgeMillis) {
-                        file.delete()
-                    }
-                }
-            }
+            if (!cacheDir.exists()) return
+            val now = System.currentTimeMillis()
+            cacheDir.listFiles()
+                ?.filter { now - it.lastModified() > maxAgeMillis }
+                ?.forEach(File::delete)
         } catch (e: SecurityException) {
             Log.e(TAG, "Failed to clean up temporary export files: permission denied", e)
         } catch (e: java.io.IOException) {
@@ -346,7 +357,11 @@ object DatabaseExporter {
         file.setWritable(true, true)
         when {
             encrypted -> {
-                val plain = if (isJson) exportToJsonString(notifications, context) else exportToCsvString(notifications, context)
+                val plain = if (isJson) {
+                    exportToJsonString(notifications, context)
+                } else {
+                    exportToCsvString(notifications, context)
+                }
                 file.writeBytes(encryptExport(plain.toByteArray(Charsets.UTF_8), context, passphrase))
             }
             isJson -> exportToJsonFile(file, notifications, context)
@@ -385,7 +400,10 @@ object DatabaseExporter {
         }
         val cipher = javax.crypto.Cipher.getInstance("AES/GCM/NoPadding")
         cipher.init(javax.crypto.Cipher.ENCRYPT_MODE, key)
-        return byteArrayOf('N'.code.toByte(), 'M'.code.toByte(), 'E'.code.toByte(), '1'.code.toByte(), salt.size.toByte()) +
+        val header = byteArrayOf(
+            'N'.code.toByte(), 'M'.code.toByte(), 'E'.code.toByte(), '1'.code.toByte(), salt.size.toByte()
+        )
+        return header +
             salt + cipher.iv + cipher.doFinal(payload)
     }
 }
