@@ -35,7 +35,7 @@ fun settingsPrivacySection(preferencesRepository: PreferencesRepository) {
     val scope = rememberCoroutineScope()
     val autoDelete by preferencesRepository.autoDeleteOnRead.collectAsState(initial = false)
     val anonymizeTitles by preferencesRepository.anonymizeTitles.collectAsState(initial = false)
-    val redactPii by preferencesRepository.redactPii.collectAsState(initial = false)
+    val redactPii by preferencesRepository.securityManager.redactPii.collectAsState(initial = false)
     val context = LocalContext.current
     val preferenceManager = remember { PreferenceManager(context) }
     var strictPrivacyEnabled by remember { mutableStateOf(preferenceManager.isStrictPrivacyEnabled()) }
@@ -80,7 +80,7 @@ fun settingsPrivacySection(preferencesRepository: PreferencesRepository) {
                 }
                 Switch(
                     checked = redactPii,
-                    onCheckedChange = { scope.launch { preferencesRepository.setRedactPii(it) } },
+                    onCheckedChange = { scope.launch { preferencesRepository.securityManager.setRedactPii(it) } },
                     enabled = !BuildConfig.DEBUG
                 )
             }

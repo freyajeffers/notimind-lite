@@ -14,9 +14,12 @@ object EncryptedDatabaseFactory {
     fun openHelperFactory(context: Context, databaseName: String): SupportSQLiteOpenHelper.Factory? {
         if (Build.FINGERPRINT == "robolectric" || isRobolectricRuntime() || !isAndroidRuntime()) return null
         val preferences = PreferencesRepository(context.applicationContext)
-        if (!preferences.dbEncrypted.value || preferences.dbEncryptionMode.value == DbEncryptionMode.NONE) return null
+        if (!preferences.securityManager.dbEncrypted.value ||
+            preferences.securityManager.dbEncryptionMode.value == DbEncryptionMode.NONE
+        ) return null
         ensureSqlCipherLoaded()
-        val useKeystore = preferences.useKeystore.value && preferences.dbEncryptionMode.value == DbEncryptionMode.KEYSTORE
+        val useKeystore = preferences.securityManager.useKeystore.value &&
+            preferences.securityManager.dbEncryptionMode.value == DbEncryptionMode.KEYSTORE
         val passphrase = SqlCipherKeyManager.getOrCreatePassphrase(context, databaseName, useKeystore)
         // SupportOpenHelperFactory retains the supplied array until the helper opens.
         // Copy before clearing the caller-owned array; clearing this same array breaks

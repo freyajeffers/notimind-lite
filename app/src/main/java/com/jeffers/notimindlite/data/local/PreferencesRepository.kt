@@ -27,6 +27,7 @@ class PreferencesRepository(context: Context) :
     val captureManager = CapturePreferencesManager(context, profileManager)
     val syncManager = SyncPreferencesManager(context, profileManager)
     val experimentalManager = ExperimentalPreferencesManager(context, profileManager)
+    val securityManager = SecurityPreferencesManager(context, profileManager)
     private val backing: android.content.SharedPreferences
         get() = deContext.getSharedPreferences(profileManager.activePreferencesName, Context.MODE_PRIVATE)
 
@@ -40,6 +41,7 @@ class PreferencesRepository(context: Context) :
             captureManager.reload()
             syncManager.reload()
             experimentalManager.reload()
+            securityManager.reload()
         }
     }
 
@@ -121,33 +123,6 @@ class PreferencesRepository(context: Context) :
     val lowMemoryMode: StateFlow<Boolean> = _lowMemoryMode
     val vectorCacheMax: StateFlow<Int> = _vectorCacheMax
 
-    // Experimental options are deliberately opt-in and remain profile scoped.
-
-    private val _redactPii = MutableStateFlow(
-        backing.getBoolean("config_pii_redaction", backing.getBoolean("config_redact_pii", false))
-    )
-    private val _encryptedExports = MutableStateFlow(backing.getBoolean("config_encrypted_exports", true))
-    private val _requirePassphrase = MutableStateFlow(backing.getBoolean("config_require_passphrase", false))
-    private val _autoLockDb = MutableStateFlow(backing.getBoolean("config_auto_lock_db", false))
-    val redactPii: StateFlow<Boolean> = _redactPii
-    val encryptedExports: StateFlow<Boolean> = _encryptedExports
-    val requirePassphrase: StateFlow<Boolean> = _requirePassphrase
-    val autoLockDb: StateFlow<Boolean> = _autoLockDb
-
-    /** Security controls are kept in the same store so they are available before the UI starts. */
-    private val _exportRequiresBiometric = MutableStateFlow(backing.getBoolean(KEY_EXPORT_REQUIRES_BIOMETRIC, false))
-    private val _appLockEnabled = MutableStateFlow(backing.getBoolean(KEY_APP_LOCK_ENABLED, false))
-    private val _useKeystore = MutableStateFlow(backing.getBoolean(KEY_USE_KEYSTORE, true))
-    private val _dbEncrypted = MutableStateFlow(backing.getBoolean(KEY_DB_ENCRYPTED, true))
-    private val _dbEncryptionMode = MutableStateFlow(
-        DbEncryptionMode.fromPersisted(backing.getString(KEY_DB_ENCRYPTION_MODE, DbEncryptionMode.KEYSTORE.persisted))
-    )
-    val exportRequiresBiometric: StateFlow<Boolean> = _exportRequiresBiometric
-    val appLockEnabled: StateFlow<Boolean> = _appLockEnabled
-    val useKeystore: StateFlow<Boolean> = _useKeystore
-    val dbEncrypted: StateFlow<Boolean> = _dbEncrypted
-    val dbEncryptionMode: StateFlow<DbEncryptionMode> = _dbEncryptionMode
-
 
     private val _autoActOnNotification = MutableStateFlow(
         backing.getBoolean(KEY_AUTO_ACT_ON_NOTIFICATION, false)
@@ -204,18 +179,6 @@ class PreferencesRepository(context: Context) :
         _vectorCacheMax.value = backing.getInt(KEY_VECTOR_CACHE_MAX, 1000)
 
 
-        _exportRequiresBiometric.value = backing.getBoolean(KEY_EXPORT_REQUIRES_BIOMETRIC, false)
-
-        _appLockEnabled.value = backing.getBoolean(KEY_APP_LOCK_ENABLED, false)
-
-        _useKeystore.value = backing.getBoolean(KEY_USE_KEYSTORE, true)
-
-        _dbEncrypted.value = backing.getBoolean(KEY_DB_ENCRYPTED, true)
-
-        _dbEncryptionMode.value = DbEncryptionMode.fromPersisted(
-            backing.getString(KEY_DB_ENCRYPTION_MODE, DbEncryptionMode.KEYSTORE.persisted)
-        )
-
 
         _autoActOnNotification.value = backing.getBoolean(KEY_AUTO_ACT_ON_NOTIFICATION, false)
 
@@ -227,48 +190,6 @@ class PreferencesRepository(context: Context) :
     }
 
 
-    fun setRedactPii(v: Boolean) {
-        backing.edit().putBoolean("config_pii_redaction", v).apply()
-        _redactPii.value = v
-    }
-
-    fun setEncryptedExports(v: Boolean) {
-        backing.edit().putBoolean("config_encrypted_exports", v).apply()
-        _encryptedExports.value = v
-    }
-
-    fun setRequirePassphrase(v: Boolean) {
-        backing.edit().putBoolean("config_require_passphrase", v).apply()
-        _requirePassphrase.value = v
-    }
-
-    fun setAutoLockDb(v: Boolean) {
-        backing.edit().putBoolean("config_auto_lock_db", v).apply()
-        _autoLockDb.value = v
-    }
-
-    fun setExportRequiresBiometric(value: Boolean) {
-        backing.edit().putBoolean(KEY_EXPORT_REQUIRES_BIOMETRIC, value).apply()
-        _exportRequiresBiometric.value = value
-    }
-    fun setAppLockEnabled(value: Boolean) {
-        backing.edit().putBoolean(KEY_APP_LOCK_ENABLED, value).apply()
-        _appLockEnabled.value = value
-    }
-
-    fun setUseKeystore(value: Boolean) {
-        backing.edit().putBoolean(KEY_USE_KEYSTORE, value).apply()
-        _useKeystore.value = value
-    }
-
-    fun setDbEncrypted(value: Boolean) {
-        backing.edit().putBoolean(KEY_DB_ENCRYPTED, value).apply()
-        _dbEncrypted.value = value
-    }
-    fun setDbEncryptionMode(value: DbEncryptionMode) {
-        backing.edit().putString(KEY_DB_ENCRYPTION_MODE, value.persisted).apply()
-        _dbEncryptionMode.value = value
-    }
 
     /** Export only user-facing settings; auth tokens and local sync metadata are excluded. */
     fun exportSyncableSettings(): org.json.JSONObject {

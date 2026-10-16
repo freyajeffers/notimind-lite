@@ -512,7 +512,8 @@ abstract class AppDatabase : RoomDatabase() {
                     val databaseName = databaseName(CE_DATABASE_NAME, profileId)
                     val preferences = PreferencesRepository(appContext)
                     val encryptionRequested =
-                        preferences.dbEncrypted.value && preferences.dbEncryptionMode.value != DbEncryptionMode.NONE
+                        preferences.securityManager.dbEncrypted.value &&
+                            preferences.securityManager.dbEncryptionMode.value != DbEncryptionMode.NONE
                     val legacyPlaintextPending = MigrationRunner(appContext).preflight(databaseName).plaintextExists
                     val consent = EncryptionMigrationConsent.get(appContext)
                     val migrationState = if (
@@ -546,7 +547,8 @@ abstract class AppDatabase : RoomDatabase() {
         val databaseName = databaseName(CE_DATABASE_NAME, profileId)
         val preferences = PreferencesRepository(appContext)
         val encryptionRequested =
-            preferences.dbEncrypted.value && preferences.dbEncryptionMode.value != DbEncryptionMode.NONE
+            preferences.securityManager.dbEncrypted.value &&
+                preferences.securityManager.dbEncryptionMode.value != DbEncryptionMode.NONE
         val legacyPlaintextPending = MigrationRunner(appContext).preflight(databaseName).plaintextExists
         val consent = EncryptionMigrationConsent.get(appContext)
         val migrationState = if (

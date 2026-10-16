@@ -31,7 +31,7 @@ internal object ExportFlow {
     ): Result<File> {
         return try {
             val preferences = PreferencesRepository(context.applicationContext)
-            require(!preferences.requirePassphrase.value || passphrase != null && passphrase.isNotEmpty()) {
+            require(!preferences.securityManager.requirePassphrase.value || passphrase != null && passphrase.isNotEmpty()) {
                 "A passphrase is required for encrypted exports"
             }
             check(NetworkUtils.isInternetAvailable(context)) {

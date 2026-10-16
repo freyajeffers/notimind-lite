@@ -47,8 +47,8 @@ fun settingsAdvancedSection(
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
-    val encryptionEnabled = preferencesRepository.dbEncrypted.collectAsState(initial = false).value &&
-        preferencesRepository.dbEncryptionMode.collectAsState(initial = DbEncryptionMode.NONE).value !=
+    val encryptionEnabled = preferencesRepository.securityManager.dbEncrypted.collectAsState(initial = false).value &&
+        preferencesRepository.securityManager.dbEncryptionMode.collectAsState(initial = DbEncryptionMode.NONE).value !=
             DbEncryptionMode.NONE
     val profileId = preferencesRepository.profileManager.activeProfileId.collectAsState().value
     val databaseName = if (profileId == PreferencesRepository.DEFAULT_PROFILE_ID) {

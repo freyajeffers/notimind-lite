@@ -23,7 +23,7 @@ class NotiMindApp : Application(), android.content.ComponentCallbacks2 {
         com.jeffers.notimindlite.util.AppInitializer.initialize(this)
         runCatching {
             val prefs = PreferencesRepository(this)
-            if (prefs.autoLockDb.value || prefs.appLockEnabled.value) {
+            if (prefs.securityManager.autoLockDb.value || prefs.securityManager.appLockEnabled.value) {
                 DatabaseLockManager.unlock()
             }
         }.onFailure {
@@ -41,7 +41,7 @@ class NotiMindApp : Application(), android.content.ComponentCallbacks2 {
             android.content.ComponentCallbacks2.TRIM_MEMORY_UI_HIDDEN -> {
                 AppIconCache.clearCache()
                 val preferences = PreferencesRepository(this)
-                if (preferences.autoLockDb.value || preferences.appLockEnabled.value) {
+                if (preferences.securityManager.autoLockDb.value || preferences.securityManager.appLockEnabled.value) {
                     DatabaseLockManager.lock()
                     AppDatabase.resetInstance()
                 }

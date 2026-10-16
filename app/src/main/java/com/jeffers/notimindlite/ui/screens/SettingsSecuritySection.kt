@@ -15,9 +15,9 @@ import kotlinx.coroutines.launch
 @Composable
 fun settingsSecuritySection(preferencesRepository: PreferencesRepository) {
     val scope = rememberCoroutineScope()
-    val encryptedExports by preferencesRepository.encryptedExports.collectAsState(initial = true)
-    val requirePassphrase by preferencesRepository.requirePassphrase.collectAsState(initial = true)
-    val autoLockDb by preferencesRepository.autoLockDb.collectAsState(initial = false)
+    val encryptedExports by preferencesRepository.securityManager.encryptedExports.collectAsState(initial = true)
+    val requirePassphrase by preferencesRepository.securityManager.requirePassphrase.collectAsState(initial = true)
+    val autoLockDb by preferencesRepository.securityManager.autoLockDb.collectAsState(initial = false)
 
     Card(
         modifier = Modifier.fillMaxWidth(),
@@ -31,7 +31,7 @@ fun settingsSecuritySection(preferencesRepository: PreferencesRepository) {
                     Text(stringResource(R.string.pref_encrypted_exports_title), style = MaterialTheme.typography.bodyLarge)
                     Text(stringResource(R.string.pref_encrypted_exports_summary), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
-                Switch(checked = encryptedExports, onCheckedChange = { scope.launch { preferencesRepository.setEncryptedExports(it) } })
+                Switch(checked = encryptedExports, onCheckedChange = { scope.launch { preferencesRepository.securityManager.setEncryptedExports(it) } })
             }
 
             Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
@@ -39,7 +39,7 @@ fun settingsSecuritySection(preferencesRepository: PreferencesRepository) {
                     Text(stringResource(R.string.pref_require_passphrase_title), style = MaterialTheme.typography.bodyLarge)
                     Text(stringResource(R.string.pref_require_passphrase_summary), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
-                Switch(checked = requirePassphrase, onCheckedChange = { scope.launch { preferencesRepository.setRequirePassphrase(it) } })
+                Switch(checked = requirePassphrase, onCheckedChange = { scope.launch { preferencesRepository.securityManager.setRequirePassphrase(it) } })
             }
 
             Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
@@ -47,7 +47,7 @@ fun settingsSecuritySection(preferencesRepository: PreferencesRepository) {
                     Text(stringResource(R.string.pref_auto_lock_title), style = MaterialTheme.typography.bodyLarge)
                     Text(stringResource(R.string.pref_auto_lock_summary), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
-                Switch(checked = autoLockDb, onCheckedChange = { scope.launch { preferencesRepository.setAutoLockDb(it) } })
+                Switch(checked = autoLockDb, onCheckedChange = { scope.launch { preferencesRepository.securityManager.setAutoLockDb(it) } })
             }
         }
     }

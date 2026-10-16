@@ -226,7 +226,7 @@ object DatabaseExporter {
             validateExportRequest(preferences, isJson, passphrase, biometricAuthenticated)
             DatabaseExportHelper.cleanupExportFiles(context)
             val file = createExportFile(context, notifications, isJson, passphrase, preferences)
-            context.startActivity(buildShareIntent(context, file, isJson, preferences.encryptedExports.value))
+            context.startActivity(buildShareIntent(context, file, isJson, preferences.securityManager.encryptedExports.value))
         } catch (e: IllegalArgumentException) {
             Log.e(TAG, "Failed to export database: invalid argument", e)
         } catch (e: SecurityException) {
@@ -247,10 +247,10 @@ object DatabaseExporter {
         val requestedFormat = if (isJson) "json" else "csv"
         val allowedFormats = preferences.exportFormats.value.split(',').map(String::trim).toSet()
         check(requestedFormat in allowedFormats) { "Export format '$requestedFormat' is disabled in Settings" }
-        check(!preferences.exportRequiresBiometric.value || biometricAuthenticated) {
+        check(!preferences.securityManager.exportRequiresBiometric.value || biometricAuthenticated) {
             "Biometric authentication is required before exporting"
         }
-        check(!preferences.requirePassphrase.value || (passphrase != null && passphrase.isNotEmpty())) {
+        check(!preferences.securityManager.requirePassphrase.value || (passphrase != null && passphrase.isNotEmpty())) {
             "A passphrase is required for exports"
         }
     }
@@ -262,7 +262,7 @@ object DatabaseExporter {
         passphrase: CharArray?,
         preferences: PreferencesRepository,
     ): File {
-        val encrypted = preferences.encryptedExports.value
+        val encrypted = preferences.securityManager.encryptedExports.value
         val extension = if (encrypted) "enc" else if (isJson) "json" else "csv"
         val file = File(context.cacheDir, "exports/notimind_export_${System.currentTimeMillis()}.$extension")
         file.parentFile?.mkdirs()

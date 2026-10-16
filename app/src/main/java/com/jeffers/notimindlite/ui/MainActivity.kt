@@ -65,8 +65,8 @@ class MainActivity : ComponentActivity() {
         } else {
             "${AppDatabase.CE_DATABASE_NAME}_$profileId"
         }
-        val migrationConsentRequired = preferencesRepository.dbEncrypted.value &&
-            preferencesRepository.dbEncryptionMode.value != DbEncryptionMode.NONE &&
+        val migrationConsentRequired = preferencesRepository.securityManager.dbEncrypted.value &&
+            preferencesRepository.securityManager.dbEncryptionMode.value != DbEncryptionMode.NONE &&
             EncryptionMigrationConsent.get(applicationContext) == EncryptionMigrationConsent.Decision.UNKNOWN &&
             migrationRunner.preflight(databaseName).plaintextExists
 

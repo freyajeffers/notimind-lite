@@ -158,10 +158,10 @@ object DatabaseExportHelper {
             notification.title
         }
         return notification.copy(
-            title = if (preferences.redactPii.value) redact(title) else title,
-            content = if (preferences.redactPii.value) redact(notification.content) else notification.content,
-            subText = notification.subText?.let { if (preferences.redactPii.value) redact(it) else it },
-            bigText = notification.bigText?.let { if (preferences.redactPii.value) redact(it) else it }
+            title = if (preferences.securityManager.redactPii.value) redact(title) else title,
+            content = if (preferences.securityManager.redactPii.value) redact(notification.content) else notification.content,
+            subText = notification.subText?.let { if (preferences.securityManager.redactPii.value) redact(it) else it },
+            bigText = notification.bigText?.let { if (preferences.securityManager.redactPii.value) redact(it) else it }
         )
     }
 
