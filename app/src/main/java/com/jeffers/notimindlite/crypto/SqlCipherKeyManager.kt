@@ -82,7 +82,12 @@ object SqlCipherKeyManager {
                 "AndroidKeyStore is required for SQLCipher passphrase protection"
             }
             robolectricKeys.getOrPut(alias) {
-                SecretKeySpec(ByteArray(PASSPHRASE_BYTES).also { java.security.SecureRandom().nextBytes(it) }, KEY_ALGORITHM)
+                SecretKeySpec(
+                    ByteArray(PASSPHRASE_BYTES).also {
+                        java.security.SecureRandom().nextBytes(it)
+                    },
+                    KEY_ALGORITHM
+                )
             }
         } catch (e: java.io.IOException) {
             Log.w("SqlCipherKeyManager", "I/O error accessing KeyStore", e)
@@ -90,7 +95,12 @@ object SqlCipherKeyManager {
                 "AndroidKeyStore is required for SQLCipher passphrase protection"
             }
             robolectricKeys.getOrPut(alias) {
-                SecretKeySpec(ByteArray(PASSPHRASE_BYTES).also { java.security.SecureRandom().nextBytes(it) }, KEY_ALGORITHM)
+                SecretKeySpec(
+                    ByteArray(PASSPHRASE_BYTES).also {
+                        java.security.SecureRandom().nextBytes(it)
+                    },
+                    KEY_ALGORITHM
+                )
             }
         }
     }

@@ -5,7 +5,10 @@ import com.jeffers.notimindlite.data.local.AutoExecuteRule
 import com.jeffers.notimindlite.data.local.PreferencesRepository
 import com.jeffers.notimindlite.service.NotificationLoggerService
 
-/** Applies automation preferences to notification actions. Kept side-effect free except for the selected PendingIntent. */
+/**
+ * Applies automation preferences to notification actions.
+ * The executor only side-effects through the selected PendingIntent.
+ */
 class NotificationActionExecutor(
     private val preferences: PreferencesRepository
 ) {
@@ -15,7 +18,11 @@ class NotificationActionExecutor(
         return NotificationLauncher.triggerAction(key, actionIndex)
     }
 
-    fun executeLongPress(context: Context, key: String, packageName: String): Boolean = when (preferences.longPressAction.value) {
+    fun executeLongPress(
+        context: Context,
+        key: String,
+        packageName: String
+    ): Boolean = when (preferences.longPressAction.value) {
         "reply" -> NotificationLauncher.triggerAction(key, 0)
         "dismiss" -> {
             NotificationLoggerService.dismissNotification(key)
