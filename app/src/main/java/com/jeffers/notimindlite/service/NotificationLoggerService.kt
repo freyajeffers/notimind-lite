@@ -38,10 +38,6 @@ import java.util.LinkedHashMap
  * It applies extended ingestion filters to eliminate clutter and persists
  * clean notifications in the Room database.
  */
-@Suppress("TooManyFunctions") // NotificationLoggerService is intentionally one service surface; the 12
-// functions map 1:1 to NotificationListenerService lifecycle hooks + capture pipeline. Splitting
-// across files would fragment directBootAware service registration. See BootRestoreManager for the
-// boot-restore subset already extracted.
 class NotificationLoggerService : NotificationListenerService() {
 
     // Service-level tag and helpers
@@ -53,9 +49,17 @@ class NotificationLoggerService : NotificationListenerService() {
     companion object {
         private const val TAG = "NotificationLoggerSrv"
         private const val MAX_CACHE_CAPACITY = 500
+        private const val CACHE_INITIAL_CAPACITY = 16
+        private const val CACHE_LOAD_FACTOR = 0.75f
+        private const val ICON_COMPRESSION_QUALITY = 100
+        private const val STALE_NOTIFICATION_DAYS = 30L
+        private const val HOURS_PER_DAY = 24L
+        private const val MINUTES_PER_HOUR = 60L
+        private const val SECONDS_PER_MINUTE = 60L
+        private const val MILLIS_PER_SECOND = 1000L
 
         private val recentLogs: MutableMap<String, Long> = Collections.synchronizedMap(
-            object : LinkedHashMap<String, Long>(16, 0.75f, true) {
+            object : LinkedHashMap<String, Long>(CACHE_INITIAL_CAPACITY, CACHE_LOAD_FACTOR, true) {
                 override fun removeEldestEntry(eldest: MutableMap.MutableEntry<String, Long>?): Boolean {
                     return size > MAX_CACHE_CAPACITY
                 }
@@ -63,7 +67,7 @@ class NotificationLoggerService : NotificationListenerService() {
         )
 
         private val recentContents: MutableMap<String, String> = Collections.synchronizedMap(
-            object : LinkedHashMap<String, String>(16, 0.75f, true) {
+            object : LinkedHashMap<String, String>(CACHE_INITIAL_CAPACITY, CACHE_LOAD_FACTOR, true) {
                 override fun removeEldestEntry(eldest: MutableMap.MutableEntry<String, String>?): Boolean {
                     return size > MAX_CACHE_CAPACITY
                 }
@@ -137,7 +141,7 @@ class NotificationLoggerService : NotificationListenerService() {
                 }
             }
             FileOutputStream(iconFile).use { out ->
-                bitmap.compress(Bitmap.CompressFormat.PNG, 100, out)
+                bitmap.compress(Bitmap.CompressFormat.PNG, ICON_COMPRESSION_QUALITY, out)
             }
             iconFile.absolutePath
         } catch (e: FileNotFoundException) {
@@ -351,7 +355,8 @@ class NotificationLoggerService : NotificationListenerService() {
     }
 
     private fun isNotificationStale(postTime: Long, now: Long): Boolean {
-        val maxAgeMs = 30L * 24 * 60 * 60 * 1000L
+        val maxAgeMs = STALE_NOTIFICATION_DAYS * HOURS_PER_DAY * MINUTES_PER_HOUR *
+            SECONDS_PER_MINUTE * MILLIS_PER_SECOND
         return postTime > 0 && now - postTime > maxAgeMs
     }
 
