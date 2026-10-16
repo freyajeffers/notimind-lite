@@ -447,40 +447,20 @@ fun activeNotificationsScreen(dao: NotificationDao, preferences: PreferencesRepo
                     !selectedPackages.isNullOrEmpty()
                 if (!hasAnyData) {
                     item(key = "active_empty_state") {
-                        if (!isGranted) {
-                            ActivePermissionEmptyState(
-                                title = stringResource(id = R.string.active_empty_permission_title),
-                                description = stringResource(id = R.string.active_empty_permission_desc),
-                                step1 = stringResource(id = R.string.active_empty_permission_step1),
-                                step2 = stringResource(id = R.string.active_empty_permission_step2),
-                                step3 = stringResource(id = R.string.active_empty_permission_step3),
-                                grantButtonText = stringResource(id = R.string.active_empty_permission_grant),
-                                onGrantClick = {
-                                    val intent = Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS)
-                                    intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                                    context.startActivity(intent)
-                                }
-                            )
-                        } else if (isSearching) {
-                            ActiveSearchEmptyState(
-                                title = stringResource(id = R.string.active_empty_search_title),
-                                description = stringResource(
-                                    id = R.string.active_empty_search_desc,
-                                    debouncedSearchQuery
-                                ),
-                                clearButtonText = stringResource(id = R.string.active_empty_search_clear),
-                                onClearClick = {
-                                    searchQuery = ""
-                                    selectedPackages = null
-                                }
-                            )
-                        } else {
-                            ActiveFirstRunEmptyState(
-                                title = stringResource(id = R.string.active_empty_first_run_title),
-                                description = stringResource(id = R.string.active_empty_first_run_desc),
-                                hint = stringResource(id = R.string.active_empty_first_run_hint)
-                            )
-                        }
+                        activeEmptyState(
+                            isGranted = isGranted,
+                            isSearching = isSearching,
+                            debouncedSearchQuery = debouncedSearchQuery,
+                            onGrantClick = {
+                                val intent = Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS)
+                                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                                context.startActivity(intent)
+                            },
+                            onClearClick = {
+                                searchQuery = ""
+                                selectedPackages = null
+                            }
+                        )
                     }
                 }
 
