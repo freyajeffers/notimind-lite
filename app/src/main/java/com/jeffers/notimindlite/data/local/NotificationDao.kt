@@ -337,15 +337,26 @@ abstract class NotificationDao {
     @Query("UPDATE notifications SET isDismissed = 1, dismissTime = :dismissTime WHERE key IN (:keys)")
     abstract suspend fun markDismissedBatch(keys: List<String>, dismissTime: Long = System.currentTimeMillis())
 
-    @Query("UPDATE notifications SET isDismissed = 1, dismissReason = :reason, dismissTime = :dismissTime WHERE key = :key")
-    abstract suspend fun markDismissedWithReason(key: String, reason: Int, dismissTime: Long = System.currentTimeMillis())
+    @Query(
+        "UPDATE notifications SET isDismissed = 1, dismissReason = :reason, " +
+            "dismissTime = :dismissTime WHERE key = :key"
+    )
+    abstract suspend fun markDismissedWithReason(
+        key: String,
+        reason: Int,
+        dismissTime: Long = System.currentTimeMillis()
+    )
 
     @Query("""
         UPDATE notifications
         SET isDismissed = 1, dismissReason = :reason, dismissTime = :dismissTime
         WHERE key IN (:keys)
     """)
-    abstract suspend fun markDismissedWithReasonBatch(keys: List<String>, reason: Int, dismissTime: Long = System.currentTimeMillis())
+    abstract suspend fun markDismissedWithReasonBatch(
+        keys: List<String>,
+        reason: Int,
+        dismissTime: Long = System.currentTimeMillis()
+    )
 
     @Query("SELECT COUNT(*) FROM notifications")
     abstract suspend fun getNotificationCount(): Int
@@ -366,7 +377,11 @@ abstract class NotificationDao {
     abstract suspend fun updateSyncStatus(key: String, status: SyncStatus, syncedAt: Long = System.currentTimeMillis())
 
     @Query("UPDATE notifications SET syncStatus = :status, lastSyncedAt = :syncedAt WHERE key IN (:keys)")
-    abstract suspend fun updateSyncStatusBatch(keys: List<String>, status: SyncStatus, syncedAt: Long = System.currentTimeMillis())
+    abstract suspend fun updateSyncStatusBatch(
+        keys: List<String>,
+        status: SyncStatus,
+        syncedAt: Long = System.currentTimeMillis()
+    )
 
     @Transaction
     open suspend fun updateEmbeddingsBatch(items: List<Pair<Long, ByteArray>>) {
