@@ -4,16 +4,13 @@ import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
-import androidx.room.RawQuery
-import androidx.sqlite.db.SupportSQLiteQuery
-import kotlinx.coroutines.flow.Flow
-
 import androidx.room.Transaction
 
 @Dao
 abstract class NotificationDao :
     NotificationSyncOperations,
     NotificationStorageOperations,
+    NotificationMaintenanceOperations,
     NotificationInsertOperations,
     NotificationEntityQueries,
     NotificationReadQueries,
@@ -171,8 +168,6 @@ abstract class NotificationDao :
     )
 
 
-    @Query("DELETE FROM notifications WHERE isDismissed = 1 AND postTime < :cutoffTimeMs AND isPinned = 0")
-    abstract suspend fun pruneOldLogs(cutoffTimeMs: Long)
 
     @Transaction
     open suspend fun updateEmbeddingsBatch(items: List<Pair<Long, ByteArray>>) {
@@ -182,9 +177,5 @@ abstract class NotificationDao :
     }
 
 
-    @Query("DELETE FROM notification_groups")
-    abstract suspend fun clearGroups()
-
-    @Query("DELETE FROM notifications")
-    abstract suspend fun clearAll()
+    // moved maintenance queries to NotificationMaintenanceOperations
 }
