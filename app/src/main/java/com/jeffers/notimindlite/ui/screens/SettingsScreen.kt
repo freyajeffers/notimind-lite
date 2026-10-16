@@ -218,17 +218,8 @@ fun settingsScreen(
         // they can quote in support tickets. Looked up via PackageManager at composable
         // scope (not inside try/catch around a composable) so the build info is cached
         // for recomposition.
-        val versionName = remember {
-            runCatching {
-                context.packageManager.getPackageInfo(context.packageName, 0).versionName ?: "?"
-            }.getOrDefault("?")
-        }
-        val versionCode = remember {
-            runCatching {
-                val info = context.packageManager.getPackageInfo(context.packageName, 0)
-                info.longVersionCode.toInt()
-            }.getOrDefault(0)
-        }
+        val versionName = remember { getVersionName(context) }
+        val versionCode = remember { getVersionCode(context) }
         Spacer(modifier = Modifier.height(8.dp))
         Text(
             text = stringResource(id = R.string.settings_version_footer, versionName, versionCode),
@@ -293,6 +284,17 @@ fun settingsScreen(
         SnackbarHost(hostState = snackbarHostState)
     }
 }
+
+private fun getVersionName(context: Context): String =
+    runCatching {
+        context.packageManager.getPackageInfo(context.packageName, 0).versionName ?: "?"
+    }.getOrDefault("?")
+
+private fun getVersionCode(context: Context): Int =
+    runCatching {
+        val info = context.packageManager.getPackageInfo(context.packageName, 0)
+        info.longVersionCode.toInt()
+    }.getOrDefault(0)
 
 @Composable
 private fun notificationAccessCard(context: Context, listenerGranted: Boolean) {
