@@ -464,33 +464,16 @@ fun activeNotificationsScreen(dao: NotificationDao, preferences: PreferencesRepo
                     }
                 }
 
-                // F-N usability [2026-09-06]: active-filter chip row, only shown when
-                // at least one filter is set, so users always know *why* their list is
-                // shorter than expected and can clear the filter with one tap.
-                val activeChips = mutableListOf<ActiveFilterChip>()
-                if (debouncedSearchQuery.isNotBlank()) {
-                    activeChips += ActiveFilterChip(text = "\"${debouncedSearchQuery}\"") {
+                activeFilterChipsItem(
+                    searchQuery = debouncedSearchQuery,
+                    selectedPackages = selectedPackages,
+                    onClearSearch = { searchQuery = "" },
+                    onClearPackages = { selectedPackages = null },
+                    onClearAll = {
                         searchQuery = ""
+                        selectedPackages = null
                     }
-                }
-                selectedPackages?.takeIf { it.isNotEmpty() }?.let { pkgs ->
-                    activeChips += ActiveFilterChip(
-                        text = "${pkgs.size} app${if (pkgs.size == 1) "" else "s"}"
-                    ) { selectedPackages = null }
-                }
-                if (activeChips.isNotEmpty()) {
-                    item(key = "active_filter_chips") {
-                        activeFilterChipsRow(
-                            label = stringResource(id = R.string.active_filter_chips_label),
-                            chips = activeChips,
-                            clearAllLabel = stringResource(id = R.string.active_filter_chips_clear_all),
-                            onClearAll = {
-                                searchQuery = ""
-                                selectedPackages = null
-                            }
-                        )
-                    }
-                }
+                )
 
                 sectionOrder.forEach { section ->
                     val isExpanded = expandedSection == section.keyName
