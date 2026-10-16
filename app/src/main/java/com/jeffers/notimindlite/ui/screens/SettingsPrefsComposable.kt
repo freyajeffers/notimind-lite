@@ -119,57 +119,7 @@ fun settingsPreferencesSection(preferencesRepository: PreferencesRepository) {
                 )
             )
 
-            Text(stringResource(R.string.pref_security_local_title), style = MaterialTheme.typography.titleMedium)
-            preferenceSwitchRow(
-                stringResource(R.string.pref_export_biometric_title),
-                stringResource(R.string.pref_export_biometric_summary), exportRequiresBiometric,
-                preferencesRepository::setExportRequiresBiometric
-            )
-            preferenceSwitchRow(
-                stringResource(R.string.pref_app_lock_title),
-                stringResource(R.string.pref_app_lock_summary), appLockEnabled,
-                preferencesRepository::setAppLockEnabled
-            )
-            preferenceSwitchRow(
-                stringResource(R.string.pref_encrypt_database_title),
-                stringResource(R.string.pref_encrypt_database_summary), dbEncrypted,
-                preferencesRepository::setDbEncrypted
-            )
-            preferenceSelectRow(
-                stringResource(R.string.pref_database_key_mode_title),
-                dbEncryptionMode.persisted,
-                listOf(
-                    "none" to stringResource(R.string.pref_key_none),
-                    "keystore" to stringResource(R.string.pref_key_keystore),
-                    "local_key" to stringResource(R.string.pref_key_local)
-                ),
-                { preferencesRepository.setDbEncryptionMode(DbEncryptionMode.fromPersisted(it)) }
-            )
-            preferenceSwitchRow(
-                stringResource(R.string.pref_keystore_title),
-                stringResource(R.string.pref_keystore_summary), useKeystore,
-                preferencesRepository::setUseKeystore, enabled = dbEncrypted
-            )
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = androidx.compose.ui.Alignment.CenterVertically
-            ) {
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(stringResource(R.string.pref_preview_length_title), style = MaterialTheme.typography.bodyLarge)
-                    Text(
-                        stringResource(R.string.pref_preview_length_summary),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-                OutlinedTextField(
-                    value = previewLength.toString(),
-                    onValueChange = { it.toIntOrNull()?.let(preferencesRepository::setPreviewLength) },
-                    modifier = Modifier.width(110.dp), singleLine = true,
-                    label = { Text(stringResource(R.string.pref_preview_length_label)) },
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
-                )
-            }
+            settingsSecuritySection(preferencesRepository)
 
             Row(
                 modifier = Modifier.fillMaxWidth(),
