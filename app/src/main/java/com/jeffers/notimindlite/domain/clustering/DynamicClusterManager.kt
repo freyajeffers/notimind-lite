@@ -134,16 +134,43 @@ object DynamicClusterManager {
             )
         ),
         "productivity" to mapOf(
-            "organization" to listOf("productivity", "work", "office", "task", "todo", "calendar", "document", "sheet", "note", "meeting", "reminder", "agenda", "schedule", "alarm", "appointment", "deadline", "planner", "organizer", "memo", "kanban", "sprint", "milestone", "project"),
-            "collaboration" to listOf("zoom", "teams", "meet", "conference", "due", "sync", "notion", "trello", "asana", "jira", "docs", "excel", "powerpoint", "word", "workspace", "evernote", "obsidian", "github", "gitlab", "bitbucket", "linear", "basecamp", "monday", "presentation", "spreadsheet", "confluence")
+            "organization" to listOf(
+                "productivity", "work", "office", "task", "todo", "calendar", "document", "sheet",
+                "note", "meeting", "reminder", "agenda", "schedule", "alarm", "appointment",
+                "deadline", "planner", "organizer", "memo", "kanban", "sprint", "milestone", "project"
+            ),
+            "collaboration" to listOf(
+                "zoom", "teams", "meet", "conference", "due", "sync", "notion", "trello", "asana",
+                "jira", "docs", "excel", "powerpoint", "word", "workspace", "evernote", "obsidian",
+                "github", "gitlab", "bitbucket", "linear", "basecamp", "monday", "presentation",
+                "spreadsheet", "confluence"
+            )
         ),
         "media" to mapOf(
-            "audio" to listOf("media", "audio", "music", "song", "track", "podcast", "radio", "sound", "stream", "spotify", "soundcloud", "pandora", "deezer", "tidal", "audible", "playlist", "album", "artist", "playing", "now playing", "headphones", "bluetooth audio", "equalizer"),
-            "video" to listOf("video", "movie", "film", "tv", "clip", "watch", "show", "play", "pause", "youtube", "netflix", "hulu", "disney", "prime video", "hbo", "max", "twitch", "apple music", "vimeo", "episode", "trailer", "season", "premiere", "broadcast", "channel", "curated", "soundtrack")
+            "audio" to listOf(
+                "media", "audio", "music", "song", "track", "podcast", "radio", "sound", "stream",
+                "spotify", "soundcloud", "pandora", "deezer", "tidal", "audible", "playlist", "album",
+                "artist", "playing", "now playing", "headphones", "bluetooth audio", "equalizer"
+            ),
+            "video" to listOf(
+                "video", "movie", "film", "tv", "clip", "watch", "show", "play", "pause", "youtube",
+                "netflix", "hulu", "disney", "prime video", "hbo", "max", "twitch", "apple music",
+                "vimeo", "episode", "trailer", "season", "premiere", "broadcast", "channel", "curated",
+                "soundtrack"
+            )
         ),
         "health" to mapOf(
-            "fitness" to listOf("health", "fitness", "workout", "gym", "run", "steps", "heart", "pulse", "sleep", "calories", "water", "exercise", "walk", "activity", "fitbit", "garmin", "strava", "myfitnesspal", "peloton", "nike run", "whoop", "cardio", "nutrition"),
-            "medical" to listOf("doctor", "medicine", "prescription", "pharmacy", "appointment", "hospital", "clinic", "diet", "weight", "headspace", "calm", "meditation", "blood pressure", "glucose", "hydration", "cycle", "wellness", "vitamins", "dosage", "apple health", "telehealth", "refill", "dentist")
+            "fitness" to listOf(
+                "health", "fitness", "workout", "gym", "run", "steps", "heart", "pulse", "sleep",
+                "calories", "water", "exercise", "walk", "activity", "fitbit", "garmin", "strava",
+                "myfitnesspal", "peloton", "nike run", "whoop", "cardio", "nutrition"
+            ),
+            "medical" to listOf(
+                "doctor", "medicine", "prescription", "pharmacy", "appointment", "hospital", "clinic",
+                "diet", "weight", "headspace", "calm", "meditation", "blood pressure", "glucose",
+                "hydration", "cycle", "wellness", "vitamins", "dosage", "apple health", "telehealth",
+                "refill", "dentist"
+            )
         ),
         "smarthome" to mapOf(
             "control" to listOf("home", "smart", "thermostat", "light", "lock", "doorbell", "camera", "motion", "sensor", "nest", "ring", "alexa", "google home", "hue", "alarm", "garage", "temperature", "plug", "device", "security cam", "smart life", "tuya", "matter", "zigbee", "z-wave", "automation", "scene", "bulb", "switch", "vacuum", "roborock", "roomba", "appliance", "ecobee", "simplisafe", "arlo", "nanoleaf", "smartthings", "lutron", "refrigerator")
