@@ -510,7 +510,7 @@ class PreferencesRepository(context: Context) :
         private const val KEY_ENABLE_FTS4 = "config_enable_fts4"
         private const val KEY_RETENTION_DAYS = "config_retention_days"
         private const val KEY_EXPORT_ENCRYPTION = "config_export_encryption"
-        private const val KEY_CAPTURE_NOTIFICATIONS = "config_capture_notifications"
+
         private const val KEY_ENABLE_SEMANTIC_RANKING = "config_enable_semantic_ranking"
         private const val KEY_AUTO_DELETE_ON_READ = "config_auto_delete_on_read"
         private const val KEY_BACKUP_INTERVAL_DAYS = "config_backup_interval_days"
@@ -542,16 +542,16 @@ class PreferencesRepository(context: Context) :
         private const val KEY_AUTO_ACT_ON_NOTIFICATION = "config_auto_act_on_notification"
         private const val KEY_DEFAULT_REPLY_METHOD = "config_default_reply_method"
         private const val KEY_LONG_PRESS_ACTION = "config_long_press_action"
-        private const val KEY_AUTO_EXECUTE_RULES = "config_auto_execute_rules"
+
         private val SORT_ORDERS = setOf("newest", "oldest", "app", "title", "dismissed", "received", "all")
         private val THEME_ACCENTS = setOf("system", "blue", "green", "purple", "orange", "amoled")
         val REPLY_METHODS = setOf("inline", "open_app", "copy")
         val LONG_PRESS_ACTIONS = setOf("open", "reply", "dismiss")
         private const val PROFILE_STORE = "notimind_profiles"
-        private const val KEY_PROFILES = "profiles"
+
         private const val KEY_ACTIVE_PROFILE = "active_profile"
         const val DEFAULT_PROFILE_ID = "default"
-        private val PROFILE_ID = Regex("[A-Za-z0-9-]{1,64}")
+
 
         fun activeProfileId(context: Context): String = context.applicationContext
             .getSharedPreferences(PROFILE_STORE, Context.MODE_PRIVATE)
