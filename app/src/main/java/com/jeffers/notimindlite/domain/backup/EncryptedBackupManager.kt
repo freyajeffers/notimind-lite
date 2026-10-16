@@ -25,6 +25,8 @@ import javax.crypto.SecretKey
 import javax.crypto.spec.GCMParameterSpec
 import javax.crypto.spec.SecretKeySpec
 
+private const val AES_KEY_BITS = 256
+
 /**
  * Handles creation and restoration of encrypted backups.
  *
@@ -335,9 +337,10 @@ object EncryptedBackupManager {
  * or a Context-bound key-wrapping helper, at which point production callers do not need
  * to migrate. Tests must use the no-arg overload below, which uses plain JCE.
  */
-@Suppress("UnusedParameter")
-fun generateBackupKey(context: Context): SecretKey =
-    BackupKeyCodec.getOrCreateKey()
+fun generateBackupKey(context: Context): SecretKey {
+    context.applicationContext
+    return BackupKeyCodec.getOrCreateKey()
+}
 
 /**
  * Test-only convenience: returns a freshly generated AES-256 SecretKey via JCE.
@@ -346,4 +349,4 @@ fun generateBackupKey(context: Context): SecretKey =
  * hardware-bound and never stored on disk.
  */
 fun generateBackupKey(): SecretKey =
-    KeyGenerator.getInstance("AES").apply { init(256) }.generateKey()
+    KeyGenerator.getInstance("AES").apply { init(AES_KEY_BITS) }.generateKey()
