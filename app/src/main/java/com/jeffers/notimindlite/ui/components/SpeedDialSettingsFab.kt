@@ -48,9 +48,20 @@ fun speedDialSettingsFab(
 ) {
     var expanded by remember { mutableStateOf(false) }
     
-    val animationSpec = spring<Float>(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessLow)
-    val scale by animateFloatAsState(targetValue = if (expanded) 1f else 0f, animationSpec = animationSpec, label = "fabScale")
-    val rotation by animateFloatAsState(targetValue = if (expanded) 45f else 0f, animationSpec = animationSpec, label = "fabRotation")
+    val animationSpec = spring<Float>(
+        dampingRatio = Spring.DampingRatioMediumBouncy,
+        stiffness = Spring.StiffnessLow
+    )
+    val scale by animateFloatAsState(
+        targetValue = if (expanded) 1f else 0f,
+        animationSpec = animationSpec,
+        label = "fabScale"
+    )
+    val rotation by animateFloatAsState(
+        targetValue = if (expanded) 45f else 0f,
+        animationSpec = animationSpec,
+        label = "fabRotation"
+    )
 
     val quickActionStateDescription = stringResource(
         if (expanded) R.string.quick_actions_expanded else R.string.quick_actions_collapsed
@@ -61,39 +72,13 @@ fun speedDialSettingsFab(
         contentAlignment = Alignment.BottomEnd
     ) {
         if (expanded || scale > 0f) {
-            Column(
-                verticalArrangement = Arrangement.spacedBy(12.dp),
-                horizontalAlignment = Alignment.End,
-                modifier = Modifier.padding(bottom = 72.dp)
-            ) {
-                speedDialItem(
-                    icon = Icons.Default.Sync,
-                    label = stringResource(R.string.quick_actions_sync),
-                    scale = scale,
-                    onClick = {
-                        expanded = false
-                        onSyncClick()
-                    }
-                )
-                speedDialItem(
-                    icon = Icons.Default.Backup,
-                    label = stringResource(R.string.quick_actions_backup),
-                    scale = scale,
-                    onClick = {
-                        expanded = false
-                        onBackupClick()
-                    }
-                )
-                speedDialItem(
-                    icon = Icons.Default.Settings,
-                    label = stringResource(R.string.quick_actions_settings),
-                    scale = scale,
-                    onClick = {
-                        expanded = false
-                        onSettingsClick()
-                    }
-                )
-            }
+            speedDialActions(
+                scale = scale,
+                close = { expanded = false },
+                onSyncClick = onSyncClick,
+                onBackupClick = onBackupClick,
+                onSettingsClick = onSettingsClick
+            )
         }
 
         FloatingActionButton(
@@ -115,6 +100,34 @@ fun speedDialSettingsFab(
                     modifier = Modifier.semantics { stateDescription = quickActionStateDescription }
                 )
             }
+        }
+    }
+}
+
+@Composable
+private fun speedDialActions(
+    scale: Float,
+    close: () -> Unit,
+    onSyncClick: () -> Unit,
+    onBackupClick: () -> Unit,
+    onSettingsClick: () -> Unit
+) {
+    Column(
+        verticalArrangement = Arrangement.spacedBy(12.dp),
+        horizontalAlignment = Alignment.End,
+        modifier = Modifier.padding(bottom = 72.dp)
+    ) {
+        speedDialItem(Icons.Default.Sync, stringResource(R.string.quick_actions_sync), scale) {
+            close()
+            onSyncClick()
+        }
+        speedDialItem(Icons.Default.Backup, stringResource(R.string.quick_actions_backup), scale) {
+            close()
+            onBackupClick()
+        }
+        speedDialItem(Icons.Default.Settings, stringResource(R.string.quick_actions_settings), scale) {
+            close()
+            onSettingsClick()
         }
     }
 }
