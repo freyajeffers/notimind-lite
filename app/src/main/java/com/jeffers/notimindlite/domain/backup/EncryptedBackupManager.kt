@@ -61,7 +61,7 @@ object EncryptedBackupManager {
             if (!encSuccess) return false
 
             val fileHash = calculateFileHash(destinationFile)
-            val signature = generateSecureSignature(fileHash, secretKey, context)
+            val signature = generateSecureSignature(fileHash, context)
 
             val record = BackupRecord(
                 actionType = "EXPORT",
@@ -323,8 +323,7 @@ object EncryptedBackupManager {
 
     private suspend fun generateSecureSignature(
         hash: String,
-        secretKey: SecretKey,
-        context: Context,
+        context: Context
     ): String = BackupNotaryClient.getSignature(context, hash)
 }
 
