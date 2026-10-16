@@ -230,7 +230,10 @@ fun settingsPreferencesSection(preferencesRepository: PreferencesRepository) {
                 stringResource(R.string.pref_keystore_summary), useKeystore,
                 preferencesRepository::setUseKeystore, enabled = dbEncrypted
             )
-            Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = androidx.compose.ui.Alignment.CenterVertically
+            ) {
                 Column(modifier = Modifier.weight(1f)) {
                     Text(stringResource(R.string.pref_preview_length_title), style = MaterialTheme.typography.bodyLarge)
                     Text(stringResource(R.string.pref_preview_length_summary), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
@@ -244,7 +247,10 @@ fun settingsPreferencesSection(preferencesRepository: PreferencesRepository) {
                 )
             }
 
-            Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = androidx.compose.ui.Alignment.CenterVertically
+            ) {
                 Column(modifier = Modifier.weight(1f)) {
                     Text(stringResource(R.string.pref_enable_sync_title), style = MaterialTheme.typography.bodyLarge)
                     Text(stringResource(R.string.pref_enable_sync_summary), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
@@ -252,7 +258,10 @@ fun settingsPreferencesSection(preferencesRepository: PreferencesRepository) {
                 Switch(checked = enableSync, onCheckedChange = preferencesRepository::setEnableSync)
             }
 
-            Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = androidx.compose.ui.Alignment.CenterVertically
+            ) {
                 Column(modifier = Modifier.weight(1f)) {
                     Text(stringResource(R.string.pref_enable_vector_title), style = MaterialTheme.typography.bodyLarge)
                     Text(stringResource(R.string.pref_enable_vector_summary), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
@@ -260,7 +269,10 @@ fun settingsPreferencesSection(preferencesRepository: PreferencesRepository) {
                 Switch(checked = enableVector, onCheckedChange = preferencesRepository::setEnableVector)
             }
 
-            Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = androidx.compose.ui.Alignment.CenterVertically
+            ) {
                 Column(modifier = Modifier.weight(1f)) {
                     Text(stringResource(R.string.pref_enable_fts4_title), style = MaterialTheme.typography.bodyLarge)
                     Text(stringResource(R.string.pref_enable_fts4_summary), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
@@ -268,7 +280,10 @@ fun settingsPreferencesSection(preferencesRepository: PreferencesRepository) {
                 Switch(checked = enableFts4, onCheckedChange = preferencesRepository::setEnableFts4)
             }
 
-            Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = androidx.compose.ui.Alignment.CenterVertically
+            ) {
                 Column(modifier = Modifier.weight(1f)) {
                     Text(stringResource(R.string.pref_semantic_ranking_title), style = MaterialTheme.typography.bodyLarge)
                     Text(stringResource(R.string.pref_semantic_ranking_summary), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
@@ -291,7 +306,10 @@ fun settingsPreferencesSection(preferencesRepository: PreferencesRepository) {
                 )
 
                 // Show debug-effective controls while preventing changes to them.
-                Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
+                Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = androidx.compose.ui.Alignment.CenterVertically
+            ) {
                     Column(modifier = Modifier.weight(1f)) {
                         Text(stringResource(R.string.pref_retention_days_title), style = MaterialTheme.typography.bodyLarge)
                         Text(stringResource(R.string.pref_retention_days_summary), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
@@ -305,7 +323,10 @@ fun settingsPreferencesSection(preferencesRepository: PreferencesRepository) {
                         label = { Text(stringResource(R.string.pref_retention_days_unit)) }
                     )
                 }
-                Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
+                Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = androidx.compose.ui.Alignment.CenterVertically
+            ) {
                     Column(modifier = Modifier.weight(1f)) {
                         Text(stringResource(R.string.pref_capture_notifications_title), style = MaterialTheme.typography.bodyLarge)
                         Text(stringResource(R.string.pref_capture_notifications_summary), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
@@ -334,7 +355,10 @@ fun settingsPreferencesSection(preferencesRepository: PreferencesRepository) {
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             } else {
-                Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
+                Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = androidx.compose.ui.Alignment.CenterVertically
+            ) {
                     Column(modifier = Modifier.weight(1f)) {
                         Text(stringResource(R.string.pref_retention_days_title), style = MaterialTheme.typography.bodyLarge)
                         Text(stringResource(R.string.pref_retention_days_summary), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
@@ -350,7 +374,10 @@ fun settingsPreferencesSection(preferencesRepository: PreferencesRepository) {
                     )
                 }
 
-                Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
+                Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = androidx.compose.ui.Alignment.CenterVertically
+            ) {
                     Column(modifier = Modifier.weight(1f)) {
                         Text(stringResource(R.string.pref_export_encryption_title), style = MaterialTheme.typography.bodyLarge)
                         Text(stringResource(R.string.pref_export_encryption_summary), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
@@ -358,7 +385,10 @@ fun settingsPreferencesSection(preferencesRepository: PreferencesRepository) {
                     Switch(checked = exportEncryption, onCheckedChange = preferencesRepository::setExportEncryption)
                 }
 
-                Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
+                Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = androidx.compose.ui.Alignment.CenterVertically
+            ) {
                     Column(modifier = Modifier.weight(1f)) {
                         Text(stringResource(R.string.pref_capture_notifications_title), style = MaterialTheme.typography.bodyLarge)
                         Text(stringResource(R.string.pref_capture_notifications_summary), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
