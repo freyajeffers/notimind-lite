@@ -689,20 +689,83 @@ class PreferencesRepository(context: Context) :
         backing.edit().putString(KEY_THEME_ACCENT, safe).apply()
         _themeAccent.value = safe
     }
-    fun setEnableTelemetry(value: Boolean) { backing.edit().putBoolean(KEY_ENABLE_TELEMETRY, value).apply(); _enableTelemetry.value = value }
-    fun setTelemetryLevel(value: String) { backing.edit().putString(KEY_TELEMETRY_LEVEL, value).apply(); _telemetryLevel.value = value }
-    fun setMaxDbMb(value: Int) { val safe = value.coerceIn(1, 4096); backing.edit().putInt(KEY_MAX_DB_MB, safe).apply(); _maxDbMb.value = safe }
-    fun setLowMemoryMode(value: Boolean) { backing.edit().putBoolean(KEY_LOW_MEMORY_MODE, value).apply(); _lowMemoryMode.value = value; com.jeffers.notimindlite.util.VectorEmbeddingHelper.setLowMemoryMode(value) }
-    fun setVectorCacheMax(value: Int) { val safe = value.coerceIn(1, 10000); backing.edit().putInt(KEY_VECTOR_CACHE_MAX, safe).apply(); _vectorCacheMax.value = safe; com.jeffers.notimindlite.util.VectorEmbeddingHelper.updateCacheSize(safe) }
-    fun setFeatureFlagsUrl(value: String) { val safe = value.trim().take(2048); backing.edit().putString(KEY_FEATURE_FLAGS_URL, safe).apply(); _featureFlagsUrl.value = safe }
-    fun setMockDataEnabled(value: Boolean) { backing.edit().putBoolean(KEY_MOCK_DATA_ENABLED, value).apply(); _mockDataEnabled.value = value }
-    fun setTestModeFlags(value: String) { val safe = value.trim().take(4096); backing.edit().putString(KEY_TEST_MODE_FLAGS, safe).apply(); _testModeFlags.value = safe }
-    fun setOffloadEmbeddings(value: Boolean) { backing.edit().putBoolean(KEY_OFFLOAD_EMBEDDINGS, value).apply(); _offloadEmbeddings.value = value }
-    fun setUseFts5(value: Boolean) { backing.edit().putBoolean(KEY_USE_FTS5, value).apply(); _useFts5.value = value }
-    fun setVectorGpu(value: Boolean) { backing.edit().putBoolean(KEY_VECTOR_GPU, value).apply(); _vectorGpu.value = value }
-    fun setAutoActOnNotification(value: Boolean) { backing.edit().putBoolean(KEY_AUTO_ACT_ON_NOTIFICATION, value).apply(); _autoActOnNotification.value = value }
-    fun setDefaultReplyMethod(value: String) { val safe = if (value in REPLY_METHODS) value else "inline"; backing.edit().putString(KEY_DEFAULT_REPLY_METHOD, safe).apply(); _defaultReplyMethod.value = safe }
-    fun setLongPressAction(value: String) { val safe = if (value in LONG_PRESS_ACTIONS) value else "open"; backing.edit().putString(KEY_LONG_PRESS_ACTION, safe).apply(); _longPressAction.value = safe }
+    fun setEnableTelemetry(value: Boolean) {
+        backing.edit().putBoolean(KEY_ENABLE_TELEMETRY, value).apply()
+        _enableTelemetry.value = value
+    }
+
+    fun setTelemetryLevel(value: String) {
+        backing.edit().putString(KEY_TELEMETRY_LEVEL, value).apply()
+        _telemetryLevel.value = value
+    }
+
+    fun setMaxDbMb(value: Int) {
+        val safe = value.coerceIn(1, 4096)
+        backing.edit().putInt(KEY_MAX_DB_MB, safe).apply()
+        _maxDbMb.value = safe
+    }
+
+    fun setLowMemoryMode(value: Boolean) {
+        backing.edit().putBoolean(KEY_LOW_MEMORY_MODE, value).apply()
+        _lowMemoryMode.value = value
+        com.jeffers.notimindlite.util.VectorEmbeddingHelper.setLowMemoryMode(value)
+    }
+
+    fun setVectorCacheMax(value: Int) {
+        val safe = value.coerceIn(1, 10000)
+        backing.edit().putInt(KEY_VECTOR_CACHE_MAX, safe).apply()
+        _vectorCacheMax.value = safe
+        com.jeffers.notimindlite.util.VectorEmbeddingHelper.updateCacheSize(safe)
+    }
+
+    fun setFeatureFlagsUrl(value: String) {
+        val safe = value.trim().take(2048)
+        backing.edit().putString(KEY_FEATURE_FLAGS_URL, safe).apply()
+        _featureFlagsUrl.value = safe
+    }
+
+    fun setMockDataEnabled(value: Boolean) {
+        backing.edit().putBoolean(KEY_MOCK_DATA_ENABLED, value).apply()
+        _mockDataEnabled.value = value
+    }
+
+    fun setTestModeFlags(value: String) {
+        val safe = value.trim().take(4096)
+        backing.edit().putString(KEY_TEST_MODE_FLAGS, safe).apply()
+        _testModeFlags.value = safe
+    }
+
+    fun setOffloadEmbeddings(value: Boolean) {
+        backing.edit().putBoolean(KEY_OFFLOAD_EMBEDDINGS, value).apply()
+        _offloadEmbeddings.value = value
+    }
+
+    fun setUseFts5(value: Boolean) {
+        backing.edit().putBoolean(KEY_USE_FTS5, value).apply()
+        _useFts5.value = value
+    }
+
+    fun setVectorGpu(value: Boolean) {
+        backing.edit().putBoolean(KEY_VECTOR_GPU, value).apply()
+        _vectorGpu.value = value
+    }
+
+    fun setAutoActOnNotification(value: Boolean) {
+        backing.edit().putBoolean(KEY_AUTO_ACT_ON_NOTIFICATION, value).apply()
+        _autoActOnNotification.value = value
+    }
+
+    fun setDefaultReplyMethod(value: String) {
+        val safe = if (value in REPLY_METHODS) value else "inline"
+        backing.edit().putString(KEY_DEFAULT_REPLY_METHOD, safe).apply()
+        _defaultReplyMethod.value = safe
+    }
+
+    fun setLongPressAction(value: String) {
+        val safe = if (value in LONG_PRESS_ACTIONS) value else "open"
+        backing.edit().putString(KEY_LONG_PRESS_ACTION, safe).apply()
+        _longPressAction.value = safe
+    }
     fun addAutoExecuteRule(rule: AutoExecuteRule) { setAutoExecuteRules(_autoExecuteRules.value + rule) }
     fun removeAutoExecuteRule(id: String) { setAutoExecuteRules(_autoExecuteRules.value.filterNot { it.id == id }) }
     fun setAutoExecuteRules(rules: List<AutoExecuteRule>) {
