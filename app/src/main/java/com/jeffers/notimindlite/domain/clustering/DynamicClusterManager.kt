@@ -83,10 +83,20 @@ object DynamicClusterManager {
         ),
         "social" to mapOf(
             "messaging" to listOf("chat", "message", "dm", "text", "conversation", "talk", "sms", "mms", "whatsapp", "telegram", "signal", "messenger", "discord", "slack", "direct message", "ping", "huddle", "voice note", "inbox message", "sent a photo"),
-            "networking" to listOf("social", "post", "friend", "reply", "typing", "instagram", "facebook", "twitter", "threads", "tiktok", "snapchat", "reddit", "linkedin", "group", "call", "voice", "channel", "mention", "reaction", "comment", "like", "share", "retweet", "follower", "story", "feed", "wechat", "viber", "line", "skype", "teams", "status", "streamer", "subscriber", "unread")
+            "networking" to listOf(
+                "social", "post", "friend", "reply", "typing", "instagram", "facebook",
+                "twitter", "threads", "tiktok", "snapchat", "reddit", "linkedin",
+                "group", "call", "voice", "channel", "mention", "reaction", "comment",
+                "like", "share", "retweet", "follower", "story", "feed", "wechat",
+                "viber", "line", "skype", "teams", "status", "streamer", "subscriber",
+                "unread"
+            )
         ),
         "travel" to mapOf(
-            "transport" to listOf("ride", "trip", "uber", "lyft", "train", "bus", "ticket", "cab", "driver", "amtrak", "subway", "metro", "rental", "hertz", "enterprise"),
+            "transport" to listOf(
+                "ride", "trip", "uber", "lyft", "train", "bus", "ticket", "cab",
+                "driver", "amtrak", "subway", "metro", "rental", "hertz", "enterprise"
+            ),
             "aviation" to listOf("travel", "flight", "airline", "gate", "boarding", "terminal", "airport", "checkin", "delay", "departure", "arrival", "luggage", "delta", "united", "american airlines", "southwest", "boarding pass", "tsa", "baggage claim"),
             "accommodation" to listOf("hotel", "booking", "reservation", "itinerary", "airbnb", "expedia", "hostel", "destination", "layover", "seat", "route", "mileage", "frequent flyer", "kayak", "priceline", "hopper", "cruise")
         ),
