@@ -32,70 +32,95 @@ fun settingsCaptureSection(preferencesRepository: PreferencesRepository) {
         Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
             Text(text = stringResource(R.string.pref_capture_title), style = MaterialTheme.typography.titleMedium)
 
-            Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(stringResource(R.string.pref_capture_enabled_title), style = MaterialTheme.typography.bodyLarge)
-                    Text(stringResource(R.string.pref_capture_enabled_summary), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                }
-                Switch(checked = captureEnabled, onCheckedChange = { scope.launch { preferencesRepository.setCaptureNotifications(it) } }, enabled = !BuildConfig.DEBUG)
-            }
+            captureToggleRow(
+                title = stringResource(R.string.pref_capture_enabled_title),
+                summary = stringResource(R.string.pref_capture_enabled_summary),
+                checked = captureEnabled,
+                onCheckedChange = { scope.launch { preferencesRepository.setCaptureNotifications(it) } },
+                enabled = !BuildConfig.DEBUG
+            )
 
-            Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(stringResource(R.string.pref_capture_foreground_title), style = MaterialTheme.typography.bodyLarge)
-                    Text(stringResource(R.string.pref_capture_foreground_summary), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                }
-                Switch(checked = foregroundOnly, onCheckedChange = { scope.launch { preferencesRepository.setCaptureForegroundOnly(it) } }, enabled = !BuildConfig.DEBUG)
-            }
+            captureToggleRow(
+                title = stringResource(R.string.pref_capture_foreground_title),
+                summary = stringResource(R.string.pref_capture_foreground_summary),
+                checked = foregroundOnly,
+                onCheckedChange = { scope.launch { preferencesRepository.setCaptureForegroundOnly(it) } },
+                enabled = !BuildConfig.DEBUG
+            )
 
-            Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(stringResource(R.string.pref_capture_attachments_title), style = MaterialTheme.typography.bodyLarge)
-                    Text(stringResource(R.string.pref_capture_attachments_summary), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                }
-                Switch(checked = attachments, onCheckedChange = { scope.launch { preferencesRepository.setCaptureAttachments(it) } }, enabled = !BuildConfig.DEBUG)
-            }
+            captureToggleRow(
+                title = stringResource(R.string.pref_capture_attachments_title),
+                summary = stringResource(R.string.pref_capture_attachments_summary),
+                checked = attachments,
+                onCheckedChange = { scope.launch { preferencesRepository.setCaptureAttachments(it) } },
+                enabled = !BuildConfig.DEBUG
+            )
 
-            Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(stringResource(R.string.pref_capture_ongoing_title), style = MaterialTheme.typography.bodyLarge)
-                    Text(stringResource(R.string.pref_capture_ongoing_summary), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                }
-                Switch(checked = ongoing, onCheckedChange = { scope.launch { preferencesRepository.setCaptureOngoing(it) } }, enabled = !BuildConfig.DEBUG)
-            }
+            captureToggleRow(
+                title = stringResource(R.string.pref_capture_ongoing_title),
+                summary = stringResource(R.string.pref_capture_ongoing_summary),
+                checked = ongoing,
+                onCheckedChange = { scope.launch { preferencesRepository.setCaptureOngoing(it) } },
+                enabled = !BuildConfig.DEBUG
+            )
 
-            Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(stringResource(R.string.pref_capture_allowlist_title), style = MaterialTheme.typography.bodyLarge)
-                    Text(stringResource(R.string.pref_capture_allowlist_summary), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                }
-                OutlinedTextField(value = allowlist, onValueChange = { scope.launch { preferencesRepository.setCapturePackageAllowlist(it) } }, modifier = Modifier.width(200.dp), singleLine = true, enabled = !BuildConfig.DEBUG)
-            }
+            captureTextFieldRow(
+                title = stringResource(R.string.pref_capture_allowlist_title),
+                summary = stringResource(R.string.pref_capture_allowlist_summary),
+                value = allowlist,
+                onValueChange = { scope.launch { preferencesRepository.setCapturePackageAllowlist(it) } },
+                width = 200.dp,
+                enabled = !BuildConfig.DEBUG
+            )
 
-            Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(stringResource(R.string.pref_capture_blocklist_title), style = MaterialTheme.typography.bodyLarge)
-                    Text(stringResource(R.string.pref_capture_blocklist_summary), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                }
-                OutlinedTextField(value = blocklist, onValueChange = { scope.launch { preferencesRepository.setCapturePackageBlocklist(it) } }, modifier = Modifier.width(200.dp), singleLine = true, enabled = !BuildConfig.DEBUG)
-            }
+            captureTextFieldRow(
+                title = stringResource(R.string.pref_capture_blocklist_title),
+                summary = stringResource(R.string.pref_capture_blocklist_summary),
+                value = blocklist,
+                onValueChange = { scope.launch { preferencesRepository.setCapturePackageBlocklist(it) } },
+                width = 200.dp,
+                enabled = !BuildConfig.DEBUG
+            )
 
-            Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(stringResource(R.string.pref_capture_min_importance_title), style = MaterialTheme.typography.bodyLarge)
-                    Text(stringResource(R.string.pref_capture_min_importance_summary), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                }
-                OutlinedTextField(value = minImportance.toString(), onValueChange = { it.toIntOrNull()?.let { v -> scope.launch { preferencesRepository.setMinImportance(v) } } }, modifier = Modifier.width(120.dp), singleLine = true, enabled = !BuildConfig.DEBUG)
-            }
+            captureTextFieldRow(
+                title = stringResource(R.string.pref_capture_min_importance_title),
+                summary = stringResource(R.string.pref_capture_min_importance_summary),
+                value = minImportance.toString(),
+                onValueChange = { it.toIntOrNull()?.let { v -> scope.launch { preferencesRepository.setMinImportance(v) } } },
+                width = 120.dp,
+                enabled = !BuildConfig.DEBUG
+            )
 
-            Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(stringResource(R.string.pref_capture_actions_only_title), style = MaterialTheme.typography.bodyLarge)
-                    Text(stringResource(R.string.pref_capture_actions_only_summary), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                }
-                Switch(checked = actionsOnly, onCheckedChange = { scope.launch { preferencesRepository.setCaptureActionsOnly(it) } }, enabled = !BuildConfig.DEBUG)
-            }
+            captureToggleRow(
+                title = stringResource(R.string.pref_capture_actions_only_title),
+                summary = stringResource(R.string.pref_capture_actions_only_summary),
+                checked = actionsOnly,
+                onCheckedChange = { scope.launch { preferencesRepository.setCaptureActionsOnly(it) } },
+                enabled = !BuildConfig.DEBUG
+            )
 
         }
+    }
+}
+
+@Composable
+private fun captureToggleRow(title: String, summary: String, checked: Boolean, onCheckedChange: (Boolean) -> Unit, enabled: Boolean = true) {
+    Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
+        Column(modifier = Modifier.weight(1f)) {
+            Text(title, style = MaterialTheme.typography.bodyLarge)
+            Text(summary, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        }
+        Switch(checked = checked, onCheckedChange = onCheckedChange, enabled = enabled)
+    }
+}
+
+@Composable
+private fun captureTextFieldRow(title: String, summary: String, value: String, onValueChange: (String) -> Unit, width: androidx.compose.ui.unit.Dp, enabled: Boolean = true) {
+    Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
+        Column(modifier = Modifier.weight(1f)) {
+            Text(title, style = MaterialTheme.typography.bodyLarge)
+            Text(summary, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        }
+        OutlinedTextField(value = value, onValueChange = onValueChange, modifier = Modifier.width(width), singleLine = true, enabled = enabled)
     }
 }
