@@ -1,6 +1,7 @@
 package com.jeffers.notimindlite.sanitization
 
 import android.content.Context
+import com.jeffers.notimindlite.data.local.PreferencesRepository
 
 /**
  * SanitizationPipeline orchestrates package filtering and PII redaction for
@@ -31,32 +32,43 @@ class SanitizationPipeline(
         subText: String?,
         bigText: String?
     ): SanitizationResult? {
-        // If redaction is disabled through settings, short-circuit and return raw fields (fallback empty strings to avoid nulls)
+        // Return raw fields when redaction is disabled; nulls become empty strings.
         val isRedactionEnabled = context?.let {
-            com.jeffers.notimindlite.data.local.PreferencesRepository(it).securityManager.redactPii.value
+            PreferencesRepository(it).securityManager.redactPii.value
         } ?: false
 
-        if (!packageFilterManager.shouldAccept(packageName)) return null
-
-        if (!isRedactionEnabled) {
-            return SanitizationResult(
-                title = title ?: "",
-                content = content ?: "",
-                subText = subText,
-                bigText = bigText
-            )
+        return when {
+            !packageFilterManager.shouldAccept(packageName) -> null
+            !isRedactionEnabled -> rawResult(title, content, subText, bigText)
+            else -> redactedResult(title, content, subText, bigText)
         }
+    }
 
-        val sanitizedTitle = redactor.redact(title ?: "") ?: return null
-        val sanitizedContent = redactor.redact(content ?: "") ?: return null
-        val sanitizedSubText = subText?.let { redactor.redact(it) }
-        val sanitizedBigText = bigText?.let { redactor.redact(it) }
+    private fun rawResult(
+        title: String?,
+        content: String?,
+        subText: String?,
+        bigText: String?
+    ): SanitizationResult = SanitizationResult(
+        title = title.orEmpty(),
+        content = content.orEmpty(),
+        subText = subText,
+        bigText = bigText
+    )
 
-        return SanitizationResult(
-            title = sanitizedTitle,
-            content = sanitizedContent,
-            subText = sanitizedSubText,
-            bigText = sanitizedBigText
-        )
+    private fun redactedResult(
+        title: String?,
+        content: String?,
+        subText: String?,
+        bigText: String?
+    ): SanitizationResult? {
+        val redactedTitle = redactor.redact(title.orEmpty())
+        val redactedContent = redactor.redact(content.orEmpty())
+        val redactedSubText = subText?.let(redactor::redact)
+        val redactedBigText = bigText?.let(redactor::redact)
+        val requiredFields = listOfNotNull(redactedTitle, redactedContent)
+        return requiredFields.takeIf { it.size == 2 }?.let {
+            SanitizationResult(it[0], it[1], redactedSubText, redactedBigText)
+        }
     }
 }
