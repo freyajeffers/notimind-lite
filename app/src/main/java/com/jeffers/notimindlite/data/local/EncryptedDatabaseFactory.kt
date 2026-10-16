@@ -12,11 +12,20 @@ object EncryptedDatabaseFactory {
     private var sqlCipherLoaded = false
 
     fun openHelperFactory(context: Context, databaseName: String): SupportSQLiteOpenHelper.Factory? {
-        if (Build.FINGERPRINT == "robolectric" || isRobolectricRuntime() || !isAndroidRuntime()) return null
         val preferences = PreferencesRepository(context.applicationContext)
-        if (!preferences.securityManager.dbEncrypted.value ||
-            preferences.securityManager.dbEncryptionMode.value == DbEncryptionMode.NONE
-        ) return null
+        return when {
+            Build.FINGERPRINT == "robolectric" || isRobolectricRuntime() || !isAndroidRuntime() -> null
+            !preferences.securityManager.dbEncrypted.value ||
+                preferences.securityManager.dbEncryptionMode.value == DbEncryptionMode.NONE -> null
+            else -> createFactory(context, databaseName, preferences)
+        }
+    }
+
+    private fun createFactory(
+        context: Context,
+        databaseName: String,
+        preferences: PreferencesRepository
+    ): SupportSQLiteOpenHelper.Factory {
         ensureSqlCipherLoaded()
         val useKeystore = preferences.securityManager.useKeystore.value &&
             preferences.securityManager.dbEncryptionMode.value == DbEncryptionMode.KEYSTORE
