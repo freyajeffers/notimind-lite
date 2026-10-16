@@ -182,16 +182,39 @@ fun settingsPreferencesSection(preferencesRepository: PreferencesRepository) {
                 rulePackage = ""; ruleTitle = ""; ruleAction = "0"
             }, enabled = !BuildConfig.DEBUG) { Text(stringResource(R.string.pref_auto_rule_add)) }
             autoExecuteRules.forEach { rule ->
-                Row(verticalAlignment = androidx.compose.ui.Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
-                    Text("${rule.packageName.ifBlank { stringResource(R.string.pref_auto_rule_any_app) }} · ${rule.titleContains.ifBlank { stringResource(R.string.pref_auto_rule_any_title) }} · ${stringResource(R.string.pref_auto_rule_action).lowercase()} ${rule.actionIndex}", Modifier.weight(1f), style = MaterialTheme.typography.bodySmall)
-                    TextButton(onClick = { preferencesRepository.removeAutoExecuteRule(rule.id) }, enabled = !BuildConfig.DEBUG) { Text(stringResource(R.string.pref_auto_rule_remove)) }
+                Row(
+                    verticalAlignment = androidx.compose.ui.Alignment.CenterVertically,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text(
+                        "${rule.packageName.ifBlank { stringResource(R.string.pref_auto_rule_any_app) }} · " +
+                            "${rule.titleContains.ifBlank { stringResource(R.string.pref_auto_rule_any_title) }} · " +
+                            "${stringResource(R.string.pref_auto_rule_action).lowercase()} ${rule.actionIndex}",
+                        Modifier.weight(1f), style = MaterialTheme.typography.bodySmall
+                    )
+                    TextButton(
+                        onClick = { preferencesRepository.removeAutoExecuteRule(rule.id) },
+                        enabled = !BuildConfig.DEBUG
+                    ) { Text(stringResource(R.string.pref_auto_rule_remove)) }
                 }
             }
 
             Text(stringResource(R.string.pref_security_local_title), style = MaterialTheme.typography.titleMedium)
-            preferenceSwitchRow(stringResource(R.string.pref_export_biometric_title), stringResource(R.string.pref_export_biometric_summary), exportRequiresBiometric, preferencesRepository::setExportRequiresBiometric)
-            preferenceSwitchRow(stringResource(R.string.pref_app_lock_title), stringResource(R.string.pref_app_lock_summary), appLockEnabled, preferencesRepository::setAppLockEnabled)
-            preferenceSwitchRow(stringResource(R.string.pref_encrypt_database_title), stringResource(R.string.pref_encrypt_database_summary), dbEncrypted, preferencesRepository::setDbEncrypted)
+            preferenceSwitchRow(
+                stringResource(R.string.pref_export_biometric_title),
+                stringResource(R.string.pref_export_biometric_summary), exportRequiresBiometric,
+                preferencesRepository::setExportRequiresBiometric
+            )
+            preferenceSwitchRow(
+                stringResource(R.string.pref_app_lock_title),
+                stringResource(R.string.pref_app_lock_summary), appLockEnabled,
+                preferencesRepository::setAppLockEnabled
+            )
+            preferenceSwitchRow(
+                stringResource(R.string.pref_encrypt_database_title),
+                stringResource(R.string.pref_encrypt_database_summary), dbEncrypted,
+                preferencesRepository::setDbEncrypted
+            )
             preferenceSelectRow(
                 stringResource(R.string.pref_database_key_mode_title),
                 dbEncryptionMode.persisted,
@@ -202,13 +225,23 @@ fun settingsPreferencesSection(preferencesRepository: PreferencesRepository) {
                 ),
                 { preferencesRepository.setDbEncryptionMode(DbEncryptionMode.fromPersisted(it)) }
             )
-            preferenceSwitchRow(stringResource(R.string.pref_keystore_title), stringResource(R.string.pref_keystore_summary), useKeystore, preferencesRepository::setUseKeystore, enabled = dbEncrypted)
+            preferenceSwitchRow(
+                stringResource(R.string.pref_keystore_title),
+                stringResource(R.string.pref_keystore_summary), useKeystore,
+                preferencesRepository::setUseKeystore, enabled = dbEncrypted
+            )
             Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
                 Column(modifier = Modifier.weight(1f)) {
                     Text(stringResource(R.string.pref_preview_length_title), style = MaterialTheme.typography.bodyLarge)
                     Text(stringResource(R.string.pref_preview_length_summary), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
-                OutlinedTextField(value = previewLength.toString(), onValueChange = { it.toIntOrNull()?.let(preferencesRepository::setPreviewLength) }, modifier = Modifier.width(110.dp), singleLine = true, label = { Text(stringResource(R.string.pref_preview_length_label)) }, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number))
+                OutlinedTextField(
+                    value = previewLength.toString(),
+                    onValueChange = { it.toIntOrNull()?.let(preferencesRepository::setPreviewLength) },
+                    modifier = Modifier.width(110.dp), singleLine = true,
+                    label = { Text(stringResource(R.string.pref_preview_length_label)) },
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+                )
             }
 
             Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
