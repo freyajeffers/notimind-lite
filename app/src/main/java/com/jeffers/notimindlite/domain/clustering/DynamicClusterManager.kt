@@ -123,7 +123,15 @@ object DynamicClusterManager {
             )
         ),
         "shopping" to mapOf(
-            "retail" to listOf("shopping", "deal", "discount", "sale", "coupon", "promo", "cart", "checkout", "store", "purchase", "bought", "item", "price", "offer", "clearance", "bogo", "ebay", "walmart", "target", "etsy", "shop", "retail", "receipt", "wishlist", "buy", "merchant", "savings", "reward", "points", "cashback", "mall", "black friday", "cyber monday", "voucher", "haul", "outlet", "bestbuy", "costco", "aliexpress", "shein", "temu", "order placed", "promo code", "rebate", "gift card", "price drop", "flash sale", "back in stock")
+            "retail" to listOf(
+                "shopping", "deal", "discount", "sale", "coupon", "promo", "cart", "checkout",
+                "store", "purchase", "bought", "item", "price", "offer", "clearance", "bogo",
+                "ebay", "walmart", "target", "etsy", "shop", "retail", "receipt", "wishlist",
+                "buy", "merchant", "savings", "reward", "points", "cashback", "mall",
+                "black friday", "cyber monday", "voucher", "haul", "outlet", "bestbuy",
+                "costco", "aliexpress", "shein", "temu", "order placed", "promo code",
+                "rebate", "gift card", "price drop", "flash sale", "back in stock"
+            )
         ),
         "productivity" to mapOf(
             "organization" to listOf("productivity", "work", "office", "task", "todo", "calendar", "document", "sheet", "note", "meeting", "reminder", "agenda", "schedule", "alarm", "appointment", "deadline", "planner", "organizer", "memo", "kanban", "sprint", "milestone", "project"),
