@@ -523,13 +523,41 @@ class PreferencesRepository(context: Context) {
         }
         editor.apply()
     }
-    fun setEnableSync(value: Boolean) { backing.edit().putBoolean(KEY_ENABLE_SYNC, value).apply(); _enableSync.value = value }
-    fun setEnableVector(value: Boolean) { backing.edit().putBoolean(KEY_ENABLE_VECTOR, value).apply(); _enableVector.value = value }
-    fun setEnableFts4(value: Boolean) { backing.edit().putBoolean(KEY_ENABLE_FTS4, value).apply(); _enableFts4.value = value }
-    fun setRetentionDays(value: Int) { val safe = value.coerceIn(1, 3650); backing.edit().putInt(KEY_RETENTION_DAYS, safe).apply(); _retentionDays.value = safe }
-    fun setExportEncryption(value: Boolean) { backing.edit().putBoolean(KEY_EXPORT_ENCRYPTION, value).apply(); _exportEncryption.value = value }
-    fun setCaptureNotifications(value: Boolean) { backing.edit().putBoolean(KEY_CAPTURE_NOTIFICATIONS, value).apply(); _captureNotifications.value = value }
-    fun setEnableSemanticRanking(value: Boolean) { backing.edit().putBoolean(KEY_ENABLE_SEMANTIC_RANKING, value).apply(); _enableSemanticRanking.value = value }
+    fun setEnableSync(value: Boolean) {
+        backing.edit().putBoolean(KEY_ENABLE_SYNC, value).apply()
+        _enableSync.value = value
+    }
+
+    fun setEnableVector(value: Boolean) {
+        backing.edit().putBoolean(KEY_ENABLE_VECTOR, value).apply()
+        _enableVector.value = value
+    }
+
+    fun setEnableFts4(value: Boolean) {
+        backing.edit().putBoolean(KEY_ENABLE_FTS4, value).apply()
+        _enableFts4.value = value
+    }
+
+    fun setRetentionDays(value: Int) {
+        val safe = value.coerceIn(1, 3650)
+        backing.edit().putInt(KEY_RETENTION_DAYS, safe).apply()
+        _retentionDays.value = safe
+    }
+
+    fun setExportEncryption(value: Boolean) {
+        backing.edit().putBoolean(KEY_EXPORT_ENCRYPTION, value).apply()
+        _exportEncryption.value = value
+    }
+
+    fun setCaptureNotifications(value: Boolean) {
+        backing.edit().putBoolean(KEY_CAPTURE_NOTIFICATIONS, value).apply()
+        _captureNotifications.value = value
+    }
+
+    fun setEnableSemanticRanking(value: Boolean) {
+        backing.edit().putBoolean(KEY_ENABLE_SEMANTIC_RANKING, value).apply()
+        _enableSemanticRanking.value = value
+    }
     fun setAutoDeleteOnRead(value: Boolean) {
         val safe = value && !BuildConfig.DEBUG
         backing.edit().putBoolean(KEY_AUTO_DELETE_ON_READ, safe).apply()
