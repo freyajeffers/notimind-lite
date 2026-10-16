@@ -26,6 +26,7 @@ class PreferencesRepository(context: Context) :
     val automationManager = AutomationPreferencesManager(context, profileManager)
     val captureManager = CapturePreferencesManager(context, profileManager)
     val syncManager = SyncPreferencesManager(context, profileManager)
+    val experimentalManager = ExperimentalPreferencesManager(context, profileManager)
     private val backing: android.content.SharedPreferences
         get() = deContext.getSharedPreferences(profileManager.activePreferencesName, Context.MODE_PRIVATE)
 
@@ -38,6 +39,7 @@ class PreferencesRepository(context: Context) :
             automationManager.reload()
             captureManager.reload()
             syncManager.reload()
+            experimentalManager.reload()
         }
     }
 
@@ -120,19 +122,6 @@ class PreferencesRepository(context: Context) :
     val vectorCacheMax: StateFlow<Int> = _vectorCacheMax
 
     // Experimental options are deliberately opt-in and remain profile scoped.
-    private val _featureFlagsUrl = MutableStateFlow(backing.getString(KEY_FEATURE_FLAGS_URL, "") ?: "")
-    private val _mockDataEnabled = MutableStateFlow(backing.getBoolean(KEY_MOCK_DATA_ENABLED, false))
-    private val _testModeFlags = MutableStateFlow(backing.getString(KEY_TEST_MODE_FLAGS, "") ?: "")
-    private val _offloadEmbeddings = MutableStateFlow(backing.getBoolean(KEY_OFFLOAD_EMBEDDINGS, false))
-    private val _useFts5 = MutableStateFlow(backing.getBoolean(KEY_USE_FTS5, false))
-    private val _vectorGpu = MutableStateFlow(backing.getBoolean(KEY_VECTOR_GPU, false))
-    val featureFlagsUrl: StateFlow<String> = _featureFlagsUrl
-    val mockDataEnabled: StateFlow<Boolean> = _mockDataEnabled
-    val testModeFlags: StateFlow<String> = _testModeFlags
-    val offloadEmbeddings: StateFlow<Boolean> = _offloadEmbeddings
-    val useFts5: StateFlow<Boolean> = _useFts5
-    val vectorGpu: StateFlow<Boolean> = _vectorGpu
-
 
     private val _redactPii = MutableStateFlow(
         backing.getBoolean("config_pii_redaction", backing.getBoolean("config_redact_pii", false))
@@ -214,14 +203,6 @@ class PreferencesRepository(context: Context) :
         _lowMemoryMode.value = backing.getBoolean(KEY_LOW_MEMORY_MODE, false)
         _vectorCacheMax.value = backing.getInt(KEY_VECTOR_CACHE_MAX, 1000)
 
-        _featureFlagsUrl.value = backing.getString(KEY_FEATURE_FLAGS_URL, "") ?: ""
-        _mockDataEnabled.value = backing.getBoolean(KEY_MOCK_DATA_ENABLED, false)
-
-        _testModeFlags.value = backing.getString(KEY_TEST_MODE_FLAGS, "") ?: ""
-        _offloadEmbeddings.value = backing.getBoolean(KEY_OFFLOAD_EMBEDDINGS, false)
-
-        _useFts5.value = backing.getBoolean(KEY_USE_FTS5, false)
-        _vectorGpu.value = backing.getBoolean(KEY_VECTOR_GPU, false)
 
         _exportRequiresBiometric.value = backing.getBoolean(KEY_EXPORT_REQUIRES_BIOMETRIC, false)
 
@@ -452,37 +433,6 @@ class PreferencesRepository(context: Context) :
         com.jeffers.notimindlite.util.VectorEmbeddingHelper.updateCacheSize(safe)
     }
 
-    fun setFeatureFlagsUrl(value: String) {
-        val safe = value.trim().take(2048)
-        backing.edit().putString(KEY_FEATURE_FLAGS_URL, safe).apply()
-        _featureFlagsUrl.value = safe
-    }
-
-    fun setMockDataEnabled(value: Boolean) {
-        backing.edit().putBoolean(KEY_MOCK_DATA_ENABLED, value).apply()
-        _mockDataEnabled.value = value
-    }
-
-    fun setTestModeFlags(value: String) {
-        val safe = value.trim().take(4096)
-        backing.edit().putString(KEY_TEST_MODE_FLAGS, safe).apply()
-        _testModeFlags.value = safe
-    }
-
-    fun setOffloadEmbeddings(value: Boolean) {
-        backing.edit().putBoolean(KEY_OFFLOAD_EMBEDDINGS, value).apply()
-        _offloadEmbeddings.value = value
-    }
-
-    fun setUseFts5(value: Boolean) {
-        backing.edit().putBoolean(KEY_USE_FTS5, value).apply()
-        _useFts5.value = value
-    }
-
-    fun setVectorGpu(value: Boolean) {
-        backing.edit().putBoolean(KEY_VECTOR_GPU, value).apply()
-        _vectorGpu.value = value
-    }
 
     fun setAutoActOnNotification(value: Boolean) {
         backing.edit().putBoolean(KEY_AUTO_ACT_ON_NOTIFICATION, value).apply()
@@ -522,12 +472,7 @@ class PreferencesRepository(context: Context) :
         private const val KEY_MAX_DB_MB = "config_max_db_mb"
         private const val KEY_LOW_MEMORY_MODE = "config_low_memory_mode"
         private const val KEY_VECTOR_CACHE_MAX = "config_vector_cache_max"
-        private const val KEY_FEATURE_FLAGS_URL = "config_feature_flags_url"
-        private const val KEY_MOCK_DATA_ENABLED = "config_mock_data_enabled"
-        private const val KEY_TEST_MODE_FLAGS = "config_test_mode_flags"
-        private const val KEY_OFFLOAD_EMBEDDINGS = "config_offload_embeddings"
-        private const val KEY_USE_FTS5 = "config_use_fts5"
-        private const val KEY_VECTOR_GPU = "config_vector_gpu"
+
         private const val KEY_USE_KEYSTORE = "config_use_keystore"
         private const val KEY_DB_ENCRYPTED = "config_db_encrypted"
         private const val KEY_DB_ENCRYPTION_MODE = "config_db_key_mode"

@@ -14,10 +14,10 @@ data class ExperimentalFeaturePreferences(
  * the local preference and the remotely/test enabled flag must both allow the capability. */
 object RuntimeFeatureGates {
     fun from(preferences: PreferencesRepository): ExperimentalFeaturePreferences = ExperimentalFeaturePreferences(
-        mockDataEnabled = preferences.mockDataEnabled.value,
-        offloadEmbeddings = preferences.offloadEmbeddings.value,
-        useFts5 = preferences.useFts5.value,
-        vectorGpu = preferences.vectorGpu.value
+        mockDataEnabled = preferences.experimentalManager.mockDataEnabled.value,
+        offloadEmbeddings = preferences.experimentalManager.offloadEmbeddings.value,
+        useFts5 = preferences.experimentalManager.useFts5.value,
+        vectorGpu = preferences.experimentalManager.vectorGpu.value
     )
 
     fun mockDataEnabled(preferences: ExperimentalFeaturePreferences, flags: FeatureFlagLoader): Boolean =

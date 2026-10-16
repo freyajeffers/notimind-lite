@@ -35,12 +35,12 @@ object AppInitializer {
         try {
             val preferences = PreferencesRepository(context)
             val featureFlags = FeatureFlagLoader().also { loader ->
-                loader.setTestModeFlags(preferences.testModeFlags.value)
+                loader.setTestModeFlags(preferences.experimentalManager.testModeFlags.value)
                 activeFeatureFlags = loader
             }
-            if (preferences.featureFlagsUrl.value.isNotBlank()) {
+            if (preferences.experimentalManager.featureFlagsUrl.value.isNotBlank()) {
                 kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.Dispatchers.IO).launch {
-                    featureFlags.loadFromUrl(preferences.featureFlagsUrl.value)
+                    featureFlags.loadFromUrl(preferences.experimentalManager.featureFlagsUrl.value)
                 }
             }
             // Apply memory-sensitive settings before any embedding work can start.
