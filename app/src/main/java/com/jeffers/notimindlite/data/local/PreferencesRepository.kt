@@ -28,6 +28,7 @@ class PreferencesRepository(context: Context) :
     val syncManager = SyncPreferencesManager(context, profileManager)
     val experimentalManager = ExperimentalPreferencesManager(context, profileManager)
     val securityManager = SecurityPreferencesManager(context, profileManager)
+    val displayManager = DisplayPreferencesManager(context, profileManager)
     private val backing: android.content.SharedPreferences
         get() = deContext.getSharedPreferences(profileManager.activePreferencesName, Context.MODE_PRIVATE)
 
@@ -42,6 +43,7 @@ class PreferencesRepository(context: Context) :
             syncManager.reload()
             experimentalManager.reload()
             securityManager.reload()
+            displayManager.reload()
         }
     }
 
@@ -91,11 +93,6 @@ class PreferencesRepository(context: Context) :
     private val _maxCacheSizeMb = MutableStateFlow(backing.getInt(KEY_MAX_CACHE_MB, 50))
     private val _semanticWeight = MutableStateFlow(backing.getInt(KEY_SEMANTIC_WEIGHT, 50))
     private val _compactMode = MutableStateFlow(backing.getBoolean(KEY_COMPACT_MODE, false))
-    private val _showAppIcons = MutableStateFlow(backing.getBoolean(KEY_SHOW_APP_ICONS, true))
-    private val _sortOrder = MutableStateFlow(backing.getString(KEY_SORT_ORDER, "newest") ?: "newest")
-    private val _groupByApp = MutableStateFlow(backing.getBoolean(KEY_GROUP_BY_APP, true))
-    private val _previewLength = MutableStateFlow(backing.getInt(KEY_PREVIEW_LENGTH, 140))
-    private val _themeAccent = MutableStateFlow(backing.getString(KEY_THEME_ACCENT, "system") ?: "system")
 
     val enableSemanticRanking: StateFlow<Boolean> = _enableSemanticRanking
     val autoDeleteOnRead: StateFlow<Boolean> = _autoDeleteOnRead
@@ -106,11 +103,6 @@ class PreferencesRepository(context: Context) :
     val maxCacheSizeMb: StateFlow<Int> = _maxCacheSizeMb
     val semanticWeight: StateFlow<Int> = _semanticWeight
     val compactMode: StateFlow<Boolean> = _compactMode
-    val showAppIcons: StateFlow<Boolean> = _showAppIcons
-    val sortOrder: StateFlow<String> = _sortOrder
-    val groupByApp: StateFlow<Boolean> = _groupByApp
-    val previewLength: StateFlow<Int> = _previewLength
-    val themeAccent: StateFlow<String> = _themeAccent
 
     private val _enableTelemetry = MutableStateFlow(backing.getBoolean(KEY_ENABLE_TELEMETRY, true))
     private val _telemetryLevel = MutableStateFlow(backing.getString(KEY_TELEMETRY_LEVEL, "minimal") ?: "minimal")
@@ -163,14 +155,6 @@ class PreferencesRepository(context: Context) :
         _semanticWeight.value = backing.getInt(KEY_SEMANTIC_WEIGHT, 50)
 
         _compactMode.value = backing.getBoolean(KEY_COMPACT_MODE, false)
-        _showAppIcons.value = backing.getBoolean(KEY_SHOW_APP_ICONS, true)
-
-        _sortOrder.value = backing.getString(KEY_SORT_ORDER, "newest") ?: "newest"
-        _groupByApp.value = backing.getBoolean(KEY_GROUP_BY_APP, true)
-
-        _previewLength.value = backing.getInt(KEY_PREVIEW_LENGTH, 140)
-        _themeAccent.value = backing.getString(KEY_THEME_ACCENT, "system") ?: "system"
-
         _enableTelemetry.value = backing.getBoolean(KEY_ENABLE_TELEMETRY, true)
         _telemetryLevel.value = backing.getString(KEY_TELEMETRY_LEVEL, "minimal") ?: "minimal"
 
@@ -298,33 +282,7 @@ class PreferencesRepository(context: Context) :
         _compactMode.value = value
     }
 
-    fun setShowAppIcons(value: Boolean) {
-        backing.edit().putBoolean(KEY_SHOW_APP_ICONS, value).apply()
-        _showAppIcons.value = value
-    }
 
-    fun setSortOrder(value: String) {
-        val safe = if (value in SORT_ORDERS) value else "newest"
-        backing.edit().putString(KEY_SORT_ORDER, safe).apply()
-        _sortOrder.value = safe
-    }
-
-    fun setGroupByApp(value: Boolean) {
-        backing.edit().putBoolean(KEY_GROUP_BY_APP, value).apply()
-        _groupByApp.value = value
-    }
-
-    fun setPreviewLength(value: Int) {
-        val safe = value.coerceIn(40, 500)
-        backing.edit().putInt(KEY_PREVIEW_LENGTH, safe).apply()
-        _previewLength.value = safe
-    }
-
-    fun setThemeAccent(value: String) {
-        val safe = if (value in THEME_ACCENTS) value else "system"
-        backing.edit().putString(KEY_THEME_ACCENT, safe).apply()
-        _themeAccent.value = safe
-    }
     fun setEnableTelemetry(value: Boolean) {
         backing.edit().putBoolean(KEY_ENABLE_TELEMETRY, value).apply()
         _enableTelemetry.value = value

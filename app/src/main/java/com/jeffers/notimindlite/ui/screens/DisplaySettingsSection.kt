@@ -22,11 +22,11 @@ import com.jeffers.notimindlite.R
 @Composable
 fun displaySettingsSection(preferencesRepository: PreferencesRepository) {
     val compactMode by preferencesRepository.compactMode.collectAsState(initial = false)
-    val showAppIcons by preferencesRepository.showAppIcons.collectAsState(initial = true)
-    val groupByApp by preferencesRepository.groupByApp.collectAsState(initial = true)
-    val sortOrder by preferencesRepository.sortOrder.collectAsState(initial = "newest")
-    val previewLength by preferencesRepository.previewLength.collectAsState(initial = 140)
-    val themeAccent by preferencesRepository.themeAccent.collectAsState(initial = "system")
+    val showAppIcons by preferencesRepository.displayManager.showAppIcons.collectAsState(initial = true)
+    val groupByApp by preferencesRepository.displayManager.groupByApp.collectAsState(initial = true)
+    val sortOrder by preferencesRepository.displayManager.sortOrder.collectAsState(initial = "newest")
+    val previewLength by preferencesRepository.displayManager.previewLength.collectAsState(initial = 140)
+    val themeAccent by preferencesRepository.displayManager.themeAccent.collectAsState(initial = "system")
 
     // Local option lists split across multiple lines to satisfy MaxLineLength rules
     val sortOptions = listOf(
@@ -55,24 +55,24 @@ fun displaySettingsSection(preferencesRepository: PreferencesRepository) {
         preferenceSwitchRow(
             stringResource(R.string.pref_show_app_icons_title),
             stringResource(R.string.pref_show_app_icons_summary), showAppIcons,
-            preferencesRepository::setShowAppIcons
+            preferencesRepository.displayManager::setShowAppIcons
         )
         preferenceSwitchRow(
             stringResource(R.string.pref_group_by_app_title),
             stringResource(R.string.pref_group_by_app_summary), groupByApp,
-            preferencesRepository::setGroupByApp
+            preferencesRepository.displayManager::setGroupByApp
         )
         preferenceSelectRow(
             stringResource(R.string.pref_sort_order_title),
             sortOrder,
             sortOptions,
-            preferencesRepository::setSortOrder
+            preferencesRepository.displayManager::setSortOrder
         )
         preferenceSelectRow(
             stringResource(R.string.pref_theme_accent_title),
             themeAccent,
             themeOptions,
-            preferencesRepository::setThemeAccent
+            preferencesRepository.displayManager::setThemeAccent
         )
 
         previewLengthRow(previewLength, preferencesRepository)
@@ -94,7 +94,7 @@ private fun previewLengthRow(previewLength: Int, preferencesRepository: Preferen
         }
         OutlinedTextField(
             value = previewLength.toString(),
-            onValueChange = { it.toIntOrNull()?.let(preferencesRepository::setPreviewLength) },
+            onValueChange = { it.toIntOrNull()?.let(preferencesRepository.displayManager::setPreviewLength) },
             modifier = Modifier.width(110.dp), singleLine = true,
             label = { Text(stringResource(R.string.pref_preview_length_label)) },
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)

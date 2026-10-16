@@ -119,7 +119,7 @@ class MainActivity : ComponentActivity() {
         }
 
         setContent {
-            val themeAccent by preferencesRepository.themeAccent.collectAsState()
+            val themeAccent by preferencesRepository.displayManager.themeAccent.collectAsState()
             com.jeffers.notimindlite.ui.theme.notiMindLiteTheme(
                 amoledTheme = themeAccent == "amoled",
                 dynamicColor = themeAccent == "system"

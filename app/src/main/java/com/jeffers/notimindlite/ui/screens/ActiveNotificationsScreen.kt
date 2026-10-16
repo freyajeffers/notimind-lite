@@ -194,10 +194,10 @@ fun activeNotificationsScreen(dao: NotificationDao, preferences: PreferencesRepo
     val lifecycleOwner = LocalLifecycleOwner.current
     val prefManager = remember { PreferenceManager(context) }
     val compactMode by preferences.compactMode.collectAsState()
-    val showAppIcons by preferences.showAppIcons.collectAsState()
-    val groupByApp by preferences.groupByApp.collectAsState()
-    val sortOrder by preferences.sortOrder.collectAsState()
-    val previewLength by preferences.previewLength.collectAsState()
+    val showAppIcons by preferences.displayManager.showAppIcons.collectAsState()
+    val groupByApp by preferences.displayManager.groupByApp.collectAsState()
+    val sortOrder by preferences.displayManager.sortOrder.collectAsState()
+    val previewLength by preferences.displayManager.previewLength.collectAsState()
 
     // F-K fix: persist user-meaningful state across process death / rotation.
     // - expandedSection: user's last-toggled section (was lost; PrefManager was only

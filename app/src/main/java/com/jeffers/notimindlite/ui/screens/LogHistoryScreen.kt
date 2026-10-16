@@ -95,7 +95,7 @@ fun logHistoryScreen(dao: NotificationDao, preferences: com.jeffers.notimindlite
     // Transient UI state (showSortMenu etc.) stays on `remember` — only durable
     // user input (sort/filter/search) survives.
     // Initialize sortMode from persisted preference when available; keep UI-local default for direct interactions.
-    val prefSort by preferences.sortOrder.collectAsState()
+    val prefSort by preferences.displayManager.sortOrder.collectAsState()
     fun prefToSortMode(pref: String): SortMode = when (pref) {
         "newest" -> SortMode.NEWEST
         "oldest" -> SortMode.OLDEST
@@ -119,7 +119,7 @@ fun logHistoryScreen(dao: NotificationDao, preferences: com.jeffers.notimindlite
 
     var sortMode by remember(prefSort) { mutableStateOf(prefToSortMode(prefSort)) }
     LaunchedEffect(sortMode) {
-        preferences.setSortOrder(sortModeToPref(sortMode))
+        preferences.displayManager.setSortOrder(sortModeToPref(sortMode))
     }
     var selectedReasonFilter by rememberSaveable { mutableStateOf(preferences.sharedSearchManager.reason.value) }
     var selectedPackages by remember { mutableStateOf(preferences.sharedSearchManager.packages.value) }
@@ -318,7 +318,7 @@ fun logHistoryScreen(dao: NotificationDao, preferences: com.jeffers.notimindlite
                                 },
                                 onClick = {
                                     sortMode = SortMode.DISMISSED
-                                    preferences.setSortOrder(sortModeToPref(sortMode))
+                                    preferences.displayManager.setSortOrder(sortModeToPref(sortMode))
                                     showSortMenu = false
                                 }
                             )
@@ -333,7 +333,7 @@ fun logHistoryScreen(dao: NotificationDao, preferences: com.jeffers.notimindlite
                                 },
                                 onClick = {
                                     sortMode = SortMode.RECEIVED
-                                    preferences.setSortOrder(sortModeToPref(sortMode))
+                                    preferences.displayManager.setSortOrder(sortModeToPref(sortMode))
                                     showSortMenu = false
                                 }
                             )
@@ -348,7 +348,7 @@ fun logHistoryScreen(dao: NotificationDao, preferences: com.jeffers.notimindlite
                                 },
                                 onClick = {
                                     sortMode = SortMode.ALL
-                                    preferences.setSortOrder(sortModeToPref(sortMode))
+                                    preferences.displayManager.setSortOrder(sortModeToPref(sortMode))
                                     showSortMenu = false
                                 }
                             )
@@ -357,7 +357,7 @@ fun logHistoryScreen(dao: NotificationDao, preferences: com.jeffers.notimindlite
                                     text = { Text("${option.label} ${if (sortMode == option) "✓" else ""}") },
                                     onClick = {
                                         sortMode = option
-                                        preferences.setSortOrder(sortModeToPref(sortMode))
+                                        preferences.displayManager.setSortOrder(sortModeToPref(sortMode))
                                         showSortMenu = false
                                     }
                                 )
