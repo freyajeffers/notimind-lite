@@ -68,24 +68,28 @@ class DatabaseMigrationOrchestrator(
     encryptedTempFile: File,
     quarantineFile: File
   ): MigrationResult {
-    if (!plaintextFile.isFile || !encryptedTempFile.isFile) {
-      return MigrationResult(
+    return when {
+      !plaintextFile.isFile || !encryptedTempFile.isFile -> MigrationResult(
         MigrationState.RETRYABLE_FAILURE,
         0,
         0,
         failure = IllegalStateException("Migration files are missing or are not regular files")
       )
-    }
-    if (quarantineFile.exists()) {
-      return MigrationResult(
+      quarantineFile.exists() -> MigrationResult(
         MigrationState.RETRYABLE_FAILURE,
         0,
         0,
         failure = IllegalStateException("Quarantine file already exists: ${quarantineFile.name}")
       )
+      else -> performCutover(plaintextFile, encryptedTempFile, quarantineFile)
     }
+  }
 
-    return try {
+  private fun performCutover(
+    plaintextFile: File,
+    encryptedTempFile: File,
+    quarantineFile: File
+  ): MigrationResult = try {
       fileOps.rename(plaintextFile, quarantineFile)
       try {
         fileOps.rename(encryptedTempFile, plaintextFile)
@@ -99,7 +103,6 @@ class DatabaseMigrationOrchestrator(
     } catch (failure: SecurityException) {
       MigrationResult(MigrationState.ROLLBACK_REQUIRED, 0, 0, failure = failure)
     }
-  }
 
   /**
    * Permanently removes the quarantine copies after the encrypted database is active.
