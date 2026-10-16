@@ -36,12 +36,4 @@ abstract class NotificationGroupDao {
     @Query("SELECT * FROM notification_groups WHERE isDismissed = 1 ORDER BY isPinned DESC, latestPostTime DESC")
     abstract fun getDismissedGroupsFlow(): Flow<List<NotificationGroupEntity>>
 
-    @Query("SELECT * FROM notification_groups WHERE groupKey = :groupKey LIMIT 1")
-    abstract suspend fun getGroupByKey(groupKey: String): NotificationGroupEntity?
-
-    @Query("SELECT * FROM notifications WHERE COALESCE(groupKey, packageName) = :groupKey ORDER BY postTime DESC")
-    abstract fun getNotificationsForGroupFlow(groupKey: String): Flow<List<NotificationEntity>>
-
-    @Query("SELECT * FROM notifications WHERE COALESCE(groupKey, packageName) = :groupKey ORDER BY postTime DESC")
-    abstract suspend fun getNotificationsForGroup(groupKey: String): List<NotificationEntity>
 }
