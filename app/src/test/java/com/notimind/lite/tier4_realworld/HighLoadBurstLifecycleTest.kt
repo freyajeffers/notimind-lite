@@ -39,9 +39,11 @@ class HighLoadBurstLifecycleTest : BaseRobolectricTest() {
             }
             database.runInTransaction {
                 val db = database.openHelper.writableDatabase
-                val appStmt = db.compileStatement(
-                    "INSERT OR IGNORE INTO apps (packageName, appName, firstSeenTime, lastSeenTime, syncStatus, lastSyncedAt) VALUES (?, ?, ?, ?, ?, ?)"
+                val appSql = (
+                    "INSERT OR IGNORE INTO apps (packageName, appName, firstSeenTime, lastSeenTime, "
+                        + "syncStatus, lastSyncedAt) VALUES (?, ?, ?, ?, ?, ?)"
                 )
+                val appStmt = db.compileStatement(appSql)
                 for (p in 0..10) {
                     appStmt.clearBindings()
                     appStmt.bindString(1, "com.stress.app_$p")
@@ -52,9 +54,13 @@ class HighLoadBurstLifecycleTest : BaseRobolectricTest() {
                     appStmt.bindLong(6, 0L)
                     appStmt.executeInsert()
                 }
-                val stmt = db.compileStatement(
-                    "INSERT INTO notifications (key, packageName, appName, title, content, postTime, lastUpdatedTime, updateCount, isDismissed, isPinned, isPersistent, isRead, isGroupSummary, priority, isOngoing, isClearable, actionsCount, smallIconRes, syncStatus, lastSyncedAt) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
+                val notifSql = (
+                    "INSERT INTO notifications (key, packageName, appName, title, content, postTime, "
+                        + "lastUpdatedTime, updateCount, isDismissed, isPinned, isPersistent, isRead, "
+                        + "isGroupSummary, priority, isOngoing, isClearable, actionsCount, smallIconRes, "
+                        + "syncStatus, lastSyncedAt) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
                 )
+                val stmt = db.compileStatement(notifSql)
                 for (i in 1..count) {
                     stmt.clearBindings()
                     stmt.bindString(1, "stress_key_$i")
