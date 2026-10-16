@@ -8,13 +8,24 @@ object PiiRedactionEngine {
     private const val LUHN_REDUCTION = 9
     // Deterministic, fast compiled patterns.
     private val otpRegex = Regex("\\b\\d{4,6}\\b")
-    private val emailRegex = Regex("[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}")
+    private val emailRegex = Regex(
+        "[A-Za-z0-9._%+-]+@" +
+            "[A-Za-z0-9.-]+\\.[A-Za-z]{2,}"
+    )
     // More permissive phone matcher: international optional, digits with separators
-    private val phoneRegex = Regex("(?:\\+?\\d[\\d\\s().-]{7,}\\d)")
+    private val phoneRegex = Regex(
+        "(?:\\+?\\d" +
+            "[\\d\\s().-]{7,}" +
+            "\\d)"
+    )
     // Currency: $ with optional spaces, digits, optional thousands/grouping and cents
-    private val currencyRegex = Regex("\\$\\s?\\d{1,3}(?:[,\\.]\\d{3})*(?:\\.\\d{2})?")
+    private val currencyRegex = Regex(
+        "\\$\\s?\\d{1,3}(?:[,\\.]\\d{3})*(?:\\.\\d{2})?"
+    )
     // Credit-card candidate: sequences of digits with optional spaces/dashes (12-19 digits total)
-    private val ccCandidateRegex = Regex("(?:\\d[ -]?){12,19}")
+    private val ccCandidateRegex = Regex(
+        "(?:\\d[ -]?){12,19}"
+    )
 
     // Redaction placeholders
     private const val OTP_REPLACEMENT = "[REDACTED-OTP]"
