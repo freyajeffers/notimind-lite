@@ -44,15 +44,7 @@ fun settingsPreferencesSection(preferencesRepository: PreferencesRepository) {
     val enableSync by preferencesRepository.enableSync.collectAsState(initial = true)
     val enableVector by preferencesRepository.enableVector.collectAsState(initial = true)
     val enableFts4 by preferencesRepository.enableFts4.collectAsState(initial = true)
-    val retentionDays by preferencesRepository.retentionDays.collectAsState(initial = 30)
-    val exportEncryption by preferencesRepository.exportEncryption.collectAsState(initial = true)
-    val captureNotifications by preferencesRepository.captureNotifications.collectAsState(initial = true)
     val enableSemanticRanking by preferencesRepository.enableSemanticRanking.collectAsState(initial = true)
-    val autoDeleteOnRead by preferencesRepository.autoDeleteOnRead.collectAsState(initial = false)
-    val backupIntervalDays by preferencesRepository.backupIntervalDays.collectAsState(initial = 0)
-    val anonymizeTitles by preferencesRepository.anonymizeTitles.collectAsState(initial = false)
-    val maxCacheSizeMb by preferencesRepository.maxCacheSizeMb.collectAsState(initial = 50)
-    val semanticWeight by preferencesRepository.semanticWeight.collectAsState(initial = 50)
     val compactMode by preferencesRepository.compactMode.collectAsState(initial = false)
     val showAppIcons by preferencesRepository.showAppIcons.collectAsState(initial = true)
     val groupByApp by preferencesRepository.groupByApp.collectAsState(initial = true)
@@ -281,123 +273,19 @@ fun settingsPreferencesSection(preferencesRepository: PreferencesRepository) {
                 Switch(checked = enableSemanticRanking, onCheckedChange = preferencesRepository::setEnableSemanticRanking)
             }
 
-            if (BuildConfig.DEBUG) {
-                LaunchedEffect(Unit) {
-                    preferencesRepository.setAutoDeleteOnRead(false)
-                    preferencesRepository.setAnonymizeTitles(false)
-                }
-                disabledPreferenceRow(
-                    title = stringResource(R.string.pref_auto_delete_on_read_title),
-                    summary = stringResource(R.string.pref_disabled_in_debug)
-                )
-                disabledPreferenceRow(
-                    title = stringResource(R.string.pref_anonymize_titles_title),
-                    summary = stringResource(R.string.pref_disabled_in_debug)
-                )
-
-                // Show debug-effective controls while preventing changes to them.
-                Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = androidx.compose.ui.Alignment.CenterVertically
-            ) {
-                    Column(modifier = Modifier.weight(1f)) {
-                        Text(stringResource(R.string.pref_retention_days_title), style = MaterialTheme.typography.bodyLarge)
-                        Text(stringResource(R.string.pref_retention_days_summary), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    }
-                    OutlinedTextField(
-                        value = retentionDays.toString(),
-                        onValueChange = { /* disabled in debug */ },
-                        modifier = Modifier.width(120.dp),
-                        singleLine = true,
-                        enabled = false,
-                        label = { Text(stringResource(R.string.pref_retention_days_unit)) }
-                    )
-                }
-                Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = androidx.compose.ui.Alignment.CenterVertically
-            ) {
-                    Column(modifier = Modifier.weight(1f)) {
-                        Text(stringResource(R.string.pref_capture_notifications_title), style = MaterialTheme.typography.bodyLarge)
-                        Text(stringResource(R.string.pref_capture_notifications_summary), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    }
-                    Switch(checked = true, onCheckedChange = { /* disabled in debug */ }, enabled = false)
-                }
-            } else {
-                preferenceSwitchRow(
-                    title = stringResource(R.string.pref_auto_delete_on_read_title),
-                    summary = stringResource(R.string.pref_auto_delete_on_read_summary),
-                    checked = autoDeleteOnRead,
-                    onCheckedChange = preferencesRepository::setAutoDeleteOnRead
-                )
-                preferenceSwitchRow(
-                    title = stringResource(R.string.pref_anonymize_titles_title),
-                    summary = stringResource(R.string.pref_anonymize_titles_summary),
-                    checked = anonymizeTitles,
-                    onCheckedChange = preferencesRepository::setAnonymizeTitles
-                )
-            }
-
-            if (BuildConfig.DEBUG) {
-                Text(
-                    text = stringResource(R.string.pref_data_search_debug_note),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            } else {
-                Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = androidx.compose.ui.Alignment.CenterVertically
-            ) {
-                    Column(modifier = Modifier.weight(1f)) {
-                        Text(stringResource(R.string.pref_retention_days_title), style = MaterialTheme.typography.bodyLarge)
-                        Text(stringResource(R.string.pref_retention_days_summary), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    }
-                    OutlinedTextField(
-                        value = retentionDays.toString(),
-                        onValueChange = { new -> new.toIntOrNull()?.let(preferencesRepository::setRetentionDays) },
-                        modifier = Modifier.width(120.dp),
-                        singleLine = true,
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                        label = { Text(stringResource(R.string.pref_retention_days_unit)) },
-                        supportingText = { Text(stringResource(R.string.pref_retention_days_range)) }
-                    )
-                }
-
-                Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = androidx.compose.ui.Alignment.CenterVertically
-            ) {
-                    Column(modifier = Modifier.weight(1f)) {
-                        Text(stringResource(R.string.pref_export_encryption_title), style = MaterialTheme.typography.bodyLarge)
-                        Text(stringResource(R.string.pref_export_encryption_summary), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    }
-                    Switch(checked = exportEncryption, onCheckedChange = preferencesRepository::setExportEncryption)
-                }
-
-                Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = androidx.compose.ui.Alignment.CenterVertically
-            ) {
-                    Column(modifier = Modifier.weight(1f)) {
-                        Text(stringResource(R.string.pref_capture_notifications_title), style = MaterialTheme.typography.bodyLarge)
-                        Text(stringResource(R.string.pref_capture_notifications_summary), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    }
-                    Switch(checked = captureNotifications, onCheckedChange = preferencesRepository::setCaptureNotifications)
-                }
-            }
+            debugSettingsSection(preferencesRepository)
         }
     }
 }
 
 
 @Composable
-private fun disabledPreferenceRow(title: String, summary: String) {
+internal fun disabledPreferenceRow(title: String, summary: String) {
     preferenceSwitchRow(title, summary, checked = false, onCheckedChange = {}, enabled = false)
 }
 
 @Composable
-private fun preferenceSwitchRow(
+internal fun preferenceSwitchRow(
     title: String,
     summary: String,
     checked: Boolean,
