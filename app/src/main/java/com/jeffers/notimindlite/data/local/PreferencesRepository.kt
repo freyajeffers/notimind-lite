@@ -770,33 +770,59 @@ class PreferencesRepository(context: Context) :
     fun removeAutoExecuteRule(id: String) { setAutoExecuteRules(_autoExecuteRules.value.filterNot { it.id == id }) }
     fun setAutoExecuteRules(rules: List<AutoExecuteRule>) {
         val safe = rules.distinctBy { it.id }
-        backing.edit().putString(KEY_AUTO_EXECUTE_RULES, encodeAutoExecuteRules(safe)).apply(); _autoExecuteRules.value = safe
+        backing.edit().putString(KEY_AUTO_EXECUTE_RULES, encodeAutoExecuteRules(safe)).apply()
+        _autoExecuteRules.value = safe
     }
 
     private fun readAutoExecuteRules(): List<AutoExecuteRule> = runCatching {
         val array = JSONArray(backing.getString(KEY_AUTO_EXECUTE_RULES, "[]"))
         (0 until array.length()).map { index ->
             val value = array.getJSONObject(index)
-            AutoExecuteRule(value.optString("id"), value.optString("packageName"), value.optString("titleContains"), value.optInt("actionIndex", 0).coerceAtLeast(0), value.optBoolean("enabled", true))
+            AutoExecuteRule(
+                id = value.optString("id"),
+                packageName = value.optString("packageName"),
+                titleContains = value.optString("titleContains"),
+                actionIndex = value.optInt("actionIndex", 0).coerceAtLeast(0),
+                enabled = value.optBoolean("enabled", true)
+            )
         }
     }.getOrDefault(emptyList())
 
     private fun encodeAutoExecuteRules(rules: List<AutoExecuteRule>): String = JSONArray(rules.map { rule ->
-        JSONObject().put("id", rule.id).put("packageName", rule.packageName).put("titleContains", rule.titleContains).put("actionIndex", rule.actionIndex).put("enabled", rule.enabled)
+        JSONObject()
+            .put("id", rule.id)
+            .put("packageName", rule.packageName)
+            .put("titleContains", rule.titleContains)
+            .put("actionIndex", rule.actionIndex)
+            .put("enabled", rule.enabled)
     }).toString()
 
 
     // Shared UI setters
-    fun setSharedSearchQuery(q: String) { backing.edit().putString("ui_shared_search_query", q).apply(); _sharedSearchQuery.value = q }
-    fun setSharedSelectedPackages(pkgs: List<String>?) { backing.edit().putString("ui_shared_selected_packages", pkgs?.joinToString(",")).apply(); _sharedSelectedPackages.value = pkgs }
-    fun setSharedSelectedReason(reason: Int?) { backing.edit().putInt("ui_shared_selected_reason", reason ?: -1).apply(); _sharedSelectedReason.value = reason }
+    fun setSharedSearchQuery(q: String) {
+        backing.edit().putString("ui_shared_search_query", q).apply()
+        _sharedSearchQuery.value = q
+    }
+
+    fun setSharedSelectedPackages(pkgs: List<String>?) {
+        backing.edit().putString("ui_shared_selected_packages", pkgs?.joinToString(",")).apply()
+        _sharedSelectedPackages.value = pkgs
+    }
+
+    fun setSharedSelectedReason(reason: Int?) {
+        backing.edit().putInt("ui_shared_selected_reason", reason ?: -1).apply()
+        _sharedSelectedReason.value = reason
+    }
     fun addRecentSearch(q: String) {
         val current = _recentSearches.value.filterNot { it == q }
         val updated = (listOf(q) + current).take(10)
         _recentSearches.value = updated
         backing.edit().putString("ui_recent_searches", JSONArray(updated).toString()).apply()
     }
-    fun resetRecentSearches() { _recentSearches.value = emptyList(); backing.edit().putString("ui_recent_searches", "").apply() }
+    fun resetRecentSearches() {
+        _recentSearches.value = emptyList()
+        backing.edit().putString("ui_recent_searches", "").apply()
+    }
     fun removeRecentSearch(q: String) {
         val updated = _recentSearches.value.filterNot { it == q }
         _recentSearches.value = updated
