@@ -42,7 +42,7 @@ object SqlCipherKeyManager {
         return passphrase
     }
 
-    private fun keyFor(context: Context, databaseName: String): SecretKey {
+    private fun keyFor(databaseName: String): SecretKey {
         val alias = "notimind_sqlcipher_$databaseName"
         return try {
             val keyStore = KeyStore.getInstance(KEYSTORE).apply { load(null) }
@@ -97,7 +97,7 @@ object SqlCipherKeyManager {
 
     private fun encrypt(context: Context, databaseName: String, plaintext: ByteArray): ByteArray {
         val cipher = Cipher.getInstance(TRANSFORMATION)
-        cipher.init(Cipher.ENCRYPT_MODE, keyFor(context, databaseName))
+        cipher.init(Cipher.ENCRYPT_MODE, keyFor(databaseName))
         val ciphertext = cipher.doFinal(plaintext)
         return ByteBuffer.allocate(IV_BYTES + ciphertext.size)
             .put(cipher.iv)
@@ -110,7 +110,7 @@ object SqlCipherKeyManager {
         val iv = payload.copyOfRange(0, IV_BYTES)
         val ciphertext = payload.copyOfRange(IV_BYTES, payload.size)
         val cipher = Cipher.getInstance(TRANSFORMATION)
-        cipher.init(Cipher.DECRYPT_MODE, keyFor(context, databaseName), GCMParameterSpec(TAG_BITS, iv))
+        cipher.init(Cipher.DECRYPT_MODE, keyFor(databaseName), GCMParameterSpec(TAG_BITS, iv))
         return cipher.doFinal(ciphertext)
     }
 }

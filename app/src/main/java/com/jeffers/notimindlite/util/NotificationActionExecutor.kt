@@ -11,13 +11,13 @@ class NotificationActionExecutor(
 ) {
     fun executeOnNotification(context: Context, key: String, packageName: String, title: String): Boolean {
         val rule = matchingRule(packageName, title)
-        if (rule != null) return NotificationLauncher.triggerAction(context, key, rule.actionIndex)
+        if (rule != null) return NotificationLauncher.triggerAction(key, rule.actionIndex)
         if (!preferences.autoActOnNotification.value) return false
-        return NotificationLauncher.triggerAction(context, key, 0)
+        return NotificationLauncher.triggerAction(key, 0)
     }
 
-    fun executeLongPress(context: Context, key: String, packageName: String, title: String): Boolean = when (preferences.longPressAction.value) {
-        "reply" -> NotificationLauncher.triggerAction(context, key, 0)
+    fun executeLongPress(context: Context, key: String, packageName: String): Boolean = when (preferences.longPressAction.value) {
+        "reply" -> NotificationLauncher.triggerAction(key, 0)
         "dismiss" -> {
             NotificationLoggerService.dismissNotification(key)
             true
