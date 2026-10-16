@@ -127,10 +127,18 @@ object DatabaseExportHelper {
             val escapedTitle = sanitizeCsvField(n.title)
             val escapedContent = sanitizeCsvField(n.content)
             val postTimeStr = dateFormat.format(Date(n.postTime))
-            sb.append(
-                "${n.id},${n.packageName},$escapedAppName,$escapedTitle,$escapedContent," +
-                    "$postTimeStr,${n.isDismissed},${n.dismissReason ?: ""},${n.isPinned}\n"
+            val rowParts = listOf(
+                n.id,
+                n.packageName,
+                escapedAppName,
+                escapedTitle,
+                escapedContent,
+                postTimeStr,
+                n.isDismissed.toString(),
+                (n.dismissReason?.toString() ?: ""),
+                n.isPinned.toString()
             )
+            sb.appendLine(rowParts.joinToString(","))
         }
         return sb.toString()
     }
@@ -145,9 +153,13 @@ object DatabaseExportHelper {
         return "\"$sanitized\""
     }
 
-    private fun isSpreadsheetFormula(value: String): Boolean =
-        value.startsWith("=") || value.startsWith("+") || value.startsWith("-") ||
-            value.startsWith("@") || value.startsWith("\t") || value.startsWith("\r")
+    private fun isSpreadsheetFormula(value: String): Boolean {
+        val first = value.firstOrNull() ?: return false
+        return when (first) {
+            '=', '+', '-', '@', '\t', '\r' -> true
+            else -> false
+        }
+    }
 
     fun applyPrivacy(notification: NotificationEntity, context: Context?): NotificationEntity {
         val preferences = context?.let { PreferencesRepository(it.applicationContext) } ?: return notification
@@ -159,7 +171,11 @@ object DatabaseExportHelper {
         }
         return notification.copy(
             title = if (preferences.securityManager.redactPii.value) redact(title) else title,
-            content = if (preferences.securityManager.redactPii.value) redact(notification.content) else notification.content,
+            content = if (preferences.securityManager.redactPii.value) {
+                redact(notification.content)
+            } else {
+                notification.content
+            },
             subText = notification.subText?.let { if (preferences.securityManager.redactPii.value) redact(it) else it },
             bigText = notification.bigText?.let { if (preferences.securityManager.redactPii.value) redact(it) else it }
         )
