@@ -373,29 +373,74 @@ class PreferencesRepository(context: Context) {
     }
 
     private fun reloadProfileFlows() {
-        _enableSync.value = backing.getBoolean(KEY_ENABLE_SYNC, true); _enableVector.value = backing.getBoolean(KEY_ENABLE_VECTOR, true)
-        _enableFts4.value = backing.getBoolean(KEY_ENABLE_FTS4, true); _retentionDays.value = backing.getInt(KEY_RETENTION_DAYS, DEFAULT_RETENTION_DAYS)
-        _exportEncryption.value = backing.getBoolean(KEY_EXPORT_ENCRYPTION, true); _captureNotifications.value = backing.getBoolean(KEY_CAPTURE_NOTIFICATIONS, true)
-        _enableSemanticRanking.value = backing.getBoolean(KEY_ENABLE_SEMANTIC_RANKING, true); _autoDeleteOnRead.value = backing.getBoolean(KEY_AUTO_DELETE_ON_READ, false)
-        _backupIntervalDays.value = backing.getInt(KEY_BACKUP_INTERVAL_DAYS, 0); _exportFormats.value = backing.getString("config_export_formats", "json,csv") ?: "json,csv"; _exportAnonymize.value = backing.getBoolean("config_export_anonymize", false); _anonymizeTitles.value = backing.getBoolean(KEY_ANONYMIZE_TITLES, false)
-        _maxCacheSizeMb.value = backing.getInt(KEY_MAX_CACHE_MB, 50); _semanticWeight.value = backing.getInt(KEY_SEMANTIC_WEIGHT, 50)
-        _compactMode.value = backing.getBoolean(KEY_COMPACT_MODE, false); _showAppIcons.value = backing.getBoolean(KEY_SHOW_APP_ICONS, true)
-        _sortOrder.value = backing.getString(KEY_SORT_ORDER, "newest") ?: "newest"; _groupByApp.value = backing.getBoolean(KEY_GROUP_BY_APP, true)
-        _previewLength.value = backing.getInt(KEY_PREVIEW_LENGTH, 140); _themeAccent.value = backing.getString(KEY_THEME_ACCENT, "system") ?: "system"
-        _enableTelemetry.value = backing.getBoolean(KEY_ENABLE_TELEMETRY, true); _telemetryLevel.value = backing.getString(KEY_TELEMETRY_LEVEL, "minimal") ?: "minimal"
-        _maxDbMb.value = backing.getInt(KEY_MAX_DB_MB, 512); _lowMemoryMode.value = backing.getBoolean(KEY_LOW_MEMORY_MODE, false); _vectorCacheMax.value = backing.getInt(KEY_VECTOR_CACHE_MAX, 1000)
-        _featureFlagsUrl.value = backing.getString(KEY_FEATURE_FLAGS_URL, "") ?: ""; _mockDataEnabled.value = backing.getBoolean(KEY_MOCK_DATA_ENABLED, false)
-        _testModeFlags.value = backing.getString(KEY_TEST_MODE_FLAGS, "") ?: ""; _offloadEmbeddings.value = backing.getBoolean(KEY_OFFLOAD_EMBEDDINGS, false)
-        _useFts5.value = backing.getBoolean(KEY_USE_FTS5, false); _vectorGpu.value = backing.getBoolean(KEY_VECTOR_GPU, false)
+        _enableSync.value = backing.getBoolean(KEY_ENABLE_SYNC, true)
+        _enableVector.value = backing.getBoolean(KEY_ENABLE_VECTOR, true)
+
+        _enableFts4.value = backing.getBoolean(KEY_ENABLE_FTS4, true)
+        _retentionDays.value = backing.getInt(KEY_RETENTION_DAYS, DEFAULT_RETENTION_DAYS)
+
+        _exportEncryption.value = backing.getBoolean(KEY_EXPORT_ENCRYPTION, true)
+        _captureNotifications.value = backing.getBoolean(KEY_CAPTURE_NOTIFICATIONS, true)
+
+        _enableSemanticRanking.value = backing.getBoolean(KEY_ENABLE_SEMANTIC_RANKING, true)
+        _autoDeleteOnRead.value = backing.getBoolean(KEY_AUTO_DELETE_ON_READ, false)
+
+        _backupIntervalDays.value = backing.getInt(KEY_BACKUP_INTERVAL_DAYS, 0)
+        _exportFormats.value = backing.getString("config_export_formats", "json,csv") ?: "json,csv"
+        _exportAnonymize.value = backing.getBoolean("config_export_anonymize", false)
+        _anonymizeTitles.value = backing.getBoolean(KEY_ANONYMIZE_TITLES, false)
+
+        _maxCacheSizeMb.value = backing.getInt(KEY_MAX_CACHE_MB, 50)
+        _semanticWeight.value = backing.getInt(KEY_SEMANTIC_WEIGHT, 50)
+
+        _compactMode.value = backing.getBoolean(KEY_COMPACT_MODE, false)
+        _showAppIcons.value = backing.getBoolean(KEY_SHOW_APP_ICONS, true)
+
+        _sortOrder.value = backing.getString(KEY_SORT_ORDER, "newest") ?: "newest"
+        _groupByApp.value = backing.getBoolean(KEY_GROUP_BY_APP, true)
+
+        _previewLength.value = backing.getInt(KEY_PREVIEW_LENGTH, 140)
+        _themeAccent.value = backing.getString(KEY_THEME_ACCENT, "system") ?: "system"
+
+        _enableTelemetry.value = backing.getBoolean(KEY_ENABLE_TELEMETRY, true)
+        _telemetryLevel.value = backing.getString(KEY_TELEMETRY_LEVEL, "minimal") ?: "minimal"
+
+        _maxDbMb.value = backing.getInt(KEY_MAX_DB_MB, 512)
+        _lowMemoryMode.value = backing.getBoolean(KEY_LOW_MEMORY_MODE, false)
+        _vectorCacheMax.value = backing.getInt(KEY_VECTOR_CACHE_MAX, 1000)
+
+        _featureFlagsUrl.value = backing.getString(KEY_FEATURE_FLAGS_URL, "") ?: ""
+        _mockDataEnabled.value = backing.getBoolean(KEY_MOCK_DATA_ENABLED, false)
+
+        _testModeFlags.value = backing.getString(KEY_TEST_MODE_FLAGS, "") ?: ""
+        _offloadEmbeddings.value = backing.getBoolean(KEY_OFFLOAD_EMBEDDINGS, false)
+
+        _useFts5.value = backing.getBoolean(KEY_USE_FTS5, false)
+        _vectorGpu.value = backing.getBoolean(KEY_VECTOR_GPU, false)
+
         _exportRequiresBiometric.value = backing.getBoolean(KEY_EXPORT_REQUIRES_BIOMETRIC, false)
+
         _appLockEnabled.value = backing.getBoolean(KEY_APP_LOCK_ENABLED, false)
+
         _useKeystore.value = backing.getBoolean(KEY_USE_KEYSTORE, true)
+
         _dbEncrypted.value = backing.getBoolean(KEY_DB_ENCRYPTED, true)
-        _dbEncryptionMode.value = DbEncryptionMode.fromPersisted(backing.getString(KEY_DB_ENCRYPTION_MODE, DbEncryptionMode.KEYSTORE.persisted))
-        _syncInterval.value = backing.getInt("config_sync_interval_min", 360); _syncWifiOnly.value = backing.getBoolean("config_sync_wifi_only", true); _syncChargingOnly.value = backing.getBoolean("config_sync_charging_only", true); _lastSyncTs.value = backing.getLong("config_last_sync_ts", 0L)
+
+        _dbEncryptionMode.value = DbEncryptionMode.fromPersisted(
+            backing.getString(KEY_DB_ENCRYPTION_MODE, DbEncryptionMode.KEYSTORE.persisted)
+        )
+
+        _syncInterval.value = backing.getInt("config_sync_interval_min", 360)
+        _syncWifiOnly.value = backing.getBoolean("config_sync_wifi_only", true)
+        _syncChargingOnly.value = backing.getBoolean("config_sync_charging_only", true)
+        _lastSyncTs.value = backing.getLong("config_last_sync_ts", 0L)
+
         _autoActOnNotification.value = backing.getBoolean(KEY_AUTO_ACT_ON_NOTIFICATION, false)
+
         _defaultReplyMethod.value = backing.getString(KEY_DEFAULT_REPLY_METHOD, "inline") ?: "inline"
+
         _longPressAction.value = backing.getString(KEY_LONG_PRESS_ACTION, "open") ?: "open"
+
         _autoExecuteRules.value = readAutoExecuteRules()
     }
 
