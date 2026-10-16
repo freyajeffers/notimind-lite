@@ -236,7 +236,11 @@ fun settingsPreferencesSection(preferencesRepository: PreferencesRepository) {
             ) {
                 Column(modifier = Modifier.weight(1f)) {
                     Text(stringResource(R.string.pref_preview_length_title), style = MaterialTheme.typography.bodyLarge)
-                    Text(stringResource(R.string.pref_preview_length_summary), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text(
+                        stringResource(R.string.pref_preview_length_summary),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
                 }
                 OutlinedTextField(
                     value = previewLength.toString(),
@@ -253,7 +257,11 @@ fun settingsPreferencesSection(preferencesRepository: PreferencesRepository) {
             ) {
                 Column(modifier = Modifier.weight(1f)) {
                     Text(stringResource(R.string.pref_enable_sync_title), style = MaterialTheme.typography.bodyLarge)
-                    Text(stringResource(R.string.pref_enable_sync_summary), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text(
+                        stringResource(R.string.pref_enable_sync_summary),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
                 }
                 Switch(checked = enableSync, onCheckedChange = preferencesRepository::setEnableSync)
             }
@@ -264,7 +272,11 @@ fun settingsPreferencesSection(preferencesRepository: PreferencesRepository) {
             ) {
                 Column(modifier = Modifier.weight(1f)) {
                     Text(stringResource(R.string.pref_enable_vector_title), style = MaterialTheme.typography.bodyLarge)
-                    Text(stringResource(R.string.pref_enable_vector_summary), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text(
+                        stringResource(R.string.pref_enable_vector_summary),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
                 }
                 Switch(checked = enableVector, onCheckedChange = preferencesRepository::setEnableVector)
             }
@@ -275,7 +287,11 @@ fun settingsPreferencesSection(preferencesRepository: PreferencesRepository) {
             ) {
                 Column(modifier = Modifier.weight(1f)) {
                     Text(stringResource(R.string.pref_enable_fts4_title), style = MaterialTheme.typography.bodyLarge)
-                    Text(stringResource(R.string.pref_enable_fts4_summary), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text(
+                        stringResource(R.string.pref_enable_fts4_summary),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
                 }
                 Switch(checked = enableFts4, onCheckedChange = preferencesRepository::setEnableFts4)
             }
@@ -286,7 +302,11 @@ fun settingsPreferencesSection(preferencesRepository: PreferencesRepository) {
             ) {
                 Column(modifier = Modifier.weight(1f)) {
                     Text(stringResource(R.string.pref_semantic_ranking_title), style = MaterialTheme.typography.bodyLarge)
-                    Text(stringResource(R.string.pref_semantic_ranking_summary), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text(
+                        stringResource(R.string.pref_semantic_ranking_summary),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
                 }
                 Switch(checked = enableSemanticRanking, onCheckedChange = preferencesRepository::setEnableSemanticRanking)
             }
