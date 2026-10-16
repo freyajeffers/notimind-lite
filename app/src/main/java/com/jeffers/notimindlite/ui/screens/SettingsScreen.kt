@@ -134,7 +134,8 @@ fun settingsScreen(
                         Icon(Icons.Default.Person, contentDescription = "Profile")
                         Column {
                             Text(
-                                text = session.displayName ?: stringResource(id = R.string.settings_default_display_name),
+                                text = session.displayName
+                                    ?: stringResource(id = R.string.settings_default_display_name),
                                 style = MaterialTheme.typography.bodyLarge,
                                 fontWeight = FontWeight.Medium
                             )
@@ -182,7 +183,11 @@ fun settingsScreen(
                     }
 
                     session.error?.let { err ->
-                        Text(text = err, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
+                        Text(
+                            text = err,
+                            color = MaterialTheme.colorScheme.error,
+                            style = MaterialTheme.typography.bodySmall
+                        )
                     }
                 }
             }
@@ -211,13 +216,70 @@ fun settingsScreen(
             )
         ) {
             Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                Text(text = stringResource(id = R.string.settings_section_listener), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
-                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                    Icon(imageVector = if (listenerGrantedTop) Icons.Default.Notifications else Icons.Default.NotificationsOff, contentDescription = if (listenerGrantedTop) "Notification access enabled" else "Notification access disabled", tint = if (listenerGrantedTop) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error)
-                    Text(text = stringResource(id = if (listenerGrantedTop) R.string.settings_listener_granted_desc else R.string.settings_listener_missing_desc), style = MaterialTheme.typography.bodyMedium, modifier = Modifier.weight(1f))
+                Text(
+                    text = stringResource(id = R.string.settings_section_listener),
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.SemiBold
+                )
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    val listenerIcon = if (listenerGrantedTop) {
+                        Icons.Default.Notifications
+                    } else {
+                        Icons.Default.NotificationsOff
+                    }
+                    Icon(
+                        imageVector = listenerIcon,
+                        contentDescription = if (listenerGrantedTop) {
+                            "Notification access enabled"
+                        } else {
+                            "Notification access disabled"
+                        },
+                        tint = if (listenerGrantedTop) {
+                            MaterialTheme.colorScheme.primary
+                        } else {
+                            MaterialTheme.colorScheme.error
+                        }
+                    )
+                    Text(
+                        text = stringResource(
+                            id = if (listenerGrantedTop) {
+                                R.string.settings_listener_granted_desc
+                            } else {
+                                R.string.settings_listener_missing_desc
+                            }
+                        ),
+                        style = MaterialTheme.typography.bodyMedium,
+                        modifier = Modifier.weight(1f)
+                    )
                 }
-                Button(onClick = { val intent = Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS); intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK); context.startActivity(intent) }, colors = ButtonDefaults.buttonColors(containerColor = if (listenerGrantedTop) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.error, contentColor = if (listenerGrantedTop) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onError)) {
-                    Text(stringResource(id = if (listenerGrantedTop) R.string.settings_listener_open else R.string.settings_listener_grant))
+                Button(
+                    onClick = {
+                        val intent = Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS)
+                        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                        context.startActivity(intent)
+                    },
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = if (listenerGrantedTop) {
+                            MaterialTheme.colorScheme.primaryContainer
+                        } else {
+                            MaterialTheme.colorScheme.error
+                        },
+                        contentColor = if (listenerGrantedTop) {
+                            MaterialTheme.colorScheme.onPrimaryContainer
+                        } else {
+                            MaterialTheme.colorScheme.onError
+                        }
+                    )
+                ) {
+                    val listenerActionLabel = if (listenerGrantedTop) {
+                        R.string.settings_listener_open
+                    } else {
+                        R.string.settings_listener_grant
+                    }
+                    Text(stringResource(id = listenerActionLabel))
                 }
             }
         }
@@ -225,19 +287,45 @@ fun settingsScreen(
         settingsSyncSection(preferencesRepository = preferencesRepository)
 
         // Boot & Restore card placed near top for quick opt-in/out.
-        Card(modifier = Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)) {
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
+        ) {
             Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                Text(text = stringResource(id = R.string.settings_section_restore), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
+                Text(
+                    text = stringResource(id = R.string.settings_section_restore),
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.SemiBold
+                )
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Icon(Icons.Default.Restore, contentDescription = "Restore")
                     Spacer(Modifier.width(8.dp))
                     Column(modifier = Modifier.weight(1f)) {
-                        Text(text = stringResource(id = R.string.settings_restore_on_boot_title), style = MaterialTheme.typography.bodyLarge)
-                        Text(text = stringResource(id = R.string.settings_restore_on_boot_desc), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Text(
+                            text = stringResource(id = R.string.settings_restore_on_boot_title),
+                            style = MaterialTheme.typography.bodyLarge
+                        )
+                        Text(
+                            text = stringResource(id = R.string.settings_restore_on_boot_desc),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
                     }
-                    Switch(checked = prefMgrTop.isRestoreOnBootEnabled() && listenerGrantedTop, enabled = listenerGrantedTop && !BuildConfig.DEBUG, onCheckedChange = { prefMgrTop.setRestoreOnBootEnabled(it) })
+                    Switch(
+                        checked = prefMgrTop.isRestoreOnBootEnabled() && listenerGrantedTop,
+                        enabled = listenerGrantedTop && !BuildConfig.DEBUG,
+                        onCheckedChange = { prefMgrTop.setRestoreOnBootEnabled(it) }
+                    )
                 }
-                OutlinedButton(onClick = { pickBackupLauncher.launch(arrayOf("application/octet-stream", "*/*")) }, modifier = Modifier.fillMaxWidth(), colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.primary)) {
+                OutlinedButton(
+                    onClick = {
+                        pickBackupLauncher.launch(arrayOf("application/octet-stream", "*/*"))
+                    },
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = ButtonDefaults.outlinedButtonColors(
+                        contentColor = MaterialTheme.colorScheme.primary
+                    )
+                ) {
                     Icon(Icons.Default.Restore, contentDescription = "Restore")
                     Spacer(Modifier.width(8.dp))
                     Text("Restore Backup Manually")
@@ -287,12 +375,7 @@ fun settingsScreen(
         val versionCode = remember {
             runCatching {
                 val info = context.packageManager.getPackageInfo(context.packageName, 0)
-                if (BuildConfig.SUPPORTS_LONG_VERSION_CODE) {
-                    info.longVersionCode.toInt()
-                } else {
-                    @Suppress("DEPRECATION")
-                    info.versionCode
-                }
+                info.longVersionCode.toInt()
             }.getOrDefault(0)
         }
         Spacer(modifier = Modifier.height(8.dp))
