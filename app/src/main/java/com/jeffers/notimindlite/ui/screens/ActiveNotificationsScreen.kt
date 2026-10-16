@@ -364,6 +364,16 @@ fun activeNotificationsScreen(dao: NotificationDao, preferences: PreferencesRepo
         floatingActionButton = { activeNotificationsFab(listState) }
     ) { innerPadding ->
         Box(modifier = Modifier.fillMaxSize()) {
+            val searchSuggestions = remember(searchQuery, pinnedNotifs, activeNotifs, filteredNotifs, recentlyDismissed, lostNotifs) {
+                if (searchQuery.length < 2) emptyList()
+                else {
+                    val allNotifs = pinnedNotifs + activeNotifs + filteredNotifs + recentlyDismissed + lostNotifs
+                    (allNotifs.map { it.appName } + allNotifs.map { it.title })
+                        .filter { it.contains(searchQuery, ignoreCase = true) }
+                        .distinct()
+                        .take(4)
+                }
+            }
             LazyColumn(
                 state = listState,
                 modifier = Modifier
@@ -373,110 +383,24 @@ fun activeNotificationsScreen(dao: NotificationDao, preferences: PreferencesRepo
                 verticalArrangement = Arrangement.spacedBy(12.dp),
                 contentPadding = PaddingValues(vertical = 12.dp)
             ) {
-                item(key = "active_search_header") {
-                    AnimatedVisibility(
-                        visible = isSearchExplicitlyOpened || searchQuery.isNotEmpty() || isSearchFocused,
-                        enter = fadeIn() + expandVertically(),
-                        exit = fadeOut() + shrinkVertically()
-                    ) {
-                        val searchSuggestions = remember(searchQuery, pinnedNotifs, activeNotifs, filteredNotifs, recentlyDismissed, lostNotifs) {
-                            if (searchQuery.length < 2) emptyList()
-                            else {
-                                val allNotifs = pinnedNotifs + activeNotifs + filteredNotifs + recentlyDismissed + lostNotifs
-                                (allNotifs.map { it.appName } + allNotifs.map { it.title })
-                                    .filter { it.contains(searchQuery, ignoreCase = true) }
-                                    .distinct()
-                                    .take(4)
-                            }
+                activeSearchHeader(
+                    ActiveSearchHeaderConfig(
+                        searchQuery = searchQuery,
+                        searchSuggestions = searchSuggestions,
+                        recentSearches = recentSearches,
+                        isVisible = isSearchExplicitlyOpened || searchQuery.isNotEmpty() || isSearchFocused,
+                        focusRequester = searchFocusRequester,
+                        preferences = preferences,
+                        onQueryChanged = { searchQuery = it },
+                        onFocusChanged = { isSearchFocused = it },
+                        onDone = {
+                            val query = searchQuery.trim()
+                            if (query.isNotEmpty()) preferences.sharedSearchManager.addRecentSearch(query)
+                            focusManager.clearFocus(force = true)
+                            keyboardController?.hide()
                         }
-                        var expandedDropdown by remember { mutableStateOf(false) }
-
-                        LaunchedEffect(searchSuggestions, recentSearches) {
-                            expandedDropdown = searchSuggestions.isNotEmpty() || recentSearches.isNotEmpty()
-                        }
-
-                        // Ensure dropdown appears promptly when the user types — sometimes
-                        // recomposition ordering delays the searchSuggestions-driven effect.
-                        LaunchedEffect(searchQuery) {
-                            if (searchQuery.length >= 2) {
-                                expandedDropdown = searchSuggestions.isNotEmpty()
-                            } else if (searchQuery.isBlank()) {
-                                expandedDropdown = recentSearches.isNotEmpty()
-                            }
-                        }
-
-                        Box(modifier = Modifier.fillMaxWidth()) {
-                            OutlinedTextField(
-                                value = searchQuery,
-                                onValueChange = { searchQuery = it },
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(bottom = 6.dp)
-                                    .focusRequester(searchFocusRequester)
-                                    .onFocusChanged { isSearchFocused = it.isFocused }
-                                    .semantics { contentDescription = "ActiveSearchField" },
-                                placeholder = { Text("Search") },
-                                leadingIcon = { Icon(Icons.Default.Search, contentDescription = "Search") },
-                                trailingIcon = {
-                                    if (searchQuery.isNotEmpty()) {
-                                        IconButton(onClick = { searchQuery = "" }) {
-                                            Icon(Icons.Default.Close, contentDescription = "Clear Search")
-                                        }
-                                    }
-                                },
-                                singleLine = true,
-                                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
-                                keyboardActions = KeyboardActions(onDone = {
-                                    val query = searchQuery.trim()
-                                    if (query.isNotEmpty()) {
-                                        preferences.sharedSearchManager.addRecentSearch(query)
-                                    }
-                                    focusManager.clearFocus(force = true)
-                                    keyboardController?.hide()
-                                }),
-                                shape = RoundedCornerShape(12.dp)
-                            )
-
-                            DropdownMenu(
-                                expanded = expandedDropdown && (searchSuggestions.isNotEmpty() || (searchQuery.isBlank() && recentSearches.isNotEmpty())),
-                                onDismissRequest = { expandedDropdown = false },
-                                properties = androidx.compose.ui.window.PopupProperties(focusable = false),
-                                modifier = Modifier.fillMaxWidth(0.9f)
-                            ) {
-                                // Show recent searches that match the current query (or all recent when blank)
-                                val matchingRecent = remember(searchQuery, recentSearches) {
-                                    if (searchQuery.isBlank()) recentSearches
-                                    else recentSearches.filter { it.contains(searchQuery, ignoreCase = true) }
-                                }
-                                matchingRecent.forEach { recent ->
-                                    DropdownMenuItem(
-                                        text = { Text(recent) },
-                                        trailingIcon = { IconButton(onClick = { preferences.sharedSearchManager.removeRecentSearch(recent) }) { Icon(Icons.Default.Close, contentDescription = "Remove recent search") } },
-                                        onClick = { searchQuery = recent; expandedDropdown = false }
-                                    )
-                                }
-                                if (matchingRecent.isNotEmpty()) {
-                                    DropdownMenuItem(
-                                        text = { Text("Clear recent searches") },
-                                        onClick = { preferences.sharedSearchManager.resetRecentSearches(); expandedDropdown = false }
-                                    )
-                                }
-
-                                // Suggestions from notification content (de-duplicated)
-                                searchSuggestions.forEach { suggestion ->
-                                    DropdownMenuItem(
-                                        text = { Text(suggestion, fontSize = 14.sp) },
-                                        onClick = {
-                                            searchQuery = suggestion
-                                            expandedDropdown = false
-                                        }
-                                    )
-                                }
-                            }
-                        }
-                    }
-                }
-
+                    )
+                )
 
                 // F-N usability [2026-09-06]: surface empty-state Composables when the
                 // entire DB is empty or a query returned no matches. Distinguishes three
