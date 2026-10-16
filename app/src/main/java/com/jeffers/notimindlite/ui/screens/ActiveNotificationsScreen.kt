@@ -210,13 +210,13 @@ fun activeNotificationsScreen(dao: NotificationDao, preferences: PreferencesRepo
     var expandedCards by remember { mutableStateOf(setOf<String>()) }
     var collapsedGroups by remember { mutableStateOf(setOf<String>()) }
     var isGranted by remember { mutableStateOf(checkNotificationPermission(context)) }
-    var searchQuery by rememberSaveable { mutableStateOf(preferences.sharedSearchQuery.value) }
+    var searchQuery by rememberSaveable { mutableStateOf(preferences.sharedSearchManager.query.value) }
     var debouncedSearchQuery by remember { mutableStateOf("") }
     var isSearchExplicitlyOpened by rememberSaveable { mutableStateOf(false) }
-    val recentSearches by preferences.recentSearches.collectAsState()
+    val recentSearches by preferences.sharedSearchManager.recentSearches.collectAsState()
     val focusManager = LocalFocusManager.current
     val keyboardController = LocalSoftwareKeyboardController.current
-    LaunchedEffect(searchQuery) { preferences.setSharedSearchQuery(searchQuery) }
+    LaunchedEffect(searchQuery) { preferences.sharedSearchManager.setQuery(searchQuery) }
 
 
 
@@ -227,9 +227,9 @@ fun activeNotificationsScreen(dao: NotificationDao, preferences: PreferencesRepo
 
 
     // F-K fix: selectedPackages is user filter state — persist across process death.
-    var selectedPackages by remember { mutableStateOf(preferences.sharedSelectedPackages.value) }
+    var selectedPackages by remember { mutableStateOf(preferences.sharedSearchManager.packages.value) }
     var showPackagePicker by remember { mutableStateOf(false) }
-    LaunchedEffect(selectedPackages) { preferences.setSharedSelectedPackages(selectedPackages) }
+    LaunchedEffect(selectedPackages) { preferences.sharedSearchManager.setPackages(selectedPackages) }
 
     DisposableEffect(lifecycleOwner) {
         val observer = LifecycleEventObserver { _, event ->
@@ -437,7 +437,7 @@ fun activeNotificationsScreen(dao: NotificationDao, preferences: PreferencesRepo
                                 keyboardActions = KeyboardActions(onDone = {
                                     val query = searchQuery.trim()
                                     if (query.isNotEmpty()) {
-                                        preferences.addRecentSearch(query)
+                                        preferences.sharedSearchManager.addRecentSearch(query)
                                     }
                                     focusManager.clearFocus(force = true)
                                     keyboardController?.hide()
@@ -459,14 +459,14 @@ fun activeNotificationsScreen(dao: NotificationDao, preferences: PreferencesRepo
                                 matchingRecent.forEach { recent ->
                                     DropdownMenuItem(
                                         text = { Text(recent) },
-                                        trailingIcon = { IconButton(onClick = { preferences.removeRecentSearch(recent) }) { Icon(Icons.Default.Close, contentDescription = "Remove recent search") } },
+                                        trailingIcon = { IconButton(onClick = { preferences.sharedSearchManager.removeRecentSearch(recent) }) { Icon(Icons.Default.Close, contentDescription = "Remove recent search") } },
                                         onClick = { searchQuery = recent; expandedDropdown = false }
                                     )
                                 }
                                 if (matchingRecent.isNotEmpty()) {
                                     DropdownMenuItem(
                                         text = { Text("Clear recent searches") },
-                                        onClick = { preferences.resetRecentSearches(); expandedDropdown = false }
+                                        onClick = { preferences.sharedSearchManager.resetRecentSearches(); expandedDropdown = false }
                                     )
                                 }
 

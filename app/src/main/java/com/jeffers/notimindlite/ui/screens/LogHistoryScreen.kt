@@ -121,8 +121,8 @@ fun logHistoryScreen(dao: NotificationDao, preferences: com.jeffers.notimindlite
     LaunchedEffect(sortMode) {
         preferences.setSortOrder(sortModeToPref(sortMode))
     }
-    var selectedReasonFilter by rememberSaveable { mutableStateOf(preferences.sharedSelectedReason.value) }
-    var selectedPackages by remember { mutableStateOf(preferences.sharedSelectedPackages.value) }
+    var selectedReasonFilter by rememberSaveable { mutableStateOf(preferences.sharedSearchManager.reason.value) }
+    var selectedPackages by remember { mutableStateOf(preferences.sharedSearchManager.packages.value) }
 
     var showSortMenu by remember { mutableStateOf(false) }
     var showFilterMenu by remember { mutableStateOf(false) }
@@ -140,18 +140,18 @@ fun logHistoryScreen(dao: NotificationDao, preferences: com.jeffers.notimindlite
         SortMode.ALL, SortMode.NEWEST, SortMode.OLDEST, SortMode.APP_NAME, SortMode.TITLE -> allNotifsEver
     }
     // F-K fix: persist search text across process death.
-    var searchQuery by rememberSaveable { mutableStateOf(preferences.sharedSearchQuery.value) }
+    var searchQuery by rememberSaveable { mutableStateOf(preferences.sharedSearchManager.query.value) }
     // debouncedSearchQuery is a derived value, not user input; do not save.
     var debouncedSearchQuery by remember { mutableStateOf("") }
     var isSearchVisible by rememberSaveable { mutableStateOf(false) }
     var isSearchFocused by remember { mutableStateOf(false) }
-    var recentSearches by rememberSaveable { mutableStateOf(preferences.recentSearches.value) }
+    var recentSearches by rememberSaveable { mutableStateOf(preferences.sharedSearchManager.recentSearches.value) }
     val focusManager = LocalFocusManager.current
     val keyboardController = LocalSoftwareKeyboardController.current
 
-    LaunchedEffect(searchQuery) { preferences.setSharedSearchQuery(searchQuery) }
-    LaunchedEffect(selectedPackages) { preferences.setSharedSelectedPackages(selectedPackages) }
-    LaunchedEffect(selectedReasonFilter) { preferences.setSharedSelectedReason(selectedReasonFilter) }
+    LaunchedEffect(searchQuery) { preferences.sharedSearchManager.setQuery(searchQuery) }
+    LaunchedEffect(selectedPackages) { preferences.sharedSearchManager.setPackages(selectedPackages) }
+    LaunchedEffect(selectedReasonFilter) { preferences.sharedSearchManager.setReason(selectedReasonFilter) }
 
     LaunchedEffect(searchQuery) {
         delay(100L)
@@ -461,7 +461,7 @@ fun logHistoryScreen(dao: NotificationDao, preferences: com.jeffers.notimindlite
                         val query = searchQuery.trim()
                         if (query.isNotEmpty()) {
                             recentSearches = listOf(query) + recentSearches.filterNot { it == query }.take(9)
-                            preferences.addRecentSearch(query)
+                            preferences.sharedSearchManager.addRecentSearch(query)
                         }
                         focusManager.clearFocus(force = true)
                         keyboardController?.hide()
@@ -483,14 +483,14 @@ fun logHistoryScreen(dao: NotificationDao, preferences: com.jeffers.notimindlite
                     matchingRecent.forEach { recent ->
                         DropdownMenuItem(
                             text = { Text(recent) },
-                            trailingIcon = { IconButton(onClick = { preferences.removeRecentSearch(recent) }) { Icon(Icons.Default.Close, contentDescription = "Remove recent search") } },
+                            trailingIcon = { IconButton(onClick = { preferences.sharedSearchManager.removeRecentSearch(recent) }) { Icon(Icons.Default.Close, contentDescription = "Remove recent search") } },
                             onClick = { searchQuery = recent; expandedDropdown = false }
                         )
                     }
                     if (matchingRecent.isNotEmpty()) {
                         DropdownMenuItem(
                             text = { Text("Clear recent searches") },
-                            onClick = { preferences.resetRecentSearches(); expandedDropdown = false }
+                            onClick = { preferences.sharedSearchManager.resetRecentSearches(); expandedDropdown = false }
                         )
                     }
                     searchSuggestions.forEach { suggestion ->

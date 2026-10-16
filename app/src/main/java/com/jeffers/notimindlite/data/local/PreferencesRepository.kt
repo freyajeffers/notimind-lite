@@ -22,6 +22,7 @@ class PreferencesRepository(context: Context) :
     private val appContext = context.applicationContext
     private val deContext = appContext.createDeviceProtectedStorageContext()
     val profileManager = ProfilePreferencesManager(context)
+    val sharedSearchManager = SharedSearchStateManager(context, profileManager)
     private val backing: android.content.SharedPreferences
         get() = deContext.getSharedPreferences(profileManager.activePreferencesName, Context.MODE_PRIVATE)
 
@@ -30,6 +31,7 @@ class PreferencesRepository(context: Context) :
         ExhaustivePreferencesRepository(context).initializeDefaults(profileManager.activeProfileId.value)
         profileManager.onProfileChanged = {
             reloadProfileFlows()
+            sharedSearchManager.reload()
         }
     }
 
@@ -192,30 +194,6 @@ class PreferencesRepository(context: Context) :
     val lastSyncTs: StateFlow<Long> = _lastSyncTs
     val useSupabaseSync: StateFlow<Boolean> = _useSupabaseSync
 
-    // Shared UI search & filter state across Active and History screens
-    private val _sharedSearchQuery = MutableStateFlow(
-        backing.getString("ui_shared_search_query", "") ?: ""
-    )
-    private val _sharedSelectedPackages = MutableStateFlow<List<String>?>(
-        backing.getString("ui_shared_selected_packages", null)
-            ?.split(',')
-            ?.filter { it.isNotBlank() }
-            ?.ifEmpty { null }
-    )
-    private val _sharedSelectedReason = MutableStateFlow(
-        backing.getInt("ui_shared_selected_reason", -1)
-            .let { if (it >= 0) it else null }
-    )
-    private val _recentSearches = MutableStateFlow(backing.getString("ui_recent_searches", "")?.let { s ->
-        runCatching { JSONArray(s) }.getOrNull()?.let { arr ->
-            (0 until arr.length()).map { arr.getString(it) }
-        } ?: emptyList()
-    } ?: emptyList())
-
-    val sharedSearchQuery: StateFlow<String> = _sharedSearchQuery
-    val sharedSelectedPackages: StateFlow<List<String>?> = _sharedSelectedPackages
-    val sharedSelectedReason: StateFlow<Int?> = _sharedSelectedReason
-    val recentSearches: StateFlow<List<String>> = _recentSearches
 
     private val _autoActOnNotification = MutableStateFlow(
         backing.getBoolean(KEY_AUTO_ACT_ON_NOTIFICATION, false)
@@ -659,36 +637,6 @@ class PreferencesRepository(context: Context) :
     }).toString()
 
 
-    // Shared UI setters
-    fun setSharedSearchQuery(q: String) {
-        backing.edit().putString("ui_shared_search_query", q).apply()
-        _sharedSearchQuery.value = q
-    }
-
-    fun setSharedSelectedPackages(pkgs: List<String>?) {
-        backing.edit().putString("ui_shared_selected_packages", pkgs?.joinToString(",")).apply()
-        _sharedSelectedPackages.value = pkgs
-    }
-
-    fun setSharedSelectedReason(reason: Int?) {
-        backing.edit().putInt("ui_shared_selected_reason", reason ?: -1).apply()
-        _sharedSelectedReason.value = reason
-    }
-    fun addRecentSearch(q: String) {
-        val current = _recentSearches.value.filterNot { it == q }
-        val updated = (listOf(q) + current).take(10)
-        _recentSearches.value = updated
-        backing.edit().putString("ui_recent_searches", JSONArray(updated).toString()).apply()
-    }
-    fun resetRecentSearches() {
-        _recentSearches.value = emptyList()
-        backing.edit().putString("ui_recent_searches", "").apply()
-    }
-    fun removeRecentSearch(q: String) {
-        val updated = _recentSearches.value.filterNot { it == q }
-        _recentSearches.value = updated
-        backing.edit().putString("ui_recent_searches", JSONArray(updated).toString()).apply()
-    }
 
 
     companion object {
