@@ -54,12 +54,28 @@ object DynamicClusterManager {
                 "mint",
                 "quickbooks",
             ),
-            "crypto" to listOf("crypto", "bitcoin", "ethereum", "coinbase", "binance", "ledger", "forex", "web3", "wallet", "token", "nft", "blockchain"),
-            "investing" to listOf("invest", "stock", "dividend", "interest", "capital", "fidelity", "vanguard", "schwab", "robinhood", "wealth", "apr", "bonus", "cashback", "payout", "settlement", "remittance", "tax", "irs", "yield")
+            "crypto" to listOf(
+                "crypto", "bitcoin", "ethereum", "coinbase", "binance", "ledger",
+                "forex", "web3", "wallet", "token", "nft", "blockchain"
+            ),
+            "investing" to listOf(
+                "invest", "stock", "dividend", "interest", "capital", "fidelity",
+                "vanguard", "schwab", "robinhood", "wealth", "apr", "bonus",
+                "cashback", "payout", "settlement", "remittance", "tax", "irs", "yield"
+            )
         ),
         "delivery" to mapOf(
-            "food" to listOf("food", "restaurant", "takeout", "groceries", "meal", "pizza", "burger", "coffee", "starbucks", "seamless", "deliveroo", "caviar", "doordash", "uber eats", "grubhub", "postmates"),
-            "logistics" to listOf("delivery", "package", "track", "courier", "amazon", "fedex", "ups", "dhl", "usps", "shipment", "shipped", "arriving", "driver", "dispatch", "parcel", "carrier", "mailbox", "dropoff", "transit", "out for delivery", "delivered", "logistics", "tracking", "freight", "cargo", "order status", "ontrac", "lasership", "prime", "fresh", "shipt", "gopuff", "cart", "fulfilled", "estimated arrival", "in transit", "locker")
+            "food" to listOf(
+                "food", "restaurant", "takeout", "groceries", "meal", "pizza", "burger", "coffee",
+                "starbucks", "seamless", "deliveroo", "caviar", "doordash", "uber eats", "grubhub", "postmates"
+            ),
+            "logistics" to listOf(
+                "delivery", "package", "track", "courier", "amazon", "fedex", "ups", "dhl", "usps",
+                "shipment", "shipped", "arriving", "driver", "dispatch", "parcel", "carrier", "mailbox",
+                "dropoff", "transit", "out for delivery", "delivered", "logistics", "tracking", "freight",
+                "cargo", "order status", "ontrac", "lasership", "prime", "fresh", "shipt", "gopuff",
+                "cart", "fulfilled", "estimated arrival", "in transit", "locker"
+            )
         ),
         "security" to mapOf(
             "authentication" to listOf("code", "otp", "password", "2fa", "mfa", "verify", "verification", "login", "auth", "authentication", "pin", "token", "passcode", "biometric", "fingerprint", "key", "confirm", "session", "credential", "identity", "reset", "duo", "authenticator", "yubikey", "temporary code", "verification code", "one-time", "passkey", "authenticating"),
