@@ -173,13 +173,35 @@ object DynamicClusterManager {
             )
         ),
         "smarthome" to mapOf(
-            "control" to listOf("home", "smart", "thermostat", "light", "lock", "doorbell", "camera", "motion", "sensor", "nest", "ring", "alexa", "google home", "hue", "alarm", "garage", "temperature", "plug", "device", "security cam", "smart life", "tuya", "matter", "zigbee", "z-wave", "automation", "scene", "bulb", "switch", "vacuum", "roborock", "roomba", "appliance", "ecobee", "simplisafe", "arlo", "nanoleaf", "smartthings", "lutron", "refrigerator")
+            "control" to listOf(
+                "home", "smart", "thermostat", "light", "lock", "doorbell", "camera",
+                "motion", "sensor", "nest", "ring", "alexa", "google home", "hue",
+                "alarm", "garage", "temperature", "plug", "device", "security cam",
+                "smart life", "tuya", "matter", "zigbee", "z-wave", "automation",
+                "scene", "bulb", "switch", "vacuum", "roborock", "roomba", "appliance",
+                "ecobee", "simplisafe", "arlo", "nanoleaf", "smartthings", "lutron",
+                "refrigerator"
+            )
         ),
         "game" to mapOf(
-            "platform" to listOf("game", "gaming", "play", "player", "score", "level", "quest", "steam", "xbox", "playstation", "nintendo", "achievement", "trophy", "multiplayer", "match", "tournament", "guild", "clan", "raid", "respawn", "battle pass", "season", "arcade", "rpg", "fps", "mmo", "gamer", "esports", "epic games", "roblox", "minecraft", "fortnite", "genshin", "valorant", "league of legends", "discord gaming", "controller", "leaderboard", "inventory")
+            "platform" to listOf(
+                "game", "gaming", "play", "player", "score", "level", "quest", "steam",
+                "xbox", "playstation", "nintendo", "achievement", "trophy", "multiplayer",
+                "match", "tournament", "guild", "clan", "raid", "respawn", "battle pass",
+                "season", "arcade", "rpg", "fps", "mmo", "gamer", "esports", "epic games",
+                "roblox", "minecraft", "fortnite", "genshin", "valorant", "league of legends",
+                "discord gaming", "controller", "leaderboard", "inventory"
+            )
         ),
         "system" to mapOf(
-            "os" to listOf("system", "battery", "update", "charging", "charger", "wifi", "bluetooth", "network", "storage", "download", "install", "memory", "cpu", "reboot", "os", "signal", "hotspot", "usb", "connected", "disconnected", "performance", "cleaner", "backup", "restore", "firmware", "patch", "data usage", "airplane mode", "low battery", "fully charged", "android", "hardware", "diagnostic", "permission", "security patch", "developer", "thermal")
+            "os" to listOf(
+                "system", "battery", "update", "charging", "charger", "wifi", "bluetooth", "network",
+                "storage", "download", "install", "memory", "cpu", "reboot", "os", "signal",
+                "hotspot", "usb", "connected", "disconnected", "performance", "cleaner",
+                "backup", "restore", "firmware", "patch", "data usage", "airplane mode",
+                "low battery", "fully charged", "android", "hardware", "diagnostic", "permission",
+                "security patch", "developer", "thermal"
+            )
         ),
         "education" to mapOf(
             "learning" to listOf("education", "learning", "course", "class", "school", "student", "university", "college", "lesson", "study", "homework", "assignment", "exam", "grade", "duolingo", "canvas", "blackboard", "coursera", "udemy", "khan", "quizlet", "tutor", "lecture", "textbook", "academic", "degree", "syllabus", "flashcards", "practice", "vocabulary", "math", "science", "language", "edx", "skillshare", "classroom", "semester", "diploma", "gpa", "quiz")
