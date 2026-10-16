@@ -56,11 +56,30 @@ private fun captureToggleSection(preferencesRepository: PreferencesRepository) {
     val ongoing by preferencesRepository.captureManager.ongoing.collectAsState(initial = true)
     val actionsOnly by preferencesRepository.captureManager.actionsOnly.collectAsState(initial = false)
 
-    captureToggleRow(stringResource(R.string.pref_capture_enabled_title), stringResource(R.string.pref_capture_enabled_summary), captureEnabled, { scope.launch { preferencesRepository.captureManager.setEnabled(it) } }, !BuildConfig.DEBUG)
-    captureToggleRow(stringResource(R.string.pref_capture_foreground_title), stringResource(R.string.pref_capture_foreground_summary), foregroundOnly, { scope.launch { preferencesRepository.captureManager.setForegroundOnly(it) } }, !BuildConfig.DEBUG)
-    captureToggleRow(stringResource(R.string.pref_capture_attachments_title), stringResource(R.string.pref_capture_attachments_summary), attachments, { scope.launch { preferencesRepository.captureManager.setAttachments(it) } }, !BuildConfig.DEBUG)
-    captureToggleRow(stringResource(R.string.pref_capture_ongoing_title), stringResource(R.string.pref_capture_ongoing_summary), ongoing, { scope.launch { preferencesRepository.captureManager.setOngoing(it) } }, !BuildConfig.DEBUG)
-    captureToggleRow(stringResource(R.string.pref_capture_actions_only_title), stringResource(R.string.pref_capture_actions_only_summary), actionsOnly, { scope.launch { preferencesRepository.captureManager.setActionsOnly(it) } }, !BuildConfig.DEBUG)
+    val enabledTitle = stringResource(R.string.pref_capture_enabled_title)
+    val enabledSummary = stringResource(R.string.pref_capture_enabled_summary)
+    val setEnabled: (Boolean) -> Unit = { scope.launch { preferencesRepository.captureManager.setEnabled(it) } }
+    captureToggleRow(enabledTitle, enabledSummary, captureEnabled, setEnabled, !BuildConfig.DEBUG)
+
+    val fgTitle = stringResource(R.string.pref_capture_foreground_title)
+    val fgSummary = stringResource(R.string.pref_capture_foreground_summary)
+    val setFg: (Boolean) -> Unit = { scope.launch { preferencesRepository.captureManager.setForegroundOnly(it) } }
+    captureToggleRow(fgTitle, fgSummary, foregroundOnly, setFg, !BuildConfig.DEBUG)
+
+    val attachTitle = stringResource(R.string.pref_capture_attachments_title)
+    val attachSummary = stringResource(R.string.pref_capture_attachments_summary)
+    val setAttach: (Boolean) -> Unit = { scope.launch { preferencesRepository.captureManager.setAttachments(it) } }
+    captureToggleRow(attachTitle, attachSummary, attachments, setAttach, !BuildConfig.DEBUG)
+
+    val ongoingTitle = stringResource(R.string.pref_capture_ongoing_title)
+    val ongoingSummary = stringResource(R.string.pref_capture_ongoing_summary)
+    val setOngoing: (Boolean) -> Unit = { scope.launch { preferencesRepository.captureManager.setOngoing(it) } }
+    captureToggleRow(ongoingTitle, ongoingSummary, ongoing, setOngoing, !BuildConfig.DEBUG)
+
+    val actionsTitle = stringResource(R.string.pref_capture_actions_only_title)
+    val actionsSummary = stringResource(R.string.pref_capture_actions_only_summary)
+    val setActionsOnly: (Boolean) -> Unit = { scope.launch { preferencesRepository.captureManager.setActionsOnly(it) } }
+    captureToggleRow(actionsTitle, actionsSummary, actionsOnly, setActionsOnly, !BuildConfig.DEBUG)
 }
 
 @Composable
@@ -70,17 +89,57 @@ private fun captureTextFieldSection(preferencesRepository: PreferencesRepository
     val blocklist by preferencesRepository.captureManager.blocklist.collectAsState(initial = "")
     val minImportance by preferencesRepository.captureManager.minImportance.collectAsState(initial = 0)
 
-    captureTextFieldRow(CaptureTextFieldConfig(stringResource(R.string.pref_capture_allowlist_title), stringResource(R.string.pref_capture_allowlist_summary), allowlist, { scope.launch { preferencesRepository.captureManager.setAllowlist(it) } }, 200.dp, !BuildConfig.DEBUG))
-    captureTextFieldRow(CaptureTextFieldConfig(stringResource(R.string.pref_capture_blocklist_title), stringResource(R.string.pref_capture_blocklist_summary), blocklist, { scope.launch { preferencesRepository.captureManager.setBlocklist(it) } }, 200.dp, !BuildConfig.DEBUG))
-    captureTextFieldRow(CaptureTextFieldConfig(stringResource(R.string.pref_capture_min_importance_title), stringResource(R.string.pref_capture_min_importance_summary), minImportance.toString(), { it.toIntOrNull()?.let { v -> scope.launch { preferencesRepository.captureManager.setMinImportance(v) } } }, 120.dp, !BuildConfig.DEBUG))
+    val allowConfig = CaptureTextFieldConfig(
+        title = stringResource(R.string.pref_capture_allowlist_title),
+        summary = stringResource(R.string.pref_capture_allowlist_summary),
+        value = allowlist,
+        onValueChange = { scope.launch { preferencesRepository.captureManager.setAllowlist(it) } },
+        width = 200.dp,
+        enabled = !BuildConfig.DEBUG
+    )
+    captureTextFieldRow(allowConfig)
+
+    val blockConfig = CaptureTextFieldConfig(
+        title = stringResource(R.string.pref_capture_blocklist_title),
+        summary = stringResource(R.string.pref_capture_blocklist_summary),
+        value = blocklist,
+        onValueChange = { scope.launch { preferencesRepository.captureManager.setBlocklist(it) } },
+        width = 200.dp,
+        enabled = !BuildConfig.DEBUG
+    )
+    captureTextFieldRow(blockConfig)
+
+    val minImpConfig = CaptureTextFieldConfig(
+        title = stringResource(R.string.pref_capture_min_importance_title),
+        summary = stringResource(R.string.pref_capture_min_importance_summary),
+        value = minImportance.toString(),
+        onValueChange = {
+            it.toIntOrNull()?.let { value ->
+                scope.launch { preferencesRepository.captureManager.setMinImportance(value) }
+            }
+        },
+        width = 120.dp,
+        enabled = !BuildConfig.DEBUG
+    )
+    captureTextFieldRow(minImpConfig)
 }
 
 @Composable
-private fun captureToggleRow(title: String, summary: String, checked: Boolean, onCheckedChange: (Boolean) -> Unit, enabled: Boolean = true) {
+private fun captureToggleRow(
+    title: String,
+    summary: String,
+    checked: Boolean,
+    onCheckedChange: (Boolean) -> Unit,
+    enabled: Boolean = true
+) {
     Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
         Column(modifier = Modifier.weight(1f)) {
             Text(title, style = MaterialTheme.typography.bodyLarge)
-            Text(summary, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text(
+                summary,
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
         }
         Switch(checked = checked, onCheckedChange = onCheckedChange, enabled = enabled)
     }
@@ -100,7 +159,11 @@ private fun captureTextFieldRow(config: CaptureTextFieldConfig) {
     Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
         Column(modifier = Modifier.weight(1f)) {
             Text(config.title, style = MaterialTheme.typography.bodyLarge)
-            Text(config.summary, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text(
+                config.summary,
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
         }
         OutlinedTextField(
             value = config.value,
