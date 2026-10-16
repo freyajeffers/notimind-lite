@@ -73,7 +73,11 @@ private fun debugRetentionRow(retentionDays: Int) {
     Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
         Column(modifier = Modifier.weight(1f)) {
             Text(stringResource(R.string.pref_retention_days_title), style = MaterialTheme.typography.bodyLarge)
-            Text(stringResource(R.string.pref_retention_days_summary), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text(
+                stringResource(R.string.pref_retention_days_summary),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
         }
         OutlinedTextField(
             value = retentionDays.toString(), onValueChange = {}, modifier = Modifier.width(120.dp),
@@ -87,7 +91,11 @@ private fun debugCaptureRow() {
     Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
         Column(modifier = Modifier.weight(1f)) {
             Text(stringResource(R.string.pref_capture_notifications_title), style = MaterialTheme.typography.bodyLarge)
-            Text(stringResource(R.string.pref_capture_notifications_summary), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text(
+                stringResource(R.string.pref_capture_notifications_summary),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
         }
         Switch(checked = true, onCheckedChange = {}, enabled = false)
     }
@@ -98,7 +106,11 @@ private fun retentionRow(preferencesRepository: PreferencesRepository, retention
     Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
         Column(modifier = Modifier.weight(1f)) {
             Text(stringResource(R.string.pref_retention_days_title), style = MaterialTheme.typography.bodyLarge)
-            Text(stringResource(R.string.pref_retention_days_summary), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text(
+                stringResource(R.string.pref_retention_days_summary),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
         }
         OutlinedTextField(
             value = retentionDays.toString(),
@@ -116,7 +128,11 @@ private fun exportEncryptionRow(preferencesRepository: PreferencesRepository, en
     Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
         Column(modifier = Modifier.weight(1f)) {
             Text(stringResource(R.string.pref_export_encryption_title), style = MaterialTheme.typography.bodyLarge)
-            Text(stringResource(R.string.pref_export_encryption_summary), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text(
+                stringResource(R.string.pref_export_encryption_summary),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
         }
         Switch(checked = enabled, onCheckedChange = preferencesRepository::setExportEncryption)
     }
@@ -127,7 +143,11 @@ private fun captureRow(preferencesRepository: PreferencesRepository, enabled: Bo
     Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
         Column(modifier = Modifier.weight(1f)) {
             Text(stringResource(R.string.pref_capture_notifications_title), style = MaterialTheme.typography.bodyLarge)
-            Text(stringResource(R.string.pref_capture_notifications_summary), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text(
+                stringResource(R.string.pref_capture_notifications_summary),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
         }
         Switch(checked = enabled, onCheckedChange = preferencesRepository::setCaptureNotifications)
     }
