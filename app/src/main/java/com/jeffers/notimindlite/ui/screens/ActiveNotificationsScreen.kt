@@ -488,143 +488,41 @@ fun activeNotificationsScreen(dao: NotificationDao, preferences: PreferencesRepo
                         NotificationSection.PINNED -> pinnedNotifs
                         NotificationSection.ACTIVE -> activeNotifs
                         NotificationSection.FILTERED -> filteredNotifs
-                        NotificationSection.DISMISSED ->
-                            recentlyDismissed.sortedByDescending { it.dismissTime ?: it.postTime }
+                        NotificationSection.DISMISSED -> recentlyDismissed.sortedByDescending { it.dismissTime ?: it.postTime }
                         NotificationSection.LOST -> lostNotifs
                     }.distinctBy { "${it.packageName}_${it.title}_${it.content}" }
-
                     val filteredList = if (!selectedPackages.isNullOrEmpty()) {
                         rawItemsList.filter { selectedPackages!!.contains(it.packageName) }
-                    } else {
-                        rawItemsList
-                    }
-
-                    val itemsList = if (debouncedSearchQuery.isBlank()) filteredList
-                    else {
-                        // F-G read-side [2026-09-02 audit]: HybridSearchEngine
-                        // composes FTS4 keyword scoring with semantic-vector
-                        // cosine scoring via Reciprocal Rank Fusion.
+                    } else rawItemsList
+                    val itemsList = if (debouncedSearchQuery.isBlank()) filteredList else {
                         HybridSearchEngine.searchAndRankBlocking(filteredList, debouncedSearchQuery)
                     }
-
-                    stickyHeader(key = "sticky_header_${section.keyName}") {
-                        Surface(
-                            modifier = Modifier.fillMaxWidth(),
-                            color = MaterialTheme.colorScheme.background,
-                            shadowElevation = if (isExpanded) 2.dp else 0.dp
-                        ) {
-                            Card(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(vertical = 4.dp)
-                                    .clickable { toggleSection(section.keyName) }
-                            ) {
-                                Row(
-                                    modifier = Modifier.padding(14.dp),
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    horizontalArrangement = Arrangement.SpaceBetween
-                                ) {
-                                    Column(modifier = Modifier.weight(1f)) {
-                                        Text(
-                                            text = section.title,
-                                            style = MaterialTheme.typography.titleMedium,
-                                            fontWeight = FontWeight.Bold
-                                        )
-                                        Text(
-                                            text = section.subtitle,
-                                            style = MaterialTheme.typography.bodySmall,
-                                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                                        )
-                                    }
-                                    Spacer(modifier = Modifier.width(8.dp))
-                                    Badge(
-                                        containerColor = MaterialTheme.colorScheme.secondaryContainer,
-                                        contentColor = MaterialTheme.colorScheme.onSecondaryContainer
-                                    ) {
-                                        Text(
-                                            text = "${itemsList.size}",
-                                            style = MaterialTheme.typography.labelMedium,
-                                            modifier = Modifier.padding(horizontal = 4.dp, vertical = 2.dp)
-                                        )
-                                    }
-                                    Spacer(modifier = Modifier.width(8.dp))
-                                    Icon(
-                                        imageVector = if (isExpanded) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
-                                        contentDescription = null
-                                    )
+                    notificationSection(
+                        NotificationSectionRenderConfig(
+                            section = section,
+                            isExpanded = isExpanded,
+                            itemsList = itemsList,
+                            groupByApp = groupByApp,
+                            sortOrder = sortOrder,
+                            collapsedGroups = collapsedGroups,
+                            onToggleSection = ::toggleSection,
+                            onToggleGroupExpand = { groupKey ->
+                                collapsedGroups = if (collapsedGroups.contains(groupKey)) {
+                                    collapsedGroups - groupKey
+                                } else {
+                                    collapsedGroups + groupKey
                                 }
-                            }
-                        }
-                    }
-
-                    if (isExpanded) {
-                        val notificationGroups = groupNotifications(itemsList, groupByApp, sortOrder)
-                        items(
-                            items = notificationGroups,
-                            key = { group -> "group_${section.keyName}_${group.groupKey}" }
-                        ) { group ->
-                            val isGroupExpanded = !collapsedGroups.contains(group.groupKey)
-                            if (group.items.size == 1) {
-                                val item = group.items[0]
-                                val cardExpanded = expandedCards.contains(item.key)
-                                logNotificationCard(
-                                    LogNotificationCardConfig(
-                                        item = item,
-                                        dateTimeFormatter = dateTimeFormatter,
-                                        dao = dao,
-                                        isExpanded = cardExpanded,
-                                        highlightQuery = debouncedSearchQuery,
-                                        onToggleExpand = {
-                                            expandedCards = if (cardExpanded) {
-                                                expandedCards - item.key
-                                            } else {
-                                                expandedCards + item.key
-                                            }
-                                        },
-                                        showAppIcon = showAppIcons,
-                                        compactMode = compactMode,
-                                        previewLength = previewLength
-                                    )
-                                )
-                            } else {
-                                NotificationGroupCard(
-                                    group = group,
-                                    dateTimeFormatter = dateTimeFormatter,
-                                    dao = dao,
-                                    isGroupExpanded = isGroupExpanded,
-                                    onToggleGroupExpand = {
-                                        collapsedGroups = if (collapsedGroups.contains(group.groupKey)) {
-                                            collapsedGroups - group.groupKey
-                                        } else {
-                                            collapsedGroups + group.groupKey
-                                        }
-                                    },
-                                    renderChildCard = { childItem ->
-                                        val cardExpanded = expandedCards.contains(childItem.key)
-                                                logNotificationCard(
-                                            LogNotificationCardConfig(
-                                                item = childItem,
-                                                dateTimeFormatter = dateTimeFormatter,
-                                                dao = dao,
-                                                isExpanded = cardExpanded,
-                                                highlightQuery = debouncedSearchQuery,
-                                                onToggleExpand = {
-                                                    expandedCards = if (cardExpanded) {
-                                                        expandedCards - childItem.key
-                                                    } else {
-                                                        expandedCards + childItem.key
-                                                    }
-                                                },
-                                                showAppIcon = showAppIcons,
-                                                compactMode = compactMode,
-                                                previewLength = previewLength
-                                            )
-                                        )
-                                    }
-                                )
-                            }
-                        }
-                    }
+                            },
+                            expandedCards = expandedCards,
+                            expandedCardsUpdater = { expandedCards = it },
+                            dateTimeFormatter = dateTimeFormatter,
+                            dao = dao,
+                            highlightQuery = debouncedSearchQuery,
+                            showAppIcon = showAppIcons,
+                            compactMode = compactMode,
+                            previewLength = previewLength
+                        )
+                    )
                 }
             }
         }
