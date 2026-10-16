@@ -59,8 +59,14 @@ class ArchitectureSetupTest : BaseRobolectricTest() {
         )
 
         val requestedPermissions = packageInfo.requestedPermissions?.toList() ?: emptyList()
-        assertTrue("POST_NOTIFICATIONS permission must be declared", requestedPermissions.contains("android.permission.POST_NOTIFICATIONS"))
-        assertTrue("RECEIVE_BOOT_COMPLETED permission must be declared", requestedPermissions.contains("android.permission.RECEIVE_BOOT_COMPLETED"))
+        val postNotificationsMsg = "POST_NOTIFICATIONS permission must be declared"
+        assertTrue(postNotificationsMsg,
+            requestedPermissions.contains("android.permission.POST_NOTIFICATIONS")
+        )
+        val bootCompletedMsg = "RECEIVE_BOOT_COMPLETED permission must be declared"
+        assertTrue(bootCompletedMsg,
+            requestedPermissions.contains("android.permission.RECEIVE_BOOT_COMPLETED")
+        )
 
         val serviceIntent = Intent("android.service.notification.NotificationListenerService").setPackage(packageName)
         val services = packageManager.queryIntentServices(serviceIntent, 0)
