@@ -361,30 +361,7 @@ fun activeNotificationsScreen(dao: NotificationDao, preferences: PreferencesRepo
                 }
             )
         },
-        floatingActionButton = {
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                SmallFloatingActionButton(
-                    modifier = Modifier.semantics { contentDescription = "PageUpButton" },
-                    onClick = {
-                        val first = listState.layoutInfo.visibleItemsInfo.firstOrNull()?.index ?: 0
-                        val page = listState.layoutInfo.visibleItemsInfo.size.coerceAtLeast(1)
-                        scope.launch { listState.animateScrollToItem((first - page).coerceAtLeast(0)) }
-                    },
-                ) {
-                    Icon(Icons.Default.KeyboardArrowUp, contentDescription = "Page up")
-                }
-                SmallFloatingActionButton(
-                    modifier = Modifier.semantics { contentDescription = "PageDownButton" },
-                    onClick = {
-                        val first = listState.layoutInfo.visibleItemsInfo.firstOrNull()?.index ?: 0
-                        val page = listState.layoutInfo.visibleItemsInfo.size.coerceAtLeast(1)
-                        scope.launch { listState.animateScrollToItem(first + page) }
-                    },
-                ) {
-                    Icon(Icons.Default.KeyboardArrowDown, contentDescription = "Page down")
-                }
-            }
-        }
+        floatingActionButton = { activeNotificationsFab(listState) }
     ) { innerPadding ->
         Box(modifier = Modifier.fillMaxSize()) {
             LazyColumn(
