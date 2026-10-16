@@ -339,7 +339,9 @@ fun logHistoryScreen(dao: NotificationDao, preferences: com.jeffers.notimindlite
                     Box {
                         val hasActiveFilters = !selectedPackages.isNullOrEmpty() || selectedReasonFilter != null
                         TooltipBox(
-                            positionProvider = TooltipDefaults.rememberTooltipPositionProvider(TooltipAnchorPosition.Above),
+                            positionProvider = TooltipDefaults.rememberTooltipPositionProvider(
+                                TooltipAnchorPosition.Above
+                            ),
                             tooltip = { PlainTooltip { Text(stringResource(id = R.string.log_history_filter_title)) } },
                             state = rememberTooltipState()
                         ) {
@@ -347,7 +349,11 @@ fun logHistoryScreen(dao: NotificationDao, preferences: com.jeffers.notimindlite
                                 Icon(
                                     imageVector = Icons.Default.FilterList,
                                     contentDescription = stringResource(id = R.string.log_history_filter_title),
-                                    tint = if (hasActiveFilters) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
+                                    tint = if (hasActiveFilters) {
+                                        MaterialTheme.colorScheme.primary
+                                    } else {
+                                        MaterialTheme.colorScheme.onSurface
+                                    }
                                 )
                             }
                         }
@@ -372,7 +378,14 @@ fun logHistoryScreen(dao: NotificationDao, preferences: com.jeffers.notimindlite
                             )
                             HorizontalDivider()
                             DropdownMenuItem(
-                                text = { Text(stringResource(id = R.string.log_history_filter_all_reasons, if (selectedReasonFilter == null) "✓" else "")) },
+                                text = {
+                                    Text(
+                                        stringResource(
+                                            id = R.string.log_history_filter_all_reasons,
+                                            if (selectedReasonFilter == null) "✓" else ""
+                                        )
+                                    )
+                                },
                                 onClick = {
                                     selectedReasonFilter = null
                                     showFilterMenu = false
@@ -380,7 +393,16 @@ fun logHistoryScreen(dao: NotificationDao, preferences: com.jeffers.notimindlite
                             )
                             availableReasons.forEach { reasonCode ->
                                 DropdownMenuItem(
-                                    text = { Text(stringResource(id = R.string.log_history_filter_reason_item, getReasonLabel(reasonCode), reasonCode, if (selectedReasonFilter == reasonCode) "✓" else "")) },
+                                    text = {
+                                        Text(
+                                            stringResource(
+                                                id = R.string.log_history_filter_reason_item,
+                                                getReasonLabel(reasonCode),
+                                                reasonCode,
+                                                if (selectedReasonFilter == reasonCode) "✓" else ""
+                                            )
+                                        )
+                                    },
                                     onClick = {
                                         selectedReasonFilter = reasonCode
                                         showFilterMenu = false
@@ -392,7 +414,9 @@ fun logHistoryScreen(dao: NotificationDao, preferences: com.jeffers.notimindlite
 
                     Box {
                         TooltipBox(
-                            positionProvider = TooltipDefaults.rememberTooltipPositionProvider(TooltipAnchorPosition.Above),
+                            positionProvider = TooltipDefaults.rememberTooltipPositionProvider(
+                                TooltipAnchorPosition.Above
+                            ),
                             tooltip = { PlainTooltip { Text("Sort Logs") } },
                             state = rememberTooltipState()
                         ) {
@@ -474,7 +498,9 @@ fun logHistoryScreen(dao: NotificationDao, preferences: com.jeffers.notimindlite
                     horizontalAlignment = Alignment.End
                 ) {
                     TooltipBox(
-                        positionProvider = TooltipDefaults.rememberTooltipPositionProvider(TooltipAnchorPosition.Above),
+                        positionProvider = TooltipDefaults.rememberTooltipPositionProvider(
+                                TooltipAnchorPosition.Above
+                            ),
                         tooltip = { PlainTooltip { Text("Scroll to Top") } },
                         state = rememberTooltipState()
                     ) {
@@ -492,7 +518,9 @@ fun logHistoryScreen(dao: NotificationDao, preferences: com.jeffers.notimindlite
                     }
 
                     TooltipBox(
-                        positionProvider = TooltipDefaults.rememberTooltipPositionProvider(TooltipAnchorPosition.Above),
+                        positionProvider = TooltipDefaults.rememberTooltipPositionProvider(
+                                TooltipAnchorPosition.Above
+                            ),
                         tooltip = { PlainTooltip { Text("Scroll to Bottom") } },
                         state = rememberTooltipState()
                     ) {
