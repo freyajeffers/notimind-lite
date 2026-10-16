@@ -645,14 +645,50 @@ class PreferencesRepository(context: Context) :
         backing.edit().putBoolean(KEY_ANONYMIZE_TITLES, value).apply()
         _anonymizeTitles.value = value
     }
-    fun setMaxCacheSizeMb(value: Int) { val safe = value.coerceIn(1, 1024); backing.edit().putInt(KEY_MAX_CACHE_MB, safe).apply(); _maxCacheSizeMb.value = safe }
-    fun setSemanticWeight(value: Int) { val safe = value.coerceIn(0, 100); backing.edit().putInt(KEY_SEMANTIC_WEIGHT, safe).apply(); _semanticWeight.value = safe }
-    fun setCompactMode(value: Boolean) { backing.edit().putBoolean(KEY_COMPACT_MODE, value).apply(); _compactMode.value = value }
-    fun setShowAppIcons(value: Boolean) { backing.edit().putBoolean(KEY_SHOW_APP_ICONS, value).apply(); _showAppIcons.value = value }
-    fun setSortOrder(value: String) { val safe = if (value in SORT_ORDERS) value else "newest"; backing.edit().putString(KEY_SORT_ORDER, safe).apply(); _sortOrder.value = safe }
-    fun setGroupByApp(value: Boolean) { backing.edit().putBoolean(KEY_GROUP_BY_APP, value).apply(); _groupByApp.value = value }
-    fun setPreviewLength(value: Int) { val safe = value.coerceIn(40, 500); backing.edit().putInt(KEY_PREVIEW_LENGTH, safe).apply(); _previewLength.value = safe }
-    fun setThemeAccent(value: String) { val safe = if (value in THEME_ACCENTS) value else "system"; backing.edit().putString(KEY_THEME_ACCENT, safe).apply(); _themeAccent.value = safe }
+    fun setMaxCacheSizeMb(value: Int) {
+        val safe = value.coerceIn(1, 1024)
+        backing.edit().putInt(KEY_MAX_CACHE_MB, safe).apply()
+        _maxCacheSizeMb.value = safe
+    }
+
+    fun setSemanticWeight(value: Int) {
+        val safe = value.coerceIn(0, 100)
+        backing.edit().putInt(KEY_SEMANTIC_WEIGHT, safe).apply()
+        _semanticWeight.value = safe
+    }
+
+    fun setCompactMode(value: Boolean) {
+        backing.edit().putBoolean(KEY_COMPACT_MODE, value).apply()
+        _compactMode.value = value
+    }
+
+    fun setShowAppIcons(value: Boolean) {
+        backing.edit().putBoolean(KEY_SHOW_APP_ICONS, value).apply()
+        _showAppIcons.value = value
+    }
+
+    fun setSortOrder(value: String) {
+        val safe = if (value in SORT_ORDERS) value else "newest"
+        backing.edit().putString(KEY_SORT_ORDER, safe).apply()
+        _sortOrder.value = safe
+    }
+
+    fun setGroupByApp(value: Boolean) {
+        backing.edit().putBoolean(KEY_GROUP_BY_APP, value).apply()
+        _groupByApp.value = value
+    }
+
+    fun setPreviewLength(value: Int) {
+        val safe = value.coerceIn(40, 500)
+        backing.edit().putInt(KEY_PREVIEW_LENGTH, safe).apply()
+        _previewLength.value = safe
+    }
+
+    fun setThemeAccent(value: String) {
+        val safe = if (value in THEME_ACCENTS) value else "system"
+        backing.edit().putString(KEY_THEME_ACCENT, safe).apply()
+        _themeAccent.value = safe
+    }
     fun setEnableTelemetry(value: Boolean) { backing.edit().putBoolean(KEY_ENABLE_TELEMETRY, value).apply(); _enableTelemetry.value = value }
     fun setTelemetryLevel(value: String) { backing.edit().putString(KEY_TELEMETRY_LEVEL, value).apply(); _telemetryLevel.value = value }
     fun setMaxDbMb(value: Int) { val safe = value.coerceIn(1, 4096); backing.edit().putInt(KEY_MAX_DB_MB, safe).apply(); _maxDbMb.value = safe }
