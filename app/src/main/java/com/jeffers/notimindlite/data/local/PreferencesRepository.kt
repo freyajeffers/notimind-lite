@@ -504,17 +504,44 @@ class PreferencesRepository(context: Context) :
         backing.edit().putBoolean(KEY_EXPORT_REQUIRES_BIOMETRIC, value).apply()
         _exportRequiresBiometric.value = value
     }
-    fun setAppLockEnabled(value: Boolean) { backing.edit().putBoolean(KEY_APP_LOCK_ENABLED, value).apply(); _appLockEnabled.value = value }
-    fun setUseKeystore(value: Boolean) { backing.edit().putBoolean(KEY_USE_KEYSTORE, value).apply(); _useKeystore.value = value }
-    fun setDbEncrypted(value: Boolean) { backing.edit().putBoolean(KEY_DB_ENCRYPTED, value).apply(); _dbEncrypted.value = value }
+    fun setAppLockEnabled(value: Boolean) {
+        backing.edit().putBoolean(KEY_APP_LOCK_ENABLED, value).apply()
+        _appLockEnabled.value = value
+    }
+
+    fun setUseKeystore(value: Boolean) {
+        backing.edit().putBoolean(KEY_USE_KEYSTORE, value).apply()
+        _useKeystore.value = value
+    }
+
+    fun setDbEncrypted(value: Boolean) {
+        backing.edit().putBoolean(KEY_DB_ENCRYPTED, value).apply()
+        _dbEncrypted.value = value
+    }
     fun setDbEncryptionMode(value: DbEncryptionMode) {
         backing.edit().putString(KEY_DB_ENCRYPTION_MODE, value.persisted).apply()
         _dbEncryptionMode.value = value
     }
-    fun setSyncInterval(v: Int) { val n = v.coerceIn(15, 1440); backing.edit().putInt("config_sync_interval_min", n).apply(); _syncInterval.value = n }
-    fun setSyncWifiOnly(v: Boolean) { backing.edit().putBoolean("config_sync_wifi_only", v).apply(); _syncWifiOnly.value = v }
-    fun setSyncChargingOnly(v: Boolean) { backing.edit().putBoolean("config_sync_charging_only", v).apply(); _syncChargingOnly.value = v }
-    fun setLastSyncTs(v: Long) { backing.edit().putLong("config_last_sync_ts", v).apply(); _lastSyncTs.value = v }
+    fun setSyncInterval(v: Int) {
+        val n = v.coerceIn(15, 1440)
+        backing.edit().putInt("config_sync_interval_min", n).apply()
+        _syncInterval.value = n
+    }
+
+    fun setSyncWifiOnly(v: Boolean) {
+        backing.edit().putBoolean("config_sync_wifi_only", v).apply()
+        _syncWifiOnly.value = v
+    }
+
+    fun setSyncChargingOnly(v: Boolean) {
+        backing.edit().putBoolean("config_sync_charging_only", v).apply()
+        _syncChargingOnly.value = v
+    }
+
+    fun setLastSyncTs(v: Long) {
+        backing.edit().putLong("config_last_sync_ts", v).apply()
+        _lastSyncTs.value = v
+    }
     fun refreshLastSyncTs() {
         _lastSyncTs.value = backing.getLong("config_last_sync_ts", 0L)
     }
@@ -592,10 +619,32 @@ class PreferencesRepository(context: Context) :
         backing.edit().putBoolean(KEY_AUTO_DELETE_ON_READ, safe).apply()
         _autoDeleteOnRead.value = safe
     }
-    fun setBackupIntervalDays(value: Int) { val safe = value.coerceAtLeast(0); backing.edit().putInt(KEY_BACKUP_INTERVAL_DAYS, safe).apply(); _backupIntervalDays.value = safe }
-    fun setExportFormats(value: String) { val safe = value.split(',', ' ', '\n').map(String::trim).filter { it == "json" || it == "csv" || it == "ndjson" }.distinct().joinToString(",").ifBlank { "json" }; backing.edit().putString("config_export_formats", safe).apply(); _exportFormats.value = safe }
-    fun setExportAnonymize(value: Boolean) { backing.edit().putBoolean("config_export_anonymize", value).apply(); _exportAnonymize.value = value }
-    fun setAnonymizeTitles(value: Boolean) { backing.edit().putBoolean(KEY_ANONYMIZE_TITLES, value).apply(); _anonymizeTitles.value = value }
+    fun setBackupIntervalDays(value: Int) {
+        val safe = value.coerceAtLeast(0)
+        backing.edit().putInt(KEY_BACKUP_INTERVAL_DAYS, safe).apply()
+        _backupIntervalDays.value = safe
+    }
+
+    fun setExportFormats(value: String) {
+        val safe = value.split(',', ' ', '\n')
+            .map(String::trim)
+            .filter { it == "json" || it == "csv" || it == "ndjson" }
+            .distinct()
+            .joinToString(",")
+            .ifBlank { "json" }
+        backing.edit().putString("config_export_formats", safe).apply()
+        _exportFormats.value = safe
+    }
+
+    fun setExportAnonymize(value: Boolean) {
+        backing.edit().putBoolean("config_export_anonymize", value).apply()
+        _exportAnonymize.value = value
+    }
+
+    fun setAnonymizeTitles(value: Boolean) {
+        backing.edit().putBoolean(KEY_ANONYMIZE_TITLES, value).apply()
+        _anonymizeTitles.value = value
+    }
     fun setMaxCacheSizeMb(value: Int) { val safe = value.coerceIn(1, 1024); backing.edit().putInt(KEY_MAX_CACHE_MB, safe).apply(); _maxCacheSizeMb.value = safe }
     fun setSemanticWeight(value: Int) { val safe = value.coerceIn(0, 100); backing.edit().putInt(KEY_SEMANTIC_WEIGHT, safe).apply(); _semanticWeight.value = safe }
     fun setCompactMode(value: Boolean) { backing.edit().putBoolean(KEY_COMPACT_MODE, value).apply(); _compactMode.value = value }
