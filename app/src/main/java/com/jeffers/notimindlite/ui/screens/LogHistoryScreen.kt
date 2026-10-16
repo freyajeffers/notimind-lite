@@ -587,7 +587,9 @@ fun logHistoryScreen(dao: NotificationDao, preferences: com.jeffers.notimindlite
                 )
 
                 DropdownMenu(
-                    expanded = expandedDropdown && (searchSuggestions.isNotEmpty() || (searchQuery.isBlank() && recentSearches.isNotEmpty())),
+                    expanded = expandedDropdown &&
+                        (searchSuggestions.isNotEmpty() ||
+                            (searchQuery.isBlank() && recentSearches.isNotEmpty())),
                     onDismissRequest = { expandedDropdown = false },
                     properties = androidx.compose.ui.window.PopupProperties(focusable = false),
                     modifier = Modifier.fillMaxWidth(SEARCH_MENU_WIDTH_FRACTION)
@@ -600,14 +602,25 @@ fun logHistoryScreen(dao: NotificationDao, preferences: com.jeffers.notimindlite
                     matchingRecent.forEach { recent ->
                         DropdownMenuItem(
                             text = { Text(recent) },
-                            trailingIcon = { IconButton(onClick = { preferences.sharedSearchManager.removeRecentSearch(recent) }) { Icon(Icons.Default.Close, contentDescription = "Remove recent search") } },
+                            trailingIcon = {
+                                IconButton(
+                                    onClick = {
+                                        preferences.sharedSearchManager.removeRecentSearch(recent)
+                                    }
+                                ) {
+                                    Icon(Icons.Default.Close, contentDescription = "Remove recent search")
+                                }
+                            },
                             onClick = { searchQuery = recent; expandedDropdown = false }
                         )
                     }
                     if (matchingRecent.isNotEmpty()) {
                         DropdownMenuItem(
                             text = { Text("Clear recent searches") },
-                            onClick = { preferences.sharedSearchManager.resetRecentSearches(); expandedDropdown = false }
+                            onClick = {
+                                preferences.sharedSearchManager.resetRecentSearches()
+                                expandedDropdown = false
+                            }
                         )
                     }
                     searchSuggestions.forEach { suggestion ->
