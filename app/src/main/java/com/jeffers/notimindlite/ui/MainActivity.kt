@@ -112,7 +112,7 @@ class MainActivity : ComponentActivity() {
             // path only invokes it post-export; users who skip export entirely
             // would otherwise accumulate files forever.
             try {
-                com.jeffers.notimindlite.util.DatabaseExporter.cleanupExportFiles(applicationContext)
+                com.jeffers.notimindlite.util.DatabaseExporter.cleanupExportFiles(applicationContext, 3600_000L)
             } catch (e: Exception) {
                 android.util.Log.e("MainActivity", "Failed cleaning export cache", e)
             }

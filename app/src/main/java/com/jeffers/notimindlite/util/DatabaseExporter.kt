@@ -25,6 +25,7 @@ import javax.crypto.spec.SecretKeySpec
 object DatabaseExporter {
 
     private const val TAG = "DatabaseExporter"
+    val cleanupExportFiles = DatabaseExportHelper::cleanupExportFiles
 
     /**
      * Orchestrates a full encrypted backup of the local database.
@@ -34,48 +35,9 @@ object DatabaseExporter {
     suspend fun performEncryptedBackup(
         context: Context,
         secretKey: SecretKey,
-        passphrase: CharArray? = null,
+        passphrase: CharArray? = null
     ): Result<File> {
-        return try {
-            val preferences = PreferencesRepository(context.applicationContext)
-            require(!preferences.requirePassphrase.value || passphrase != null && passphrase.isNotEmpty()) {
-                "A passphrase is required for encrypted exports"
-            }
-            check(NetworkUtils.isInternetAvailable(context)) {
-                "Active internet connection is required to create a backup"
-            }
-
-            val dbFile = context.getDatabasePath("notifications.db")
-            check(dbFile.exists()) { "Database file not found" }
-
-            val backupFile = File(context.cacheDir, "notimind_backup_${System.currentTimeMillis()}.enc")
-
-            val success = EncryptedBackupManager.createAuthorizedBackup(
-                context = context,
-                sourceDbFile = dbFile,
-                destinationFile = backupFile,
-                secretKey = secretKey,
-                passphrase = passphrase,
-            )
-
-            check(success) { "Backup encryption or notary authorization failed" }
-            Result.success(backupFile)
-        } catch (e: java.io.IOException) {
-            Log.e(TAG, "Backup process failed: IO error", e)
-            Result.failure(e)
-        } catch (e: java.security.GeneralSecurityException) {
-            Log.e(TAG, "Backup process failed: crypto error", e)
-            Result.failure(e)
-        } catch (e: SecurityException) {
-            Log.e(TAG, "Backup process failed: security exception", e)
-            Result.failure(e)
-        } catch (e: IllegalArgumentException) {
-            Log.e(TAG, "Backup process failed: invalid argument", e)
-            Result.failure(e)
-        } catch (e: IllegalStateException) {
-            Log.e(TAG, "Backup process failed: invalid state", e)
-            Result.failure(e)
-        }
+        return ExportFlow.performEncryptedBackup(context, secretKey, passphrase)
     }
 
     /**
@@ -131,7 +93,7 @@ object DatabaseExporter {
 
     fun exportToJsonString(notifications: List<NotificationEntity>, context: Context? = null): String {
         val jsonArray = JSONArray()
-        for (notif in notifications.map { applyPrivacy(it, context) }) {
+        for (notif in notifications.map { DatabaseExportHelper.applyPrivacy(it, context) }) {
             val jsonObject = JSONObject().apply {
                 put("id", notif.id)
                 put("key", notif.key)
@@ -164,7 +126,7 @@ object DatabaseExporter {
 
     fun exportToNdjsonString(notifications: List<NotificationEntity>, context: Context? = null): String {
         val sb = StringBuilder()
-        for (notif in notifications.map { applyPrivacy(it, context) }) {
+        for (notif in notifications.map { DatabaseExportHelper.applyPrivacy(it, context) }) {
             val jsonObject = JSONObject().apply {
                 put("id", notif.id)
                 put("key", notif.key)
@@ -202,7 +164,7 @@ object DatabaseExporter {
                 writer.setIndent("  ")
                 writer.beginArray()
                 val dateFormat = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault())
-                for (notif in notifications.map { applyPrivacy(it, context) }) {
+                for (notif in notifications.map { DatabaseExportHelper.applyPrivacy(it, context) }) {
                     writer.beginObject()
                     writer.name("id").value(notif.id)
                     writer.name("key").value(notif.key)
@@ -235,10 +197,10 @@ object DatabaseExporter {
         val sb = StringBuilder()
         sb.append("ID,Package,AppName,Title,Content,PostTime,IsDismissed,DismissReason,IsPinned\n")
         val dateFormat = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault())
-        for (n in notifications.map { applyPrivacy(it, context) }) {
-            val escapedAppName = sanitizeCsvField(n.appName)
-            val escapedTitle = sanitizeCsvField(n.title)
-            val escapedContent = sanitizeCsvField(n.content)
+        for (n in notifications.map { DatabaseExportHelper.applyPrivacy(it, context) }) {
+            val escapedAppName = DatabaseExportHelper.sanitizeCsvField(n.appName)
+            val escapedTitle = DatabaseExportHelper.sanitizeCsvField(n.title)
+            val escapedContent = DatabaseExportHelper.sanitizeCsvField(n.content)
             val postTimeStr = dateFormat.format(Date(n.postTime))
             sb.append(
                 "${n.id},${n.packageName},$escapedAppName,$escapedTitle,$escapedContent," +
@@ -248,58 +210,9 @@ object DatabaseExporter {
         return sb.toString()
     }
 
-    fun sanitizeCsvField(value: String?): String {
-        if (value == null) return "\"\""
-        var sanitized = value.replace("\"", "\"\"")
-        val trimmedSpace = sanitized.trimStart(' ')
-        if (isSpreadsheetFormula(trimmedSpace)) {
-            sanitized = "'$sanitized"
-        }
-        return "\"$sanitized\""
-    }
 
-    private fun isSpreadsheetFormula(value: String): Boolean =
-        value.startsWith("=") || value.startsWith("+") || value.startsWith("-") ||
-            value.startsWith("@") || value.startsWith("\t") || value.startsWith("\r")
 
-    private fun applyPrivacy(notification: NotificationEntity, context: Context?): NotificationEntity {
-        val preferences = context?.let { PreferencesRepository(it.applicationContext) } ?: return notification
-        fun redact(value: String): String = PiiRedactionEngine.redact(value) ?: "[REDACTED]"
-        val title = if (preferences.exportAnonymize.value || preferences.anonymizeTitles.value) {
-            "[REDACTED-TITLE]"
-        } else {
-            notification.title
-        }
-        return notification.copy(
-            title = if (preferences.redactPii.value) redact(title) else title,
-            content = if (preferences.redactPii.value) redact(notification.content) else notification.content,
-            subText = notification.subText?.let { if (preferences.redactPii.value) redact(it) else it },
-            bigText = notification.bigText?.let { if (preferences.redactPii.value) redact(it) else it }
-        )
-    }
 
-    fun getExportFileUri(context: Context, file: File): Uri {
-        return FileProvider.getUriForFile(
-            context,
-            "${context.packageName}.fileprovider",
-            file
-        )
-    }
-
-    fun cleanupExportFiles(context: Context, maxAgeMillis: Long = 3600_000L) {
-        try {
-            val cacheDir = File(context.cacheDir, "exports")
-            if (!cacheDir.exists()) return
-            val now = System.currentTimeMillis()
-            cacheDir.listFiles()
-                ?.filter { now - it.lastModified() > maxAgeMillis }
-                ?.forEach(File::delete)
-        } catch (e: SecurityException) {
-            Log.e(TAG, "Failed to clean up temporary export files: permission denied", e)
-        } catch (e: java.io.IOException) {
-            Log.e(TAG, "Failed to clean up temporary export files: IO error", e)
-        }
-    }
 
     fun shareExportFile(
         context: Context,
@@ -311,7 +224,7 @@ object DatabaseExporter {
         try {
             val preferences = PreferencesRepository(context.applicationContext)
             validateExportRequest(preferences, isJson, passphrase, biometricAuthenticated)
-            cleanupExportFiles(context)
+            DatabaseExportHelper.cleanupExportFiles(context)
             val file = createExportFile(context, notifications, isJson, passphrase, preferences)
             context.startActivity(buildShareIntent(context, file, isJson, preferences.encryptedExports.value))
         } catch (e: IllegalArgumentException) {
@@ -362,7 +275,7 @@ object DatabaseExporter {
                 } else {
                     exportToCsvString(notifications, context)
                 }
-                file.writeBytes(encryptExport(plain.toByteArray(Charsets.UTF_8), context, passphrase))
+                file.writeBytes(ExportFlow.encryptExport(plain.toByteArray(Charsets.UTF_8), context, passphrase))
             }
             isJson -> exportToJsonFile(file, notifications, context)
             else -> FileWriter(file).use { it.write(exportToCsvString(notifications, context)) }
@@ -376,7 +289,7 @@ object DatabaseExporter {
         isJson: Boolean,
         encrypted: Boolean,
     ): Intent {
-        val uri = getExportFileUri(context, file)
+        val uri = DatabaseExportHelper.getExportFileUri(context, file)
         val mimeType = if (encrypted) "application/octet-stream" else if (isJson) "application/json" else "text/csv"
         val shareIntent = Intent(Intent.ACTION_SEND).apply {
             type = mimeType
@@ -390,20 +303,4 @@ object DatabaseExporter {
         ).apply { addFlags(Intent.FLAG_ACTIVITY_NEW_TASK) }
     }
 
-    /** AES-GCM envelope; without a passphrase the AES key is backed by Android Keystore. */
-    internal fun encryptExport(payload: ByteArray, context: Context, passphrase: CharArray?): ByteArray {
-        val salt = if (passphrase != null) BackupKeyWrap.generateSalt() else ByteArray(0)
-        val key = if (passphrase != null) {
-            BackupKeyWrap.deriveKek(passphrase, salt)
-        } else {
-            SecretKeySpec(SqlCipherKeyManager.getOrCreatePassphrase(context, "exports"), "AES")
-        }
-        val cipher = javax.crypto.Cipher.getInstance("AES/GCM/NoPadding")
-        cipher.init(javax.crypto.Cipher.ENCRYPT_MODE, key)
-        val header = byteArrayOf(
-            'N'.code.toByte(), 'M'.code.toByte(), 'E'.code.toByte(), '1'.code.toByte(), salt.size.toByte()
-        )
-        return header +
-            salt + cipher.iv + cipher.doFinal(payload)
-    }
 }
