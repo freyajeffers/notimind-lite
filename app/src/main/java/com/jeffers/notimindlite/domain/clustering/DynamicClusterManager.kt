@@ -183,7 +183,9 @@ object DynamicClusterManager {
         "delivery" to listOf("food", "eat", "delivery", "order", "courier", "transit"),
         "security" to listOf("auth", "otp", "pass", "secure", "vpn"),
         "travel" to listOf("flight", "hotel", "ride", "airline", "trip", "travel"),
-        "shopping" to listOf("shop", "store", "deal", "cart", "mall"),
+        "shopping" to listOf(
+            "shopping", "deal", "discount", "sale", "coupon"
+        ),
         "health" to listOf("fit", "health", "gym", "run", "doctor", "med"),
         "smarthome" to listOf("home", "smart", "camera", "iot", "nest", "ring"),
         "game" to listOf("game", "play", "arcade", "rpg"),
