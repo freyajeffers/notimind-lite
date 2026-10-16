@@ -107,6 +107,7 @@ fun checkNotificationPermission(context: Context): Boolean {
 }
 
 private const val REASON_CODE_OFFSET = 1
+private const val HEX_RADIX = 16
 
 private val REASON_LABELS = listOf(
     R.string.reason_1,
@@ -1049,7 +1050,10 @@ fun notificationExpandedAttributes(
                 attributeRow(label = "Intent URI", value = item.intentUri)
             }
             if (item.smallIconRes != 0) {
-                attributeRow(label = "Small Icon Res", value = "0x${item.smallIconRes.toString(16).uppercase()}")
+                attributeRow(
+                    label = "Small Icon Res",
+                    value = "0x${item.smallIconRes.toString(HEX_RADIX).uppercase()}"
+                )
             }
             if (!item.appIconUri.isNullOrEmpty()) {
                 attributeRow(label = "App Icon URI", value = item.appIconUri)
