@@ -204,31 +204,88 @@ object DynamicClusterManager {
             )
         ),
         "education" to mapOf(
-            "learning" to listOf("education", "learning", "course", "class", "school", "student", "university", "college", "lesson", "study", "homework", "assignment", "exam", "grade", "duolingo", "canvas", "blackboard", "coursera", "udemy", "khan", "quizlet", "tutor", "lecture", "textbook", "academic", "degree", "syllabus", "flashcards", "practice", "vocabulary", "math", "science", "language", "edx", "skillshare", "classroom", "semester", "diploma", "gpa", "quiz")
+            "learning" to listOf(
+                "education", "learning", "course", "class", "school", "student", "university",
+                "college", "lesson", "study", "homework", "assignment", "exam", "grade",
+                "duolingo", "canvas", "blackboard", "coursera", "udemy", "khan", "quizlet",
+                "tutor", "lecture", "textbook", "academic", "degree", "syllabus", "flashcards",
+                "practice", "vocabulary", "math", "science", "language", "edx", "skillshare",
+                "classroom", "semester", "diploma", "gpa", "quiz"
+            )
         ),
         "news" to mapOf(
-            "press" to listOf("news", "article", "headline", "breaking", "journal", "magazine", "newspaper", "press", "editor", "broadcast", "report", "edition", "nytimes", "wsj", "bbc", "cnn", "reuters", "bloomberg", "apnews", "feed", "newsletter", "politics", "world", "local", "weather", "forecast", "radar", "temperature", "storm", "rain", "snow", "climate", "huffpost", "washington post", "economist", "guardian", "daily", "breaking news", "front page")
+            "press" to listOf(
+                "news", "article", "headline", "breaking", "journal", "magazine", "newspaper",
+                "press", "editor", "broadcast", "report", "edition", "nytimes", "wsj", "bbc",
+                "cnn", "reuters", "bloomberg", "apnews", "feed", "newsletter", "politics",
+                "world", "local", "weather", "forecast", "radar", "temperature", "storm",
+                "rain", "snow", "climate", "huffpost", "washington post", "economist",
+                "guardian", "daily", "breaking news", "front page"
+            )
         ),
         "food" to mapOf(
-            "culinary" to listOf("recipe", "cooking", "kitchen", "chef", "baking", "ingredients", "dinner", "lunch", "breakfast", "snack", "restaurant", "reservation", "opentable", "yelp", "menu", "dining", "coffee", "barista", "cocktail", "wine", "beer", "brewery", "tasting", "dish", "grocery", "supermarket", "produce", "bakery", "deli", "culinary", "flavor", "cookbook", "tasty", "allrecipes", "nytcars", "bon appetit", "roast", "grill", "dessert", "appetizer")
+            "culinary" to listOf(
+                "recipe", "cooking", "kitchen", "baking", "ingredients", "dinner", "lunch",
+                "breakfast", "snack", "restaurant", "reservation", "opentable", "yelp",
+                "menu", "dining", "coffee", "barista", "cocktail", "wine", "beer", "brewery",
+                "tasting", "dish", "grocery", "supermarket", "produce", "bakery", "deli",
+                "culinary", "flavor", "cookbook", "tasty", "allrecipes", "nytcars",
+                "bon appetit", "roast", "grill", "dessert", "appetizer"
+            )
         ),
         "realestate" to mapOf(
-            "property" to listOf("real estate", "housing", "apartment", "house", "home", "rent", "lease", "mortgage", "tenant", "landlord", "zillow", "redfin", "realtor", "trulia", "property", "listing", "inspection", "closing", "broker", "condo", "townhouse", "sublet", "escrow", "hoa", "realty", "move", "moving", "neighborhood", "open house", "square feet", "land", "appraisal")
+            "property" to listOf(
+                "real estate", "housing", "apartment", "house", "home", "rent", "lease",
+                "mortgage", "tenant", "landlord", "zillow", "redfin", "realtor", "trulia",
+                "property", "listing", "inspection", "closing", "broker", "condo", "townhouse",
+                "sublet", "escrow", "hoa", "realty", "move", "moving", "neighborhood",
+                "open house", "square feet", "land", "appraisal"
+            )
         ),
         "automotive" to mapOf(
-            "vehicle" to listOf("auto", "car", "vehicle", "truck", "motorcycle", "drive", "driving", "gas", "fuel", "ev", "charging", "tesla", "supercharger", "service", "maintenance", "oil", "tire", "mechanic", "dealer", "mileage", "odometer", "engine", "battery", "brake", "parking", "toll", "speed", "traffic", "accident", "insurance", "geico", "progressive", "statefarm", "waze", "gas station", "carplay", "android auto", "transmission", "recall", "registration")
+            "vehicle" to listOf(
+                "auto", "car", "vehicle", "truck", "motorcycle", "drive", "driving", "gas",
+                "fuel", "ev", "charging", "tesla", "supercharger", "service", "maintenance",
+                "oil", "tire", "mechanic", "dealer", "mileage", "odometer", "engine",
+                "battery", "brake", "parking", "toll", "speed", "traffic", "accident",
+                "insurance", "geico", "progressive", "statefarm", "waze", "gas station",
+                "carplay", "android auto", "transmission", "recall", "registration"
+            )
         ),
         "dating" to mapOf(
-            "romance" to listOf("dating", "match", "tinder", "bumble", "hinge", "okcupid", "coffee meets bagel", "relationship", "single", "date", "crush", "swipe", "profile", "meetup", "flirt", "romance", "anniversary", "partner", "couple", "marriage", "wedding", "engaged", "matchmaking", "sparks", "speed date")
+            "romance" to listOf(
+                "dating", "match", "tinder", "bumble", "hinge", "okcupid", "coffee meets bagel",
+                "relationship", "single", "date", "crush", "swipe", "profile", "meetup",
+                "flirt", "romance", "anniversary", "partner", "couple", "marriage", "wedding",
+                "engaged", "matchmaking", "sparks", "speed date"
+            )
         ),
         "events" to mapOf(
-            "entertainment" to listOf("tickets", "concert", "festival", "event", "show", "theater", "broadway", "ticketmaster", "stubhub", "seatgeek", "livenation", "venue", "stadium", "arena", "vip", "pass", "wristband", "lineup", "performer", "stage", "curtain", "seating", "box office", "tour", "showtime", "general admission", "doors open", "headliner", "merch", "amphitheater")
+            "entertainment" to listOf(
+                "tickets", "concert", "festival", "event", "show", "theater", "broadway", "ticketmaster",
+                "stubhub", "seatgeek", "livenation", "venue", "stadium", "arena", "vip", "pass",
+                "wristband", "lineup", "performer", "stage", "curtain", "seating", "box office",
+                "tour", "showtime", "general admission", "doors open", "headliner", "merch",
+                "amphitheater"
+            )
         ),
         "utilities" to mapOf(
-            "services" to listOf("utility", "electric", "power", "water", "gas", "internet", "wifi", "broadband", "cable", "mobile", "cellular", "sim", "verizon", "att", "tmobile", "sprint", "vodafone", "billing", "meter", "outage", "telecom", "provider", "hotspot", "roaming", "data plan", "carrier", "spectrum", "xfinity", "comcast", "conedison", "pge", "energy", "kilowatt", "fiber")
+            "services" to listOf(
+                "utility", "electric", "power", "water", "gas", "internet", "wifi", "broadband",
+                "cable", "mobile", "cellular", "sim", "verizon", "att", "tmobile", "sprint",
+                "vodafone", "billing", "meter", "outage", "telecom", "provider", "hotspot",
+                "roaming", "data plan", "carrier", "spectrum", "xfinity", "comcast",
+                "conedison", "pge", "energy", "kilowatt", "fiber"
+            )
         ),
         "pets" to mapOf(
-            "care" to listOf("pet", "dog", "cat", "puppy", "kitten", "vet", "veterinary", "clinic", "vaccine", "chewy", "rover", "barkbox", "grooming", "walk", "walker", "foster", "adoption", "shelter", "rescue", "collar", "microchip", "leash", "paws", "litter", "pet food", "kennel", "boarding", "flea", "tick", "rabies", "petco", "petsmart", "aquarium", "bird", "reptile")
+            "care" to listOf(
+                "pet", "dog", "cat", "puppy", "kitten", "vet", "veterinary", "clinic", "vaccine",
+                "chewy", "rover", "barkbox", "grooming", "walk", "walker", "foster", "adoption",
+                "shelter", "rescue", "collar", "microchip", "leash", "paws", "litter", "pet food",
+                "kennel", "boarding", "flea", "tick", "rabies", "petco", "petsmart", "aquarium",
+                "bird", "reptile"
+            )
         ),
         "career" to mapOf(
             "employment" to listOf("job", "career", "recruiter", "interview", "hiring", "resume", "cv", "application", "applied", "position", "salary", "offer", "linkedin", "indeed", "glassdoor", "monster", "ziprecruiter", "employment", "employer", "candidate", "promotion", "workplace", "hr", "onboarding", "headhunter", "job alert", "requisition", "cover letter", "internship", "benefits")
