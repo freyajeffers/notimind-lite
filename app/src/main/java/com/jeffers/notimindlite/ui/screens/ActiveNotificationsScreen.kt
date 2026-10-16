@@ -145,6 +145,14 @@ fun checkNotificationPermission(context: Context): Boolean {
 }
 
 private const val REASON_CODE_OFFSET = 1
+private const val PRIORITY_MIN = -2
+private const val PRIORITY_LOW = -1
+private const val PRIORITY_DEFAULT = 0
+private const val PRIORITY_HIGH = 1
+private const val PRIORITY_MAX = 2
+private const val SEARCH_MIN_LENGTH = 2
+private const val MAX_SEARCH_SUGGESTIONS = 4
+private const val SEARCH_DEBOUNCE_MS = 100L
 
 private val REASON_LABELS = listOf(
     R.string.reason_1,
@@ -183,11 +191,11 @@ fun getReasonLabel(reason: Int?): Int {
 
 fun getPriorityLabel(priority: Int): String {
     return when (priority) {
-        -2 -> "Min"
-        -1 -> "Low"
-        0 -> "Default"
-        1 -> "High"
-        2 -> "Max"
+        PRIORITY_MIN -> "Min"
+        PRIORITY_LOW -> "Low"
+        PRIORITY_DEFAULT -> "Default"
+        PRIORITY_HIGH -> "High"
+        PRIORITY_MAX -> "Max"
         else -> "Unknown ($priority)"
     }
 }
@@ -196,7 +204,11 @@ enum class NotificationSection(val keyName: String, val title: String, val subti
     PINNED("PINNED", "Pinned Notifications", "Flagged & saved notifications for later reference"),
     ACTIVE("ACTIVE", "Active Notifications", "Currently active status bar notifications (sorted by time received)"),
     FILTERED("FILTERED", "Filtered Notifications", "System, clutter, spam, and auto-filtered notifications"),
-    DISMISSED("DISMISSED", "Recently Dismissed", "User swiped, clicked, or cleared notifications (sorted by time dismissed)"),
+    DISMISSED(
+        "DISMISSED",
+        "Recently Dismissed",
+        "User swiped, clicked, or cleared notifications (sorted by time dismissed)"
+    ),
     LOST("LOST", "Lost Notifications", "App cancelled or package changed notifications (sorted by time dismissed)")
 }
 
@@ -261,7 +273,7 @@ fun activeNotificationsScreen(dao: NotificationDao, preferences: PreferencesRepo
 
 
     LaunchedEffect(searchQuery) {
-        delay(100L)
+        delay(SEARCH_DEBOUNCE_MS)
         debouncedSearchQuery = searchQuery
     }
 
@@ -304,9 +316,20 @@ fun activeNotificationsScreen(dao: NotificationDao, preferences: PreferencesRepo
 
     val sectionOrder = remember(expandedSection, pinnedNotifs.size) {
         val defaultList = if (pinnedNotifs.isNotEmpty()) {
-            listOf(NotificationSection.PINNED, NotificationSection.ACTIVE, NotificationSection.FILTERED, NotificationSection.DISMISSED, NotificationSection.LOST)
+            listOf(
+                NotificationSection.PINNED,
+                NotificationSection.ACTIVE,
+                NotificationSection.FILTERED,
+                NotificationSection.DISMISSED,
+                NotificationSection.LOST
+            )
         } else {
-            listOf(NotificationSection.ACTIVE, NotificationSection.FILTERED, NotificationSection.DISMISSED, NotificationSection.LOST)
+            listOf(
+                NotificationSection.ACTIVE,
+                NotificationSection.FILTERED,
+                NotificationSection.DISMISSED,
+                NotificationSection.LOST
+            )
         }
         val selected = defaultList.find { it.keyName == expandedSection }
         if (selected != null) {
@@ -364,14 +387,21 @@ fun activeNotificationsScreen(dao: NotificationDao, preferences: PreferencesRepo
         floatingActionButton = { activeNotificationsFab(listState) }
     ) { innerPadding ->
         Box(modifier = Modifier.fillMaxSize()) {
-            val searchSuggestions = remember(searchQuery, pinnedNotifs, activeNotifs, filteredNotifs, recentlyDismissed, lostNotifs) {
-                if (searchQuery.length < 2) emptyList()
+            val searchSuggestions = remember(
+                searchQuery,
+                pinnedNotifs,
+                activeNotifs,
+                filteredNotifs,
+                recentlyDismissed,
+                lostNotifs
+            ) {
+                if (searchQuery.length < SEARCH_MIN_LENGTH) emptyList()
                 else {
                     val allNotifs = pinnedNotifs + activeNotifs + filteredNotifs + recentlyDismissed + lostNotifs
                     (allNotifs.map { it.appName } + allNotifs.map { it.title })
                         .filter { it.contains(searchQuery, ignoreCase = true) }
                         .distinct()
-                        .take(4)
+                        .take(MAX_SEARCH_SUGGESTIONS)
                 }
             }
             LazyColumn(
@@ -494,7 +524,9 @@ fun activeNotificationsScreen(dao: NotificationDao, preferences: PreferencesRepo
                     val filteredList = if (!selectedPackages.isNullOrEmpty()) {
                         rawItemsList.filter { selectedPackages!!.contains(it.packageName) }
                     } else rawItemsList
-                    val itemsList = if (debouncedSearchQuery.isBlank()) filteredList else {
+                    val itemsList = if (debouncedSearchQuery.isBlank()) {
+                        filteredList
+                    } else {
                         HybridSearchEngine.searchAndRankBlocking(filteredList, debouncedSearchQuery)
                     }
                     notificationSection(
