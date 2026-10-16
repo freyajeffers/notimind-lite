@@ -64,21 +64,7 @@ fun settingsPreferencesSection(preferencesRepository: PreferencesRepository) {
     var ruleTitle by remember { mutableStateOf("") }
     var ruleAction by remember { mutableStateOf("0") }
 
-    // Local option lists split across multiple lines to satisfy MaxLineLength rules
-    val sortOptions = listOf(
-        "newest" to stringResource(R.string.pref_sort_newest),
-        "oldest" to stringResource(R.string.pref_sort_oldest),
-        "app" to stringResource(R.string.pref_sort_app)
-    )
-
-    val themeOptions = listOf(
-        "system" to stringResource(R.string.pref_theme_system),
-        "blue" to stringResource(R.string.pref_theme_blue),
-        "green" to stringResource(R.string.pref_theme_green),
-        "purple" to stringResource(R.string.pref_theme_purple),
-        "orange" to stringResource(R.string.pref_theme_orange),
-        "amoled" to "AMOLED black"
-    )
+    // display options moved to DisplaySettingsSection
 
     val replyOptions = listOf(
         "inline" to stringResource(R.string.pref_reply_inline),
