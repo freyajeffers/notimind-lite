@@ -789,26 +789,7 @@ fun logNotificationCard(config: LogNotificationCardConfig) {
             }
 
             if (!isExpanded) {
-                if (item.title.isNotEmpty()) {
-                    Text(
-                        text = highlightSearchText(item.title, highlightQuery),
-                        style = MaterialTheme.typography.bodyMedium,
-                        fontWeight = FontWeight.SemiBold,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                        modifier = Modifier.padding(top = 4.dp)
-                    )
-                }
-                if (item.content.isNotEmpty()) {
-                    Text(
-                        text = highlightSearchText(item.content.take(previewLength), highlightQuery),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        maxLines = 2,
-                        overflow = TextOverflow.Ellipsis,
-                        modifier = Modifier.padding(top = 2.dp)
-                    )
-                }
+                notificationCollapsedContent(config)
             }
 
             if (isExpanded) {
@@ -819,5 +800,33 @@ fun logNotificationCard(config: LogNotificationCardConfig) {
                 )
             }
         }
+    }
+}
+
+@Composable
+private fun notificationCollapsedContent(config: LogNotificationCardConfig) {
+    val item = config.item
+    val highlightQuery = config.highlightQuery
+    val previewLength = config.previewLength
+
+    if (item.title.isNotEmpty()) {
+        Text(
+            text = highlightSearchText(item.title, highlightQuery),
+            style = MaterialTheme.typography.bodyMedium,
+            fontWeight = FontWeight.SemiBold,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+            modifier = Modifier.padding(top = 4.dp)
+        )
+    }
+    if (item.content.isNotEmpty()) {
+        Text(
+            text = highlightSearchText(item.content.take(previewLength), highlightQuery),
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            maxLines = 2,
+            overflow = TextOverflow.Ellipsis,
+            modifier = Modifier.padding(top = 2.dp)
+        )
     }
 }
