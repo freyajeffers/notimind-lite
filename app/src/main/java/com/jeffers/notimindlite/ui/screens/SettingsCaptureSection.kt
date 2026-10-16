@@ -82,30 +82,36 @@ fun settingsCaptureSection(preferencesRepository: PreferencesRepository) {
             )
 
             captureTextFieldRow(
-                title = stringResource(R.string.pref_capture_allowlist_title),
-                summary = stringResource(R.string.pref_capture_allowlist_summary),
-                value = allowlist,
-                onValueChange = { scope.launch { preferencesRepository.setCapturePackageAllowlist(it) } },
-                width = 200.dp,
-                enabled = !BuildConfig.DEBUG
+                CaptureTextFieldConfig(
+                    title = stringResource(R.string.pref_capture_allowlist_title),
+                    summary = stringResource(R.string.pref_capture_allowlist_summary),
+                    value = allowlist,
+                    onValueChange = { scope.launch { preferencesRepository.setCapturePackageAllowlist(it) } },
+                    width = 200.dp,
+                    enabled = !BuildConfig.DEBUG
+                )
             )
 
             captureTextFieldRow(
-                title = stringResource(R.string.pref_capture_blocklist_title),
-                summary = stringResource(R.string.pref_capture_blocklist_summary),
-                value = blocklist,
-                onValueChange = { scope.launch { preferencesRepository.setCapturePackageBlocklist(it) } },
-                width = 200.dp,
-                enabled = !BuildConfig.DEBUG
+                CaptureTextFieldConfig(
+                    title = stringResource(R.string.pref_capture_blocklist_title),
+                    summary = stringResource(R.string.pref_capture_blocklist_summary),
+                    value = blocklist,
+                    onValueChange = { scope.launch { preferencesRepository.setCapturePackageBlocklist(it) } },
+                    width = 200.dp,
+                    enabled = !BuildConfig.DEBUG
+                )
             )
 
             captureTextFieldRow(
-                title = stringResource(R.string.pref_capture_min_importance_title),
-                summary = stringResource(R.string.pref_capture_min_importance_summary),
-                value = minImportance.toString(),
-                onValueChange = { it.toIntOrNull()?.let { v -> scope.launch { preferencesRepository.setMinImportance(v) } } },
-                width = 120.dp,
-                enabled = !BuildConfig.DEBUG
+                CaptureTextFieldConfig(
+                    title = stringResource(R.string.pref_capture_min_importance_title),
+                    summary = stringResource(R.string.pref_capture_min_importance_summary),
+                    value = minImportance.toString(),
+                    onValueChange = { it.toIntOrNull()?.let { v -> scope.launch { preferencesRepository.setMinImportance(v) } } },
+                    width = 120.dp,
+                    enabled = !BuildConfig.DEBUG
+                )
             )
 
             captureToggleRow(
@@ -131,13 +137,28 @@ private fun captureToggleRow(title: String, summary: String, checked: Boolean, o
     }
 }
 
+private data class CaptureTextFieldConfig(
+    val title: String,
+    val summary: String,
+    val value: String,
+    val onValueChange: (String) -> Unit,
+    val width: Dp,
+    val enabled: Boolean = true
+)
+
 @Composable
-private fun captureTextFieldRow(title: String, summary: String, value: String, onValueChange: (String) -> Unit, width: androidx.compose.ui.unit.Dp, enabled: Boolean = true) {
+private fun captureTextFieldRow(config: CaptureTextFieldConfig) {
     Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
         Column(modifier = Modifier.weight(1f)) {
-            Text(title, style = MaterialTheme.typography.bodyLarge)
-            Text(summary, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text(config.title, style = MaterialTheme.typography.bodyLarge)
+            Text(config.summary, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
-        OutlinedTextField(value = value, onValueChange = onValueChange, modifier = Modifier.width(width), singleLine = true, enabled = enabled)
+        OutlinedTextField(
+            value = config.value,
+            onValueChange = config.onValueChange,
+            modifier = Modifier.width(config.width),
+            singleLine = true,
+            enabled = config.enabled
+        )
     }
 }
