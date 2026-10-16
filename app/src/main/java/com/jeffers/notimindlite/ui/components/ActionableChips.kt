@@ -147,24 +147,23 @@ private fun actionChip(
             onDismissRequest = { expanded = false }
         ) {
             DropdownMenuItem(
-                text = {
-                    Text(
-                        when (entity.type) {
-                            ActionableEntityExtractor.EntityType.OTP -> stringResource(R.string.actionable_copy_code)
-                            ActionableEntityExtractor.EntityType.URL -> stringResource(R.string.actionable_copy_link)
-                            ActionableEntityExtractor.EntityType.LOCATION ->
-                                stringResource(R.string.actionable_copy_address)
-                        }
-                    )
-                },
+                text = { Text(menuLabelForCopy(entity)) },
                 onClick = {
                     clipboardManager.setText(AnnotatedString(entity.value))
                     expanded = false
                 },
-            leadingIcon = { Icon(Icons.Default.ContentCopy, contentDescription = "Copy", modifier = Modifier.size(18.dp)) }
+                leadingIcon = {
+                    Icon(
+                        Icons.Default.ContentCopy,
+                        contentDescription = "Copy",
+                        modifier = Modifier.size(18.dp)
+                    )
+                }
             )
 
-            if (entity.type == ActionableEntityExtractor.EntityType.URL || entity.type == ActionableEntityExtractor.EntityType.LOCATION) {
+            val canOpenExternally = entity.type == ActionableEntityExtractor.EntityType.URL ||
+                entity.type == ActionableEntityExtractor.EntityType.LOCATION
+            if (canOpenExternally) {
                 DropdownMenuItem(
                     text = {
                         Text(
@@ -177,11 +176,7 @@ private fun actionChip(
                     },
                     onClick = {
                         try {
-                            val uriString = if (entity.type == ActionableEntityExtractor.EntityType.URL) {
-                                entity.value
-                            } else {
-                                "geo:0,0?q=${Uri.encode(entity.value)}"
-                            }
+                            val uriString = externalUriFor(entity)
                             val intent = Intent(Intent.ACTION_VIEW, Uri.parse(uriString)).apply {
                                 addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
                             }
@@ -213,7 +208,13 @@ private fun actionChip(
                     )
                     expanded = false
                 },
-                leadingIcon = { Icon(Icons.Default.Share, contentDescription = stringResource(R.string.actionable_share), modifier = Modifier.size(18.dp)) }
+                leadingIcon = {
+                    Icon(
+                        Icons.Default.Share,
+                        contentDescription = stringResource(R.string.actionable_share),
+                        modifier = Modifier.size(18.dp)
+                    )
+                }
             )
         }
     }
@@ -225,3 +226,20 @@ data class ActionChipConfig(
     val containerColor: Color,
     val onColor: Color
 )
+
+@Composable
+private fun menuLabelForCopy(
+    entity: ActionableEntityExtractor.ActionableEntity
+): String = when (entity.type) {
+    ActionableEntityExtractor.EntityType.OTP -> stringResource(R.string.actionable_copy_code)
+    ActionableEntityExtractor.EntityType.URL -> stringResource(R.string.actionable_copy_link)
+    ActionableEntityExtractor.EntityType.LOCATION -> stringResource(R.string.actionable_copy_address)
+}
+
+private fun externalUriFor(
+    entity: ActionableEntityExtractor.ActionableEntity
+): String = if (entity.type == ActionableEntityExtractor.EntityType.URL) {
+    entity.value
+} else {
+    "geo:0,0?q=${Uri.encode(entity.value)}"
+}
