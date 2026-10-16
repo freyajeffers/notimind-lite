@@ -278,35 +278,6 @@ fun activeNotificationsScreen(dao: NotificationDao, preferences: PreferencesRepo
         }
     }
 
-    val notificationsBySection by remember {
-        derivedStateOf {
-            NotificationSection.entries.associateWith { section ->
-                val rawList = when (section) {
-                    NotificationSection.PINNED -> pinnedNotifs
-                    NotificationSection.ACTIVE -> activeNotifs
-                    NotificationSection.FILTERED -> filteredNotifs
-                    NotificationSection.DISMISSED -> recentlyDismissed
-                    NotificationSection.LOST -> lostNotifs
-                }.distinctBy { "${it.packageName}_${it.title}_${it.content}" }
-
-                val filtered = if (!selectedPackages.isNullOrEmpty()) {
-                    rawList.filter { selectedPackages!!.contains(it.packageName) }
-                } else {
-                    rawList
-                }
-
-                if (debouncedSearchQuery.isBlank()) {
-                    filtered
-                } else {
-                    // F-G read-side [2026-09-02 audit, resolved via H-wire commit]:
-                    // Replaced naive title/content substring filter with
-                    // HybridSearchEngine (FTS4 + semantic vector, RRF-fused).
-                    HybridSearchEngine.searchAndRankBlocking(filtered, debouncedSearchQuery)
-                }
-            }
-        }
-    }
-
     val listState = rememberLazyListState()
 
     fun toggleSection(sectionKey: String) {

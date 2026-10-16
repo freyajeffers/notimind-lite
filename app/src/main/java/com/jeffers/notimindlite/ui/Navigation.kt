@@ -92,7 +92,7 @@ fun mainNavigation(
                 activeNotificationsScreen(notificationDao, preferencesRepository)
             }
             composable(Screen.History.route) {
-                logHistoryScreen(notificationDao, authManager, db, preferencesRepository)
+                logHistoryScreen(notificationDao, preferencesRepository)
             }
             composable(Screen.Settings.route) {
                 settingsScreen(authManager = authManager, preferencesRepository = preferencesRepository)

@@ -86,7 +86,7 @@ enum class SortMode(val label: String) {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun logHistoryScreen(dao: NotificationDao, authManager: AuthManager, db: AppDatabase, preferences: com.jeffers.notimindlite.data.local.PreferencesRepository) {
+fun logHistoryScreen(dao: NotificationDao, preferences: com.jeffers.notimindlite.data.local.PreferencesRepository) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     val listState = rememberLazyListState()
@@ -126,7 +126,6 @@ fun logHistoryScreen(dao: NotificationDao, authManager: AuthManager, db: AppData
 
     var showSortMenu by remember { mutableStateOf(false) }
     var showFilterMenu by remember { mutableStateOf(false) }
-    var showExportMenu by remember { mutableStateOf(false) }
     var showPackagePicker by remember { mutableStateOf(false) }
     var expandedCards by remember { mutableStateOf(setOf<String>()) }
     var collapsedGroups by remember { mutableStateOf(setOf<String>()) }
@@ -134,7 +133,6 @@ fun logHistoryScreen(dao: NotificationDao, authManager: AuthManager, db: AppData
     val allNotifsDismissed by dao.getDismissedNotificationsSortedByDismissed().collectAsState(initial = emptyList())
     val allNotifsReceived by dao.getDismissedNotificationsSortedByReceived().collectAsState(initial = emptyList())
     val allNotifsEver by dao.getAllNotificationsSortedByDismissed().collectAsState(initial = emptyList())
-    val totalCount by dao.getTotalNotificationCountFlow().collectAsState(initial = 0)
 
     val activeList = when (sortMode) {
         SortMode.DISMISSED -> allNotifsDismissed
