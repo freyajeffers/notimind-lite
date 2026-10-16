@@ -112,6 +112,10 @@ import java.util.*
 private const val PREFETCH_AHEAD = 24
 private const val PREFETCH_BEHIND = 2
 private const val BASE_SORT_MODE_COUNT = 3
+private const val SEARCH_DEBOUNCE_MILLIS = 100L
+private const val MAX_SEARCH_SUGGESTIONS = 4
+private const val MAX_RECENT_SEARCHES = 9
+private const val SEARCH_FIELD_CORNER_RADIUS = 12
 
 enum class SortMode(val label: String) {
     DISMISSED("Time Dismissed"),
@@ -193,7 +197,7 @@ fun logHistoryScreen(dao: NotificationDao, preferences: com.jeffers.notimindlite
     LaunchedEffect(selectedReasonFilter) { preferences.sharedSearchManager.setReason(selectedReasonFilter) }
 
     LaunchedEffect(searchQuery) {
-        delay(100L)
+        delay(SEARCH_DEBOUNCE_MILLIS)
         debouncedSearchQuery = searchQuery
     }
 
@@ -465,7 +469,7 @@ fun logHistoryScreen(dao: NotificationDao, preferences: com.jeffers.notimindlite
                     (activeList.map { it.appName } + activeList.map { it.title })
                         .filter { it.contains(searchQuery, ignoreCase = true) }
                         .distinct()
-                        .take(4)
+                        .take(MAX_SEARCH_SUGGESTIONS)
                 }
             }
             var expandedDropdown by remember { mutableStateOf(false) }
@@ -499,13 +503,15 @@ fun logHistoryScreen(dao: NotificationDao, preferences: com.jeffers.notimindlite
                     keyboardActions = KeyboardActions(onDone = {
                         val query = searchQuery.trim()
                         if (query.isNotEmpty()) {
-                            recentSearches = listOf(query) + recentSearches.filterNot { it == query }.take(9)
+                            recentSearches = listOf(query) + recentSearches
+                                .filterNot { it == query }
+                                .take(MAX_RECENT_SEARCHES)
                             preferences.sharedSearchManager.addRecentSearch(query)
                         }
                         focusManager.clearFocus(force = true)
                         keyboardController?.hide()
                     }),
-                    shape = RoundedCornerShape(12.dp)
+                    shape = RoundedCornerShape(SEARCH_FIELD_CORNER_RADIUS.dp)
                 )
 
                 DropdownMenu(
