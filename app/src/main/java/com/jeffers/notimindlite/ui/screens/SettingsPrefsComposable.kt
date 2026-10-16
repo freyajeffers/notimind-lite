@@ -167,7 +167,14 @@ internal fun preferenceSelectRow(
             }
             DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
                 options.forEach { (key, label) ->
-                    DropdownMenuItem(text = { Text(label) }, enabled = enabled, onClick = { onSelected(key); expanded = false })
+                    DropdownMenuItem(
+                        text = { Text(label) },
+                        enabled = enabled,
+                        onClick = {
+                            onSelected(key)
+                            expanded = false
+                        }
+                    )
                 }
             }
         }
