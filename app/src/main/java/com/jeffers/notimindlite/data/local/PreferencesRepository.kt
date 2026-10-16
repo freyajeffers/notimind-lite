@@ -352,23 +352,13 @@ class PreferencesRepository(context: Context) :
         private const val KEY_LOW_MEMORY_MODE = "config_low_memory_mode"
         private const val KEY_VECTOR_CACHE_MAX = "config_vector_cache_max"
 
-        private const val KEY_USE_KEYSTORE = "config_use_keystore"
-        private const val KEY_DB_ENCRYPTED = "config_db_encrypted"
-        private const val KEY_DB_ENCRYPTION_MODE = "config_db_key_mode"
-        private const val KEY_APP_LOCK_ENABLED = "config_app_lock_enabled"
-        private const val KEY_EXPORT_REQUIRES_BIOMETRIC = "config_export_requires_biometric"
+
         private const val KEY_COMPACT_MODE = "config_compact_mode"
-        private const val KEY_SHOW_APP_ICONS = "config_show_app_icons"
-        private const val KEY_SORT_ORDER = "config_sort_order"
-        private const val KEY_GROUP_BY_APP = "config_group_by_app"
-        private const val KEY_PREVIEW_LENGTH = "config_preview_length"
-        private const val KEY_THEME_ACCENT = "config_theme_accent"
         private const val KEY_AUTO_ACT_ON_NOTIFICATION = "config_auto_act_on_notification"
         private const val KEY_DEFAULT_REPLY_METHOD = "config_default_reply_method"
         private const val KEY_LONG_PRESS_ACTION = "config_long_press_action"
 
-        private val SORT_ORDERS = setOf("newest", "oldest", "app", "title", "dismissed", "received", "all")
-        private val THEME_ACCENTS = setOf("system", "blue", "green", "purple", "orange", "amoled")
+
         val REPLY_METHODS = setOf("inline", "open_app", "copy")
         val LONG_PRESS_ACTIONS = setOf("open", "reply", "dismiss")
         private const val PROFILE_STORE = "notimind_profiles"
