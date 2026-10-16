@@ -136,6 +136,50 @@ data class LogHistoryCardState(
     val onToggleExpand: () -> Unit
 )
 
+data class LogHistorySearchState(
+    val searchQuery: String,
+    val onSearchChange: (String) -> Unit,
+    val onDone: (String) -> Unit,
+    val onClear: () -> Unit,
+    val onFocusChanged: (Boolean) -> Unit,
+    val keyboardController: androidx.compose.ui.platform.SoftwareKeyboardController?,
+    val modifier: Modifier = Modifier
+)
+
+@Composable
+private fun logHistorySearchField(state: LogHistorySearchState) {
+    val searchQuery = state.searchQuery
+    val onSearchChange = state.onSearchChange
+    val onDone = state.onDone
+    val onClear = state.onClear
+    val onFocusChanged = state.onFocusChanged
+    val keyboardController = state.keyboardController
+    val modifier = state.modifier
+    OutlinedTextField(
+        value = searchQuery,
+        onValueChange = onSearchChange,
+        modifier = modifier
+            .fillMaxWidth()
+            .onFocusChanged { onFocusChanged(it.isFocused) },
+        placeholder = { Text("Search") },
+        leadingIcon = { Icon(Icons.Default.Search, contentDescription = "Search") },
+        trailingIcon = {
+            if (searchQuery.isNotEmpty()) {
+                IconButton(onClick = onClear) {
+                    Icon(Icons.Default.Close, contentDescription = "Clear Search")
+                }
+            }
+        },
+        singleLine = true,
+        keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+        keyboardActions = KeyboardActions(onDone = {
+            onDone(searchQuery)
+            keyboardController?.hide()
+        }),
+        shape = RoundedCornerShape(SEARCH_FIELD_CORNER_RADIUS.dp)
+    )
+}
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun logHistoryScreen(dao: NotificationDao, preferences: com.jeffers.notimindlite.data.local.PreferencesRepository) {
@@ -492,25 +536,12 @@ fun logHistoryScreen(dao: NotificationDao, preferences: com.jeffers.notimindlite
                     .fillMaxWidth()
                     .padding(horizontal = 16.dp, vertical = 8.dp)
             ) {
-                OutlinedTextField(
-                    value = searchQuery,
-                    onValueChange = { searchQuery = it },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .onFocusChanged { isSearchFocused = it.isFocused },
-                    placeholder = { Text("Search") },
-                    leadingIcon = { Icon(Icons.Default.Search, contentDescription = "Search") },
-                    trailingIcon = {
-                        if (searchQuery.isNotEmpty()) {
-                            IconButton(onClick = { searchQuery = "" }) {
-                                Icon(Icons.Default.Close, contentDescription = "Clear Search")
-                            }
-                        }
-                    },
-                    singleLine = true,
-                    keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
-                    keyboardActions = KeyboardActions(onDone = {
-                        val query = searchQuery.trim()
+                logHistorySearchField(
+                    LogHistorySearchState(
+                        searchQuery = searchQuery,
+                        onSearchChange = { searchQuery = it },
+                        onDone = { rawQuery ->
+                        val query = rawQuery.trim()
                         if (query.isNotEmpty()) {
                             recentSearches = listOf(query) + recentSearches
                                 .filterNot { it == query }
@@ -518,9 +549,12 @@ fun logHistoryScreen(dao: NotificationDao, preferences: com.jeffers.notimindlite
                             preferences.sharedSearchManager.addRecentSearch(query)
                         }
                         focusManager.clearFocus(force = true)
-                        keyboardController?.hide()
-                    }),
-                    shape = RoundedCornerShape(SEARCH_FIELD_CORNER_RADIUS.dp)
+                    },
+                    onClear = { searchQuery = "" },
+                    onFocusChanged = { isSearchFocused = it },
+                    keyboardController = keyboardController,
+                    modifier = Modifier.fillMaxWidth()
+                    )
                 )
 
                 DropdownMenu(
