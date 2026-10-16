@@ -59,6 +59,7 @@ class SyncWorker(
 
     companion object {
         private const val SYNC_WORK_NAME = "notimind_firestore_sync"
+        private const val PERIODIC_SYNC_INTERVAL_HOURS = 6L
 
         fun schedulePeriodicSync(context: Context) {
             val constraints = Constraints.Builder()
@@ -67,7 +68,10 @@ class SyncWorker(
                 .setRequiresDeviceIdle(true)
                 .build()
 
-            val request = PeriodicWorkRequestBuilder<SyncWorker>(6, TimeUnit.HOURS)
+            val request = PeriodicWorkRequestBuilder<SyncWorker>(
+                PERIODIC_SYNC_INTERVAL_HOURS,
+                TimeUnit.HOURS
+            )
                 .setConstraints(constraints)
                 .build()
 
