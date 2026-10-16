@@ -41,21 +41,6 @@ import com.jeffers.notimindlite.BuildConfig
 @Composable
 fun settingsPreferencesSection(preferencesRepository: PreferencesRepository) {
 
-    val enableSync by preferencesRepository.enableSync.collectAsState(initial = true)
-    val enableVector by preferencesRepository.enableVector.collectAsState(initial = true)
-    val enableFts4 by preferencesRepository.enableFts4.collectAsState(initial = true)
-    val enableSemanticRanking by preferencesRepository.enableSemanticRanking.collectAsState(initial = true)
-    val compactMode by preferencesRepository.compactMode.collectAsState(initial = false)
-    val showAppIcons by preferencesRepository.showAppIcons.collectAsState(initial = true)
-    val groupByApp by preferencesRepository.groupByApp.collectAsState(initial = true)
-    val sortOrder by preferencesRepository.sortOrder.collectAsState(initial = "newest")
-    val previewLength by preferencesRepository.previewLength.collectAsState(initial = 140)
-    val themeAccent by preferencesRepository.themeAccent.collectAsState(initial = "system")
-    val exportRequiresBiometric by preferencesRepository.exportRequiresBiometric.collectAsState(initial = false)
-    val appLockEnabled by preferencesRepository.appLockEnabled.collectAsState(initial = false)
-    val useKeystore by preferencesRepository.useKeystore.collectAsState(initial = true)
-    val dbEncrypted by preferencesRepository.dbEncrypted.collectAsState(initial = true)
-    val dbEncryptionMode by preferencesRepository.dbEncryptionMode.collectAsState(initial = DbEncryptionMode.KEYSTORE)
     val autoActOnNotification by preferencesRepository.autoActOnNotification.collectAsState(initial = false)
     val defaultReplyMethod by preferencesRepository.defaultReplyMethod.collectAsState(initial = "inline")
     val longPressAction by preferencesRepository.longPressAction.collectAsState(initial = "open")
@@ -120,66 +105,6 @@ fun settingsPreferencesSection(preferencesRepository: PreferencesRepository) {
             )
 
             settingsSecuritySection(preferencesRepository)
-
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = androidx.compose.ui.Alignment.CenterVertically
-            ) {
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(stringResource(R.string.pref_enable_sync_title), style = MaterialTheme.typography.bodyLarge)
-                    Text(
-                        stringResource(R.string.pref_enable_sync_summary),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-                Switch(checked = enableSync, onCheckedChange = preferencesRepository::setEnableSync)
-            }
-
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = androidx.compose.ui.Alignment.CenterVertically
-            ) {
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(stringResource(R.string.pref_enable_vector_title), style = MaterialTheme.typography.bodyLarge)
-                    Text(
-                        stringResource(R.string.pref_enable_vector_summary),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-                Switch(checked = enableVector, onCheckedChange = preferencesRepository::setEnableVector)
-            }
-
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = androidx.compose.ui.Alignment.CenterVertically
-            ) {
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(stringResource(R.string.pref_enable_fts4_title), style = MaterialTheme.typography.bodyLarge)
-                    Text(
-                        stringResource(R.string.pref_enable_fts4_summary),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-                Switch(checked = enableFts4, onCheckedChange = preferencesRepository::setEnableFts4)
-            }
-
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = androidx.compose.ui.Alignment.CenterVertically
-            ) {
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(stringResource(R.string.pref_semantic_ranking_title), style = MaterialTheme.typography.bodyLarge)
-                    Text(
-                        stringResource(R.string.pref_semantic_ranking_summary),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-                Switch(checked = enableSemanticRanking, onCheckedChange = preferencesRepository::setEnableSemanticRanking)
-            }
 
             debugSettingsSection(preferencesRepository)
         }
