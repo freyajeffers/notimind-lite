@@ -444,11 +444,30 @@ class PreferencesRepository(context: Context) {
         _autoExecuteRules.value = readAutoExecuteRules()
     }
 
-    fun setCaptureForegroundOnly(v: Boolean) { backing.edit().putBoolean("config_capture_foreground_only", v).apply(); _captureForegroundOnly.value = v }
-    fun setCaptureAttachments(v: Boolean) { backing.edit().putBoolean("config_capture_attachments", v).apply(); _captureAttachments.value = v }
-    fun setCaptureOngoing(v: Boolean) { backing.edit().putBoolean("config_capture_ongoing", v).apply(); _captureOngoing.value = v }
-    fun setCapturePackageAllowlist(v: String) { backing.edit().putString("config_capture_package_allowlist", v).apply(); _capturePackageAllowlist.value = v }
-    fun setCapturePackageBlocklist(v: String) { backing.edit().putString("config_capture_package_blocklist", v).apply(); _capturePackageBlocklist.value = v }
+    fun setCaptureForegroundOnly(v: Boolean) {
+        backing.edit().putBoolean("config_capture_foreground_only", v).apply()
+        _captureForegroundOnly.value = v
+    }
+
+    fun setCaptureAttachments(v: Boolean) {
+        backing.edit().putBoolean("config_capture_attachments", v).apply()
+        _captureAttachments.value = v
+    }
+
+    fun setCaptureOngoing(v: Boolean) {
+        backing.edit().putBoolean("config_capture_ongoing", v).apply()
+        _captureOngoing.value = v
+    }
+
+    fun setCapturePackageAllowlist(v: String) {
+        backing.edit().putString("config_capture_package_allowlist", v).apply()
+        _capturePackageAllowlist.value = v
+    }
+
+    fun setCapturePackageBlocklist(v: String) {
+        backing.edit().putString("config_capture_package_blocklist", v).apply()
+        _capturePackageBlocklist.value = v
+    }
     fun setMinImportance(v: Int) { val n = v.coerceIn(0, 5); backing.edit().putInt("config_min_importance", n).apply(); _minImportance.value = n }
     fun setCaptureActionsOnly(v: Boolean) { backing.edit().putBoolean("config_capture_actions_only", v).apply(); _captureActionsOnly.value = v }
     fun setRedactPii(v: Boolean) { backing.edit().putBoolean("config_pii_redaction", v).apply(); _redactPii.value = v }
