@@ -22,13 +22,15 @@ class PreferencesRepository(context: Context) :
     private val appContext = context.applicationContext
     private val deContext = appContext.createDeviceProtectedStorageContext()
     val profileManager = ProfilePreferencesManager(context)
-    private val profileStore = deContext.getSharedPreferences(PROFILE_STORE, Context.MODE_PRIVATE)
     private val backing: android.content.SharedPreferences
         get() = deContext.getSharedPreferences(profileManager.activePreferencesName, Context.MODE_PRIVATE)
 
     init {
         migrateRenamedKeys()
         ExhaustivePreferencesRepository(context).initializeDefaults(profileManager.activeProfileId.value)
+        profileManager.onProfileChanged = {
+            reloadProfileFlows()
+        }
     }
 
     private fun migrateRenamedKeys() {
@@ -51,10 +53,6 @@ class PreferencesRepository(context: Context) :
         editor.apply()
     }
 
-    private val _profiles = MutableStateFlow(readProfiles())
-    private val _activeProfileId = MutableStateFlow(profileManager.activeProfileId.value)
-    val profiles: StateFlow<List<Profile>> = _profiles.asStateFlow()
-    val activeProfileId: StateFlow<String> = _activeProfileId.asStateFlow()
 
     private val _enableSync = MutableStateFlow(backing.getBoolean(KEY_ENABLE_SYNC, true))
     private val _enableVector = MutableStateFlow(backing.getBoolean(KEY_ENABLE_VECTOR, true))
@@ -234,143 +232,7 @@ class PreferencesRepository(context: Context) :
     val longPressAction: StateFlow<String> = _longPressAction
     val autoExecuteRules: StateFlow<List<AutoExecuteRule>> = _autoExecuteRules
 
-    /** Creates a profile without copying another account's notification database. */
-    fun createProfile(name: String): Profile {
-        val clean = name.trim().take(80).ifBlank { "Profile ${_profiles.value.size + 1}" }
-        val id = java.util.UUID.randomUUID().toString()
-        val profile = Profile(id, clean, System.currentTimeMillis())
-        val updated = (_profiles.value + profile).distinctBy { it.id }
-        writeProfiles(updated)
-        return profile
-    }
 
-    fun deleteProfile(id: String): Boolean {
-        if (id == DEFAULT_PROFILE_ID || id == profileManager.activeProfileId.value) return false
-        val updated = _profiles.value.filterNot { it.id == id }
-        if (updated.size == _profiles.value.size) return false
-        writeProfiles(updated)
-        return true
-    }
-
-    /** Switches both preferences and Room database selection for subsequent calls. */
-    fun setActiveProfile(id: String): Boolean {
-        if (_profiles.value.none { it.id == id }) return false
-        profileStore.edit().putString(KEY_ACTIVE_PROFILE, id).apply()
-        _activeProfileId.value = id
-        reloadProfileFlows()
-        return true
-    }
-
-    fun exportProfile(id: String = profileManager.activeProfileId.value): String {
-        require(_profiles.value.any { it.id == id }) { "Unknown profile" }
-        val source = appContext.getSharedPreferences("notimind_lite_prefs_$id", Context.MODE_PRIVATE)
-        val values = JSONObject()
-        source.all.forEach { (key, value) ->
-            when (value) {
-                is Boolean -> values.put(key, value)
-                is Int -> values.put(key, value)
-                is Long -> values.put(key, value)
-                is String -> values.put(key, value)
-            }
-        }
-        val profile = _profiles.value.first { it.id == id }
-        return JSONObject().put("version", 1).put("profile", JSONObject()
-            .put("id", profile.id).put("name", profile.name).put("createdAt", profile.createdAt))
-            .put("settings", values).toString()
-    }
-
-    /** Imports a profile export and returns the imported profile. Existing ids are rejected. */
-    fun importProfile(serialized: String): Profile {
-        val root = JSONObject(serialized)
-        require(root.optInt("version", 0) == 1) { "Unsupported profile export" }
-        val source = root.getJSONObject("profile")
-        val id = source.optString("id").takeIf { it.matches(PROFILE_ID) }
-            ?.takeIf { _profiles.value.none { profile -> profile.id == it } }
-            ?: java.util.UUID.randomUUID().toString()
-        val profile = Profile(
-            id,
-            source.optString("name", "Imported profile").take(80),
-            source.optLong("createdAt", System.currentTimeMillis())
-        )
-        val editor = appContext.getSharedPreferences("notimind_lite_prefs_$id", Context.MODE_PRIVATE).edit()
-        val settings = root.optJSONObject("settings")
-        settings?.keys()?.forEach { key ->
-            when (val value = settings.get(key)) {
-                is Boolean -> editor.putBoolean(key, value)
-                is Int -> editor.putInt(key, value)
-                is Long -> editor.putLong(key, value)
-                is String -> editor.putString(key, value)
-            }
-        }
-        editor.apply()
-        writeProfiles(_profiles.value + profile)
-        return profile
-    }
-
-    private fun readProfiles(): List<Profile> {
-        val raw = profileStore.getString(KEY_PROFILES, null)
-        if (raw == null) {
-            migrateLegacyIfNeeded()
-            val default = Profile(DEFAULT_PROFILE_ID, "Default", System.currentTimeMillis())
-            profileStore.edit().putString(
-                KEY_PROFILES,
-                JSONArray()
-                    .put(
-                        JSONObject()
-                            .put("id", default.id)
-                            .put("name", default.name)
-                            .put("createdAt", default.createdAt)
-                    )
-                    .toString()
-            ).apply()
-            return listOf(default)
-        }
-        return parseProfiles(raw)
-    }
-
-    private fun migrateLegacyIfNeeded() {
-        val legacy = appContext.getSharedPreferences("notimind_lite_prefs", Context.MODE_PRIVATE)
-        if (legacy.all.isNotEmpty() && !backing.contains(KEY_ENABLE_SYNC)) {
-            val editor = backing.edit()
-            legacy.all.forEach { (key, value) ->
-                when (value) {
-                    is Boolean -> editor.putBoolean(key, value)
-                    is Int -> editor.putInt(key, value)
-                    is Long -> editor.putLong(key, value)
-                    is String -> editor.putString(key, value)
-                }
-            }
-            editor.apply()
-        }
-    }
-
-    private fun parseProfiles(raw: String): List<Profile> {
-        return runCatching {
-            val array = JSONArray(raw)
-            (0 until array.length()).map { index ->
-                val profile = array.getJSONObject(index)
-                Profile(profile.getString("id"), profile.getString("name"), profile.getLong("createdAt"))
-            }
-        }.getOrDefault(listOf(Profile(DEFAULT_PROFILE_ID, "Default", 0L)))
-    }
-
-    private fun writeProfiles(value: List<Profile>) {
-        val safe = if (value.any { it.id == DEFAULT_PROFILE_ID }) {
-            value
-        } else {
-            listOf(Profile(DEFAULT_PROFILE_ID, "Default", 0L)) + value
-        }
-        val serialized = JSONArray(
-            safe.map {
-                JSONObject()
-                    .put("id", it.id)
-                    .put("name", it.name)
-                    .put("createdAt", it.createdAt)
-            }
-        ).toString()
-        profileStore.edit().putString(KEY_PROFILES, serialized).apply()
-        _profiles.value = safe
-    }
 
     private fun reloadProfileFlows() {
         _enableSync.value = backing.getBoolean(KEY_ENABLE_SYNC, true)

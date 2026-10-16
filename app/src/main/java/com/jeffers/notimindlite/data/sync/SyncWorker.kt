@@ -30,7 +30,7 @@ class SyncWorker(
     }
 
     private suspend fun syncSupabase(db: AppDatabase, preferences: PreferencesRepository): Result {
-        val profileId = preferences.activeProfileId.value
+        val profileId = preferences.profileManager.activeProfileId.value
         val supabaseAuth = SupabaseAuthManager(applicationContext)
         val userId = supabaseAuth.currentSession().uid ?: return Result.success()
         SupabaseSettingsSyncRepository(supabaseAuth).restoreOrUpload(preferences, userId)
@@ -39,7 +39,7 @@ class SyncWorker(
     }
 
     private suspend fun syncFirebase(db: AppDatabase, preferences: PreferencesRepository): Result {
-        val profileId = preferences.activeProfileId.value
+        val profileId = preferences.profileManager.activeProfileId.value
         val user = com.google.firebase.auth.FirebaseAuth.getInstance().currentUser
             ?: return Result.success()
         FirebaseSettingsSyncRepository().restoreOrUpload(preferences, user.uid)

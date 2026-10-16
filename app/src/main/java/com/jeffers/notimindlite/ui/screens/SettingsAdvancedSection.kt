@@ -50,7 +50,7 @@ fun settingsAdvancedSection(
     val encryptionEnabled = preferencesRepository.dbEncrypted.collectAsState(initial = false).value &&
         preferencesRepository.dbEncryptionMode.collectAsState(initial = DbEncryptionMode.NONE).value !=
             DbEncryptionMode.NONE
-    val profileId = preferencesRepository.activeProfileId.collectAsState().value
+    val profileId = preferencesRepository.profileManager.activeProfileId.collectAsState().value
     val databaseName = if (profileId == PreferencesRepository.DEFAULT_PROFILE_ID) {
         AppDatabase.CE_DATABASE_NAME
     } else {
