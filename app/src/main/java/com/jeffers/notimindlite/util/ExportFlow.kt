@@ -8,20 +8,47 @@ import java.io.File
 import javax.crypto.spec.SecretKeySpec
 
 internal object ExportFlow {
+    private const val MAX_SALT_LENGTH = 255
+    private val exportMagic = byteArrayOf(
+        'N'.code.toByte(),
+        'M'.code.toByte(),
+        'E'.code.toByte(),
+        '1'.code.toByte()
+    )
+    private const val AES_GCM_TRANSFORM = "AES/GCM/NoPadding"
 
-    internal fun encryptExport(payload: ByteArray, context: Context, passphrase: CharArray?): ByteArray {
-        val salt = if (passphrase != null) BackupKeyWrap.generateSalt() else ByteArray(0)
+    internal fun encryptExport(
+        payload: ByteArray,
+        context: Context,
+        passphrase: CharArray?
+    ): ByteArray {
+        val salt = if (passphrase != null) {
+            BackupKeyWrap.generateSalt()
+        } else {
+            ByteArray(0)
+        }
+
         val key = if (passphrase != null) {
             BackupKeyWrap.deriveKek(passphrase, salt)
         } else {
-            SecretKeySpec(SqlCipherKeyManager.getOrCreatePassphrase(context, "exports"), "AES")
+            val pass = SqlCipherKeyManager.getOrCreatePassphrase(context, "exports")
+            SecretKeySpec(pass, "AES")
         }
-        val cipher = javax.crypto.Cipher.getInstance("AES/GCM/NoPadding")
+
+        val cipher = javax.crypto.Cipher.getInstance(AES_GCM_TRANSFORM)
         cipher.init(javax.crypto.Cipher.ENCRYPT_MODE, key)
-        val header = byteArrayOf(
-            'N'.code.toByte(), 'M'.code.toByte(), 'E'.code.toByte(), '1'.code.toByte(), salt.size.toByte()
-        )
-        return header + salt + cipher.iv + cipher.doFinal(payload)
+
+        val header = buildHeader(salt)
+
+        val encrypted = cipher.doFinal(payload)
+
+        return header + salt + cipher.iv + encrypted
+    }
+
+    private fun buildHeader(salt: ByteArray): ByteArray {
+        // Header format: 4-byte magic + 1-byte salt length
+        val saltLen = salt.size.coerceAtMost(MAX_SALT_LENGTH)
+        return exportMagic + byteArrayOf(saltLen.toByte())
     }
 
     suspend fun performEncryptedBackup(
@@ -31,7 +58,8 @@ internal object ExportFlow {
     ): Result<File> {
         return try {
             val preferences = PreferencesRepository(context.applicationContext)
-            require(!preferences.securityManager.requirePassphrase.value || passphrase != null && passphrase.isNotEmpty()) {
+            val passphraseRequired = preferences.securityManager.requirePassphrase.value
+            require(!passphraseRequired || passphrase != null && passphrase.isNotEmpty()) {
                 "A passphrase is required for encrypted exports"
             }
             check(NetworkUtils.isInternetAvailable(context)) {
