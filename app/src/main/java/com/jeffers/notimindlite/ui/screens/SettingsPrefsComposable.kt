@@ -156,48 +156,16 @@ fun settingsPreferencesSection(preferencesRepository: PreferencesRepository) {
                 preferencesRepository::setLongPressAction,
                 enabled = !BuildConfig.DEBUG
             )
-            Text(stringResource(R.string.pref_auto_rules_title), style = MaterialTheme.typography.bodyLarge)
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
-                OutlinedTextField(
-                    rulePackage, { rulePackage = it }, Modifier.weight(1f), singleLine = true,
-                    enabled = !BuildConfig.DEBUG, label = { Text(stringResource(R.string.pref_auto_rule_package)) }
-                )
-                OutlinedTextField(
-                    ruleTitle, { ruleTitle = it }, Modifier.weight(1f), singleLine = true,
-                    enabled = !BuildConfig.DEBUG, label = { Text(stringResource(R.string.pref_auto_rule_title)) }
-                )
-                OutlinedTextField(
-                    ruleAction, { ruleAction = it }, Modifier.width(72.dp), singleLine = true,
-                    enabled = !BuildConfig.DEBUG, label = { Text(stringResource(R.string.pref_auto_rule_action)) },
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
-                )
-            }
-            Button(onClick = {
-                preferencesRepository.addAutoExecuteRule(
-                    AutoExecuteRule(
-                        packageName = rulePackage.trim(), titleContains = ruleTitle.trim(),
-                        actionIndex = ruleAction.toIntOrNull()?.coerceAtLeast(0) ?: 0
-                    )
-                )
-                rulePackage = ""; ruleTitle = ""; ruleAction = "0"
-            }, enabled = !BuildConfig.DEBUG) { Text(stringResource(R.string.pref_auto_rule_add)) }
-            autoExecuteRules.forEach { rule ->
-                Row(
-                    verticalAlignment = androidx.compose.ui.Alignment.CenterVertically,
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Text(
-                        "${rule.packageName.ifBlank { stringResource(R.string.pref_auto_rule_any_app) }} · " +
-                            "${rule.titleContains.ifBlank { stringResource(R.string.pref_auto_rule_any_title) }} · " +
-                            "${stringResource(R.string.pref_auto_rule_action).lowercase()} ${rule.actionIndex}",
-                        Modifier.weight(1f), style = MaterialTheme.typography.bodySmall
-                    )
-                    TextButton(
-                        onClick = { preferencesRepository.removeAutoExecuteRule(rule.id) },
-                        enabled = !BuildConfig.DEBUG
-                    ) { Text(stringResource(R.string.pref_auto_rule_remove)) }
-                }
-            }
+            autoRulesSection(
+                preferencesRepository = preferencesRepository,
+                autoExecuteRules = autoExecuteRules,
+                rulePackage = rulePackage,
+                onRulePackageChange = { rulePackage = it },
+                ruleTitle = ruleTitle,
+                onRuleTitleChange = { ruleTitle = it },
+                ruleAction = ruleAction,
+                onRuleActionChange = { ruleAction = it }
+            )
 
             Text(stringResource(R.string.pref_security_local_title), style = MaterialTheme.typography.titleMedium)
             preferenceSwitchRow(
