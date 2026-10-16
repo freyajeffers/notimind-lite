@@ -696,17 +696,23 @@ fun activeNotificationsScreen(dao: NotificationDao, authManager: AuthManager, db
                                 val item = group.items[0]
                                 val cardExpanded = expandedCards.contains(item.key)
                                 logNotificationCard(
-                                    item = item,
-                                    dateTimeFormatter = dateTimeFormatter,
-                                    dao = dao,
-                                    isExpanded = cardExpanded,
-                                            highlightQuery = debouncedSearchQuery,
-                                    showAppIcon = showAppIcons,
-                                    compactMode = compactMode,
-                                    previewLength = previewLength,
-                                    onToggleExpand = {
-                                        expandedCards = if (cardExpanded) expandedCards - item.key else expandedCards + item.key
-                                    }
+                                    LogNotificationCardConfig(
+                                        item = item,
+                                        dateTimeFormatter = dateTimeFormatter,
+                                        dao = dao,
+                                        isExpanded = cardExpanded,
+                                        highlightQuery = debouncedSearchQuery,
+                                        onToggleExpand = {
+                                            expandedCards = if (cardExpanded) {
+                                                expandedCards - item.key
+                                            } else {
+                                                expandedCards + item.key
+                                            }
+                                        },
+                                        showAppIcon = showAppIcons,
+                                        compactMode = compactMode,
+                                        previewLength = previewLength
+                                    )
                                 )
                             } else {
                                 NotificationGroupCard(
@@ -723,22 +729,24 @@ fun activeNotificationsScreen(dao: NotificationDao, authManager: AuthManager, db
                                     },
                                     renderChildCard = { childItem ->
                                         val cardExpanded = expandedCards.contains(childItem.key)
-                                        logNotificationCard(
-                                            item = childItem,
-                                            dateTimeFormatter = dateTimeFormatter,
-                                            dao = dao,
-                                            isExpanded = cardExpanded,
-                                            highlightQuery = debouncedSearchQuery,
-                                    showAppIcon = showAppIcons,
-                                    compactMode = compactMode,
-                                    previewLength = previewLength,
-                                            onToggleExpand = {
-                                                expandedCards = if (cardExpanded) {
-                                                    expandedCards - childItem.key
-                                                } else {
-                                                    expandedCards + childItem.key
-                                                }
-                                            }
+                                                logNotificationCard(
+                                            LogNotificationCardConfig(
+                                                item = childItem,
+                                                dateTimeFormatter = dateTimeFormatter,
+                                                dao = dao,
+                                                isExpanded = cardExpanded,
+                                                highlightQuery = debouncedSearchQuery,
+                                                onToggleExpand = {
+                                                    expandedCards = if (cardExpanded) {
+                                                        expandedCards - childItem.key
+                                                    } else {
+                                                        expandedCards + childItem.key
+                                                    }
+                                                },
+                                                showAppIcon = showAppIcons,
+                                                compactMode = compactMode,
+                                                previewLength = previewLength
+                                            )
                                         )
                                     }
                                 )
@@ -764,19 +772,31 @@ fun activeNotificationsScreen(dao: NotificationDao, authManager: AuthManager, db
 
 }
 
+data class LogNotificationCardConfig(
+    val item: NotificationEntity,
+    val dateTimeFormatter: DateTimeFormatter,
+    val dao: NotificationDao,
+    val isExpanded: Boolean,
+    val highlightQuery: String = "",
+    val onToggleExpand: () -> Unit,
+    val showAppIcon: Boolean = true,
+    val compactMode: Boolean = false,
+    val previewLength: Int = 140
+)
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun logNotificationCard(
-    item: NotificationEntity,
-    dateTimeFormatter: DateTimeFormatter,
-    dao: NotificationDao,
-    isExpanded: Boolean,
-    highlightQuery: String = "",
-    onToggleExpand: () -> Unit,
-    showAppIcon: Boolean = true,
-    compactMode: Boolean = false,
-    previewLength: Int = 140
-) {
+fun logNotificationCard(config: LogNotificationCardConfig) {
+    val item = config.item
+    val dateTimeFormatter = config.dateTimeFormatter
+    val dao = config.dao
+    val isExpanded = config.isExpanded
+    val highlightQuery = config.highlightQuery
+    val onToggleExpand = config.onToggleExpand
+    val showAppIcon = config.showAppIcon
+    val compactMode = config.compactMode
+    val previewLength = config.previewLength
+    
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
 
