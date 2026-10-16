@@ -32,6 +32,7 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun notificationGroupDao(): NotificationGroupDao
 
     abstract fun notificationGroupDetailDao(): NotificationGroupDetailDao
+    abstract fun notificationQueryDao(): NotificationQueryDao
     abstract fun appDao(): AppDao
     abstract fun backupDao(): BackupDao
 
