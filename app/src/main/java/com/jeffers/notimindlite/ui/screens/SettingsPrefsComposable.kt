@@ -158,13 +158,15 @@ fun settingsPreferencesSection(preferencesRepository: PreferencesRepository) {
             )
             autoRulesSection(
                 preferencesRepository = preferencesRepository,
-                autoExecuteRules = autoExecuteRules,
-                rulePackage = rulePackage,
-                onRulePackageChange = { rulePackage = it },
-                ruleTitle = ruleTitle,
-                onRuleTitleChange = { ruleTitle = it },
-                ruleAction = ruleAction,
-                onRuleActionChange = { ruleAction = it }
+                config = AutoRulesConfig(
+                    autoExecuteRules = autoExecuteRules,
+                    rulePackage = rulePackage,
+                    onRulePackageChange = { rulePackage = it },
+                    ruleTitle = ruleTitle,
+                    onRuleTitleChange = { ruleTitle = it },
+                    ruleAction = ruleAction,
+                    onRuleActionChange = { ruleAction = it }
+                )
             )
 
             Text(stringResource(R.string.pref_security_local_title), style = MaterialTheme.typography.titleMedium)

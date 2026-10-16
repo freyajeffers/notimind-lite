@@ -20,28 +20,19 @@ import com.jeffers.notimindlite.BuildConfig
 import com.jeffers.notimindlite.R
 
 @Composable
-fun autoRulesSection(
-    preferencesRepository: PreferencesRepository,
-    autoExecuteRules: List<AutoExecuteRule>,
-    rulePackage: String,
-    onRulePackageChange: (String) -> Unit,
-    ruleTitle: String,
-    onRuleTitleChange: (String) -> Unit,
-    ruleAction: String,
-    onRuleActionChange: (String) -> Unit
-) {
+fun autoRulesSection(preferencesRepository: PreferencesRepository, config: AutoRulesConfig) {
     Column(modifier = Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
             OutlinedTextField(
-                rulePackage, onValueChange = onRulePackageChange, Modifier.weight(1f), singleLine = true,
+                config.rulePackage, onValueChange = config.onRulePackageChange, Modifier.weight(1f), singleLine = true,
                 enabled = !BuildConfig.DEBUG, label = { Text(stringResource(R.string.pref_auto_rule_package)) }
             )
             OutlinedTextField(
-                ruleTitle, onValueChange = onRuleTitleChange, Modifier.weight(1f), singleLine = true,
+                config.ruleTitle, onValueChange = config.onRuleTitleChange, Modifier.weight(1f), singleLine = true,
                 enabled = !BuildConfig.DEBUG, label = { Text(stringResource(R.string.pref_auto_rule_title)) }
             )
             OutlinedTextField(
-                ruleAction, onValueChange = onRuleActionChange, Modifier.width(72.dp), singleLine = true,
+                config.ruleAction, onValueChange = config.onRuleActionChange, Modifier.width(72.dp), singleLine = true,
                 enabled = !BuildConfig.DEBUG, label = { Text(stringResource(R.string.pref_auto_rule_action)) },
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
             )
@@ -49,14 +40,14 @@ fun autoRulesSection(
         Button(onClick = {
             preferencesRepository.addAutoExecuteRule(
                 AutoExecuteRule(
-                    packageName = rulePackage.trim(), titleContains = ruleTitle.trim(),
-                    actionIndex = ruleAction.toIntOrNull()?.coerceAtLeast(0) ?: 0
+                    packageName = config.rulePackage.trim(), titleContains = config.ruleTitle.trim(),
+                    actionIndex = config.ruleAction.toIntOrNull()?.coerceAtLeast(0) ?: 0
                 )
             )
-            onRulePackageChange(""); onRuleTitleChange(""); onRuleActionChange("0")
+            config.onRulePackageChange(""); config.onRuleTitleChange(""); config.onRuleActionChange("0")
         }, enabled = !BuildConfig.DEBUG) { Text(stringResource(R.string.pref_auto_rule_add)) }
 
-        autoExecuteRules.forEach { rule ->
+        config.autoExecuteRules.forEach { rule ->
             Row(
                 verticalAlignment = androidx.compose.ui.Alignment.CenterVertically,
                 modifier = Modifier.fillMaxWidth()
