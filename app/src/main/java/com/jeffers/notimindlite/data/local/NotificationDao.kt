@@ -15,7 +15,12 @@ abstract class NotificationDao :
     NotificationSyncOperations,
     NotificationStorageOperations,
     NotificationInsertOperations,
-    NotificationQueryDao {
+    NotificationEntityQueries,
+    NotificationReadQueries,
+    NotificationStateQueries,
+    NotificationSearchQueries,
+    NotificationReadStateQueries,
+    NotificationCountQueries {
 
     @Transaction
     open suspend fun insert(entity: NotificationEntity): Long {
