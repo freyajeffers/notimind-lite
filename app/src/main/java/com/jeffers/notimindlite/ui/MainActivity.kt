@@ -161,7 +161,7 @@ class MainActivity : ComponentActivity() {
                         }
                     }
 
-                    MainNavigation(notificationDao = dao, authManager = authManager, db = database, preferencesRepository = preferencesRepository)
+                    mainNavigation(notificationDao = dao, authManager = authManager, db = database, preferencesRepository = preferencesRepository)
 
                     if (showPermissionDialog && !hasPermission) {
                         AlertDialog(

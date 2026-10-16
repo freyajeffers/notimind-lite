@@ -8,7 +8,6 @@ import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.navigation.NavGraph.Companion.findStartDestination
@@ -45,13 +44,7 @@ sealed class Screen(val route: String, val title: Int, val icon: @Composable () 
 }
 
 @Composable
-@Suppress(
-    "LongMethod",
-    "FunctionNaming"
-) // MainNavigation composes top bar + bottom bar + nav host in one pass; extracting them
-// into sub-Composables would fragment navigation state ownership. Composable PascalCase is
-// required by the Compose API and detekt's FunctionNaming rule does not exempt it.
-fun MainNavigation(
+fun mainNavigation(
     modifier: Modifier = Modifier,
     notificationDao: NotificationDao,
     authManager: AuthManager,
@@ -60,8 +53,6 @@ fun MainNavigation(
 ) {
     val navController = rememberNavController()
     val items = listOf(Screen.Active, Screen.History, Screen.Settings)
-    val context = androidx.compose.ui.platform.LocalContext.current
-    val preferenceManager = remember { com.jeffers.notimindlite.data.local.PreferenceManager(context) }
 
     Scaffold(
         bottomBar = {
