@@ -99,34 +99,7 @@ fun settingsPreferencesSection(preferencesRepository: PreferencesRepository) {
         Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
             Text(text = stringResource(R.string.pref_data_search_title), style = MaterialTheme.typography.titleMedium)
 
-            Text(stringResource(R.string.pref_display_title), style = MaterialTheme.typography.titleMedium)
-            preferenceSwitchRow(
-                stringResource(R.string.pref_compact_mode_title),
-                stringResource(R.string.pref_compact_mode_summary), compactMode,
-                preferencesRepository::setCompactMode
-            )
-            preferenceSwitchRow(
-                stringResource(R.string.pref_show_app_icons_title),
-                stringResource(R.string.pref_show_app_icons_summary), showAppIcons,
-                preferencesRepository::setShowAppIcons
-            )
-            preferenceSwitchRow(
-                stringResource(R.string.pref_group_by_app_title),
-                stringResource(R.string.pref_group_by_app_summary), groupByApp,
-                preferencesRepository::setGroupByApp
-            )
-            preferenceSelectRow(
-                stringResource(R.string.pref_sort_order_title),
-                sortOrder,
-                sortOptions,
-                preferencesRepository::setSortOrder
-            )
-            preferenceSelectRow(
-                stringResource(R.string.pref_theme_accent_title),
-                themeAccent,
-                themeOptions,
-                preferencesRepository::setThemeAccent
-            )
+            displaySettingsSection(preferencesRepository)
 
             Text(stringResource(R.string.pref_automation_title), style = MaterialTheme.typography.titleMedium)
             preferenceSwitchRow(
@@ -302,7 +275,7 @@ internal fun preferenceSwitchRow(
 }
 
 @Composable
-private fun preferenceSelectRow(
+internal fun preferenceSelectRow(
     title: String,
     selected: String,
     options: List<Pair<String, String>>,
