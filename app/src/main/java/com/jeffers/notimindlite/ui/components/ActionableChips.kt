@@ -76,29 +76,7 @@ private fun actionChip(
     val context = LocalContext.current
     val clipboardManager = LocalClipboardManager.current
 
-    val config = when (entity.type) {
-        ActionableEntityExtractor.EntityType.OTP -> 
-            ActionChipConfig(
-                Icons.Default.ContentCopy,
-                stringResource(R.string.actionable_entity_otp),
-                MaterialTheme.colorScheme.primaryContainer,
-                MaterialTheme.colorScheme.onPrimaryContainer
-            )
-        ActionableEntityExtractor.EntityType.URL ->
-            ActionChipConfig(
-                icon = Icons.AutoMirrored.Filled.OpenInNew,
-                label = stringResource(R.string.actionable_entity_link),
-                containerColor = MaterialTheme.colorScheme.secondaryContainer,
-                onColor = MaterialTheme.colorScheme.onSecondaryContainer
-            )
-        ActionableEntityExtractor.EntityType.LOCATION -> 
-            ActionChipConfig(
-                Icons.Default.Place,
-                stringResource(R.string.actionable_entity_place),
-                MaterialTheme.colorScheme.tertiaryContainer,
-                MaterialTheme.colorScheme.onTertiaryContainer
-            )
-    }
+    val config = actionChipConfig(entity)
 
     val actionDescription = stringResource(
         R.string.actionable_action_suffix,
@@ -142,83 +120,133 @@ private fun actionChip(
             }
         )
 
-        DropdownMenu(
-            expanded = expanded,
-            onDismissRequest = { expanded = false }
-        ) {
-            DropdownMenuItem(
-                text = { Text(menuLabelForCopy(entity)) },
-                onClick = {
-                    clipboardManager.setText(AnnotatedString(entity.value))
-                    expanded = false
-                },
-                leadingIcon = {
-                    Icon(
-                        Icons.Default.ContentCopy,
-                        contentDescription = "Copy",
-                        modifier = Modifier.size(18.dp)
-                    )
-                }
+        actionChipMenu(
+            ActionChipMenuParams(
+                entity = entity,
+                expanded = expanded,
+                context = context,
+                clipboardManager = clipboardManager,
+                shareViaLabel = shareViaLabel,
+                onDismiss = { expanded = false }
             )
-
-            val canOpenExternally = entity.type == ActionableEntityExtractor.EntityType.URL ||
-                entity.type == ActionableEntityExtractor.EntityType.LOCATION
-            if (canOpenExternally) {
-                DropdownMenuItem(
-                    text = {
-                        Text(
-                            if (entity.type == ActionableEntityExtractor.EntityType.URL) {
-                                stringResource(R.string.actionable_open_browser)
-                            } else {
-                                stringResource(R.string.actionable_open_maps)
-                            }
-                        )
-                    },
-                    onClick = {
-                        try {
-                            val uriString = externalUriFor(entity)
-                            val intent = Intent(Intent.ACTION_VIEW, Uri.parse(uriString)).apply {
-                                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                            }
-                            context.startActivity(intent)
-                        } catch (_: ActivityNotFoundException) {
-                            // No compatible external handler is installed.
-                        }
-                        expanded = false
-                    },
-                    leadingIcon = {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.OpenInNew,
-                            contentDescription = "Open",
-                            modifier = Modifier.size(18.dp)
-                        )
-                    }
-                )
-            }
-
-            DropdownMenuItem(
-                text = { Text(stringResource(R.string.actionable_share)) },
-                onClick = {
-                    val shareIntent = Intent(Intent.ACTION_SEND).apply {
-                        type = "text/plain"
-                        putExtra(Intent.EXTRA_TEXT, entity.value)
-                    }
-                    context.startActivity(
-                        Intent.createChooser(shareIntent, shareViaLabel)
-                    )
-                    expanded = false
-                },
-                leadingIcon = {
-                    Icon(
-                        Icons.Default.Share,
-                        contentDescription = stringResource(R.string.actionable_share),
-                        modifier = Modifier.size(18.dp)
-                    )
-                }
-            )
-        }
+        )
     }
 }
+
+@Composable
+private fun actionChipConfig(
+    entity: ActionableEntityExtractor.ActionableEntity
+): ActionChipConfig = when (entity.type) {
+    ActionableEntityExtractor.EntityType.OTP -> ActionChipConfig(
+        Icons.Default.ContentCopy,
+        stringResource(R.string.actionable_entity_otp),
+        MaterialTheme.colorScheme.primaryContainer,
+        MaterialTheme.colorScheme.onPrimaryContainer
+    )
+    ActionableEntityExtractor.EntityType.URL -> ActionChipConfig(
+        icon = Icons.AutoMirrored.Filled.OpenInNew,
+        label = stringResource(R.string.actionable_entity_link),
+        containerColor = MaterialTheme.colorScheme.secondaryContainer,
+        onColor = MaterialTheme.colorScheme.onSecondaryContainer
+    )
+    ActionableEntityExtractor.EntityType.LOCATION -> ActionChipConfig(
+        Icons.Default.Place,
+        stringResource(R.string.actionable_entity_place),
+        MaterialTheme.colorScheme.tertiaryContainer,
+        MaterialTheme.colorScheme.onTertiaryContainer
+    )
+}
+
+@Composable
+private fun actionChipMenu(params: ActionChipMenuParams) {
+    val entity = params.entity
+    val expanded = params.expanded
+    val context = params.context
+    val clipboardManager = params.clipboardManager
+    val shareViaLabel = params.shareViaLabel
+    val onDismiss = params.onDismiss
+    DropdownMenu(expanded = expanded, onDismissRequest = onDismiss) {
+        DropdownMenuItem(
+            text = { Text(menuLabelForCopy(entity)) },
+            onClick = {
+                clipboardManager.setText(AnnotatedString(entity.value))
+                onDismiss()
+            },
+            leadingIcon = {
+                Icon(Icons.Default.ContentCopy, contentDescription = "Copy", modifier = Modifier.size(18.dp))
+            }
+        )
+        val canOpenExternally = entity.type == ActionableEntityExtractor.EntityType.URL ||
+            entity.type == ActionableEntityExtractor.EntityType.LOCATION
+        if (canOpenExternally) {
+            externalActionMenuItem(entity, context, onDismiss)
+        }
+        DropdownMenuItem(
+            text = { Text(stringResource(R.string.actionable_share)) },
+            onClick = {
+                val shareIntent = Intent(Intent.ACTION_SEND).apply {
+                    type = "text/plain"
+                    putExtra(Intent.EXTRA_TEXT, entity.value)
+                }
+                context.startActivity(Intent.createChooser(shareIntent, shareViaLabel))
+                onDismiss()
+            },
+            leadingIcon = {
+                Icon(
+                    Icons.Default.Share,
+                    contentDescription = stringResource(R.string.actionable_share),
+                    modifier = Modifier.size(18.dp)
+                )
+            }
+        )
+    }
+}
+
+@Composable
+private fun externalActionMenuItem(
+    entity: ActionableEntityExtractor.ActionableEntity,
+    context: android.content.Context,
+    onDismiss: () -> Unit
+) {
+    DropdownMenuItem(
+        text = {
+            Text(
+                if (entity.type == ActionableEntityExtractor.EntityType.URL) {
+                    stringResource(R.string.actionable_open_browser)
+                } else {
+                    stringResource(R.string.actionable_open_maps)
+                }
+            )
+        },
+        onClick = {
+            try {
+                val intent = Intent(Intent.ACTION_VIEW, Uri.parse(externalUriFor(entity))).apply {
+                    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                }
+                context.startActivity(intent)
+            } catch (_: ActivityNotFoundException) {
+                // No compatible external handler is installed.
+            }
+            onDismiss()
+        },
+        leadingIcon = {
+            Icon(
+                Icons.AutoMirrored.Filled.OpenInNew,
+                contentDescription = "Open",
+                modifier = Modifier.size(18.dp)
+            )
+        }
+    )
+}
+
+private data class ActionChipMenuParams(
+    val entity: ActionableEntityExtractor.ActionableEntity,
+    val expanded: Boolean,
+    val context: android.content.Context,
+    val clipboardManager: androidx.compose.ui.platform.ClipboardManager,
+    val shareViaLabel: String,
+    val onDismiss: () -> Unit
+)
 
 data class ActionChipConfig(
     val icon: ImageVector,
