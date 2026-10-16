@@ -17,7 +17,8 @@ data class AutoExecuteRule(
 )
 
 /** User-facing runtime options persisted in the existing direct-boot-safe preference store. */
-class PreferencesRepository(context: Context) {
+class PreferencesRepository(context: Context) :
+    PreferencesPerformanceOperations by PreferencesPerformanceOperationsImpl(context) {
     private val appContext = context.applicationContext
     private val deContext = appContext.createDeviceProtectedStorageContext()
     private val profileStore = deContext.getSharedPreferences(PROFILE_STORE, Context.MODE_PRIVATE)
@@ -636,12 +637,6 @@ class PreferencesRepository(context: Context) {
         JSONObject().put("id", rule.id).put("packageName", rule.packageName).put("titleContains", rule.titleContains).put("actionIndex", rule.actionIndex).put("enabled", rule.enabled)
     }).toString()
 
-    fun getThreadPoolSize() = backing.getInt(KEY_THREAD_POOL_SIZE, DEFAULT_THREAD_POOL_SIZE)
-        .coerceIn(MIN_THREAD_POOL_SIZE, MAX_THREAD_POOL_SIZE)
-
-    fun setThreadPoolSize(value: Int) {
-        backing.edit().putInt(KEY_THREAD_POOL_SIZE, value.coerceIn(MIN_THREAD_POOL_SIZE, MAX_THREAD_POOL_SIZE)).apply()
-    }
 
     // Shared UI setters
     fun setSharedSearchQuery(q: String) { backing.edit().putString("ui_shared_search_query", q).apply(); _sharedSearchQuery.value = q }
@@ -660,43 +655,9 @@ class PreferencesRepository(context: Context) {
         backing.edit().putString("ui_recent_searches", JSONArray(updated).toString()).apply()
     }
 
-    fun getEmbeddingRateMs() = backing.getLong(KEY_EMBEDDING_RATE_MS, DEFAULT_EMBEDDING_RATE_MS).coerceAtLeast(0L)
-
-    fun setEmbeddingRateMs(value: Long) {
-        backing.edit().putLong(KEY_EMBEDDING_RATE_MS, value.coerceAtLeast(0L)).apply()
-    }
-
-    fun getDbCompactionDays() = backing.getInt(KEY_DB_COMPACTION_DAYS, DEFAULT_DB_COMPACTION_DAYS).coerceAtLeast(1)
-
-    fun setDbCompactionDays(value: Int) {
-        backing.edit().putInt(KEY_DB_COMPACTION_DAYS, value.coerceAtLeast(1)).apply()
-    }
-
-    fun getReindexDays() = backing.getInt(KEY_REINDEX_DAYS, DEFAULT_REINDEX_DAYS).coerceAtLeast(1)
-
-    fun setReindexDays(value: Int) {
-        backing.edit().putInt(KEY_REINDEX_DAYS, value.coerceAtLeast(1)).apply()
-    }
-
-    fun isEmbeddingOffloadEnabled() = backing.getBoolean(KEY_EMBEDDING_OFFLOAD, DEFAULT_EMBEDDING_OFFLOAD)
-
-    fun setEmbeddingOffloadEnabled(value: Boolean) {
-        backing.edit().putBoolean(KEY_EMBEDDING_OFFLOAD, value).apply()
-    }
 
     companion object {
-        const val DEFAULT_THREAD_POOL_SIZE = 2
-        const val DEFAULT_EMBEDDING_RATE_MS = 0L
-        const val DEFAULT_DB_COMPACTION_DAYS = 7
-        const val DEFAULT_REINDEX_DAYS = 30
-        const val DEFAULT_EMBEDDING_OFFLOAD = true
-        private const val MIN_THREAD_POOL_SIZE = 1
-        private const val MAX_THREAD_POOL_SIZE = 32
-        private const val KEY_THREAD_POOL_SIZE = "performance_thread_pool_size"
-        private const val KEY_EMBEDDING_RATE_MS = "performance_embedding_rate_ms"
-        private const val KEY_DB_COMPACTION_DAYS = "performance_db_compaction_days"
-        private const val KEY_REINDEX_DAYS = "performance_reindex_days"
-        private const val KEY_EMBEDDING_OFFLOAD = "performance_embedding_offload"
+
         private const val DEFAULT_RETENTION_DAYS = 30
         const val RETAIN_ALL_DAYS = 3650
         private const val KEY_ENABLE_SYNC = "config_enable_sync"
