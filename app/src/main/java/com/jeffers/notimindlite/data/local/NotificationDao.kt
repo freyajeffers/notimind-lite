@@ -20,7 +20,7 @@ private const val LOST_NOTIFICATIONS_QUERY =
         "ORDER BY COALESCE(dismissTime, postTime) DESC"
 
 @Dao
-abstract class NotificationDao {
+abstract class NotificationDao : NotificationSyncOperations {
 
     @Insert(onConflict = OnConflictStrategy.IGNORE)
     abstract suspend fun insertAppInternal(app: AppEntity): Long
@@ -336,19 +336,6 @@ abstract class NotificationDao {
     @Query("DELETE FROM notifications WHERE isDismissed = 1 AND postTime < :cutoffTimeMs AND isPinned = 0")
     abstract suspend fun pruneOldLogs(cutoffTimeMs: Long)
 
-    @Query("SELECT * FROM notifications WHERE syncStatus != 'SYNCED'")
-    abstract suspend fun getUnsyncedNotifications(): List<NotificationEntity>
-
-    @Query("UPDATE notifications SET syncStatus = :status, lastSyncedAt = :syncedAt WHERE key = :key")
-    abstract suspend fun updateSyncStatus(key: String, status: SyncStatus, syncedAt: Long = System.currentTimeMillis())
-
-    @Query("UPDATE notifications SET syncStatus = :status, lastSyncedAt = :syncedAt WHERE key IN (:keys)")
-    abstract suspend fun updateSyncStatusBatch(
-        keys: List<String>,
-        status: SyncStatus,
-        syncedAt: Long = System.currentTimeMillis()
-    )
-
     @Transaction
     open suspend fun updateEmbeddingsBatch(items: List<Pair<Long, ByteArray>>) {
         for ((id, embedding) in items) {
@@ -356,11 +343,6 @@ abstract class NotificationDao {
         }
     }
 
-    @Query("UPDATE notifications SET syncStatus = 'PENDING_DELETE' WHERE key = :key")
-    abstract suspend fun markPendingDelete(key: String)
-
-    @Query("DELETE FROM notifications WHERE syncStatus = 'PENDING_DELETE'")
-    abstract suspend fun purgePendingDeletes()
 
     @Query("DELETE FROM notification_groups")
     abstract suspend fun clearGroups()
