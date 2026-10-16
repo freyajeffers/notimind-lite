@@ -695,7 +695,7 @@ fun activeNotificationsScreen(dao: NotificationDao, authManager: AuthManager, db
                             if (group.items.size == 1) {
                                 val item = group.items[0]
                                 val cardExpanded = expandedCards.contains(item.key)
-                                LogNotificationCard(
+                                logNotificationCard(
                                     item = item,
                                     dateTimeFormatter = dateTimeFormatter,
                                     dao = dao,
@@ -723,7 +723,7 @@ fun activeNotificationsScreen(dao: NotificationDao, authManager: AuthManager, db
                                     },
                                     renderChildCard = { childItem ->
                                         val cardExpanded = expandedCards.contains(childItem.key)
-                                        LogNotificationCard(
+                                        logNotificationCard(
                                             item = childItem,
                                             dateTimeFormatter = dateTimeFormatter,
                                             dao = dao,
@@ -766,15 +766,7 @@ fun activeNotificationsScreen(dao: NotificationDao, authManager: AuthManager, db
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-@Suppress(
-    "CyclomaticComplexMethod",
-    "LongMethod",
-    "FunctionNaming"
-) // LogNotificationCard renders the full History row (header + chips + action menu + dismiss +
-// actions count + expanded panel) in one Composable; splitting it into sub-Composables would
-// require lifting expanded state out of the row, breaking local `remember` reuse. Composable
-// PascalCase is required by the Compose API and detekt's FunctionNaming rule does not exempt it.
-fun LogNotificationCard(
+fun logNotificationCard(
     item: NotificationEntity,
     dateTimeFormatter: DateTimeFormatter,
     dao: NotificationDao,
