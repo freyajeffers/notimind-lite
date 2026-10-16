@@ -13,7 +13,6 @@ import java.util.*
  */
 object SnoozeReminderScheduler {
     private const val TAG = "SnoozeScheduler"
-    private const val CHANNEL_ID = "snooze_reminders"
 
     /**
      * Schedules a reminder notification for a specific notification item.
