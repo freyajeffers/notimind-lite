@@ -78,11 +78,25 @@ object DynamicClusterManager {
             )
         ),
         "security" to mapOf(
-            "authentication" to listOf("code", "otp", "password", "2fa", "mfa", "verify", "verification", "login", "auth", "authentication", "pin", "token", "passcode", "biometric", "fingerprint", "key", "confirm", "session", "credential", "identity", "reset", "duo", "authenticator", "yubikey", "temporary code", "verification code", "one-time", "passkey", "authenticating"),
-            "protection" to listOf("security", "alert", "suspicious", "unauthorized", "breach", "secure", "shield", "protect", "antivirus", "malware", "firewall", "vpn", "sign in", "compromised", "detected", "unrecognized device", "security key", "vault", "encryption", "trusted device")
+            "authentication" to listOf(
+                "code", "otp", "password", "2fa", "mfa", "verify", "verification", "login",
+                "auth", "authentication", "pin", "token", "passcode", "biometric", "fingerprint",
+                "key", "confirm", "session", "credential", "identity", "reset", "duo",
+                "authenticator", "yubikey", "temporary code", "verification code", "one-time",
+                "passkey", "authenticating"
+            ),
+            "protection" to listOf(
+                "security", "alert", "suspicious", "unauthorized", "breach", "secure", "shield",
+                "protect", "antivirus", "malware", "firewall", "vpn", "sign in", "compromised",
+                "detected", "unrecognized device", "security key", "vault", "encryption", "trusted device"
+            )
         ),
         "social" to mapOf(
-            "messaging" to listOf("chat", "message", "dm", "text", "conversation", "talk", "sms", "mms", "whatsapp", "telegram", "signal", "messenger", "discord", "slack", "direct message", "ping", "huddle", "voice note", "inbox message", "sent a photo"),
+            "messaging" to listOf(
+                "chat", "message", "dm", "text", "conversation", "talk", "sms", "mms",
+                "whatsapp", "telegram", "signal", "messenger", "discord", "slack", "direct message",
+                "ping", "huddle", "voice note", "inbox message", "sent a photo"
+            ),
             "networking" to listOf(
                 "social", "post", "friend", "reply", "typing", "instagram", "facebook",
                 "twitter", "threads", "tiktok", "snapchat", "reddit", "linkedin",
@@ -97,8 +111,16 @@ object DynamicClusterManager {
                 "ride", "trip", "uber", "lyft", "train", "bus", "ticket", "cab",
                 "driver", "amtrak", "subway", "metro", "rental", "hertz", "enterprise"
             ),
-            "aviation" to listOf("travel", "flight", "airline", "gate", "boarding", "terminal", "airport", "checkin", "delay", "departure", "arrival", "luggage", "delta", "united", "american airlines", "southwest", "boarding pass", "tsa", "baggage claim"),
-            "accommodation" to listOf("hotel", "booking", "reservation", "itinerary", "airbnb", "expedia", "hostel", "destination", "layover", "seat", "route", "mileage", "frequent flyer", "kayak", "priceline", "hopper", "cruise")
+            "aviation" to listOf(
+                "travel", "flight", "airline", "gate", "boarding", "terminal", "airport", "checkin",
+                "delay", "departure", "arrival", "luggage", "delta", "united", "american airlines",
+                "southwest", "boarding pass", "tsa", "baggage claim"
+            ),
+            "accommodation" to listOf(
+                "hotel", "booking", "reservation", "itinerary", "airbnb", "expedia", "hostel",
+                "destination", "layover", "seat", "route", "mileage", "frequent flyer", "kayak",
+                "priceline", "hopper", "cruise"
+            )
         ),
         "shopping" to mapOf(
             "retail" to listOf("shopping", "deal", "discount", "sale", "coupon", "promo", "cart", "checkout", "store", "purchase", "bought", "item", "price", "offer", "clearance", "bogo", "ebay", "walmart", "target", "etsy", "shop", "retail", "receipt", "wishlist", "buy", "merchant", "savings", "reward", "points", "cashback", "mall", "black friday", "cyber monday", "voucher", "haul", "outlet", "bestbuy", "costco", "aliexpress", "shein", "temu", "order placed", "promo code", "rebate", "gift card", "price drop", "flash sale", "back in stock")
