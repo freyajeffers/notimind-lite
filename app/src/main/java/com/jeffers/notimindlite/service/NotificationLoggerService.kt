@@ -506,7 +506,6 @@ class NotificationLoggerService : NotificationListenerService() {
         NotificationLauncher.unregisterPendingIntent(key)
         recentLogs.remove(key)
         recentContents.remove(key)
-        val dismissTime = System.currentTimeMillis()
         val effectiveReason = reason ?: 1
 
         scope.launch {
@@ -517,8 +516,7 @@ class NotificationLoggerService : NotificationListenerService() {
                     packageName = sbn.packageName,
                     title = title,
                     content = content,
-                    reason = effectiveReason,
-                    dismissTime = dismissTime
+                    reason = effectiveReason
                 )
             } catch (e: IllegalStateException) {
                 Log.e(TAG, "Invalid database state marking notification dismissed for $key", e)

@@ -312,7 +312,8 @@ abstract class NotificationDao {
 
     @Query("""
         UPDATE notifications 
-        SET isDismissed = 1, dismissReason = :reason, dismissTime = :dismissTime 
+        SET isDismissed = 1, dismissReason = :reason,
+            dismissTime = CAST(strftime('%s', 'now') AS INTEGER) * 1000
         WHERE key = :key 
            OR (
                packageName = :packageName 
@@ -327,8 +328,7 @@ abstract class NotificationDao {
         packageName: String,
         title: String,
         content: String,
-        reason: Int,
-        dismissTime: Long = System.currentTimeMillis()
+        reason: Int
     )
 
     @Query("UPDATE notifications SET isDismissed = 1, dismissTime = :dismissTime WHERE key = :key")

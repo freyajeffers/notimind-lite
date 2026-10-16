@@ -171,8 +171,7 @@ class NotificationDaoFeaturesTest {
             packageName = "com.telegram.messenger",
             title = "New Message",
             content = "Check this out",
-            reason = 1,
-            dismissTime = 3500L
+            reason = 1
         )
 
         active = dao.getActiveNotificationsFlow().first()
