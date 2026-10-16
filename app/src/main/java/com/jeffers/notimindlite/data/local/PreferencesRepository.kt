@@ -194,9 +194,19 @@ class PreferencesRepository(context: Context) {
     val useSupabaseSync: StateFlow<Boolean> = _useSupabaseSync
 
     // Shared UI search & filter state across Active and History screens
-    private val _sharedSearchQuery = MutableStateFlow(backing.getString("ui_shared_search_query", "") ?: "")
-    private val _sharedSelectedPackages = MutableStateFlow<List<String>?>(backing.getString("ui_shared_selected_packages", null)?.split(',')?.filter { it.isNotBlank() }?.ifEmpty { null })
-    private val _sharedSelectedReason = MutableStateFlow(backing.getInt("ui_shared_selected_reason", -1).let { if (it >= 0) it else null })
+    private val _sharedSearchQuery = MutableStateFlow(
+        backing.getString("ui_shared_search_query", "") ?: ""
+    )
+    private val _sharedSelectedPackages = MutableStateFlow<List<String>?>(
+        backing.getString("ui_shared_selected_packages", null)
+            ?.split(',')
+            ?.filter { it.isNotBlank() }
+            ?.ifEmpty { null }
+    )
+    private val _sharedSelectedReason = MutableStateFlow(
+        backing.getInt("ui_shared_selected_reason", -1)
+            .let { if (it >= 0) it else null }
+    )
     private val _recentSearches = MutableStateFlow(backing.getString("ui_recent_searches", "")?.let { s ->
         runCatching { JSONArray(s) }.getOrNull()?.let { arr ->
             (0 until arr.length()).map { arr.getString(it) }
@@ -208,9 +218,15 @@ class PreferencesRepository(context: Context) {
     val sharedSelectedReason: StateFlow<Int?> = _sharedSelectedReason
     val recentSearches: StateFlow<List<String>> = _recentSearches
 
-    private val _autoActOnNotification = MutableStateFlow(backing.getBoolean(KEY_AUTO_ACT_ON_NOTIFICATION, false))
-    private val _defaultReplyMethod = MutableStateFlow(backing.getString(KEY_DEFAULT_REPLY_METHOD, "inline") ?: "inline")
-    private val _longPressAction = MutableStateFlow(backing.getString(KEY_LONG_PRESS_ACTION, "open") ?: "open")
+    private val _autoActOnNotification = MutableStateFlow(
+        backing.getBoolean(KEY_AUTO_ACT_ON_NOTIFICATION, false)
+    )
+    private val _defaultReplyMethod = MutableStateFlow(
+        backing.getString(KEY_DEFAULT_REPLY_METHOD, "inline") ?: "inline"
+    )
+    private val _longPressAction = MutableStateFlow(
+        backing.getString(KEY_LONG_PRESS_ACTION, "open") ?: "open"
+    )
     private val _autoExecuteRules = MutableStateFlow(readAutoExecuteRules())
     val autoActOnNotification: StateFlow<Boolean> = _autoActOnNotification
     val defaultReplyMethod: StateFlow<String> = _defaultReplyMethod
