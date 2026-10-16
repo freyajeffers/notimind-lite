@@ -518,7 +518,8 @@ fun activeNotificationsScreen(dao: NotificationDao, preferences: PreferencesRepo
                         NotificationSection.PINNED -> pinnedNotifs
                         NotificationSection.ACTIVE -> activeNotifs
                         NotificationSection.FILTERED -> filteredNotifs
-                        NotificationSection.DISMISSED -> recentlyDismissed.sortedByDescending { it.dismissTime ?: it.postTime }
+                        NotificationSection.DISMISSED -> recentlyDismissed
+                            .sortedByDescending { it.dismissTime ?: it.postTime }
                         NotificationSection.LOST -> lostNotifs
                     }.distinctBy { "${it.packageName}_${it.title}_${it.content}" }
                     val filteredList = if (!selectedPackages.isNullOrEmpty()) {
