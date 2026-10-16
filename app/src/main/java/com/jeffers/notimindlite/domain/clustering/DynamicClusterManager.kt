@@ -288,7 +288,13 @@ object DynamicClusterManager {
             )
         ),
         "career" to mapOf(
-            "employment" to listOf("job", "career", "recruiter", "interview", "hiring", "resume", "cv", "application", "applied", "position", "salary", "offer", "linkedin", "indeed", "glassdoor", "monster", "ziprecruiter", "employment", "employer", "candidate", "promotion", "workplace", "hr", "onboarding", "headhunter", "job alert", "requisition", "cover letter", "internship", "benefits")
+            "employment" to listOf(
+                "job", "career", "recruiter", "interview", "hiring", "resume", "cv", "application",
+                "applied", "position", "salary", "offer", "linkedin", "indeed", "glassdoor", "monster",
+                "ziprecruiter", "employment", "employer", "candidate", "promotion", "workplace", "hr",
+                "onboarding", "headhunter", "job alert", "requisition", "cover letter", "internship",
+                "benefits"
+            )
         )
     )
 
