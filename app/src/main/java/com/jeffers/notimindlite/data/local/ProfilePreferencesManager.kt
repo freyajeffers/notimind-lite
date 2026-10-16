@@ -29,11 +29,11 @@ class ProfilePreferencesManager(context: Context) {
     }
 
     fun deleteProfile(id: String): Boolean {
-        if (id == DEFAULT_PROFILE_ID || id == activeId) return false
         val updated = _profiles.value.filterNot { it.id == id }
-        if (updated.size == _profiles.value.size) return false
-        writeProfiles(updated)
-        return true
+        val canDelete = id != DEFAULT_PROFILE_ID && id != activeId
+        val shouldDelete = canDelete && updated.size != _profiles.value.size
+        if (shouldDelete) writeProfiles(updated)
+        return shouldDelete
     }
 
     fun setActiveProfile(id: String): Boolean {
