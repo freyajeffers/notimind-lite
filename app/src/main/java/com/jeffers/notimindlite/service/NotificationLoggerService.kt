@@ -46,6 +46,7 @@ class NotificationLoggerService : NotificationListenerService() {
     private val serviceJob = SupervisorJob()
     private val scope = CoroutineScope(Dispatchers.IO + serviceJob)
     private val actionExecutor by lazy { NotificationActionExecutor(PreferencesRepository(applicationContext)) }
+    private val embeddingIndexer by lazy { com.jeffers.notimindlite.util.NotificationEmbeddingIndexer() }
 
     companion object {
         private const val TAG = "NotificationLoggerSrv"
@@ -175,7 +176,7 @@ class NotificationLoggerService : NotificationListenerService() {
                     // backfill) wrote embeddings, leaving every post-migration
                     // notification unrankable. Pure-Kotlin compute, sub-ms per
                     // embedding, LRU-cached (256 entries), safe on the IO scope.
-                    indexEmbeddingsForBatch(dao, ids, entities)
+                    embeddingIndexer.indexBatch(dao, ids, entities)
                     Log.d(TAG, "onListenerConnected: successfully batch inserted ${entities.size} active notifications")
                 }
             } catch (e: IllegalStateException) {
@@ -236,7 +237,7 @@ class NotificationLoggerService : NotificationListenerService() {
                     dao.insert(finalEntity)
                     // F-G fix [2026-09-02 audit]: populate embedding for the single
                     // posted notification so semantic search can rank it.
-                    indexEmbeddingForSingle(dao, finalEntity)
+                    embeddingIndexer.indexSingle(dao, finalEntity)
                     Log.d(TAG, "Inserted: ${finalEntity.title} (${finalEntity.appName})")
                 } catch (e: IllegalStateException) {
                     Log.e(TAG, "Invalid database state inserting ${entity.title}", e)
@@ -380,61 +381,4 @@ class NotificationLoggerService : NotificationListenerService() {
         }
     }
 
-    /**
-     * F-G fix [2026-09-02 audit]: helper to populate the `embedding` BLOB column on a
-     * single inserted row. Background context — pre-F-G only DatabaseMigrator wrote
-     * embeddings (one-shot v18 backfill), so every post-migration notification had a
-     * NULL embedding and was invisible to the semantic leg of HybridSearchEngine.
-     */
-    private suspend fun indexEmbeddingForSingle(dao: NotificationDao, entity: NotificationEntity) {
-        try {
-            val text = buildEmbeddingText(entity)
-            val embedding = VectorEmbeddingHelper.computeEmbedding(text)
-            // Room can't bind a FloatArray directly as a query parameter; it
-            // expands each float into its own ? placeholder. Convert via the
-            // same TypeConverter that the entity's `embedding` column uses,
-            // so writes and reads round-trip through the same byte order.
-            dao.updateEmbedding(entity.id, Converters().fromFloatArray(embedding) ?: return)
-        } catch (e: IllegalStateException) {
-            Log.w(TAG, "Embedding compute skipped for ${entity.key}: invalid state", e)
-        } catch (e: android.database.sqlite.SQLiteException) {
-            Log.w(TAG, "Embedding write skipped for ${entity.key}: database error", e)
-        }
-    }
-
-    /**
-     * F-G fix [2026-09-02 audit]: batch variant for the onListenerConnected rehydrate.
-     * Calls dao.updateEmbedding sequentially; could be replaced with
-     * updateEmbeddingsBatch for large batches, but per the AGENTS.md "Additive
-     * Preference" principle the safer choice is to reuse the existing sequential path
-     * that DatabaseMigrator proves out at v18.
-     */
-    private suspend fun indexEmbeddingsForBatch(
-        dao: NotificationDao,
-        ids: List<Long>,
-        entities: List<NotificationEntity>
-    ) {
-        if (ids.size != entities.size) {
-            Log.w(TAG, "Batch embedding skipped: id/entity size mismatch (${ids.size} vs ${entities.size})")
-            return
-        }
-        for (i in entities.indices) {
-            indexEmbeddingForSingle(dao, entities[i].copy(id = ids[i]))
-        }
-    }
-
-    /**
-     * F-G fix [2026-09-02 audit]: match the text-shape DatabaseMigrator uses so the
-     * on-capture embeddings live in the same feature space as the backfilled ones.
-     */
-    private fun buildEmbeddingText(entity: NotificationEntity): String =
-        buildString {
-            append(entity.appName).append(' ')
-            append(entity.title).append(' ')
-            append(entity.content).append(' ')
-            if (!entity.subText.isNullOrEmpty()) append(entity.subText).append(' ')
-            if (!entity.bigText.isNullOrEmpty()) append(entity.bigText).append(' ')
-            if (!entity.category.isNullOrEmpty()) append(entity.category).append(' ')
-            append(entity.packageName)
-        }
 }
