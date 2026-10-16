@@ -1,6 +1,11 @@
 package com.jeffers.notimindlite.sanitization
 
 object PiiRedactionEngine {
+    private const val MIN_CARD_DIGITS = 12
+    private const val MAX_CARD_DIGITS = 19
+    private const val LUHN_BASE = 10
+    private const val LUHN_DOUBLE = 2
+    private const val LUHN_REDUCTION = 9
     // Deterministic, fast compiled patterns.
     private val otpRegex = Regex("\\b\\d{4,6}\\b")
     private val emailRegex = Regex("[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}")
@@ -50,7 +55,7 @@ object PiiRedactionEngine {
         // Emails
         out = out.replace(emailRegex, EMAIL_REPLACEMENT)
 
-        // Post-process placeholders: collapse adjacent placeholder artifacts like "[REDACTED-PHONE]-[REDACTED-OTP]" -> "[REDACTED-PHONE]"
+        // Collapse adjacent placeholder artifacts into a single phone placeholder.
         out = out.replace(Regex("""\[REDACTED-PHONE\][\s\p{Punct}]*\[REDACTED-OTP\]"""), PHONE_REPLACEMENT)
 
         // Ensure CSV-safe output: remove newlines and double embedded quotes
@@ -64,18 +69,18 @@ object PiiRedactionEngine {
 
     private fun isValidLuhn(digitsOnly: String): Boolean {
         val s = digitsOnly.filter { it.isDigit() }
-        if (s.length < 12 || s.length > 19) return false
+        if (s.length < MIN_CARD_DIGITS || s.length > MAX_CARD_DIGITS) return false
         var sum = 0
         var alternate = false
         for (i in s.length - 1 downTo 0) {
             var n = s[i] - '0'
             if (alternate) {
-                n *= 2
-                if (n > 9) n -= 9
+                n *= LUHN_DOUBLE
+                if (n > LUHN_BASE - 1) n -= LUHN_REDUCTION
             }
             sum += n
             alternate = !alternate
         }
-        return sum % 10 == 0
+        return sum % LUHN_BASE == 0
     }
 }
