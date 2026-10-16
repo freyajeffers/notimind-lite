@@ -18,43 +18,43 @@ private const val LOST_NOTIFICATIONS_QUERY =
 @Dao
 interface NotificationQueryDao {
     @Query("SELECT * FROM notifications ORDER BY postTime DESC")
-    abstract fun getAllNotifications(): Flow<List<NotificationEntity>>
+    fun getAllNotifications(): Flow<List<NotificationEntity>>
 
     @Query("SELECT * FROM notifications ORDER BY postTime DESC")
-    abstract fun getAllNotificationsFlow(): Flow<List<NotificationEntity>>
+    fun getAllNotificationsFlow(): Flow<List<NotificationEntity>>
 
     @Query("SELECT * FROM notifications ORDER BY postTime DESC")
-    abstract suspend fun getAllNotificationsList(): List<NotificationEntity>
+    suspend fun getAllNotificationsList(): List<NotificationEntity>
 
     @Query("SELECT * FROM notifications ORDER BY postTime DESC LIMIT :limit")
-    abstract suspend fun getRecentNotificationsList(limit: Int): List<NotificationEntity>
+    suspend fun getRecentNotificationsList(limit: Int): List<NotificationEntity>
 
     @Query("SELECT * FROM notifications ORDER BY postTime DESC")
-    abstract fun getAllNotificationsSortedByReceived(): Flow<List<NotificationEntity>>
+    fun getAllNotificationsSortedByReceived(): Flow<List<NotificationEntity>>
 
     @Query("SELECT * FROM notifications ORDER BY COALESCE(dismissTime, postTime) DESC")
-    abstract fun getAllNotificationsSortedByDismissed(): Flow<List<NotificationEntity>>
+    fun getAllNotificationsSortedByDismissed(): Flow<List<NotificationEntity>>
 
     @Query("SELECT * FROM notifications WHERE isDismissed = 1 ORDER BY COALESCE(dismissTime, postTime) DESC")
-    abstract fun getDismissedNotificationsSortedByDismissed(): Flow<List<NotificationEntity>>
+    fun getDismissedNotificationsSortedByDismissed(): Flow<List<NotificationEntity>>
 
     @Query("SELECT * FROM notifications WHERE isDismissed = 1 ORDER BY postTime DESC")
-    abstract fun getDismissedNotificationsSortedByReceived(): Flow<List<NotificationEntity>>
+    fun getDismissedNotificationsSortedByReceived(): Flow<List<NotificationEntity>>
 
     @Query("SELECT * FROM notifications WHERE isDismissed = 0 ORDER BY isOngoing DESC, postTime DESC")
-    abstract fun getActiveNotifications(): Flow<List<NotificationEntity>>
+    fun getActiveNotifications(): Flow<List<NotificationEntity>>
 
     @Query("SELECT * FROM notifications WHERE isDismissed = 0 ORDER BY isOngoing DESC, postTime DESC")
-    abstract fun getActiveNotificationsFlow(): Flow<List<NotificationEntity>>
+    fun getActiveNotificationsFlow(): Flow<List<NotificationEntity>>
 
     @Query("SELECT * FROM notifications WHERE isDismissed = 0 ORDER BY isOngoing DESC, postTime DESC")
-    abstract suspend fun getActiveNotificationsList(): List<NotificationEntity>
+    suspend fun getActiveNotificationsList(): List<NotificationEntity>
 
     @Query(RECENT_DISMISSED_QUERY)
-    abstract fun getRecentlyDismissedFlow(): Flow<List<NotificationEntity>>
+    fun getRecentlyDismissedFlow(): Flow<List<NotificationEntity>>
 
     @Query(LOST_NOTIFICATIONS_QUERY)
-    abstract fun getLostNotificationsFlow(): Flow<List<NotificationEntity>>
+    fun getLostNotificationsFlow(): Flow<List<NotificationEntity>>
 
     @Query("""
         SELECT * FROM notifications 
@@ -63,25 +63,25 @@ interface NotificationQueryDao {
            OR priority < 0)
         ORDER BY postTime DESC
     """)
-    abstract fun getFilteredNotificationsFlow(): Flow<List<NotificationEntity>>
+    fun getFilteredNotificationsFlow(): Flow<List<NotificationEntity>>
 
     @Query("SELECT * FROM notifications WHERE key = :key LIMIT 1")
-    abstract suspend fun getNotificationByKey(key: String): NotificationEntity?
+    suspend fun getNotificationByKey(key: String): NotificationEntity?
 
     @Query("SELECT * FROM notifications WHERE id = :id LIMIT 1")
-    abstract suspend fun getNotificationById(id: Long): NotificationEntity?
+    suspend fun getNotificationById(id: Long): NotificationEntity?
 
     @Query("SELECT * FROM notifications ORDER BY postTime DESC")
-    abstract suspend fun getAllNotificationsSync(): List<NotificationEntity>
+    suspend fun getAllNotificationsSync(): List<NotificationEntity>
 
     @Query("SELECT * FROM notifications WHERE embedding IS NULL")
-    abstract suspend fun getNotificationsNeedingVectorization(): List<NotificationEntity>
+    suspend fun getNotificationsNeedingVectorization(): List<NotificationEntity>
 
     @Query("UPDATE notifications SET embedding = :embedding WHERE id = :id")
-    abstract suspend fun updateEmbedding(id: Long, embedding: ByteArray)
+    suspend fun updateEmbedding(id: Long, embedding: ByteArray)
 
     @Query("SELECT * FROM notifications WHERE isPinned = 1 ORDER BY postTime DESC")
-    abstract fun getPinnedNotificationsFlow(): Flow<List<NotificationEntity>>
+    fun getPinnedNotificationsFlow(): Flow<List<NotificationEntity>>
 
     // FTS
     @Query("""
@@ -90,7 +90,7 @@ interface NotificationQueryDao {
         WHERE notifications_fts MATCH :searchQuery
         ORDER BY postTime DESC
     """)
-    abstract fun searchNotificationsFts(searchQuery: String): Flow<List<NotificationEntity>>
+    fun searchNotificationsFts(searchQuery: String): Flow<List<NotificationEntity>>
 
     @Query("""
         SELECT notifications.* FROM notifications
@@ -98,19 +98,19 @@ interface NotificationQueryDao {
         WHERE notifications_fts MATCH :searchQuery
         ORDER BY postTime DESC
     """)
-    abstract suspend fun searchNotificationsFtsSync(searchQuery: String): List<NotificationEntity>
+    suspend fun searchNotificationsFtsSync(searchQuery: String): List<NotificationEntity>
 
     @RawQuery(observedEntities = [NotificationEntity::class])
-    abstract fun searchNotificationsRaw(query: SupportSQLiteQuery): Flow<List<NotificationEntity>>
+    fun searchNotificationsRaw(query: SupportSQLiteQuery): Flow<List<NotificationEntity>>
 
     @Query("INSERT INTO notifications_fts(notifications_fts) VALUES('rebuild')")
-    abstract suspend fun rebuildFtsIndex()
+    suspend fun rebuildFtsIndex()
 
     @Query("UPDATE notifications SET isPinned = :isPinned WHERE key = :key")
-    abstract suspend fun updatePinnedStatus(key: String, isPinned: Boolean)
+    suspend fun updatePinnedStatus(key: String, isPinned: Boolean)
 
     @Query("UPDATE notifications SET isPinned = :isPinned WHERE key IN (:keys)")
-    abstract suspend fun updatePinnedStatusBatch(keys: List<String>, isPinned: Boolean)
+    suspend fun updatePinnedStatusBatch(keys: List<String>, isPinned: Boolean)
 
     @Query("UPDATE notifications SET isRead = 1 WHERE key = :key")
     suspend fun markAsReadInternal(key: String)
@@ -144,14 +144,14 @@ interface NotificationQueryDao {
     }
 
     @Query("SELECT COUNT(*) FROM notifications")
-    abstract suspend fun getNotificationCount(): Int
+    suspend fun getNotificationCount(): Int
 
     @Query("SELECT COUNT(*) FROM notifications WHERE isDismissed = 1")
-    abstract fun getDismissedNotificationCountFlow(): Flow<Int>
+    fun getDismissedNotificationCountFlow(): Flow<Int>
 
     @Query("SELECT COUNT(*) FROM notifications")
-    abstract fun getTotalNotificationCountFlow(): Flow<Int>
+    fun getTotalNotificationCountFlow(): Flow<Int>
 
     @Query("SELECT COUNT(*) FROM notifications WHERE isRead = 0 AND isDismissed = 0")
-    abstract fun getUnreadCountFlow(): Flow<Int>
+    fun getUnreadCountFlow(): Flow<Int>
 }
