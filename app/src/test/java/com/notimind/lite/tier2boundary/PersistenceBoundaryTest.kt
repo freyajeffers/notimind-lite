@@ -186,11 +186,41 @@ class PersistenceBoundaryTest : BaseRobolectricTest() {
     fun tc_R2_T2_008_fiftyThousandEntityQueryPerformanceBenchmark() = runTest {
         val count = 50_000
 
-        // Insert the benchmark dataset directly in one SQLite transaction.
+        populatePerformanceDataset(count)
+
+        assertEquals(50_000, dao.getNotificationCount())
+
+        // Measure full active notification list read query response time
+        val queryDurationNs = measureNanoTime {
+            val activeList = dao.getActiveNotificationsList()
+            assertEquals(25_000, activeList.size)
+        }
+        val queryDurationMs = queryDurationNs / 1_000_000.0
+
+        assertTrue(
+            "50,000 entity query response time ($queryDurationMs ms) must be within " +
+                "SLA limit (< 2000.0 ms in Robolectric JVM)",
+            queryDurationMs < 2000.0
+        )
+
+        // Single item indexed lookup by key SLA check (sub-10ms requirement for JVM Robolectric test runner)
+        val singleLookupNs = measureNanoTime {
+            val target = dao.getNotificationByKey("perf_key_25000")
+            assertNotNull(target)
+        }
+        val singleLookupMs = singleLookupNs / 1_000_000.0
+
+        assertTrue(
+            "Single key query lookup ($singleLookupMs ms) on 50,000 records must satisfy sub-10ms SLA",
+            singleLookupMs < 10.0
+        )
+    }
+    private fun populatePerformanceDataset(count: Int) {
         database.runInTransaction {
             val db = database.openHelper.writableDatabase
             val appStmt = db.compileStatement(
-                "INSERT OR IGNORE INTO apps (packageName, appName, firstSeenTime, lastSeenTime, syncStatus, lastSyncedAt) VALUES (?, ?, ?, ?, ?, ?)"
+                "INSERT OR IGNORE INTO apps (packageName, appName, firstSeenTime, lastSeenTime, " +
+                    "syncStatus, lastSyncedAt) VALUES (?, ?, ?, ?, ?, ?)"
             )
             for (p in 0..20) {
                 appStmt.clearBindings()
@@ -203,7 +233,10 @@ class PersistenceBoundaryTest : BaseRobolectricTest() {
                 appStmt.executeInsert()
             }
             val stmt = db.compileStatement(
-                "INSERT INTO notifications (id, key, packageName, appName, title, content, postTime, lastUpdatedTime, updateCount, isDismissed, isPinned, isPersistent, isRead, isGroupSummary, priority, isOngoing, isClearable, actionsCount, smallIconRes, syncStatus, lastSyncedAt) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
+                "INSERT INTO notifications (id, key, packageName, appName, title, content, postTime, " +
+                    "lastUpdatedTime, updateCount, isDismissed, isPinned, isPersistent, isRead, " +
+                    "isGroupSummary, priority, isOngoing, isClearable, actionsCount, smallIconRes, " +
+                    "syncStatus, lastSyncedAt) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
             )
             for (i in 1..count) {
                 stmt.clearBindings()
@@ -231,33 +264,6 @@ class PersistenceBoundaryTest : BaseRobolectricTest() {
                 stmt.executeInsert()
             }
         }
-
-        assertEquals(50_000, dao.getNotificationCount())
-
-        // Measure full active notification list read query response time
-        val queryDurationNs = measureNanoTime {
-            val activeList = dao.getActiveNotificationsList()
-            assertEquals(25_000, activeList.size)
-        }
-        val queryDurationMs = queryDurationNs / 1_000_000.0
-
-        
-        assertTrue(
-            "50,000 entity query response time ($queryDurationMs ms) must be within SLA limit (< 2000.0 ms in Robolectric JVM)",
-            queryDurationMs < 2000.0
-        )
-
-        // Single item indexed lookup by key SLA check (sub-10ms requirement for JVM Robolectric test runner)
-        val singleLookupNs = measureNanoTime {
-            val target = dao.getNotificationByKey("perf_key_25000")
-            assertNotNull(target)
-        }
-        val singleLookupMs = singleLookupNs / 1_000_000.0
-
-        
-        assertTrue(
-            "Single key query lookup ($singleLookupMs ms) on 50,000 records must satisfy sub-10ms SLA",
-            singleLookupMs < 10.0
-        )
     }
+
 }
