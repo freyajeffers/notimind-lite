@@ -224,15 +224,16 @@ private fun notificationSectionOrder(
     return if (selected != null) listOf(selected) + defaultList.filter { it != selected } else defaultList
 }
 
-private fun notificationSearchSuggestions(
-    query: String,
-    notifications: List<NotificationEntity>
-): List<String> {
-    if (query.length < SEARCH_MIN_LENGTH) return emptyList()
-    return (notifications.map { it.appName } + notifications.map { it.title })
-        .filter { it.contains(query, ignoreCase = true) }
-        .distinct()
-        .take(MAX_SEARCH_SUGGESTIONS)
+private val notificationSearchSuggestions:
+    (String, List<NotificationEntity>) -> List<String> = { query, notifications ->
+    if (query.length < SEARCH_MIN_LENGTH) {
+        emptyList()
+    } else {
+        (notifications.map { it.appName } + notifications.map { it.title })
+            .filter { it.contains(query, ignoreCase = true) }
+            .distinct()
+            .take(MAX_SEARCH_SUGGESTIONS)
+    }
 }
 
 enum class NotificationSection(val keyName: String, val title: String, val subtitle: String) {
@@ -272,6 +273,32 @@ fun appIconImage(appIconUri: String?, modifier: Modifier = Modifier.size(20.dp))
             modifier = modifier
         )
     }
+}
+
+private data class ActiveNotificationsScaffoldConfig(
+    val selectedPackages: List<String>?,
+    val searchQuery: String,
+    val onClearFilters: () -> Unit,
+    val onOpenPackagePicker: () -> Unit,
+    val onToggleSearch: () -> Unit,
+    val listState: androidx.compose.foundation.lazy.LazyListState,
+    val content: @Composable (PaddingValues) -> Unit
+)
+
+private val activeNotificationsLayout: @Composable (ActiveNotificationsScaffoldConfig) -> Unit = { config ->
+    Scaffold(
+        topBar = {
+            activeNotificationsTopBar(
+                selectedPackages = config.selectedPackages,
+                searchQuery = config.searchQuery,
+                onClearFilters = config.onClearFilters,
+                onOpenPackagePicker = config.onOpenPackagePicker,
+                onToggleSearch = config.onToggleSearch
+            )
+        },
+        floatingActionButton = { activeNotificationsFab(config.listState) },
+        content = { innerPadding -> config.content(innerPadding) }
+    )
 }
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class, ExperimentalLayoutApi::class)
@@ -372,94 +399,93 @@ fun activeNotificationsScreen(dao: NotificationDao, preferences: PreferencesRepo
         }
     }
 
-    Scaffold(
-        topBar = {
-            activeNotificationsTopBar(
-                selectedPackages = selectedPackages,
-                searchQuery = searchQuery,
-                onClearFilters = {
-                    selectedPackages = null
-                    searchQuery = ""
-                    isSearchFocused = false
+    activeNotificationsLayout(
+        ActiveNotificationsScaffoldConfig(
+            selectedPackages = selectedPackages,
+            searchQuery = searchQuery,
+            onClearFilters = {
+                selectedPackages = null
+                searchQuery = ""
+                isSearchFocused = false
+                isSearchExplicitlyOpened = false
+                focusManager.clearFocus(force = true)
+                keyboardController?.hide()
+            },
+            onOpenPackagePicker = { showPackagePicker = true },
+            onToggleSearch = {
+                if (isSearchExplicitlyOpened || searchQuery.isNotEmpty() || isSearchFocused) {
                     isSearchExplicitlyOpened = false
-                    focusManager.clearFocus(force = true)
-                    keyboardController?.hide()
-                },
-                onOpenPackagePicker = { showPackagePicker = true },
-                onToggleSearch = {
-                    if (isSearchExplicitlyOpened || searchQuery.isNotEmpty() || isSearchFocused) {
-                        isSearchExplicitlyOpened = false
-                        isSearchFocused = false
-                        searchQuery = ""
-                    } else {
-                        isSearchExplicitlyOpened = true
-                        scope.launch { listState.animateScrollToItem(0); searchFocusRequester.requestFocus() }
-                    }
+                    isSearchFocused = false
+                    searchQuery = ""
+                } else {
+                    isSearchExplicitlyOpened = true
+                    scope.launch { listState.animateScrollToItem(0); searchFocusRequester.requestFocus() }
                 }
-            )
-        },
-        floatingActionButton = { activeNotificationsFab(listState) }
-    ) { innerPadding ->
-        Box(modifier = Modifier.fillMaxSize()) {
-            val searchSuggestions = remember(
-                searchQuery,
-                pinnedNotifs,
-                activeNotifs,
-                filteredNotifs,
-                recentlyDismissed,
-                lostNotifs
-            ) {
-                notificationSearchSuggestions(
-                    searchQuery,
-                    pinnedNotifs + activeNotifs + filteredNotifs + recentlyDismissed + lostNotifs
-                )
+            },
+            listState = listState,
+            content = { innerPadding ->
+                Box(modifier = Modifier.fillMaxSize()) {
+                    val searchSuggestions = remember(
+                        searchQuery,
+                        pinnedNotifs,
+                        activeNotifs,
+                        filteredNotifs,
+                        recentlyDismissed,
+                        lostNotifs
+                    ) {
+                        notificationSearchSuggestions(
+                            searchQuery,
+                            pinnedNotifs + activeNotifs + filteredNotifs + recentlyDismissed + lostNotifs
+                        )
+                    }
+                    renderActiveNotificationsList(
+                        ActiveNotificationsListConfig(
+                            listState = listState,
+                            innerPadding = innerPadding,
+                            searchQuery = searchQuery,
+                            searchSuggestions = searchSuggestions,
+                            recentSearches = recentSearches,
+                            isSearchVisible = isSearchExplicitlyOpened || searchQuery.isNotEmpty() || isSearchFocused,
+                            searchFocusRequester = searchFocusRequester,
+                            preferences = preferences,
+                            focusManager = focusManager,
+                            keyboardController = keyboardController,
+                            isGranted = isGranted,
+                            debouncedSearchQuery = debouncedSearchQuery,
+                            selectedPackages = selectedPackages,
+                            context = context,
+                            pinnedNotifs = pinnedNotifs,
+                            activeNotifs = activeNotifs,
+                            filteredNotifs = filteredNotifs,
+                            recentlyDismissed = recentlyDismissed,
+                            lostNotifs = lostNotifs,
+                            sectionOrder = sectionOrder,
+                            expandedSection = expandedSection,
+                            collapsedGroups = collapsedGroups,
+                            expandedCards = expandedCards,
+                            dateTimeFormatter = dateTimeFormatter,
+                            dao = dao,
+                            showAppIcons = showAppIcons,
+                            compactMode = compactMode,
+                            groupByApp = groupByApp,
+                            sortOrder = sortOrder,
+                            previewLength = previewLength,
+                            onSearchChanged = { searchQuery = it },
+                            onFocusChanged = { isSearchFocused = it },
+                            onClear = {
+                                searchQuery = ""
+                                selectedPackages = null
+                            },
+                            onSetPackages = { selectedPackages = it },
+                            onSetCollapsedGroups = { collapsedGroups = it },
+                            onSetExpandedCards = { expandedCards = it },
+                            toggleSection = ::toggleSection
+                        )
+                    )
+                }
             }
-            renderActiveNotificationsList(
-                ActiveNotificationsListConfig(
-                    listState = listState,
-                    innerPadding = innerPadding,
-                    searchQuery = searchQuery,
-                    searchSuggestions = searchSuggestions,
-                    recentSearches = recentSearches,
-                    isSearchVisible = isSearchExplicitlyOpened || searchQuery.isNotEmpty() || isSearchFocused,
-                    searchFocusRequester = searchFocusRequester,
-                    preferences = preferences,
-                    focusManager = focusManager,
-                    keyboardController = keyboardController,
-                    isGranted = isGranted,
-                    debouncedSearchQuery = debouncedSearchQuery,
-                    selectedPackages = selectedPackages,
-                    context = context,
-                    pinnedNotifs = pinnedNotifs,
-                    activeNotifs = activeNotifs,
-                    filteredNotifs = filteredNotifs,
-                    recentlyDismissed = recentlyDismissed,
-                    lostNotifs = lostNotifs,
-                    sectionOrder = sectionOrder,
-                    expandedSection = expandedSection,
-                    collapsedGroups = collapsedGroups,
-                    expandedCards = expandedCards,
-                    dateTimeFormatter = dateTimeFormatter,
-                    dao = dao,
-                    showAppIcons = showAppIcons,
-                    compactMode = compactMode,
-                    groupByApp = groupByApp,
-                    sortOrder = sortOrder,
-                    previewLength = previewLength,
-                    onSearchChanged = { searchQuery = it },
-                    onFocusChanged = { isSearchFocused = it },
-                    onClear = {
-                        searchQuery = ""
-                        selectedPackages = null
-                    },
-                    onSetPackages = { selectedPackages = it },
-                    onSetCollapsedGroups = { collapsedGroups = it },
-                    onSetExpandedCards = { expandedCards = it },
-                    toggleSection = ::toggleSection
-                )
-            )
-        }
-    }
+        )
+    )
 
     if (showPackagePicker) {
         appPackageSelectorDialog(
