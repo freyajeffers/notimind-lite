@@ -63,8 +63,14 @@ class NotificationLauncherTest {
         // Unregister on removal
         NotificationLauncher.unregisterPendingIntent(key)
 
-        org.junit.Assert.assertEquals("PendingIntent cache must be empty after unregistration", 0, NotificationLauncher.getPendingIntentCacheSize())
-        org.junit.Assert.assertEquals("ActionIntent cache must be empty after unregistration", 0, NotificationLauncher.getActionIntentCacheSize())
+        org.junit.Assert.assertEquals(
+            "PendingIntent cache must be empty after unregistration", 0,
+            NotificationLauncher.getPendingIntentCacheSize()
+        )
+        org.junit.Assert.assertEquals(
+            "ActionIntent cache must be empty after unregistration", 0,
+            NotificationLauncher.getActionIntentCacheSize()
+        )
     }
 
     @Test
@@ -83,7 +89,13 @@ class NotificationLauncherTest {
             NotificationLauncher.unregisterPendingIntent(key)
         }
 
-        org.junit.Assert.assertEquals("PendingIntent cache must be 0 after 10,000 burst cycle removals", 0, NotificationLauncher.getPendingIntentCacheSize())
-        org.junit.Assert.assertEquals("ActionIntent cache must be 0 after 10,000 burst cycle removals", 0, NotificationLauncher.getActionIntentCacheSize())
+        org.junit.Assert.assertEquals(
+            "PendingIntent cache must be 0 after 10,000 burst cycle removals", 0,
+            NotificationLauncher.getPendingIntentCacheSize()
+        )
+        org.junit.Assert.assertEquals(
+            "ActionIntent cache must be 0 after 10,000 burst cycle removals", 0,
+            NotificationLauncher.getActionIntentCacheSize()
+        )
     }
 }
