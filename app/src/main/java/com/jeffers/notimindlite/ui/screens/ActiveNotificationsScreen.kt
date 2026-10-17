@@ -108,6 +108,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.jeffers.notimindlite.R
@@ -275,6 +276,36 @@ fun appIconImage(appIconUri: String?, modifier: Modifier = Modifier.size(20.dp))
     }
 }
 
+private data class ActiveNotificationLifecycleConfig(
+    val searchQuery: String,
+    val selectedPackages: List<String>?,
+    val lifecycleOwner: LifecycleOwner,
+    val context: Context,
+    val preferences: PreferencesRepository,
+    val setDebouncedSearchQuery: (String) -> Unit,
+    val setIsGranted: (Boolean) -> Unit
+)
+
+private val activeNotificationLifecycle: @Composable (ActiveNotificationLifecycleConfig) -> Unit = { config ->
+    LaunchedEffect(config.searchQuery) {
+        config.preferences.sharedSearchManager.setQuery(config.searchQuery)
+        delay(SEARCH_DEBOUNCE_MS)
+        config.setDebouncedSearchQuery(config.searchQuery)
+    }
+    LaunchedEffect(config.selectedPackages) {
+        config.preferences.sharedSearchManager.setPackages(config.selectedPackages)
+    }
+    DisposableEffect(config.lifecycleOwner) {
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_RESUME) {
+                config.setIsGranted(checkNotificationPermission(config.context))
+            }
+        }
+        config.lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose { config.lifecycleOwner.lifecycle.removeObserver(observer) }
+    }
+}
+
 private data class ActiveNotificationsScaffoldConfig(
     val selectedPackages: List<String>?,
     val searchQuery: String,
@@ -330,32 +361,19 @@ fun activeNotificationsScreen(dao: NotificationDao, preferences: PreferencesRepo
     val recentSearches by preferences.sharedSearchManager.recentSearches.collectAsState()
     val focusManager = LocalFocusManager.current
     val keyboardController = LocalSoftwareKeyboardController.current
-    LaunchedEffect(searchQuery) { preferences.sharedSearchManager.setQuery(searchQuery) }
-
-
-
-    LaunchedEffect(searchQuery) {
-        delay(SEARCH_DEBOUNCE_MS)
-        debouncedSearchQuery = searchQuery
-    }
-
-
-    // F-K fix: selectedPackages is user filter state — persist across process death.
     var selectedPackages by remember { mutableStateOf(preferences.sharedSearchManager.packages.value) }
     var showPackagePicker by remember { mutableStateOf(false) }
-    LaunchedEffect(selectedPackages) { preferences.sharedSearchManager.setPackages(selectedPackages) }
-
-    DisposableEffect(lifecycleOwner) {
-        val observer = LifecycleEventObserver { _, event ->
-            if (event == Lifecycle.Event.ON_RESUME) {
-                isGranted = checkNotificationPermission(context)
-            }
-        }
-        lifecycleOwner.lifecycle.addObserver(observer)
-        onDispose {
-            lifecycleOwner.lifecycle.removeObserver(observer)
-        }
-    }
+    activeNotificationLifecycle(
+        ActiveNotificationLifecycleConfig(
+            searchQuery = searchQuery,
+            selectedPackages = selectedPackages,
+            lifecycleOwner = lifecycleOwner,
+            context = context,
+            preferences = preferences,
+            setDebouncedSearchQuery = { debouncedSearchQuery = it },
+            setIsGranted = { isGranted = it }
+        )
+    )
 
     val pinnedNotifs by dao.getPinnedNotificationsFlow().collectAsState(initial = emptyList())
     val activeNotifs by dao.getActiveNotificationsFlow().collectAsState(initial = emptyList())
