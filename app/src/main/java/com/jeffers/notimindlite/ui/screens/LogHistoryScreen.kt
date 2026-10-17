@@ -515,73 +515,19 @@ fun logHistoryScreen(dao: NotificationDao, preferences: com.jeffers.notimindlite
                     }
                 )
             } else {
-                LazyColumn(
-                    state = listState,
-                    modifier = Modifier.fillMaxSize(),
-                    contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    items(
-                        items = notificationGroups,
-                        key = { group -> "history_group_${group.groupKey}" },
-                        contentType = { group -> if (group.items.size == 1) "notification" else "group" }
-                    ) { group ->
-                        val isGroupExpanded = !collapsedGroups.contains(group.groupKey)
-                        if (group.items.size == 1) {
-                            val item = group.items[0]
-                            val cardExpanded = expandedCards.contains(item.key)
-                            logHistoryCard(
-                                LogHistoryCardState(
-                                    item = item,
-                                    dateTimeFormatter = dateTimeFormatter,
-                                    dao = dao,
-                                    isExpanded = cardExpanded,
-                                    highlightQuery = debouncedSearchQuery,
-                                    onToggleExpand = {
-                                    expandedCards = if (cardExpanded) {
-                                        expandedCards - item.key
-                                    } else {
-                                        expandedCards + item.key
-                                    }
-                                    }
-                                )
-                            )
-                        } else {
-                            NotificationGroupCard(
-                                group = group,
-                                dateTimeFormatter = dateTimeFormatter,
-                                dao = dao,
-                                isGroupExpanded = isGroupExpanded,
-                                onToggleGroupExpand = {
-                                    collapsedGroups = if (collapsedGroups.contains(group.groupKey)) {
-                                        collapsedGroups - group.groupKey
-                                    } else {
-                                        collapsedGroups + group.groupKey
-                                    }
-                                },
-                                renderChildCard = { childItem ->
-                                    val cardExpanded = expandedCards.contains(childItem.key)
-                                    logHistoryCard(
-                                        LogHistoryCardState(
-                                            item = childItem,
-                                            dateTimeFormatter = dateTimeFormatter,
-                                            dao = dao,
-                                            isExpanded = cardExpanded,
-                                            highlightQuery = debouncedSearchQuery,
-                                            onToggleExpand = {
-                                            expandedCards = if (cardExpanded) {
-                                                expandedCards - childItem.key
-                                            } else {
-                                                expandedCards + childItem.key
-                                            }
-                                            }
-                                        )
-                                    )
-                                }
-                            )
-                        }
-                    }
-                }
+                renderLogHistoryList(
+                    LogHistoryListConfig(
+                        listState = listState,
+                        groups = notificationGroups,
+                        collapsedGroups = collapsedGroups,
+                        setCollapsedGroups = { collapsedGroups = it },
+                        expandedCards = expandedCards,
+                        setExpandedCards = { expandedCards = it },
+                        debouncedSearchQuery = debouncedSearchQuery,
+                        dateTimeFormatter = dateTimeFormatter,
+                        dao = dao
+                    )
+                )
             }
             if (showPackagePicker) {
                 appPackageSelectorDialog(
@@ -591,6 +537,92 @@ fun logHistoryScreen(dao: NotificationDao, preferences: com.jeffers.notimindlite
                     onPackagesSelected = { pkgs ->
                         selectedPackages = pkgs
                         showPackagePicker = false
+                    }
+                )
+            }
+        }
+    }
+}
+
+private data class LogHistoryListConfig(
+    val listState: androidx.compose.foundation.lazy.LazyListState,
+    val groups: List<UiNotificationGroup>,
+    val collapsedGroups: Set<String>,
+    val setCollapsedGroups: (Set<String>) -> Unit,
+    val expandedCards: Set<String>,
+    val setExpandedCards: (Set<String>) -> Unit,
+    val debouncedSearchQuery: String,
+    val dateTimeFormatter: DateTimeFormatter,
+    val dao: NotificationDao
+)
+
+private val renderLogHistoryList: @Composable (LogHistoryListConfig) -> Unit = { config ->
+    LazyColumn(
+        state = config.listState,
+        modifier = Modifier.fillMaxSize(),
+        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        items(
+            items = config.groups,
+            key = { group -> "history_group_${group.groupKey}" },
+            contentType = { group -> if (group.items.size == 1) "notification" else "group" }
+        ) { group ->
+            val isGroupExpanded = !config.collapsedGroups.contains(group.groupKey)
+            if (group.items.size == 1) {
+                val item = group.items[0]
+                logHistoryCard(
+                    LogHistoryCardState(
+                        item = item,
+                        dateTimeFormatter = config.dateTimeFormatter,
+                        dao = config.dao,
+                        isExpanded = config.expandedCards.contains(item.key),
+                        highlightQuery = config.debouncedSearchQuery,
+                        onToggleExpand = {
+                            config.setExpandedCards(
+                                if (config.expandedCards.contains(item.key)) {
+                                    config.expandedCards - item.key
+                                } else {
+                                    config.expandedCards + item.key
+                                }
+                            )
+                        }
+                    )
+                )
+            } else {
+                NotificationGroupCard(
+                    group = group,
+                    dateTimeFormatter = config.dateTimeFormatter,
+                    dao = config.dao,
+                    isGroupExpanded = isGroupExpanded,
+                    onToggleGroupExpand = {
+                        config.setCollapsedGroups(
+                            if (config.collapsedGroups.contains(group.groupKey)) {
+                                config.collapsedGroups - group.groupKey
+                            } else {
+                                config.collapsedGroups + group.groupKey
+                            }
+                        )
+                    },
+                    renderChildCard = { childItem ->
+                        logHistoryCard(
+                            LogHistoryCardState(
+                                item = childItem,
+                                dateTimeFormatter = config.dateTimeFormatter,
+                                dao = config.dao,
+                                isExpanded = config.expandedCards.contains(childItem.key),
+                                highlightQuery = config.debouncedSearchQuery,
+                                onToggleExpand = {
+                                    config.setExpandedCards(
+                                        if (config.expandedCards.contains(childItem.key)) {
+                                            config.expandedCards - childItem.key
+                                        } else {
+                                            config.expandedCards + childItem.key
+                                        }
+                                    )
+                                }
+                            )
+                        )
                     }
                 )
             }
