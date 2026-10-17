@@ -45,7 +45,8 @@ class SupabaseSettingsSyncRepository(private val auth: SupabaseAuthManager) : Se
                     "return=minimal"
                 )
             } else {
-                preferences.settingsSyncManager.importSyncableSettings(rows.getJSONObject(0).optJSONObject("settings") ?: JSONObject())
+                val remoteSettings = rows.getJSONObject(0).optJSONObject("settings") ?: JSONObject()
+                preferences.settingsSyncManager.importSyncableSettings(remoteSettings)
             }
             Result.success(Unit)
         } catch (e: java.io.IOException) {
