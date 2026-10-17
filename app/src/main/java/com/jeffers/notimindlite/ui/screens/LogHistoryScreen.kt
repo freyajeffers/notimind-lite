@@ -181,6 +181,26 @@ private fun logHistorySearchField(state: LogHistorySearchState) {
     )
 }
 
+private fun filterAndSortNotifications(
+    activeList: List<NotificationEntity>,
+    reason: Int?,
+    packages: List<String>?,
+    query: String,
+    sortMode: SortMode
+): List<NotificationEntity> {
+    var list = activeList.distinctBy { "${it.packageName}_${it.title}_${it.content}" }
+    if (reason != null) list = list.filter { it.dismissReason == reason }
+    if (!packages.isNullOrEmpty()) list = list.filter { packages.contains(it.packageName) }
+    if (query.isNotBlank()) list = HybridSearchEngine.searchAndRankBlocking(list, query)
+    return when (sortMode) {
+        SortMode.NEWEST -> list.sortedByDescending { it.postTime }
+        SortMode.OLDEST -> list.sortedBy { it.postTime }
+        SortMode.APP_NAME -> list.sortedWith(compareBy(String.CASE_INSENSITIVE_ORDER) { it.appName })
+        SortMode.TITLE -> list.sortedWith(compareBy(String.CASE_INSENSITIVE_ORDER) { it.title })
+        else -> list
+    }
+}
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun logHistoryScreen(dao: NotificationDao, preferences: com.jeffers.notimindlite.data.local.PreferencesRepository) {
@@ -273,27 +293,13 @@ fun logHistoryScreen(dao: NotificationDao, preferences: com.jeffers.notimindlite
 
     val filteredNotifs by remember(activeList, selectedReasonFilter, selectedPackages, debouncedSearchQuery, sortMode) {
         derivedStateOf {
-            var list = activeList.distinctBy { "${it.packageName}_${it.title}_${it.content}" }
-
-            if (selectedReasonFilter != null) {
-                list = list.filter { it.dismissReason == selectedReasonFilter }
-            }
-
-            if (!selectedPackages.isNullOrEmpty()) {
-                list = list.filter { selectedPackages!!.contains(it.packageName) }
-            }
-
-            if (debouncedSearchQuery.isNotBlank()) {
-                list = HybridSearchEngine.searchAndRankBlocking(list, debouncedSearchQuery)
-            }
-
-            when (sortMode) {
-                SortMode.NEWEST -> list.sortedByDescending { it.postTime }
-                SortMode.OLDEST -> list.sortedBy { it.postTime }
-                SortMode.APP_NAME -> list.sortedWith(compareBy(String.CASE_INSENSITIVE_ORDER) { it.appName })
-                SortMode.TITLE -> list.sortedWith(compareBy(String.CASE_INSENSITIVE_ORDER) { it.title })
-                else -> list
-            }
+            filterAndSortNotifications(
+                activeList,
+                selectedReasonFilter,
+                selectedPackages,
+                debouncedSearchQuery,
+                sortMode
+            )
         }
     }
 
