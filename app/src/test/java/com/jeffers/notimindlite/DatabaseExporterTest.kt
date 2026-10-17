@@ -62,12 +62,24 @@ class DatabaseExporterTest {
 
     @Test
     fun testCsvFormulaInjectionSanitization() {
-        val entityEqual = NotificationEntity(key = "k1", packageName = "p", appName = "App", title = "=1+1", content = "=SUM(A1:A10)")
-        val entityPlus = NotificationEntity(key = "k2", packageName = "p", appName = "App", title = "+1-2", content = "+1+1")
-        val entityMinus = NotificationEntity(key = "k3", packageName = "p", appName = "App", title = "-1+2", content = "-cmd|' /C calc'!A0")
-        val entityAt = NotificationEntity(key = "k4", packageName = "p", appName = "App", title = "@SUM(1,2)", content = "@appName")
-        val entityTab = NotificationEntity(key = "k5", packageName = "p", appName = "App", title = "\tTabbed", content = "\rCarriage")
-        val entityLeadingSpaceFormula = NotificationEntity(key = "k6", packageName = "p", appName = "App", title = "   =1+1", content = "  +2")
+        val entityEqual = NotificationEntity(
+            key = "k1", packageName = "p", appName = "App", title = "=1+1", content = "=SUM(A1:A10)"
+        )
+        val entityPlus = NotificationEntity(
+            key = "k2", packageName = "p", appName = "App", title = "+1-2", content = "+1+1"
+        )
+        val entityMinus = NotificationEntity(
+            key = "k3", packageName = "p", appName = "App", title = "-1+2", content = "-cmd|' /C calc'!A0"
+        )
+        val entityAt = NotificationEntity(
+            key = "k4", packageName = "p", appName = "App", title = "@SUM(1,2)", content = "@appName"
+        )
+        val entityTab = NotificationEntity(
+            key = "k5", packageName = "p", appName = "App", title = "\tTabbed", content = "\rCarriage"
+        )
+        val entityLeadingSpaceFormula = NotificationEntity(
+            key = "k6", packageName = "p", appName = "App", title = "   =1+1", content = "  +2"
+        )
 
         val csvString = DatabaseExporter.exportToCsvString(
             listOf(entityEqual, entityPlus, entityMinus, entityAt, entityTab, entityLeadingSpaceFormula)
@@ -89,7 +101,10 @@ class DatabaseExporterTest {
         val preferences = com.jeffers.notimindlite.data.local.PreferencesRepository(context)
         preferences.setAnonymizeTitles(true)
         preferences.setRedactPii(true)
-        val entity = NotificationEntity(key = "privacy", packageName = "p", appName = "App", title = "Secret title", content = "Email me at user@example.com")
+        val entity = NotificationEntity(
+            key = "privacy", packageName = "p", appName = "App", title = "Secret title",
+            content = "Email me at user@example.com"
+        )
 
         val obj = JSONArray(DatabaseExporter.exportToJsonString(listOf(entity), context)).getJSONObject(0)
         assertEquals("[REDACTED-TITLE]", obj.getString("title"))
