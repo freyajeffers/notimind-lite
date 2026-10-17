@@ -19,7 +19,9 @@ class PermissionRevocationLifecycleTest : BaseRobolectricTest() {
         val service = serviceController.create().get()
 
         val componentNameStr = "${context.packageName}/${NotificationLoggerService::class.java.canonicalName}"
-        android.provider.Settings.Secure.putString(context.contentResolver, "enabled_notification_listeners", componentNameStr)
+        android.provider.Settings.Secure.putString(
+            context.contentResolver, "enabled_notification_listeners", componentNameStr
+        )
 
         // 1. Initial State: Listener permission granted, ingest SBN-1
         val sbn1 = createMockStatusBarNotification(

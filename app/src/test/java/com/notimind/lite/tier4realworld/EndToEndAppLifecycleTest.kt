@@ -82,7 +82,9 @@ class EndToEndAppLifecycleTest : BaseRobolectricTest() {
 
         // Phase 5: History Search / Filter validation
         val allHistory = dao.getAllNotifications().first()
-        val slackMatch = allHistory.filter { it.appName == "Slack" || it.title.contains("Slack") || it.content.contains("v1.2") }
+        val slackMatch = allHistory.filter {
+            it.appName == "Slack" || it.title.contains("Slack") || it.content.contains("v1.2")
+        }
         assertEquals(1, slackMatch.size)
         assertEquals("Slack", slackMatch[0].packageName.replace("com.", "").replace("android", "").capitalize())
 
@@ -95,5 +97,7 @@ class EndToEndAppLifecycleTest : BaseRobolectricTest() {
         serviceController.destroy()
     }
 
-    private fun String.capitalize(): String = this.replaceFirstChar { if (it.isLowerCase()) it.titlecase() else it.toString() }
+    private fun String.capitalize(): String = replaceFirstChar {
+        if (it.isLowerCase()) it.titlecase() else it.toString()
+    }
 }

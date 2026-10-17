@@ -87,7 +87,9 @@ class CloudChaosStabilityTest : BaseRobolectricTest() {
         every { mockFirestore.batch() } returns mockBatch
         every { mockCol.document(notification.key) } returns mockDoc
         every { mockBatch.commit() } returns Tasks.forException(
-            FirebaseFirestoreException("Network connection lost mid-upload", FirebaseFirestoreException.Code.UNAVAILABLE)
+            FirebaseFirestoreException(
+                "Network connection lost mid-upload", FirebaseFirestoreException.Code.UNAVAILABLE
+            )
         )
 
         val result = repository.sync(userId, testKey)
@@ -172,7 +174,10 @@ class CloudChaosStabilityTest : BaseRobolectricTest() {
 
         val result = repository.sync(userId, testKey)
 
-        assertTrue("Sync should complete successfully for large batches. Failure: ${result.exceptionOrNull()?.message}", result.isSuccess)
+        assertTrue(
+            "Sync should complete successfully for large batches. Failure: ${result.exceptionOrNull()?.message}",
+            result.isSuccess
+        )
         coVerify(exactly = 1) { mockDao.insertNotifications(any()) }
     }
 }
