@@ -81,29 +81,7 @@ fun settingsScreen(
     val session by authManager.session.collectAsState()
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
-    var syncMessage by remember { mutableStateOf<String?>(null) }
-
-    // H1: file picker + restore dialog plumbing. The picker runs on the UI thread but
-    // copies the URI to a local cache File on Dispatchers.IO before invoking performRestore.
-    // Snackbar feedback surfaces success/failure without leaving the Settings screen.
-    var selectedBackupUri by remember { mutableStateOf<Uri?>(null) }
-    var showRestoreDialog by remember { mutableStateOf(false) }
-    var showBackupKeyDialog by remember { mutableStateOf(false) }
-    var backupKeyBase64 by remember { mutableStateOf("") }
-    var pendingBackupKey by remember { mutableStateOf<SecretKey?>(null) }
     val snackbarHostState = remember { SnackbarHostState() }
-
-    val restoreSuccessMsg = stringResource(id = R.string.settings_restore_success)
-    val restoreFailureMsg = stringResource(id = R.string.settings_restore_failure)
-
-    val pickBackupLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.OpenDocument()
-    ) { uri: Uri? ->
-        if (uri == null) return@rememberLauncherForActivityResult
-        selectedBackupUri = uri
-        showRestoreDialog = true
-    }
-
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -111,8 +89,6 @@ fun settingsScreen(
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        Spacer(modifier = Modifier.height(0.dp))
-
         accountSection(
             session = session,
             authManager = authManager,
@@ -137,20 +113,10 @@ fun settingsScreen(
 
         settingsSyncSection(preferencesRepository = preferencesRepository)
 
-        restoreCard(
+        settingsBackupSection(
             prefMgr = prefMgrTop,
             listenerGranted = listenerGrantedTop,
-            onPickBackup = { pickBackupLauncher.launch(arrayOf("application/octet-stream", "*/*")) },
-            onCreateBackup = {
-                if (!NetworkUtils.isInternetAvailable(context)) {
-                    syncMessage = "An active internet connection is required to create a backup"
-                } else {
-                    val secretKey = generateBackupKey(context)
-                    pendingBackupKey = secretKey
-                    backupKeyBase64 = com.jeffers.notimindlite.data.local.BackupKeyCodec.encode(secretKey)
-                    showBackupKeyDialog = true
-                }
-            }
+            snackbarHostState = snackbarHostState
         )
 
         // Continue with other sections
@@ -163,47 +129,81 @@ fun settingsScreen(
             onMigrationCompleted = { (context as? android.app.Activity)?.recreate() }
         )
         settingsPreferencesBackupSection()
-
-
-        // F-N usability [2026-09-06]: version footer — gives users a build identifier
-        // they can quote in support tickets. Looked up via PackageManager at composable
-        // scope (not inside try/catch around a composable) so the build info is cached
-        // for recomposition.
-        val versionName = remember { getVersionName(context) }
-        val versionCode = remember { getVersionCode(context) }
-        Spacer(modifier = Modifier.height(8.dp))
-        Text(
-            text = stringResource(id = R.string.settings_version_footer, versionName, versionCode),
-            style = MaterialTheme.typography.labelSmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(vertical = 8.dp),
-        )
-
-        restoreDialogs(
-            config = RestoreDialogConfig(
-                context = context,
-                scope = scope,
-                selectedBackupUri = selectedBackupUri,
-                showRestoreDialog = showRestoreDialog,
-                restoreSuccessMsg = restoreSuccessMsg,
-                restoreFailureMsg = restoreFailureMsg,
-                backupKeyBase64 = backupKeyBase64,
-                pendingBackupKey = pendingBackupKey,
-                showBackupKeyDialog = showBackupKeyDialog,
-                onRestoreDismiss = { showRestoreDialog = false },
-                onBackupDismiss = {
-                    showBackupKeyDialog = false
-                    pendingBackupKey = null
-                },
-                snackbarHostState = snackbarHostState,
-                onSyncMessage = { syncMessage = it }
-            )
-        )
+        settingsVersionFooter(context)
 
         SnackbarHost(hostState = snackbarHostState)
     }
+}
+
+@Composable
+private fun settingsBackupSection(
+    prefMgr: PreferenceManager,
+    listenerGranted: Boolean,
+    snackbarHostState: SnackbarHostState
+) {
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
+    var selectedBackupUri by remember { mutableStateOf<Uri?>(null) }
+    var showRestoreDialog by remember { mutableStateOf(false) }
+    var showBackupKeyDialog by remember { mutableStateOf(false) }
+    var backupKeyBase64 by remember { mutableStateOf("") }
+    var pendingBackupKey by remember { mutableStateOf<SecretKey?>(null) }
+    val pickBackupLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.OpenDocument()
+    ) { uri: Uri? ->
+        if (uri != null) {
+            selectedBackupUri = uri
+            showRestoreDialog = true
+        }
+    }
+    restoreCard(
+        prefMgr = prefMgr,
+        listenerGranted = listenerGranted,
+        onPickBackup = { pickBackupLauncher.launch(arrayOf("application/octet-stream", "*/*")) },
+        onCreateBackup = {
+            if (NetworkUtils.isInternetAvailable(context)) {
+                val secretKey = generateBackupKey(context)
+                pendingBackupKey = secretKey
+                backupKeyBase64 = com.jeffers.notimindlite.data.local.BackupKeyCodec.encode(secretKey)
+                showBackupKeyDialog = true
+            }
+        }
+    )
+    restoreDialogs(
+        config = RestoreDialogConfig(
+            context = context,
+            scope = scope,
+            selectedBackupUri = selectedBackupUri,
+            showRestoreDialog = showRestoreDialog,
+            restoreSuccessMsg = stringResource(R.string.settings_restore_success),
+            restoreFailureMsg = stringResource(R.string.settings_restore_failure),
+            backupKeyBase64 = backupKeyBase64,
+            pendingBackupKey = pendingBackupKey,
+            showBackupKeyDialog = showBackupKeyDialog,
+            onRestoreDismiss = { showRestoreDialog = false },
+            onBackupDismiss = {
+                showBackupKeyDialog = false
+                pendingBackupKey = null
+            },
+            snackbarHostState = snackbarHostState,
+            onSyncMessage = {}
+        )
+    )
+}
+
+@Composable
+private fun settingsVersionFooter(context: Context) {
+    val versionName = remember { getVersionName(context) }
+    val versionCode = remember { getVersionCode(context) }
+    Spacer(modifier = Modifier.height(8.dp))
+    Text(
+        text = stringResource(id = R.string.settings_version_footer, versionName, versionCode),
+        style = MaterialTheme.typography.labelSmall,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 8.dp)
+    )
 }
 
 private fun getVersionName(context: Context): String =
