@@ -81,28 +81,10 @@ class DatabaseMigrationOrchestrator(
         0,
         failure = IllegalStateException("Quarantine file already exists: ${quarantineFile.name}")
       )
-      else -> performCutover(plaintextFile, encryptedTempFile, quarantineFile)
+      else -> performCutover(plaintextFile, encryptedTempFile, quarantineFile, fileOps)
     }
   }
 
-  private fun performCutover(
-    plaintextFile: File,
-    encryptedTempFile: File,
-    quarantineFile: File
-  ): MigrationResult = try {
-      fileOps.rename(plaintextFile, quarantineFile)
-      try {
-        fileOps.rename(encryptedTempFile, plaintextFile)
-      } catch (promotionFailure: IllegalStateException) {
-        fileOps.rename(quarantineFile, plaintextFile)
-        throw promotionFailure
-      }
-      MigrationResult(MigrationState.COMPLETE, 0, 0, backupFile = quarantineFile)
-    } catch (failure: IllegalStateException) {
-      MigrationResult(MigrationState.ROLLBACK_REQUIRED, 0, 0, failure = failure)
-    } catch (failure: SecurityException) {
-      MigrationResult(MigrationState.ROLLBACK_REQUIRED, 0, 0, failure = failure)
-    }
 
   /**
    * Permanently removes the quarantine copies after the encrypted database is active.
@@ -219,6 +201,26 @@ class DatabaseMigrationOrchestrator(
     private const val ROOM_MASTER_TABLE = "room_master_table"
     private const val ANDROID_METADATA_TABLE = "android_metadata"
   }
+}
+
+private fun performCutover(
+  plaintextFile: File,
+  encryptedTempFile: File,
+  quarantineFile: File,
+  fileOps: MigrationFileOps
+): MigrationResult = try {
+  fileOps.rename(plaintextFile, quarantineFile)
+  try {
+    fileOps.rename(encryptedTempFile, plaintextFile)
+  } catch (promotionFailure: IllegalStateException) {
+    fileOps.rename(quarantineFile, plaintextFile)
+    throw promotionFailure
+  }
+  MigrationResult(MigrationState.COMPLETE, 0, 0, backupFile = quarantineFile)
+} catch (failure: IllegalStateException) {
+  MigrationResult(MigrationState.ROLLBACK_REQUIRED, 0, 0, failure = failure)
+} catch (failure: SecurityException) {
+  MigrationResult(MigrationState.ROLLBACK_REQUIRED, 0, 0, failure = failure)
 }
 
 interface MigrationFileOps {
