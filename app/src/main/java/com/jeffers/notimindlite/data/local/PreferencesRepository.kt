@@ -88,18 +88,14 @@ class PreferencesRepository(context: Context) :
     }
 
 
-    private val _enableSync = MutableStateFlow(backing.getBoolean(KEY_ENABLE_SYNC, true))
-    private val _enableVector = MutableStateFlow(backing.getBoolean(KEY_ENABLE_VECTOR, true))
-    private val _enableFts4 = MutableStateFlow(backing.getBoolean(KEY_ENABLE_FTS4, true))
+
     private val _retentionDays = MutableStateFlow(
         backing.getInt(KEY_RETENTION_DAYS, if (BuildConfig.DEBUG) RETAIN_ALL_DAYS else DEFAULT_RETENTION_DAYS)
     )
     private val _exportEncryption = MutableStateFlow(backing.getBoolean(KEY_EXPORT_ENCRYPTION, true))
 
 
-    val enableSync: StateFlow<Boolean> = _enableSync
-    val enableVector: StateFlow<Boolean> = _enableVector
-    val enableFts4: StateFlow<Boolean> = _enableFts4
+
     val retentionDays: StateFlow<Int> = _retentionDays
     val exportEncryption: StateFlow<Boolean> = _exportEncryption
 
@@ -148,10 +144,7 @@ class PreferencesRepository(context: Context) :
 
 
     private fun reloadProfileFlows() {
-        _enableSync.value = backing.getBoolean(KEY_ENABLE_SYNC, true)
-        _enableVector.value = backing.getBoolean(KEY_ENABLE_VECTOR, true)
 
-        _enableFts4.value = backing.getBoolean(KEY_ENABLE_FTS4, true)
         _retentionDays.value = backing.getInt(KEY_RETENTION_DAYS, DEFAULT_RETENTION_DAYS)
 
         _exportEncryption.value = backing.getBoolean(KEY_EXPORT_ENCRYPTION, true)
@@ -186,20 +179,6 @@ class PreferencesRepository(context: Context) :
 
 
 
-    fun setEnableSync(value: Boolean) {
-        backing.edit().putBoolean(KEY_ENABLE_SYNC, value).apply()
-        _enableSync.value = value
-    }
-
-    fun setEnableVector(value: Boolean) {
-        backing.edit().putBoolean(KEY_ENABLE_VECTOR, value).apply()
-        _enableVector.value = value
-    }
-
-    fun setEnableFts4(value: Boolean) {
-        backing.edit().putBoolean(KEY_ENABLE_FTS4, value).apply()
-        _enableFts4.value = value
-    }
 
     fun setRetentionDays(value: Int) {
         val safe = value.coerceIn(MIN_RETENTION_DAYS, MAX_RETENTION_DAYS)
@@ -288,9 +267,7 @@ class PreferencesRepository(context: Context) :
 
         private const val DEFAULT_RETENTION_DAYS = 30
         const val RETAIN_ALL_DAYS = 3650
-        private const val KEY_ENABLE_SYNC = "config_enable_sync"
-        private const val KEY_ENABLE_VECTOR = "config_enable_vector"
-        private const val KEY_ENABLE_FTS4 = "config_enable_fts4"
+
         private const val KEY_RETENTION_DAYS = "config_retention_days"
         private const val KEY_EXPORT_ENCRYPTION = "config_export_encryption"
 

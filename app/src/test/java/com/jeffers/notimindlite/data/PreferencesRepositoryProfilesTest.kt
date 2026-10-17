@@ -26,10 +26,10 @@ class PreferencesRepositoryProfilesTest {
         val profiles = repository.profileManager
         val profile = profiles.createProfile("Work")
         assertTrue(profiles.setActiveProfile(profile.id))
-        repository.setEnableSync(false)
-        assertEquals(false, repository.enableSync.value)
+        repository.syncManager.setEnableSync(false)
+        assertEquals(false, repository.syncManager.enableSync.value)
         assertTrue(profiles.setActiveProfile(ProfilePreferencesManager.DEFAULT_PROFILE_ID))
-        assertEquals(true, repository.enableSync.value)
+        assertEquals(true, repository.syncManager.enableSync.value)
         val imported = profiles.importProfile(profiles.exportProfile(profile.id))
         assertTrue(imported.id != profile.id)
     }
