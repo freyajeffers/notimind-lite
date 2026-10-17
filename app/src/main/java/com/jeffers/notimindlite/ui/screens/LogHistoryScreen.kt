@@ -114,10 +114,10 @@ private const val PREFETCH_AHEAD = 24
 private const val PREFETCH_BEHIND = 2
 private const val BASE_SORT_MODE_COUNT = 3
 private const val SEARCH_DEBOUNCE_MILLIS = 100L
-private const val MAX_SEARCH_SUGGESTIONS = 4
+
 private const val MAX_RECENT_SEARCHES = 9
 private const val SEARCH_FIELD_CORNER_RADIUS = 12
-private const val SEARCH_MENU_WIDTH_FRACTION = 0.9f
+
 
 enum class SortMode(val label: String) {
     DISMISSED("Time Dismissed"),
@@ -508,13 +508,7 @@ fun logHistoryScreen(dao: NotificationDao, preferences: com.jeffers.notimindlite
                 .padding(innerPadding)
         ) {
             val searchSuggestions = remember(searchQuery, activeList) {
-                if (searchQuery.length < 2) emptyList()
-                else {
-                    (activeList.map { it.appName } + activeList.map { it.title })
-                        .filter { it.contains(searchQuery, ignoreCase = true) }
-                        .distinct()
-                        .take(MAX_SEARCH_SUGGESTIONS)
-                }
+                logHistorySearchSuggestions(searchQuery, activeList)
             }
             var expandedDropdown by remember { mutableStateOf(false) }
 
@@ -548,53 +542,18 @@ fun logHistoryScreen(dao: NotificationDao, preferences: com.jeffers.notimindlite
                     )
                 )
 
-                DropdownMenu(
-                    expanded = expandedDropdown &&
-                        (searchSuggestions.isNotEmpty() ||
-                            (searchQuery.isBlank() && recentSearches.isNotEmpty())),
-                    onDismissRequest = { expandedDropdown = false },
-                    properties = androidx.compose.ui.window.PopupProperties(focusable = false),
-                    modifier = Modifier.fillMaxWidth(SEARCH_MENU_WIDTH_FRACTION)
-                ) {
-                    val matchingRecent = if (searchQuery.isBlank()) {
-                        recentSearches
-                    } else {
-                        recentSearches.filter { it.contains(searchQuery, ignoreCase = true) }
-                    }
-                    matchingRecent.forEach { recent ->
-                        DropdownMenuItem(
-                            text = { Text(recent) },
-                            trailingIcon = {
-                                IconButton(
-                                    onClick = {
-                                        preferences.sharedSearchManager.removeRecentSearch(recent)
-                                    }
-                                ) {
-                                    Icon(Icons.Default.Close, contentDescription = "Remove recent search")
-                                }
-                            },
-                            onClick = { searchQuery = recent; expandedDropdown = false }
-                        )
-                    }
-                    if (matchingRecent.isNotEmpty()) {
-                        DropdownMenuItem(
-                            text = { Text("Clear recent searches") },
-                            onClick = {
-                                preferences.sharedSearchManager.resetRecentSearches()
-                                expandedDropdown = false
-                            }
-                        )
-                    }
-                    searchSuggestions.forEach { suggestion ->
-                        DropdownMenuItem(
-                            text = { Text(suggestion, fontSize = 14.sp) },
-                            onClick = {
-                                searchQuery = suggestion
-                                expandedDropdown = false
-                            }
-                        )
-                    }
-                }
+                logHistorySearchDropdown(
+                    LogHistorySearchDropdownConfig(
+                        expanded = expandedDropdown,
+                        searchSuggestions = searchSuggestions,
+                        recentSearches = recentSearches,
+                        searchQuery = searchQuery,
+                        onRemoveRecent = { preferences.sharedSearchManager.removeRecentSearch(it) },
+                        onClearRecent = { preferences.sharedSearchManager.resetRecentSearches() },
+                        onSelectSuggestion = { v -> searchQuery = v },
+                        onDismiss = { expandedDropdown = false }
+                    )
+                )
             }
 
             if (filteredNotifs.isEmpty()) {
