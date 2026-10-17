@@ -344,13 +344,7 @@ fun activeNotificationsScreen(dao: NotificationDao, preferences: PreferencesRepo
     val sortOrder by preferences.displayManager.sortOrder.collectAsState()
     val previewLength by preferences.displayManager.previewLength.collectAsState()
 
-    // F-K fix: persist user-meaningful state across process death / rotation.
-    // - expandedSection: user's last-toggled section (was lost; PrefManager was only
-    //   read on initial composition, never written back on toggle).
-    // - searchQuery, isSearchExplicitlyOpened, selectedPackages: user input state.
-    // - isGranted, expandedCards, dismissingKeys, showBackupKeyDialog, currentBackupKey,
-    //   currentPendingSecretKey, showPackagePicker, debouncedSearchQuery, isSearchFocused:
-    //   transient UI / derived / security-sensitive; do not save.
+
     var expandedSection by rememberSaveable { mutableStateOf(prefManager.getExpandedSection()) }
     var expandedCards by remember { mutableStateOf(setOf<String>()) }
     var collapsedGroups by remember { mutableStateOf(setOf<String>()) }
@@ -410,7 +404,7 @@ fun activeNotificationsScreen(dao: NotificationDao, preferences: PreferencesRepo
     var isSearchFocused by remember { mutableStateOf(false) }
     val imeVisible = WindowInsets.isImeVisible
 
-    // Auto-hide when keyboard is dismissed (IME no longer visible) AND the field lost focus
+
     LaunchedEffect(isSearchFocused, imeVisible, searchQuery) {
         if (!imeVisible && !isSearchFocused && searchQuery.isBlank()) {
             isSearchExplicitlyOpened = false
@@ -505,19 +499,25 @@ fun activeNotificationsScreen(dao: NotificationDao, preferences: PreferencesRepo
         )
     )
 
-    if (showPackagePicker) {
-        appPackageSelectorDialog(
-            selectedPackages = selectedPackages ?: emptyList(),
-            availableApps = availableApps,
-            onDismiss = { showPackagePicker = false },
-            onPackagesSelected = { pkgs ->
-                selectedPackages = pkgs
-                showPackagePicker = false
-            }
-        )
+    renderActivePackagePicker(showPackagePicker, selectedPackages, availableApps) { pkgs, visible ->
+        selectedPackages = pkgs
+        showPackagePicker = visible
     }
 
 }
+
+private val renderActivePackagePicker:
+    @Composable (Boolean, List<String>?, List<Pair<String, String>>, (List<String>?, Boolean) -> Unit) -> Unit =
+    { visible, selectedPackages, availableApps, onChanged ->
+        if (visible) {
+            appPackageSelectorDialog(
+                selectedPackages = selectedPackages ?: emptyList(),
+                availableApps = availableApps,
+                onDismiss = { onChanged(selectedPackages, false) },
+                onPackagesSelected = { onChanged(it, false) }
+            )
+        }
+    }
 
 private data class ActiveNotificationsListConfig(
     val listState: androidx.compose.foundation.lazy.LazyListState,
