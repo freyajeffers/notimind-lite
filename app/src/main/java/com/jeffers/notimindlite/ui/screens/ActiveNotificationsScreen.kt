@@ -200,6 +200,41 @@ fun getPriorityLabel(priority: Int): String {
     }
 }
 
+private fun notificationSectionOrder(
+    expandedSection: String,
+    hasPinnedNotifications: Boolean
+): List<NotificationSection> {
+    val defaultList = if (hasPinnedNotifications) {
+        listOf(
+            NotificationSection.PINNED,
+            NotificationSection.ACTIVE,
+            NotificationSection.FILTERED,
+            NotificationSection.DISMISSED,
+            NotificationSection.LOST
+        )
+    } else {
+        listOf(
+            NotificationSection.ACTIVE,
+            NotificationSection.FILTERED,
+            NotificationSection.DISMISSED,
+            NotificationSection.LOST
+        )
+    }
+    val selected = defaultList.find { it.keyName == expandedSection }
+    return if (selected != null) listOf(selected) + defaultList.filter { it != selected } else defaultList
+}
+
+private fun notificationSearchSuggestions(
+    query: String,
+    notifications: List<NotificationEntity>
+): List<String> {
+    if (query.length < SEARCH_MIN_LENGTH) return emptyList()
+    return (notifications.map { it.appName } + notifications.map { it.title })
+        .filter { it.contains(query, ignoreCase = true) }
+        .distinct()
+        .take(MAX_SEARCH_SUGGESTIONS)
+}
+
 enum class NotificationSection(val keyName: String, val title: String, val subtitle: String) {
     PINNED("PINNED", "Pinned Notifications", "Flagged & saved notifications for later reference"),
     ACTIVE("ACTIVE", "Active Notifications", "Currently active status bar notifications (sorted by time received)"),
@@ -315,28 +350,7 @@ fun activeNotificationsScreen(dao: NotificationDao, preferences: PreferencesRepo
     val scope = rememberCoroutineScope()
 
     val sectionOrder = remember(expandedSection, pinnedNotifs.size) {
-        val defaultList = if (pinnedNotifs.isNotEmpty()) {
-            listOf(
-                NotificationSection.PINNED,
-                NotificationSection.ACTIVE,
-                NotificationSection.FILTERED,
-                NotificationSection.DISMISSED,
-                NotificationSection.LOST
-            )
-        } else {
-            listOf(
-                NotificationSection.ACTIVE,
-                NotificationSection.FILTERED,
-                NotificationSection.DISMISSED,
-                NotificationSection.LOST
-            )
-        }
-        val selected = defaultList.find { it.keyName == expandedSection }
-        if (selected != null) {
-            listOf(selected) + defaultList.filter { it != selected }
-        } else {
-            defaultList
-        }
+        notificationSectionOrder(expandedSection, pinnedNotifs.isNotEmpty())
     }
 
     val listState = rememberLazyListState()
@@ -395,14 +409,10 @@ fun activeNotificationsScreen(dao: NotificationDao, preferences: PreferencesRepo
                 recentlyDismissed,
                 lostNotifs
             ) {
-                if (searchQuery.length < SEARCH_MIN_LENGTH) emptyList()
-                else {
-                    val allNotifs = pinnedNotifs + activeNotifs + filteredNotifs + recentlyDismissed + lostNotifs
-                    (allNotifs.map { it.appName } + allNotifs.map { it.title })
-                        .filter { it.contains(searchQuery, ignoreCase = true) }
-                        .distinct()
-                        .take(MAX_SEARCH_SUGGESTIONS)
-                }
+                notificationSearchSuggestions(
+                    searchQuery,
+                    pinnedNotifs + activeNotifs + filteredNotifs + recentlyDismissed + lostNotifs
+                )
             }
             LazyColumn(
                 state = listState,
