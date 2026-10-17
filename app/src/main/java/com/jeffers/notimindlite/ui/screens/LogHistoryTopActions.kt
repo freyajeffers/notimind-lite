@@ -1,18 +1,27 @@
 package com.jeffers.notimindlite.ui.screens
 
-import androidx.compose.material3.*
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.PlainTooltip
+import androidx.compose.material3.Text
+import androidx.compose.material3.TooltipAnchorPosition
+import androidx.compose.material3.TooltipBox
+import androidx.compose.material3.TooltipDefaults
+import androidx.compose.material3.rememberTooltipState
 import androidx.compose.foundation.layout.Box
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.remember
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.FilterAltOff
 import androidx.compose.material.icons.filled.FilterList
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.unit.sp
+
 import com.jeffers.notimindlite.R
 
-data class LogHistoryTopActionsConfig(
+data class LogHistoryTopActions(
     val selectedPackages: List<String>?,
     val selectedReasonFilter: Int?,
     val searchQuery: String,
@@ -32,8 +41,10 @@ data class LogHistoryTopActionsConfig(
 )
 
 @Composable
-fun logHistoryTopActions(config: LogHistoryTopActionsConfig) {
-    if (!config.selectedPackages.isNullOrEmpty() || config.selectedReasonFilter != null || config.searchQuery.isNotBlank()) {
+fun logHistoryTopActions(config: LogHistoryTopActions) {
+    if (!config.selectedPackages.isNullOrEmpty() ||
+        config.selectedReasonFilter != null || config.searchQuery.isNotBlank()
+    ) {
         IconButton(onClick = {
             config.setSelectedPackages(null)
             config.setSelectedReasonFilter(null)
@@ -41,10 +52,18 @@ fun logHistoryTopActions(config: LogHistoryTopActionsConfig) {
             config.keyboardController?.hide()
         }) { Icon(Icons.Default.FilterAltOff, contentDescription = "Clear filters") }
     }
+    logHistoryFilterMenu(config)
+}
+
+@Composable
+private fun logHistoryFilterMenu(config: LogHistoryTopActions) {
     Box {
-        val hasActiveFilters = !config.selectedPackages.isNullOrEmpty() || config.selectedReasonFilter != null
+        val hasActiveFilters = !config.selectedPackages.isNullOrEmpty() ||
+            config.selectedReasonFilter != null
         TooltipBox(
-            positionProvider = TooltipDefaults.rememberTooltipPositionProvider(TooltipAnchorPosition.Above),
+            positionProvider = TooltipDefaults.rememberTooltipPositionProvider(
+                TooltipAnchorPosition.Above
+            ),
             tooltip = { PlainTooltip { Text(stringResource(id = R.string.log_history_filter_title)) } },
             state = rememberTooltipState()
         ) {
@@ -52,26 +71,71 @@ fun logHistoryTopActions(config: LogHistoryTopActionsConfig) {
                 Icon(
                     imageVector = Icons.Default.FilterList,
                     contentDescription = stringResource(id = R.string.log_history_filter_title),
-                    tint = if (hasActiveFilters) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
+                    tint = if (hasActiveFilters) {
+                        MaterialTheme.colorScheme.primary
+                    } else {
+                        MaterialTheme.colorScheme.onSurface
+                    }
                 )
             }
         }
-        DropdownMenu(expanded = config.showFilterMenu, onDismissRequest = { config.setShowFilterMenu(false) }) {
-            DropdownMenuItem(text = { Text(stringResource(id = R.string.log_history_filter_app_count, config.selectedPackages?.size?.toString() ?: stringResource(R.string.common_all))) }, onClick = {
+        logHistoryFilterDropdown(config)
+    }
+}
+
+@Composable
+private fun logHistoryFilterDropdown(config: LogHistoryTopActions) {
+    DropdownMenu(
+        expanded = config.showFilterMenu,
+        onDismissRequest = { config.setShowFilterMenu(false) }
+    ) {
+        DropdownMenuItem(
+            text = {
+                Text(
+                    stringResource(
+                        id = R.string.log_history_filter_app_count,
+                        config.selectedPackages?.size?.toString()
+                            ?: stringResource(R.string.common_all)
+                    )
+                )
+            },
+            onClick = {
                 config.setShowFilterMenu(false)
                 config.setShowPackagePicker(true)
-            })
-            HorizontalDivider()
-            DropdownMenuItem(text = { Text(stringResource(id = R.string.log_history_filter_all_reasons, if (config.selectedReasonFilter == null) "✓" else "")) }, onClick = {
+            }
+        )
+        HorizontalDivider()
+        DropdownMenuItem(
+            text = {
+                Text(
+                    stringResource(
+                        id = R.string.log_history_filter_all_reasons,
+                        if (config.selectedReasonFilter == null) "✓" else ""
+                    )
+                )
+            },
+            onClick = {
                 config.setSelectedReasonFilter(null)
                 config.setShowFilterMenu(false)
-            })
-            config.availableReasons.forEach { reasonCode ->
-                DropdownMenuItem(text = { Text(stringResource(id = R.string.log_history_filter_reason_item, getReasonLabel(reasonCode), reasonCode, if (config.selectedReasonFilter == reasonCode) "✓" else "")) }, onClick = {
+            }
+        )
+        config.availableReasons.forEach { reasonCode ->
+            DropdownMenuItem(
+                text = {
+                    Text(
+                        stringResource(
+                            id = R.string.log_history_filter_reason_item,
+                            getReasonLabel(reasonCode),
+                            reasonCode,
+                            if (config.selectedReasonFilter == reasonCode) "✓" else ""
+                        )
+                    )
+                },
+                onClick = {
                     config.setSelectedReasonFilter(reasonCode)
                     config.setShowFilterMenu(false)
-                })
-            }
+                }
+            )
         }
     }
 }

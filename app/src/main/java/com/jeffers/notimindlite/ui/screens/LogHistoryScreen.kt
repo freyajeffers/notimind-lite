@@ -343,7 +343,7 @@ fun logHistoryScreen(dao: NotificationDao, preferences: com.jeffers.notimindlite
                 title = {},
                 actions = {
                         logHistoryTopActions(
-                        LogHistoryTopActionsConfig(
+                        LogHistoryTopActions(
                             selectedPackages = selectedPackages,
                             selectedReasonFilter = selectedReasonFilter,
                             searchQuery = searchQuery,
