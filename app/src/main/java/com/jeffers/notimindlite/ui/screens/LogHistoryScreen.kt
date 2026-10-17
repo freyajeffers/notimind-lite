@@ -251,8 +251,9 @@ private fun notificationIconPrefetch(
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun logHistoryScreen(dao: NotificationDao, preferences: com.jeffers.notimindlite.data.local.PreferencesRepository) {
+private val renderLogHistoryScreen:
+    @Composable (NotificationDao, com.jeffers.notimindlite.data.local.PreferencesRepository) -> Unit =
+    { dao, preferences ->
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     val listState = rememberLazyListState()
@@ -528,6 +529,12 @@ fun logHistoryScreen(dao: NotificationDao, preferences: com.jeffers.notimindlite
             )
         }
     }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun logHistoryScreen(dao: NotificationDao, preferences: com.jeffers.notimindlite.data.local.PreferencesRepository) {
+    renderLogHistoryScreen(dao, preferences)
 }
 
 private val renderLogHistoryPackagePicker:
