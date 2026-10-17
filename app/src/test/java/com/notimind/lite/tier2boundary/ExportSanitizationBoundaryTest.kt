@@ -40,7 +40,9 @@ class ExportSanitizationBoundaryTest : BaseRobolectricTest() {
         val formulaAt = createDummyEntity(key = "k_at", title = "@SUM(1,2)", content = "@appName")
         val formulaTab = createDummyEntity(key = "k_tab", title = "\tTabbed", content = "Tabbed Content")
 
-        val csvStr = DatabaseExporter.exportToCsvString(listOf(formulaEqual, formulaPlus, formulaMinus, formulaAt, formulaTab))
+        val csvStr = DatabaseExporter.exportToCsvString(
+            listOf(formulaEqual, formulaPlus, formulaMinus, formulaAt, formulaTab)
+        )
         assertNotNull(csvStr)
 
         val lines = csvStr.lines().filter { it.isNotBlank() }

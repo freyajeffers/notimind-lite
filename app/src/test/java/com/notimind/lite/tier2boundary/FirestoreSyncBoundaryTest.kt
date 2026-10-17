@@ -136,7 +136,11 @@ class FirestoreSyncBoundaryTest {
 
         val result = repository.sync(userId, testKey)
 
-        assertTrue("Sync should complete successfully even if some remote docs are corrupted. Failure: ${result.exceptionOrNull()?.message}", result.isSuccess)
+        assertTrue(
+            "Sync should complete successfully even if some remote docs are corrupted. " +
+                "Failure: ${result.exceptionOrNull()?.message}",
+            result.isSuccess
+        )
         coVerify { mockDao.insertNotifications(any()) }
     }
 

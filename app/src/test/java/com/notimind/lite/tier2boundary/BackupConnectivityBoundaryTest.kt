@@ -43,7 +43,9 @@ class BackupConnectivityBoundaryTest : BaseRobolectricTest() {
     @Test
     fun performEncryptedBackup_should_bypass_connectivity_guard_when_internet_is_available() = runTest {
         mockkObject(DatabaseExporter)
-        coEvery { DatabaseExporter.performEncryptedBackup(context, testKey) } returns Result.success(java.io.File("/dev/null"))
+        coEvery { DatabaseExporter.performEncryptedBackup(context, testKey) } returns Result.success(
+            java.io.File("/dev/null")
+        )
 
         val result = DatabaseExporter.performEncryptedBackup(context, testKey)
 
