@@ -21,7 +21,7 @@ import com.jeffers.notimindlite.R
 
 @Composable
 fun displaySettingsSection(preferencesRepository: PreferencesRepository) {
-    val compactMode by preferencesRepository.compactMode.collectAsState(initial = false)
+    val compactMode by preferencesRepository.displayManager.compactMode.collectAsState(initial = false)
     val showAppIcons by preferencesRepository.displayManager.showAppIcons.collectAsState(initial = true)
     val groupByApp by preferencesRepository.displayManager.groupByApp.collectAsState(initial = true)
     val sortOrder by preferencesRepository.displayManager.sortOrder.collectAsState(initial = "newest")
@@ -50,7 +50,7 @@ fun displaySettingsSection(preferencesRepository: PreferencesRepository) {
         preferenceSwitchRow(
             stringResource(R.string.pref_compact_mode_title),
             stringResource(R.string.pref_compact_mode_summary), compactMode,
-            preferencesRepository::setCompactMode
+            preferencesRepository.displayManager::setCompactMode
         )
         preferenceSwitchRow(
             stringResource(R.string.pref_show_app_icons_title),

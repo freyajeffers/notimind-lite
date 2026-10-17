@@ -111,7 +111,7 @@ class PreferencesRepository(context: Context) :
     private val _anonymizeTitles = MutableStateFlow(backing.getBoolean(KEY_ANONYMIZE_TITLES, false))
     private val _maxCacheSizeMb = MutableStateFlow(backing.getInt(KEY_MAX_CACHE_MB, DEFAULT_MAX_CACHE_MB))
     private val _semanticWeight = MutableStateFlow(backing.getInt(KEY_SEMANTIC_WEIGHT, DEFAULT_SEMANTIC_WEIGHT))
-    private val _compactMode = MutableStateFlow(backing.getBoolean(KEY_COMPACT_MODE, false))
+
 
     val enableSemanticRanking: StateFlow<Boolean> = _enableSemanticRanking
     val autoDeleteOnRead: StateFlow<Boolean> = _autoDeleteOnRead
@@ -120,7 +120,7 @@ class PreferencesRepository(context: Context) :
     val anonymizeTitles: StateFlow<Boolean> = _anonymizeTitles
     val maxCacheSizeMb: StateFlow<Int> = _maxCacheSizeMb
     val semanticWeight: StateFlow<Int> = _semanticWeight
-    val compactMode: StateFlow<Boolean> = _compactMode
+
 
     private val _maxDbMb = MutableStateFlow(backing.getInt(KEY_MAX_DB_MB, DEFAULT_MAX_DB_MB))
     private val _lowMemoryMode = MutableStateFlow(backing.getBoolean(KEY_LOW_MEMORY_MODE, false))
@@ -167,7 +167,7 @@ class PreferencesRepository(context: Context) :
         _maxCacheSizeMb.value = backing.getInt(KEY_MAX_CACHE_MB, DEFAULT_MAX_CACHE_MB)
         _semanticWeight.value = backing.getInt(KEY_SEMANTIC_WEIGHT, DEFAULT_SEMANTIC_WEIGHT)
 
-        _compactMode.value = backing.getBoolean(KEY_COMPACT_MODE, false)
+
         _maxDbMb.value = backing.getInt(KEY_MAX_DB_MB, DEFAULT_MAX_DB_MB)
         _lowMemoryMode.value = backing.getBoolean(KEY_LOW_MEMORY_MODE, false)
         _vectorCacheMax.value = backing.getInt(KEY_VECTOR_CACHE_MAX, DEFAULT_VECTOR_CACHE_MAX)
@@ -244,10 +244,6 @@ class PreferencesRepository(context: Context) :
         _semanticWeight.value = safe
     }
 
-    fun setCompactMode(value: Boolean) {
-        backing.edit().putBoolean(KEY_COMPACT_MODE, value).apply()
-        _compactMode.value = value
-    }
 
 
 
@@ -310,7 +306,7 @@ class PreferencesRepository(context: Context) :
         private const val KEY_VECTOR_CACHE_MAX = "config_vector_cache_max"
 
 
-        private const val KEY_COMPACT_MODE = "config_compact_mode"
+
         private const val KEY_AUTO_ACT_ON_NOTIFICATION = "config_auto_act_on_notification"
         private const val KEY_DEFAULT_REPLY_METHOD = "config_default_reply_method"
         private const val KEY_LONG_PRESS_ACTION = "config_long_press_action"

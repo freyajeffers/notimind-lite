@@ -245,7 +245,7 @@ fun activeNotificationsScreen(dao: NotificationDao, preferences: PreferencesRepo
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
     val prefManager = remember { PreferenceManager(context) }
-    val compactMode by preferences.compactMode.collectAsState()
+    val compactMode by preferences.displayManager.compactMode.collectAsState()
     val showAppIcons by preferences.displayManager.showAppIcons.collectAsState()
     val groupByApp by preferences.displayManager.groupByApp.collectAsState()
     val sortOrder by preferences.displayManager.sortOrder.collectAsState()

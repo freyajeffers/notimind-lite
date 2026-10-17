@@ -16,12 +16,14 @@ class DisplayPreferencesManager(context: Context, private val profileManager: Pr
     private val _groupByApp = MutableStateFlow(preferences.getBoolean(KEY_GROUP_BY_APP, true))
     private val _previewLength = MutableStateFlow(preferences.getInt(KEY_PREVIEW_LENGTH, DEFAULT_PREVIEW_LENGTH))
     private val _themeAccent = MutableStateFlow(preferences.getString(KEY_THEME_ACCENT, "system") ?: "system")
+    private val _compactMode = MutableStateFlow(preferences.getBoolean(KEY_COMPACT_MODE, false))
 
     val showAppIcons: StateFlow<Boolean> = _showAppIcons.asStateFlow()
     val sortOrder: StateFlow<String> = _sortOrder.asStateFlow()
     val groupByApp: StateFlow<Boolean> = _groupByApp.asStateFlow()
     val previewLength: StateFlow<Int> = _previewLength.asStateFlow()
     val themeAccent: StateFlow<String> = _themeAccent.asStateFlow()
+    val compactMode: StateFlow<Boolean> = _compactMode.asStateFlow()
 
     fun reload() {
         _showAppIcons.value = preferences.getBoolean(KEY_SHOW_APP_ICONS, true)
@@ -29,6 +31,7 @@ class DisplayPreferencesManager(context: Context, private val profileManager: Pr
         _groupByApp.value = preferences.getBoolean(KEY_GROUP_BY_APP, true)
         _previewLength.value = preferences.getInt(KEY_PREVIEW_LENGTH, DEFAULT_PREVIEW_LENGTH)
         _themeAccent.value = preferences.getString(KEY_THEME_ACCENT, "system") ?: "system"
+        _compactMode.value = preferences.getBoolean(KEY_COMPACT_MODE, false)
     }
 
     fun setShowAppIcons(value: Boolean) {
@@ -59,12 +62,18 @@ class DisplayPreferencesManager(context: Context, private val profileManager: Pr
         _themeAccent.value = safe
     }
 
+    fun setCompactMode(value: Boolean) {
+        preferences.edit().putBoolean(KEY_COMPACT_MODE, value).apply()
+        _compactMode.value = value
+    }
+
     private companion object {
         const val KEY_SHOW_APP_ICONS = "config_show_app_icons"
         const val KEY_SORT_ORDER = "config_sort_order"
         const val KEY_GROUP_BY_APP = "config_group_by_app"
         const val KEY_PREVIEW_LENGTH = "config_preview_length"
         const val KEY_THEME_ACCENT = "config_theme_accent"
+        const val KEY_COMPACT_MODE = "config_compact_mode"
         private const val DEFAULT_PREVIEW_LENGTH = 140
         private const val MIN_PREVIEW_LENGTH = 16
         private const val MAX_PREVIEW_LENGTH = 1024
