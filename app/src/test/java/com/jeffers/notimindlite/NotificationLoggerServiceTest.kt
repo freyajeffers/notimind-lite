@@ -93,7 +93,7 @@ class NotificationLoggerServiceTest : BaseRobolectricTest() {
             service.onNotificationPosted(blankSbn)
             Thread.sleep(100)
 
-            assertEquals("Blank title and content notification clutter must be suppressed", 0, dao.getAllNotificationsList().size)
+            assertNoNotifications("Blank title and content notification clutter must be suppressed")
 
             serviceController.destroy()
         }
@@ -129,7 +129,7 @@ class NotificationLoggerServiceTest : BaseRobolectricTest() {
             service.onNotificationPosted(usbSbn)
             Thread.sleep(100)
 
-            assertEquals("System USB debugging notification clutter must be suppressed", 0, dao.getAllNotificationsList().size)
+            assertNoNotifications("System USB debugging notification clutter must be suppressed")
 
             // System charging clutter notification from android with category "service"
             val chargingNotification = Notification().apply {
@@ -156,7 +156,7 @@ class NotificationLoggerServiceTest : BaseRobolectricTest() {
             service.onNotificationPosted(chargingSbn)
             Thread.sleep(100)
 
-            assertEquals("System charging notification clutter must be suppressed", 0, dao.getAllNotificationsList().size)
+            assertNoNotifications("System charging notification clutter must be suppressed")
 
             serviceController.destroy()
         }
@@ -177,10 +177,14 @@ class NotificationLoggerServiceTest : BaseRobolectricTest() {
             service.onNotificationPosted(summarySbn)
             Thread.sleep(100)
 
-            assertEquals("Summary clutter ('x more notifications') must be suppressed", 0, dao.getAllNotificationsList().size)
+            assertNoNotifications("Summary clutter ('x more notifications') must be suppressed")
 
             serviceController.destroy()
         }
+    }
+
+    private fun assertNoNotifications(message: String) {
+        assertEquals(message, 0, dao.getAllNotificationsList().size)
     }
 }
 
