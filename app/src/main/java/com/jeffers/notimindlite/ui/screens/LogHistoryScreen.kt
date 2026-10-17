@@ -294,18 +294,17 @@ fun logHistoryScreen(dao: NotificationDao, preferences: com.jeffers.notimindlite
     val focusManager = LocalFocusManager.current
     val keyboardController = LocalSoftwareKeyboardController.current
 
-    LaunchedEffect(searchQuery) { preferences.sharedSearchManager.setQuery(searchQuery) }
-    LaunchedEffect(selectedPackages) { preferences.sharedSearchManager.setPackages(selectedPackages) }
-    LaunchedEffect(selectedReasonFilter) { preferences.sharedSearchManager.setReason(selectedReasonFilter) }
-
-    LaunchedEffect(searchQuery) {
-        delay(SEARCH_DEBOUNCE_MILLIS)
-        debouncedSearchQuery = searchQuery
-    }
-
-    LaunchedEffect(isSearchFocused, searchQuery) {
-        if (!isSearchFocused && searchQuery.isBlank()) isSearchVisible = false
-    }
+    logHistorySearchLifecycle(
+        LogHistorySearchLifecycleConfig(
+            searchQuery = searchQuery,
+            selectedPackages = selectedPackages,
+            selectedReasonFilter = selectedReasonFilter,
+            isSearchFocused = isSearchFocused,
+            preferences = preferences,
+            setDebouncedSearchQuery = { debouncedSearchQuery = it },
+            setIsSearchVisible = { isSearchVisible = it }
+        )
+    )
 
     val dateTimeFormatter = remember {
         DateTimeFormatter.ofLocalizedDateTime(FormatStyle.MEDIUM).withZone(ZoneId.systemDefault())
@@ -540,6 +539,36 @@ fun logHistoryScreen(dao: NotificationDao, preferences: com.jeffers.notimindlite
                     }
                 )
             }
+        }
+    }
+}
+
+private data class LogHistorySearchLifecycleConfig(
+    val searchQuery: String,
+    val selectedPackages: List<String>?,
+    val selectedReasonFilter: Int?,
+    val isSearchFocused: Boolean,
+    val preferences: com.jeffers.notimindlite.data.local.PreferencesRepository,
+    val setDebouncedSearchQuery: (String) -> Unit,
+    val setIsSearchVisible: (Boolean) -> Unit
+)
+
+private val logHistorySearchLifecycle:
+    @Composable (LogHistorySearchLifecycleConfig) -> Unit = { config ->
+    LaunchedEffect(config.searchQuery) {
+        config.preferences.sharedSearchManager.setQuery(config.searchQuery)
+        delay(SEARCH_DEBOUNCE_MILLIS)
+        config.setDebouncedSearchQuery(config.searchQuery)
+    }
+    LaunchedEffect(config.selectedPackages) {
+        config.preferences.sharedSearchManager.setPackages(config.selectedPackages)
+    }
+    LaunchedEffect(config.selectedReasonFilter) {
+        config.preferences.sharedSearchManager.setReason(config.selectedReasonFilter)
+    }
+    LaunchedEffect(config.isSearchFocused, config.searchQuery) {
+        if (!config.isSearchFocused && config.searchQuery.isBlank()) {
+            config.setIsSearchVisible(false)
         }
     }
 }
