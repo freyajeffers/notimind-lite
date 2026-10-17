@@ -19,6 +19,7 @@ class ProfilePreferencesManager(context: Context) {
     val profiles: StateFlow<List<Profile>> = _profiles.asStateFlow()
     val activeProfileId: StateFlow<String> = _activeProfileId.asStateFlow()
     val activePreferencesName: String get() = "notimind_lite_prefs_$activeId"
+    var onProfileChanged: (() -> Unit)? = null
 
     fun createProfile(name: String): Profile {
         val clean = name.trim().take(MAX_PROFILE_NAME_LENGTH)
@@ -41,6 +42,7 @@ class ProfilePreferencesManager(context: Context) {
         activeId = id
         store.edit().putString(KEY_ACTIVE_PROFILE, id).apply()
         _activeProfileId.value = id
+        onProfileChanged?.invoke()
         return true
     }
 
@@ -130,7 +132,7 @@ class ProfilePreferencesManager(context: Context) {
         private const val PROFILE_STORE = "notimind_profiles"
         private const val KEY_PROFILES = "profiles"
         private const val KEY_ACTIVE_PROFILE = "active_profile"
-        private const val DEFAULT_PROFILE_ID = "default"
+        const val DEFAULT_PROFILE_ID = "default"
         private const val PROFILE_EXPORT_VERSION = 1
         private const val MAX_PROFILE_NAME_LENGTH = 80
         private val PROFILE_ID = Regex("[A-Za-z0-9-]{8,64}")
