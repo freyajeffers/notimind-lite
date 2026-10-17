@@ -35,7 +35,7 @@ class SupabaseSettingsSyncRepository(private val auth: SupabaseAuthManager) : Se
                 request("GET", path, refreshed)
             }
             val rows = JSONArray(if (response.isBlank()) "[]" else response)
-            val local = preferences.exportSyncableSettings()
+            val local = preferences.settingsSyncManager.exportSyncableSettings()
             if (rows.length() == 0) {
                 request(
                     "POST",
@@ -45,7 +45,7 @@ class SupabaseSettingsSyncRepository(private val auth: SupabaseAuthManager) : Se
                     "return=minimal"
                 )
             } else {
-                preferences.importSyncableSettings(rows.getJSONObject(0).optJSONObject("settings") ?: JSONObject())
+                preferences.settingsSyncManager.importSyncableSettings(rows.getJSONObject(0).optJSONObject("settings") ?: JSONObject())
             }
             Result.success(Unit)
         } catch (e: java.io.IOException) {

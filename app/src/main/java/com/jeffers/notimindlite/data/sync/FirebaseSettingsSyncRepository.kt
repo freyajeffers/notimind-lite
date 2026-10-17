@@ -11,12 +11,12 @@ class FirebaseSettingsSyncRepository(
     override suspend fun restoreOrUpload(preferences: PreferencesRepository, userId: String): Result<Unit> = try {
         val ref = firestore.collection("users").document(userId).collection("settings").document("preferences")
         val remote = ref.get().await()
-        val local = preferences.exportSyncableSettings()
+        val local = preferences.settingsSyncManager.exportSyncableSettings()
         if (!remote.exists()) {
             ref.set(mapOf("settings" to local.toString(), "updatedAt" to System.currentTimeMillis())).await()
         } else {
             val remoteSettings = JSONObject(remote.getString("settings") ?: "{}")
-            preferences.importSyncableSettings(remoteSettings)
+            preferences.settingsSyncManager.importSyncableSettings(remoteSettings)
             ref.set(mapOf("settings" to remoteSettings.toString(), "updatedAt" to System.currentTimeMillis())).await()
         }
         Result.success(Unit)

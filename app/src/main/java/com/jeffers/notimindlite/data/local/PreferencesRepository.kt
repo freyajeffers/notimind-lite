@@ -46,6 +46,7 @@ class PreferencesRepository(context: Context) :
     val displayManager = DisplayPreferencesManager(context, profileManager)
     private val backing: android.content.SharedPreferences
         get() = deContext.getSharedPreferences(profileManager.activePreferencesName, Context.MODE_PRIVATE)
+    val settingsSyncManager = SettingsSyncManager { backing }
 
     init {
         migrateRenamedKeys()
@@ -190,34 +191,7 @@ class PreferencesRepository(context: Context) :
 
 
 
-    /** Export only user-facing settings; auth tokens and local sync metadata are excluded. */
-    fun exportSyncableSettings(): org.json.JSONObject {
-        val result = org.json.JSONObject()
-        backing.all.forEach { (key, value) ->
-            if (!key.startsWith("config_") || key == "config_use_supabase_sync") {
-                when (value) {
-                    is Boolean, is Int, is Long, is Float, is String -> result.put(key, value)
-                }
-            }
-        }
-        return result
-    }
 
-    fun importSyncableSettings(settings: org.json.JSONObject) {
-        val editor = backing.edit()
-        settings.keys().forEach { key ->
-            if (!key.startsWith("config_") || key == "config_use_supabase_sync") {
-                when (val value = settings.opt(key)) {
-                    is Boolean -> editor.putBoolean(key, value)
-                    is Int -> editor.putInt(key, value)
-                    is Long -> editor.putLong(key, value)
-                    is Double -> editor.putFloat(key, value.toFloat())
-                    is String -> editor.putString(key, value)
-                }
-            }
-        }
-        editor.apply()
-    }
     fun setEnableSync(value: Boolean) {
         backing.edit().putBoolean(KEY_ENABLE_SYNC, value).apply()
         _enableSync.value = value
