@@ -414,92 +414,50 @@ fun activeNotificationsScreen(dao: NotificationDao, preferences: PreferencesRepo
                     pinnedNotifs + activeNotifs + filteredNotifs + recentlyDismissed + lostNotifs
                 )
             }
-            LazyColumn(
-                state = listState,
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(innerPadding)
-                    .padding(horizontal = 16.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp),
-                contentPadding = PaddingValues(vertical = 12.dp)
-            ) {
-                activeSearchHeader(
-                    ActiveSearchHeaderConfig(
-                        searchQuery = searchQuery,
-                        searchSuggestions = searchSuggestions,
-                        recentSearches = recentSearches,
-                        isVisible = isSearchExplicitlyOpened || searchQuery.isNotEmpty() || isSearchFocused,
-                        focusRequester = searchFocusRequester,
-                        preferences = preferences,
-                        onQueryChanged = { searchQuery = it },
-                        onFocusChanged = { isSearchFocused = it },
-                        onDone = {
-                            val query = searchQuery.trim()
-                            if (query.isNotEmpty()) preferences.sharedSearchManager.addRecentSearch(query)
-                            focusManager.clearFocus(force = true)
-                            keyboardController?.hide()
-                        }
-                    )
-                )
-
-                val hasAnyData = activeNotifs.isNotEmpty() ||
-                    filteredNotifs.isNotEmpty() ||
-                    pinnedNotifs.isNotEmpty() ||
-                    recentlyDismissed.isNotEmpty() ||
-                    lostNotifs.isNotEmpty()
-                val isSearching = debouncedSearchQuery.isNotBlank() ||
-                    !selectedPackages.isNullOrEmpty()
-                activeNotificationsEmptyStateItem(
-                    ActiveNotificationsEmptyStateConfig(
-                        hasAnyData = hasAnyData,
-                        isGranted = isGranted,
-                        isSearching = isSearching,
-                        debouncedSearchQuery = debouncedSearchQuery,
-                        context = context,
-                        onClear = {
-                            searchQuery = ""
-                            selectedPackages = null
-                        }
-                    )
-                )
-
-                activeFilterChipsItem(
-                    searchQuery = debouncedSearchQuery,
+            renderActiveNotificationsList(
+                ActiveNotificationsListConfig(
+                    listState = listState,
+                    innerPadding = innerPadding,
+                    searchQuery = searchQuery,
+                    searchSuggestions = searchSuggestions,
+                    recentSearches = recentSearches,
+                    isSearchVisible = isSearchExplicitlyOpened || searchQuery.isNotEmpty() || isSearchFocused,
+                    searchFocusRequester = searchFocusRequester,
+                    preferences = preferences,
+                    focusManager = focusManager,
+                    keyboardController = keyboardController,
+                    isGranted = isGranted,
+                    debouncedSearchQuery = debouncedSearchQuery,
                     selectedPackages = selectedPackages,
-                    onClearSearch = { searchQuery = "" },
-                    onClearPackages = { selectedPackages = null },
-                    onClearAll = {
+                    context = context,
+                    pinnedNotifs = pinnedNotifs,
+                    activeNotifs = activeNotifs,
+                    filteredNotifs = filteredNotifs,
+                    recentlyDismissed = recentlyDismissed,
+                    lostNotifs = lostNotifs,
+                    sectionOrder = sectionOrder,
+                    expandedSection = expandedSection,
+                    collapsedGroups = collapsedGroups,
+                    expandedCards = expandedCards,
+                    dateTimeFormatter = dateTimeFormatter,
+                    dao = dao,
+                    showAppIcons = showAppIcons,
+                    compactMode = compactMode,
+                    groupByApp = groupByApp,
+                    sortOrder = sortOrder,
+                    previewLength = previewLength,
+                    onSearchChanged = { searchQuery = it },
+                    onFocusChanged = { isSearchFocused = it },
+                    onClear = {
                         searchQuery = ""
                         selectedPackages = null
-                    }
+                    },
+                    onSetPackages = { selectedPackages = it },
+                    onSetCollapsedGroups = { collapsedGroups = it },
+                    onSetExpandedCards = { expandedCards = it },
+                    toggleSection = ::toggleSection
                 )
-
-                renderNotificationSections(
-                    ActiveNotificationSectionsConfig(
-                        sectionOrder = sectionOrder,
-                        expandedSection = expandedSection,
-                        pinnedNotifs = pinnedNotifs,
-                        activeNotifs = activeNotifs,
-                        filteredNotifs = filteredNotifs,
-                        recentlyDismissed = recentlyDismissed,
-                        lostNotifs = lostNotifs,
-                        selectedPackages = selectedPackages,
-                        debouncedSearchQuery = debouncedSearchQuery,
-                        groupByApp = groupByApp,
-                        sortOrder = sortOrder,
-                        collapsedGroups = collapsedGroups,
-                        setCollapsedGroups = { collapsedGroups = it },
-                        expandedCards = expandedCards,
-                        setExpandedCards = { expandedCards = it },
-                        dateTimeFormatter = dateTimeFormatter,
-                        dao = dao,
-                        showAppIcons = showAppIcons,
-                        compactMode = compactMode,
-                        previewLength = previewLength,
-                        toggleSection = ::toggleSection
-                    )
-                )
-            }
+            )
         }
     }
 
@@ -515,6 +473,132 @@ fun activeNotificationsScreen(dao: NotificationDao, preferences: PreferencesRepo
         )
     }
 
+}
+
+private data class ActiveNotificationsListConfig(
+    val listState: androidx.compose.foundation.lazy.LazyListState,
+    val innerPadding: PaddingValues,
+    val searchQuery: String,
+    val searchSuggestions: List<String>,
+    val recentSearches: List<String>,
+    val isSearchVisible: Boolean,
+    val searchFocusRequester: FocusRequester,
+    val preferences: PreferencesRepository,
+    val focusManager: androidx.compose.ui.focus.FocusManager,
+    val keyboardController: androidx.compose.ui.platform.SoftwareKeyboardController?,
+    val isGranted: Boolean,
+    val debouncedSearchQuery: String,
+    val selectedPackages: List<String>?,
+    val context: Context,
+    val pinnedNotifs: List<NotificationEntity>,
+    val activeNotifs: List<NotificationEntity>,
+    val filteredNotifs: List<NotificationEntity>,
+    val recentlyDismissed: List<NotificationEntity>,
+    val lostNotifs: List<NotificationEntity>,
+    val sectionOrder: List<NotificationSection>,
+    val expandedSection: String,
+    val collapsedGroups: Set<String>,
+    val expandedCards: Set<String>,
+    val dateTimeFormatter: DateTimeFormatter,
+    val dao: NotificationDao,
+    val showAppIcons: Boolean,
+    val compactMode: Boolean,
+    val groupByApp: Boolean,
+    val sortOrder: String,
+    val previewLength: Int,
+    val onSearchChanged: (String) -> Unit,
+    val onFocusChanged: (Boolean) -> Unit,
+    val onClear: () -> Unit,
+    val onSetPackages: (List<String>?) -> Unit,
+    val onSetCollapsedGroups: (Set<String>) -> Unit,
+    val onSetExpandedCards: (Set<String>) -> Unit,
+    val toggleSection: (String) -> Unit
+)
+
+@Composable
+private fun renderActiveNotificationsList(config: ActiveNotificationsListConfig) {
+    LazyColumn(
+        state = config.listState,
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(config.innerPadding)
+            .padding(horizontal = 16.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp),
+        contentPadding = PaddingValues(vertical = 12.dp)
+    ) {
+        activeSearchHeader(
+            ActiveSearchHeaderConfig(
+                searchQuery = config.searchQuery,
+                searchSuggestions = config.searchSuggestions,
+                recentSearches = config.recentSearches,
+                isVisible = config.isSearchVisible,
+                focusRequester = config.searchFocusRequester,
+                preferences = config.preferences,
+                onQueryChanged = config.onSearchChanged,
+                onFocusChanged = config.onFocusChanged,
+                onDone = {
+                    val query = config.searchQuery.trim()
+                    if (query.isNotEmpty()) config.preferences.sharedSearchManager.addRecentSearch(query)
+                    config.focusManager.clearFocus(force = true)
+                    config.keyboardController?.hide()
+                }
+            )
+        )
+        val hasAnyData = config.activeNotifs.isNotEmpty() ||
+            config.filteredNotifs.isNotEmpty() ||
+            config.pinnedNotifs.isNotEmpty() ||
+            config.recentlyDismissed.isNotEmpty() ||
+            config.lostNotifs.isNotEmpty()
+        val isSearching = config.debouncedSearchQuery.isNotBlank() ||
+            !config.selectedPackages.isNullOrEmpty()
+        activeNotificationsEmptyStateItem(
+            ActiveNotificationsEmptyStateConfig(
+                hasAnyData = hasAnyData,
+                isGranted = config.isGranted,
+                isSearching = isSearching,
+                debouncedSearchQuery = config.debouncedSearchQuery,
+                context = config.context,
+                onClear = config.onClear
+            )
+        )
+        activeFilterChipsItem(
+            searchQuery = config.debouncedSearchQuery,
+            selectedPackages = config.selectedPackages,
+            onClearSearch = { config.onSearchChanged("") },
+            onClearPackages = { config.onSetPackages(null) },
+            onClearAll = config.onClear
+        )
+        renderActiveNotificationSections(config)
+    }
+}
+
+private val renderActiveNotificationSections:
+    androidx.compose.foundation.lazy.LazyListScope.(ActiveNotificationsListConfig) -> Unit = { config ->
+    renderNotificationSections(
+        ActiveNotificationSectionsConfig(
+            sectionOrder = config.sectionOrder,
+            expandedSection = config.expandedSection,
+            pinnedNotifs = config.pinnedNotifs,
+            activeNotifs = config.activeNotifs,
+            filteredNotifs = config.filteredNotifs,
+            recentlyDismissed = config.recentlyDismissed,
+            lostNotifs = config.lostNotifs,
+            selectedPackages = config.selectedPackages,
+            debouncedSearchQuery = config.debouncedSearchQuery,
+            groupByApp = config.groupByApp,
+            sortOrder = config.sortOrder,
+            collapsedGroups = config.collapsedGroups,
+            setCollapsedGroups = config.onSetCollapsedGroups,
+            expandedCards = config.expandedCards,
+            setExpandedCards = config.onSetExpandedCards,
+            dateTimeFormatter = config.dateTimeFormatter,
+            dao = config.dao,
+            showAppIcons = config.showAppIcons,
+            compactMode = config.compactMode,
+            previewLength = config.previewLength,
+            toggleSection = config.toggleSection
+        )
+    )
 }
 
 private data class ActiveNotificationsEmptyStateConfig(
