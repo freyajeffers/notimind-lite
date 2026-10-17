@@ -442,12 +442,6 @@ fun activeNotificationsScreen(dao: NotificationDao, preferences: PreferencesRepo
                     )
                 )
 
-                // F-N usability [2026-09-06]: surface empty-state Composables when the
-                // entire DB is empty or a query returned no matches. Distinguishes three
-                // scenarios: (1) permission missing → guidance + CTA, (2) permission OK
-                // but no notifications captured yet → first-run guidance, (3) permission
-                // OK + DB has rows but a query/filter returned nothing → search-empty
-                // guidance with a clear-search escape hatch.
                 val hasAnyData = activeNotifs.isNotEmpty() ||
                     filteredNotifs.isNotEmpty() ||
                     pinnedNotifs.isNotEmpty() ||
@@ -455,24 +449,19 @@ fun activeNotificationsScreen(dao: NotificationDao, preferences: PreferencesRepo
                     lostNotifs.isNotEmpty()
                 val isSearching = debouncedSearchQuery.isNotBlank() ||
                     !selectedPackages.isNullOrEmpty()
-                if (!hasAnyData) {
-                    item(key = "active_empty_state") {
-                        activeEmptyState(
-                            isGranted = isGranted,
-                            isSearching = isSearching,
-                            debouncedSearchQuery = debouncedSearchQuery,
-                            onGrantClick = {
-                                val intent = Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS)
-                                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                                context.startActivity(intent)
-                            },
-                            onClearClick = {
-                                searchQuery = ""
-                                selectedPackages = null
-                            }
-                        )
-                    }
-                }
+                activeNotificationsEmptyStateItem(
+                    ActiveNotificationsEmptyStateConfig(
+                        hasAnyData = hasAnyData,
+                        isGranted = isGranted,
+                        isSearching = isSearching,
+                        debouncedSearchQuery = debouncedSearchQuery,
+                        context = context,
+                        onClear = {
+                            searchQuery = ""
+                            selectedPackages = null
+                        }
+                    )
+                )
 
                 activeFilterChipsItem(
                     searchQuery = debouncedSearchQuery,
@@ -526,6 +515,34 @@ fun activeNotificationsScreen(dao: NotificationDao, preferences: PreferencesRepo
         )
     }
 
+}
+
+private data class ActiveNotificationsEmptyStateConfig(
+    val hasAnyData: Boolean,
+    val isGranted: Boolean,
+    val isSearching: Boolean,
+    val debouncedSearchQuery: String,
+    val context: Context,
+    val onClear: () -> Unit
+)
+
+private fun androidx.compose.foundation.lazy.LazyListScope.activeNotificationsEmptyStateItem(
+    config: ActiveNotificationsEmptyStateConfig
+) {
+    if (config.hasAnyData) return
+    item(key = "active_empty_state") {
+        activeEmptyState(
+            isGranted = config.isGranted,
+            isSearching = config.isSearching,
+            debouncedSearchQuery = config.debouncedSearchQuery,
+            onGrantClick = {
+                val intent = Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS)
+                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                config.context.startActivity(intent)
+            },
+            onClearClick = config.onClear
+        )
+    }
 }
 
 data class LogNotificationCardConfig(
