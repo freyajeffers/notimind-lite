@@ -47,13 +47,13 @@ class EndToEndAppLifecycleTest : BaseRobolectricTest() {
             val parts = titleContent.split(": ")
             val title = parts[0]
             val text = parts[1]
-            createMockStatusBarNotification(
+            createMockStatusBarNotification(MockStatusBarParams(
                 key = "$pkg|${100 + idx}|null|${1000 + idx}",
                 packageName = pkg,
                 title = title,
                 text = text,
                 postTime = System.currentTimeMillis() + idx * 1000
-            )
+            ))
         }
 
         for (sbn in sbns) {

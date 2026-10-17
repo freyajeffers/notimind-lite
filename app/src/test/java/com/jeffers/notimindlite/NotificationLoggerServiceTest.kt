@@ -47,24 +47,24 @@ class NotificationLoggerServiceTest : BaseRobolectricTest() {
             )
 
             // 1. Notification from app's own package (com.jeffers.notimindlite)
-            val selfSbn = createMockStatusBarNotification(
+            val selfSbn = createMockStatusBarNotification(MockStatusBarParams(
                 key = "com.jeffers.notimindlite|101|null|1001",
                 packageName = context.packageName,
                 title = "Self App Title",
                 text = "Self App Content"
-            )
+            ))
             service.onNotificationPosted(selfSbn)
             Thread.sleep(100)
 
             assertEquals("Self package notifications must be ignored", 0, dao.getAllNotificationsList().size)
 
             // 2. Notification from external package (com.example.other)
-            val externalSbn = createMockStatusBarNotification(
+            val externalSbn = createMockStatusBarNotification(MockStatusBarParams(
                 key = "com.example.other|102|null|1002",
                 packageName = "com.example.other",
                 title = "External App Title",
                 text = "External App Content"
-            )
+            ))
             service.onNotificationPosted(externalSbn)
             withTimeout(2_000) {
                 while (dao.getAllNotificationsList().size < 1) delay(10)
@@ -84,12 +84,12 @@ class NotificationLoggerServiceTest : BaseRobolectricTest() {
             val serviceController = Robolectric.buildService(NotificationLoggerService::class.java)
             val service = serviceController.create().get()
 
-            val blankSbn = createMockStatusBarNotification(
+            val blankSbn = createMockStatusBarNotification(MockStatusBarParams(
                 key = "com.example.app|103|null|1003",
                 packageName = "com.example.app",
                 title = "",
                 text = ""
-            )
+            ))
             service.onNotificationPosted(blankSbn)
             Thread.sleep(100)
 
@@ -168,12 +168,12 @@ class NotificationLoggerServiceTest : BaseRobolectricTest() {
             val serviceController = Robolectric.buildService(NotificationLoggerService::class.java)
             val service = serviceController.create().get()
 
-            val summarySbn = createMockStatusBarNotification(
+            val summarySbn = createMockStatusBarNotification(MockStatusBarParams(
                 key = "com.example.app|104|null|1004",
                 packageName = "com.example.app",
                 title = "3 more notifications",
                 text = "Group summary"
-            )
+            ))
             service.onNotificationPosted(summarySbn)
             Thread.sleep(100)
 

@@ -16,7 +16,9 @@ class ViewModelUiStatePairwiseTest : BaseRobolectricTest() {
         assertTrue("Active notifications flow should initially be empty", activeFlow.isEmpty())
 
         // Insert notification
-        val entity = createDummyEntity(key = "k_flow_1", title = "Flow Title", content = "Flow Body")
+        val entity = createDummyEntity(
+            DummyEntityParams(key = "k_flow_1", title = "Flow Title", content = "Flow Body")
+        )
         dao.insertNotification(entity)
 
         activeFlow = dao.getActiveNotificationsFlow().first()

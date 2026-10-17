@@ -51,13 +51,13 @@ class HighLoadBurstLifecycleTest : BaseRobolectricTest() {
         // Insert 50 active notifications
         for (i in 1..50) {
             dao.insertNotification(
-                createDummyEntity(
+                createDummyEntity(DummyEntityParams(
                     key = "burst_reboot_k_$i",
                     appName = "App $i",
                     title = "Burst Title $i",
                     content = "Burst Content $i",
                     isDismissed = i > 25 // 25 active, 25 dismissed
-                )
+                 ))
             )
         }
 

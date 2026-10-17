@@ -22,27 +22,27 @@ class BootReceiverDbPairwiseTest : BaseRobolectricTest() {
         val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
         val shadowNm: ShadowNotificationManager = Shadows.shadowOf(notificationManager)
 
-        val n1 = createDummyEntity(
+        val n1 = createDummyEntity(DummyEntityParams(
             key = "k1",
             appName = "App 1",
             title = "Title 1",
             content = "Unique Content 1",
             isDismissed = false
-        )
-        val n2 = createDummyEntity(
+         ))
+        val n2 = createDummyEntity(DummyEntityParams(
             key = "k2",
             appName = "App 2",
             title = "Existing Active Title",
             content = "Existing Active Content",
             isDismissed = false
-        )
-        val n3 = createDummyEntity(
+         ))
+        val n3 = createDummyEntity(DummyEntityParams(
             key = "k3",
             appName = "App 3",
             title = "Title 3",
             content = "Content 3",
             isDismissed = true
-        )
+         ))
 
         dao.insertNotification(n1)
         dao.insertNotification(n2)

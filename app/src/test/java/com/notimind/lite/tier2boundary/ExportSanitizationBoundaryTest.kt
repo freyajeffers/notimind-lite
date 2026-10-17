@@ -13,12 +13,12 @@ class ExportSanitizationBoundaryTest : BaseRobolectricTest() {
 
     @Test
     fun tc_EXP_001_jsonExportValidSchemaAndEscaping() {
-        val entity1 = createDummyEntity(
+        val entity1 = createDummyEntity(DummyEntityParams(
             key = "k_json_1",
             title = "Title with \"quotes\" and \n newlines",
             content = "Content with \\ slashes and \t tabs"
-        )
-        val entity2 = createDummyEntity(key = "k_json_2", title = "Simple", content = "Simple")
+         ))
+        val entity2 = createDummyEntity(DummyEntityParams(key = "k_json_2", title = "Simple", content = "Simple" ))
 
         val jsonStr = DatabaseExporter.exportToJsonString(listOf(entity1, entity2))
         assertNotNull(jsonStr)
@@ -34,11 +34,21 @@ class ExportSanitizationBoundaryTest : BaseRobolectricTest() {
 
     @Test
     fun tc_EXP_002_csvExportFormulaInjectionEscaping() {
-        val formulaEqual = createDummyEntity(key = "k_eq", title = "=1+1", content = "=SUM(A1:A10)")
-        val formulaPlus = createDummyEntity(key = "k_plus", title = "+1-2", content = "+1+1")
-        val formulaMinus = createDummyEntity(key = "k_minus", title = "-1+2", content = "-cmd|' /C calc'!A0")
-        val formulaAt = createDummyEntity(key = "k_at", title = "@SUM(1,2)", content = "@appName")
-        val formulaTab = createDummyEntity(key = "k_tab", title = "\tTabbed", content = "Tabbed Content")
+        val formulaEqual = createDummyEntity(
+            DummyEntityParams(key = "k_eq", title = "=1+1", content = "=SUM(A1:A10)")
+        )
+        val formulaPlus = createDummyEntity(
+            DummyEntityParams(key = "k_plus", title = "+1-2", content = "+1+1")
+        )
+        val formulaMinus = createDummyEntity(
+            DummyEntityParams(key = "k_minus", title = "-1+2", content = "-cmd|' /C calc'!A0")
+        )
+        val formulaAt = createDummyEntity(
+            DummyEntityParams(key = "k_at", title = "@SUM(1,2)", content = "@appName")
+        )
+        val formulaTab = createDummyEntity(
+            DummyEntityParams(key = "k_tab", title = "\tTabbed", content = "Tabbed Content")
+        )
 
         val csvStr = DatabaseExporter.exportToCsvString(
             listOf(formulaEqual, formulaPlus, formulaMinus, formulaAt, formulaTab)
@@ -59,7 +69,7 @@ class ExportSanitizationBoundaryTest : BaseRobolectricTest() {
 
     @Test
     fun tc_EXP_003_shareExportFileAndCleanup() {
-        val notifications = listOf(createDummyEntity(key = "share_k1"))
+        val notifications = listOf(createDummyEntity(DummyEntityParams(key = "share_k1" )))
 
         DatabaseExporter.shareExportFile(context, notifications, isJson = true)
         DatabaseExporter.shareExportFile(context, notifications, isJson = false)

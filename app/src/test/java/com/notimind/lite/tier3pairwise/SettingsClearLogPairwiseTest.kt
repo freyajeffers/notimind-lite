@@ -14,7 +14,9 @@ class SettingsClearLogPairwiseTest : BaseRobolectricTest() {
     fun tc_T3_004_settingsClearLogRoomDbStateSynchronization() = runTest {
         // Populate DB with 5 entities
         for (i in 1..5) {
-            dao.insertNotification(createDummyEntity(key = "k_settings_$i", isDismissed = i % 2 == 0))
+            dao.insertNotification(
+                createDummyEntity(DummyEntityParams(key = "k_settings_$i", isDismissed = i % 2 == 0))
+            )
         }
 
         assertEquals(5, dao.getNotificationCount())

@@ -44,11 +44,11 @@ class PersistenceBoundaryTest : BaseRobolectricTest() {
         val largeTitle = "A".repeat(10_000)
         val largeContent = "B".repeat(100_000)
 
-        val entity = createDummyEntity(
+        val entity = createDummyEntity(DummyEntityParams(
             key = "large_payload_key",
             title = largeTitle,
             content = largeContent
-        )
+         ))
 
         val rowId = dao.insertNotification(entity)
         assertTrue(rowId > 0)
@@ -63,11 +63,11 @@ class PersistenceBoundaryTest : BaseRobolectricTest() {
         val injectionTitle = "😀 Special ' UNION SELECT * FROM notifications; DROP TABLE notifications; --"
         val rtlContent = "‏עברית / العربية 🚀🔥"
 
-        val entity = createDummyEntity(
+        val entity = createDummyEntity(DummyEntityParams(
             key = "sql_inj_key",
             title = injectionTitle,
             content = rtlContent
-        )
+         ))
 
         dao.insertNotification(entity)
 
@@ -138,10 +138,10 @@ class PersistenceBoundaryTest : BaseRobolectricTest() {
 
     @Test
     fun tc_R2_T2_006_boundaryTimestampsAndSortingIntegrity() = runTest {
-        val eZero = createDummyEntity(key = "k_zero", postTime = 0L)
-        val eNeg = createDummyEntity(key = "k_neg", postTime = -100L)
-        val eMax = createDummyEntity(key = "k_max", postTime = Long.MAX_VALUE)
-        val eNormal = createDummyEntity(key = "k_norm", postTime = 1000L)
+        val eZero = createDummyEntity(DummyEntityParams(key = "k_zero", postTime = 0L ))
+        val eNeg = createDummyEntity(DummyEntityParams(key = "k_neg", postTime = -100L ))
+        val eMax = createDummyEntity(DummyEntityParams(key = "k_max", postTime = Long.MAX_VALUE ))
+        val eNormal = createDummyEntity(DummyEntityParams(key = "k_norm", postTime = 1000L ))
 
         dao.insertNotification(eZero)
         dao.insertNotification(eNeg)
@@ -161,7 +161,7 @@ class PersistenceBoundaryTest : BaseRobolectricTest() {
         val jobs = (1..50).map { i ->
             async(Dispatchers.IO) {
                 val key = "concurrent_key_$i"
-                dao.insertNotification(createDummyEntity(key = key))
+                dao.insertNotification(createDummyEntity(DummyEntityParams(key = key )))
                 if (i % 2 == 0) {
                     dao.markDismissed(key)
                 }

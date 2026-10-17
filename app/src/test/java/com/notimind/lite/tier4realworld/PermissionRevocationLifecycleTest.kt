@@ -24,12 +24,12 @@ class PermissionRevocationLifecycleTest : BaseRobolectricTest() {
         )
 
         // 1. Initial State: Listener permission granted, ingest SBN-1
-        val sbn1 = createMockStatusBarNotification(
+        val sbn1 = createMockStatusBarNotification(MockStatusBarParams(
             key = "perm_k1",
             packageName = "com.test.app1",
             title = "Title 1",
             text = "Content 1"
-        )
+        ))
         service.onNotificationPosted(sbn1)
         Thread.sleep(100)
 
@@ -38,12 +38,12 @@ class PermissionRevocationLifecycleTest : BaseRobolectricTest() {
         // 2. Permission revocation simulation: settings listener component String cleared
         Settings.Secure.putString(context.contentResolver, "enabled_notification_listeners", "NONE")
 
-        val sbn2 = createMockStatusBarNotification(
+        val sbn2 = createMockStatusBarNotification(MockStatusBarParams(
             key = "perm_k2",
             packageName = "com.test.app2",
             title = "Title 2",
             text = "Content 2"
-        )
+        ))
 
         // Attempt notification post while revoked — should handle safely without throwing
         val beforeCount = dao.getNotificationCount()
@@ -65,12 +65,12 @@ class PermissionRevocationLifecycleTest : BaseRobolectricTest() {
         Settings.Secure.putString(context.contentResolver, "enabled_notification_listeners", componentNameStr)
         NotificationLoggerService.rebindService(context)
 
-        val sbn3 = createMockStatusBarNotification(
+        val sbn3 = createMockStatusBarNotification(MockStatusBarParams(
             key = "perm_k3",
             packageName = "com.test.app3",
             title = "Title 3",
             text = "Content 3"
-        )
+        ))
         service.onNotificationPosted(sbn3)
         Thread.sleep(100)
 
