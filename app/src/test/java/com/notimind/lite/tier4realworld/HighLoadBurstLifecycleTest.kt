@@ -23,71 +23,7 @@ class HighLoadBurstLifecycleTest : BaseRobolectricTest() {
     fun tc_T4_002_stressTenThousandEventsStabilityAndDatabaseSla() = runTest {
         val count = 10_000
 
-        // Measure batch insertion of 10,000 entities
-        measureTimeMillis {
-            (1..count).map { i ->
-                NotificationEntity(
-                    key = "stress_key_$i",
-                    packageName = "com.stress.app_${i % 10}",
-                    appName = "Stress App ${i % 10}",
-                    title = "Burst Notification $i",
-                    content = "High-load stress test payload body $i",
-                    postTime = System.currentTimeMillis() + i,
-                    isDismissed = i % 2 == 0,
-                    isPinned = i % 100 == 0
-                )
-            }
-            database.runInTransaction {
-                val db = database.openHelper.writableDatabase
-                val appSql = (
-                    "INSERT OR IGNORE INTO apps (packageName, appName, firstSeenTime, lastSeenTime, "
-                        + "syncStatus, lastSyncedAt) VALUES (?, ?, ?, ?, ?, ?)"
-                )
-                val appStmt = db.compileStatement(appSql)
-                for (p in 0..10) {
-                    appStmt.clearBindings()
-                    appStmt.bindString(1, "com.stress.app_$p")
-                    appStmt.bindString(2, "Stress App $p")
-                    appStmt.bindLong(3, System.currentTimeMillis())
-                    appStmt.bindLong(4, System.currentTimeMillis())
-                    appStmt.bindString(5, "PENDING_UPLOAD")
-                    appStmt.bindLong(6, 0L)
-                    appStmt.executeInsert()
-                }
-                val notifSql = (
-                    "INSERT INTO notifications (key, packageName, appName, title, content, postTime, "
-                        + "lastUpdatedTime, updateCount, isDismissed, isPinned, isPersistent, isRead, "
-                        + "isGroupSummary, priority, isOngoing, isClearable, actionsCount, smallIconRes, "
-                        + "syncStatus, lastSyncedAt) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, "
-                        + "?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
-                )
-                val stmt = db.compileStatement(notifSql)
-                for (i in 1..count) {
-                    stmt.clearBindings()
-                    stmt.bindString(1, "stress_key_$i")
-                    stmt.bindString(2, "com.stress.app_${i % 10}")
-                    stmt.bindString(3, "Stress App ${i % 10}")
-                    stmt.bindString(4, "Burst Notification $i")
-                    stmt.bindString(5, "High-load stress test payload body $i")
-                    stmt.bindLong(6, System.currentTimeMillis() + i)
-                    stmt.bindLong(7, System.currentTimeMillis() + i)
-                    stmt.bindLong(8, 1L)
-                    stmt.bindLong(9, if (i % 2 == 0) 1L else 0L)
-                    stmt.bindLong(10, if (i % 100 == 0) 1L else 0L)
-                    stmt.bindLong(11, 0L)
-                    stmt.bindLong(12, 0L)
-                    stmt.bindLong(13, 0L)
-                    stmt.bindLong(14, 0L)
-                    stmt.bindLong(15, 0L)
-                    stmt.bindLong(16, 1L)
-                    stmt.bindLong(17, 0L)
-                    stmt.bindLong(18, 0L)
-                    stmt.bindString(19, "PENDING_UPLOAD")
-                    stmt.bindLong(20, 0L)
-                    stmt.executeInsert()
-                }
-            }
-        }
+        populateHighLoadDatabase(count)
 
         val totalInDb = dao.getNotificationCount()
         assertEquals(10_000, totalInDb)
@@ -137,4 +73,56 @@ class HighLoadBurstLifecycleTest : BaseRobolectricTest() {
         val posted = shadowNm.allNotifications
         assertTrue("BootReceiver must restore active notifications upon sudden reboot", posted.isNotEmpty())
     }
+    private fun populateHighLoadDatabase(count: Int) {
+        measureTimeMillis {
+            database.runInTransaction {
+                val db = database.openHelper.writableDatabase
+                val appStmt = db.compileStatement(
+                    "INSERT OR IGNORE INTO apps (packageName, appName, firstSeenTime, lastSeenTime, " +
+                        "syncStatus, lastSyncedAt) VALUES (?, ?, ?, ?, ?, ?)"
+                )
+                for (p in 0..10) {
+                    appStmt.clearBindings()
+                    appStmt.bindString(1, "com.stress.app_$p")
+                    appStmt.bindString(2, "Stress App $p")
+                    appStmt.bindLong(3, System.currentTimeMillis())
+                    appStmt.bindLong(4, System.currentTimeMillis())
+                    appStmt.bindString(5, "PENDING_UPLOAD")
+                    appStmt.bindLong(6, 0L)
+                    appStmt.executeInsert()
+                }
+                val stmt = db.compileStatement(
+                    "INSERT INTO notifications (key, packageName, appName, title, content, postTime, " +
+                        "lastUpdatedTime, updateCount, isDismissed, isPinned, isPersistent, isRead, " +
+                        "isGroupSummary, priority, isOngoing, isClearable, actionsCount, smallIconRes, " +
+                        "syncStatus, lastSyncedAt) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
+                )
+                for (i in 1..count) {
+                    stmt.clearBindings()
+                    stmt.bindString(1, "stress_key_$i")
+                    stmt.bindString(2, "com.stress.app_${i % 10}")
+                    stmt.bindString(3, "Stress App ${i % 10}")
+                    stmt.bindString(4, "Burst Notification $i")
+                    stmt.bindString(5, "High-load stress test payload body $i")
+                    stmt.bindLong(6, System.currentTimeMillis() + i)
+                    stmt.bindLong(7, System.currentTimeMillis() + i)
+                    stmt.bindLong(8, 1L)
+                    stmt.bindLong(9, if (i % 2 == 0) 1L else 0L)
+                    stmt.bindLong(10, if (i % 100 == 0) 1L else 0L)
+                    stmt.bindLong(11, 0L)
+                    stmt.bindLong(12, 0L)
+                    stmt.bindLong(13, 0L)
+                    stmt.bindLong(14, 0L)
+                    stmt.bindLong(15, 0L)
+                    stmt.bindLong(16, 1L)
+                    stmt.bindLong(17, 0L)
+                    stmt.bindLong(18, 0L)
+                    stmt.bindString(19, "PENDING_UPLOAD")
+                    stmt.bindLong(20, 0L)
+                    stmt.executeInsert()
+                }
+            }
+        }
+    }
+
 }
