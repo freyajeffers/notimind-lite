@@ -333,8 +333,9 @@ private val activeNotificationsLayout: @Composable (ActiveNotificationsScaffoldC
 }
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class, ExperimentalLayoutApi::class)
-@Composable
-fun activeNotificationsScreen(dao: NotificationDao, preferences: PreferencesRepository) {
+private val renderActiveNotificationsScreen:
+    @Composable (NotificationDao, PreferencesRepository) -> Unit =
+    { dao, preferences ->
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
     val prefManager = remember { PreferenceManager(context) }
@@ -496,6 +497,12 @@ fun activeNotificationsScreen(dao: NotificationDao, preferences: PreferencesRepo
         showPackagePicker = visible
     }
 
+}
+
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class, ExperimentalLayoutApi::class)
+@Composable
+fun activeNotificationsScreen(dao: NotificationDao, preferences: PreferencesRepository) {
+    renderActiveNotificationsScreen(dao, preferences)
 }
 
 private data class ActiveNotificationsScaffoldWrapperConfig(
