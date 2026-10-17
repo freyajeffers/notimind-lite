@@ -95,7 +95,11 @@ class ArchitectureBoundaryTest : BaseRobolectricTest() {
 
         val firstInstance = instances.first()
         for (instance in instances) {
-            assertSame("All concurrent thread calls must return the identical database instance", firstInstance, instance)
+            assertSame(
+                "All concurrent thread calls must return the identical database instance",
+                firstInstance,
+                instance
+            )
         }
     }
 }

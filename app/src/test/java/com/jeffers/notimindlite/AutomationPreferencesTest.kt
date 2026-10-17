@@ -22,7 +22,16 @@ class AutomationPreferencesTest {
         first.setAutoActOnNotification(true)
         first.setDefaultReplyMethod("copy")
         first.setLongPressAction("reply")
-        first.setAutoExecuteRules(listOf(AutoExecuteRule(id = "r1", packageName = "com.chat", titleContains = "urgent", actionIndex = 2)))
+        first.setAutoExecuteRules(
+            listOf(
+                AutoExecuteRule(
+                    id = "r1",
+                    packageName = "com.chat",
+                    titleContains = "urgent",
+                    actionIndex = 2
+                )
+            )
+        )
 
         val second = PreferencesRepository(context)
         assertTrue(second.autoActOnNotification.value)
