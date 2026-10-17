@@ -95,9 +95,18 @@ class NavigationAndSettingsUiTest {
 
     @Test
     fun testLogHistorySearchFilter_matchesAllFields() = runTest {
-        val n1 = NotificationEntity(id = 1L, key = "k1", packageName = "com.chat.messenger", appName = "ChatApp", title = "Meeting reminder", content = "Project Sync at 3pm", postTime = 1000L, isDismissed = true)
-        val n2 = NotificationEntity(id = 2L, key = "k2", packageName = "com.email.client", appName = "MailClient", title = "Urgent: Security Alert", content = "Password update required", postTime = 2000L, isDismissed = true)
-        val n3 = NotificationEntity(id = 3L, key = "k3", packageName = "com.social.media", appName = "SocialFeed", title = "New Like", content = "Alice liked your post", postTime = 3000L, isDismissed = true)
+        val n1 = NotificationEntity(
+            id = 1L, key = "k1", packageName = "com.chat.messenger", appName = "ChatApp",
+            title = "Meeting reminder", content = "Project Sync at 3pm", postTime = 1000L, isDismissed = true
+        )
+        val n2 = NotificationEntity(
+            id = 2L, key = "k2", packageName = "com.email.client", appName = "MailClient",
+            title = "Urgent: Security Alert", content = "Password update required", postTime = 2000L, isDismissed = true
+        )
+        val n3 = NotificationEntity(
+            id = 3L, key = "k3", packageName = "com.social.media", appName = "SocialFeed",
+            title = "New Like", content = "Alice liked your post", postTime = 3000L, isDismissed = true
+        )
 
         dao.insert(n1)
         dao.insert(n2)
@@ -107,22 +116,22 @@ class NavigationAndSettingsUiTest {
         assertEquals(3, list.size)
 
         // Filter by appName
-        val appMatch = list.filter { it.appName.contains("Mail", ignoreCase = true) || it.title.contains("Mail", ignoreCase = true) || it.content.contains("Mail", ignoreCase = true) || it.packageName.contains("Mail", ignoreCase = true) }
+        val appMatch = list.filter { matchesAllFields(it, "Mail") }
         assertEquals(1, appMatch.size)
         assertEquals("MailClient", appMatch[0].appName)
 
         // Filter by title
-        val titleMatch = list.filter { it.appName.contains("Meeting", ignoreCase = true) || it.title.contains("Meeting", ignoreCase = true) || it.content.contains("Meeting", ignoreCase = true) || it.packageName.contains("Meeting", ignoreCase = true) }
+        val titleMatch = list.filter { matchesAllFields(it, "Meeting") }
         assertEquals(1, titleMatch.size)
         assertEquals("Meeting reminder", titleMatch[0].title)
 
         // Filter by content
-        val contentMatch = list.filter { it.appName.contains("Password", ignoreCase = true) || it.title.contains("Password", ignoreCase = true) || it.content.contains("Password", ignoreCase = true) || it.packageName.contains("Password", ignoreCase = true) }
+        val contentMatch = list.filter { matchesAllFields(it, "Password") }
         assertEquals(1, contentMatch.size)
         assertEquals("Password update required", contentMatch[0].content)
 
         // Filter by packageName
-        val pkgMatch = list.filter { it.appName.contains("social", ignoreCase = true) || it.title.contains("social", ignoreCase = true) || it.content.contains("social", ignoreCase = true) || it.packageName.contains("social", ignoreCase = true) }
+        val pkgMatch = list.filter { matchesAllFields(it, "social") }
         assertEquals(1, pkgMatch.size)
         assertEquals("com.social.media", pkgMatch[0].packageName)
     }
@@ -159,4 +168,8 @@ class NavigationAndSettingsUiTest {
             avgMs < 16.0
         )
     }
+
+    private fun matchesAllFields(notification: NotificationEntity, query: String): Boolean =
+        listOf(notification.appName, notification.title, notification.content, notification.packageName)
+            .any { it.contains(query, ignoreCase = true) }
 }
