@@ -37,6 +37,7 @@ import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material.icons.filled.Search
 import com.jeffers.notimindlite.ui.components.NotificationGroupCard
+import com.jeffers.notimindlite.ui.components.UiNotificationGroup
 import com.jeffers.notimindlite.ui.components.groupNotifications
 import org.json.JSONArray
 import androidx.compose.material.icons.outlined.BookmarkBorder
@@ -202,6 +203,32 @@ private fun filterAndSortNotifications(
     }
 }
 
+@Composable
+private fun notificationIconPrefetch(
+    context: android.content.Context,
+    listState: androidx.compose.foundation.lazy.LazyListState,
+    notificationGroups: List<UiNotificationGroup>
+) {
+    LaunchedEffect(notificationGroups, listState) {
+        snapshotFlow { listState.layoutInfo.visibleItemsInfo.map { it.index } }
+            .distinctUntilChanged()
+            .collect { visibleIndexes ->
+                if (visibleIndexes.isEmpty() || notificationGroups.isEmpty()) return@collect
+                val first = ((visibleIndexes.minOrNull() ?: 0) - PREFETCH_BEHIND).coerceAtLeast(0)
+                val last = ((visibleIndexes.maxOrNull() ?: 0) + PREFETCH_AHEAD)
+                    .coerceAtMost(notificationGroups.lastIndex)
+                val candidates = notificationGroups
+                    .subList(first, last + 1)
+                    .flatMap { it.items }
+                    .mapNotNull { it.appIconUri }
+                    .distinct()
+                withContext(Dispatchers.IO) {
+                    candidates.map { uri -> async { AppIconCache.getIcon(context, uri) } }.awaitAll()
+                }
+            }
+    }
+}
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun logHistoryScreen(dao: NotificationDao, preferences: com.jeffers.notimindlite.data.local.PreferencesRepository) {
@@ -308,24 +335,7 @@ fun logHistoryScreen(dao: NotificationDao, preferences: com.jeffers.notimindlite
         groupNotifications(filteredNotifs)
     }
 
-    LaunchedEffect(notificationGroups, listState) {
-        snapshotFlow { listState.layoutInfo.visibleItemsInfo.map { it.index } }
-            .distinctUntilChanged()
-            .collect { visibleIndexes ->
-                if (visibleIndexes.isEmpty() || notificationGroups.isEmpty()) return@collect
-                val first = ((visibleIndexes.minOrNull() ?: 0) - PREFETCH_BEHIND).coerceAtLeast(0)
-                val last = ((visibleIndexes.maxOrNull() ?: 0) + PREFETCH_AHEAD)
-                    .coerceAtMost(notificationGroups.lastIndex)
-                val candidates = notificationGroups
-                    .subList(first, last + 1)
-                    .flatMap { it.items }
-                    .mapNotNull { it.appIconUri }
-                    .distinct()
-                withContext(Dispatchers.IO) {
-                    candidates.distinct().map { uri -> async { AppIconCache.getIcon(context, uri) } }.awaitAll()
-                }
-            }
-    }
+    notificationIconPrefetch(context, listState, notificationGroups)
 
     Scaffold(
         topBar = {
