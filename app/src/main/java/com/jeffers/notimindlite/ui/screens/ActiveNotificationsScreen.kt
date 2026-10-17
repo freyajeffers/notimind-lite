@@ -411,30 +411,22 @@ fun activeNotificationsScreen(dao: NotificationDao, preferences: PreferencesRepo
         }
     }
 
-    activeNotificationsLayout(
-        ActiveNotificationsScaffoldConfig(
+    activeNotificationsScaffoldWrapper(
+        ActiveNotificationsScaffoldWrapperConfig(
             selectedPackages = selectedPackages,
             searchQuery = searchQuery,
-            onClearFilters = {
-                selectedPackages = null
-                searchQuery = ""
-                isSearchFocused = false
-                isSearchExplicitlyOpened = false
-                focusManager.clearFocus(force = true)
-                keyboardController?.hide()
-            },
-            onOpenPackagePicker = { showPackagePicker = true },
-            onToggleSearch = {
-                if (isSearchExplicitlyOpened || searchQuery.isNotEmpty() || isSearchFocused) {
-                    isSearchExplicitlyOpened = false
-                    isSearchFocused = false
-                    searchQuery = ""
-                } else {
-                    isSearchExplicitlyOpened = true
-                    scope.launch { listState.animateScrollToItem(0); searchFocusRequester.requestFocus() }
-                }
-            },
+            isSearchExplicitlyOpened = isSearchExplicitlyOpened,
+            isSearchFocused = isSearchFocused,
+            focusManager = focusManager,
+            keyboardController = keyboardController,
+            searchFocusRequester = searchFocusRequester,
+            scope = scope,
             listState = listState,
+            onSetSelectedPackages = { selectedPackages = it },
+            onSetSearchQuery = { searchQuery = it },
+            onSetSearchFocused = { isSearchFocused = it },
+            onSetSearchExplicitlyOpened = { isSearchExplicitlyOpened = it },
+            onOpenPackagePicker = { showPackagePicker = true },
             content = { innerPadding ->
                 Box(modifier = Modifier.fillMaxSize()) {
                     val searchSuggestions = remember(
@@ -504,6 +496,58 @@ fun activeNotificationsScreen(dao: NotificationDao, preferences: PreferencesRepo
         showPackagePicker = visible
     }
 
+}
+
+private data class ActiveNotificationsScaffoldWrapperConfig(
+    val selectedPackages: List<String>?,
+    val searchQuery: String,
+    val isSearchExplicitlyOpened: Boolean,
+    val isSearchFocused: Boolean,
+    val focusManager: androidx.compose.ui.focus.FocusManager,
+    val keyboardController: androidx.compose.ui.platform.SoftwareKeyboardController?,
+    val searchFocusRequester: FocusRequester,
+    val scope: kotlinx.coroutines.CoroutineScope,
+    val listState: androidx.compose.foundation.lazy.LazyListState,
+    val onSetSelectedPackages: (List<String>?) -> Unit,
+    val onSetSearchQuery: (String) -> Unit,
+    val onSetSearchFocused: (Boolean) -> Unit,
+    val onSetSearchExplicitlyOpened: (Boolean) -> Unit,
+    val onOpenPackagePicker: () -> Unit,
+    val content: @Composable (PaddingValues) -> Unit
+)
+
+private val activeNotificationsScaffoldWrapper:
+    @Composable (ActiveNotificationsScaffoldWrapperConfig) -> Unit = { config ->
+    activeNotificationsLayout(
+        ActiveNotificationsScaffoldConfig(
+            selectedPackages = config.selectedPackages,
+            searchQuery = config.searchQuery,
+            onClearFilters = {
+                config.onSetSelectedPackages(null)
+                config.onSetSearchQuery("")
+                config.onSetSearchFocused(false)
+                config.onSetSearchExplicitlyOpened(false)
+                config.focusManager.clearFocus(force = true)
+                config.keyboardController?.hide()
+            },
+            onOpenPackagePicker = config.onOpenPackagePicker,
+            onToggleSearch = {
+                if (config.isSearchExplicitlyOpened || config.searchQuery.isNotEmpty() || config.isSearchFocused) {
+                    config.onSetSearchExplicitlyOpened(false)
+                    config.onSetSearchFocused(false)
+                    config.onSetSearchQuery("")
+                } else {
+                    config.onSetSearchExplicitlyOpened(true)
+                    config.scope.launch {
+                        config.listState.animateScrollToItem(0)
+                        config.searchFocusRequester.requestFocus()
+                    }
+                }
+            },
+            listState = config.listState,
+            content = config.content
+        )
+    )
 }
 
 private val renderActivePackagePicker:
