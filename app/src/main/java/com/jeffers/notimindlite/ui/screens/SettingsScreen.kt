@@ -137,70 +137,21 @@ fun settingsScreen(
 
         settingsSyncSection(preferencesRepository = preferencesRepository)
 
-        // Boot & Restore card placed near top for quick opt-in/out.
-        Card(
-            modifier = Modifier.fillMaxWidth(),
-            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
-        ) {
-            Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                Text(
-                    text = stringResource(id = R.string.settings_section_restore),
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.SemiBold
-                )
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(Icons.Default.Restore, contentDescription = "Restore")
-                    Spacer(Modifier.width(8.dp))
-                    Column(modifier = Modifier.weight(1f)) {
-                        Text(
-                            text = stringResource(id = R.string.settings_restore_on_boot_title),
-                            style = MaterialTheme.typography.bodyLarge
-                        )
-                        Text(
-                            text = stringResource(id = R.string.settings_restore_on_boot_desc),
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
-                    Switch(
-                        checked = prefMgrTop.isRestoreOnBootEnabled() && listenerGrantedTop,
-                        enabled = listenerGrantedTop && !BuildConfig.DEBUG,
-                        onCheckedChange = { prefMgrTop.setRestoreOnBootEnabled(it) }
-                    )
-                }
-                OutlinedButton(
-                    onClick = {
-                        pickBackupLauncher.launch(arrayOf("application/octet-stream", "*/*"))
-                    },
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = ButtonDefaults.outlinedButtonColors(
-                        contentColor = MaterialTheme.colorScheme.primary
-                    )
-                ) {
-                    Icon(Icons.Default.Restore, contentDescription = "Restore")
-                    Spacer(Modifier.width(8.dp))
-                    Text("Restore Backup Manually")
-                }
-                OutlinedButton(
-                    onClick = {
-                        if (!NetworkUtils.isInternetAvailable(context)) {
-                            syncMessage = "An active internet connection is required to create a backup"
-                        } else {
-                            val secretKey = generateBackupKey(context)
-                            pendingBackupKey = secretKey
-                            backupKeyBase64 = com.jeffers.notimindlite.data.local.BackupKeyCodec.encode(secretKey)
-                            showBackupKeyDialog = true
-                        }
-                    },
-                    enabled = !BuildConfig.DEBUG,
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Icon(Icons.Default.Restore, contentDescription = "Encrypted backup")
-                    Spacer(Modifier.width(8.dp))
-                    Text("Create Encrypted Backup")
+        restoreCard(
+            prefMgr = prefMgrTop,
+            listenerGranted = listenerGrantedTop,
+            onPickBackup = { pickBackupLauncher.launch(arrayOf("application/octet-stream", "*/*")) },
+            onCreateBackup = {
+                if (!NetworkUtils.isInternetAvailable(context)) {
+                    syncMessage = "An active internet connection is required to create a backup"
+                } else {
+                    val secretKey = generateBackupKey(context)
+                    pendingBackupKey = secretKey
+                    backupKeyBase64 = com.jeffers.notimindlite.data.local.BackupKeyCodec.encode(secretKey)
+                    showBackupKeyDialog = true
                 }
             }
-        }
+        )
 
         // Continue with other sections
         settingsCaptureSection(preferencesRepository = preferencesRepository)
@@ -230,56 +181,26 @@ fun settingsScreen(
                 .padding(vertical = 8.dp),
         )
 
-        // H1: render the restore dialog (if a backup file has been picked). The dialog reads
-        // the passphrase from the user; the snackbar host inside the Column surfaces the
-        // outcome of performRestore() without leaving the Settings screen.
-        val currentUri = selectedBackupUri
-        if (showRestoreDialog && currentUri != null) {
-            val pickedDisplayName = currentUri.lastPathSegment
-                ?: stringResource(id = R.string.settings_restore_picked_default_name)
-            RestoreBackupDialog(
-                fileName = pickedDisplayName,
-                onDismiss = { showRestoreDialog = false },
-                onConfirm = { passphrase ->
-                    showRestoreDialog = false
-                    val uriToRestore = currentUri
-                    scope.launch {
-                        val result = runRestore(
-                            context = context,
-                            uri = uriToRestore,
-                            passphrase = passphrase,
-                        )
-                        val msg = if (result.isSuccess) restoreSuccessMsg else restoreFailureMsg
-                        snackbarHostState.showSnackbar(msg)
-                    }
-                },
-            )
-        }
-
-        if (showBackupKeyDialog && pendingBackupKey != null) {
-            BackupKeyDialog(
-                keyBase64 = backupKeyBase64,
-                onDismiss = {
+        restoreDialogs(
+            config = RestoreDialogConfig(
+                context = context,
+                scope = scope,
+                selectedBackupUri = selectedBackupUri,
+                showRestoreDialog = showRestoreDialog,
+                restoreSuccessMsg = restoreSuccessMsg,
+                restoreFailureMsg = restoreFailureMsg,
+                backupKeyBase64 = backupKeyBase64,
+                pendingBackupKey = pendingBackupKey,
+                showBackupKeyDialog = showBackupKeyDialog,
+                onRestoreDismiss = { showRestoreDialog = false },
+                onBackupDismiss = {
                     showBackupKeyDialog = false
                     pendingBackupKey = null
                 },
-                onConfirm = { passphrase ->
-                    showBackupKeyDialog = false
-                    val secretKey = pendingBackupKey
-                    pendingBackupKey = null
-                    if (secretKey != null) {
-                        scope.launch {
-                            val result = DatabaseExporter.performEncryptedBackup(context, secretKey, passphrase)
-                            syncMessage = if (result.isSuccess) {
-                                "Backup created successfully"
-                            } else {
-                                "Backup failed: ${result.exceptionOrNull()?.localizedMessage}"
-                            }
-                        }
-                    }
-                }
+                snackbarHostState = snackbarHostState,
+                onSyncMessage = { syncMessage = it }
             )
-        }
+        )
 
         SnackbarHost(hostState = snackbarHostState)
     }
@@ -491,25 +412,4 @@ private fun unauthenticatedAccount(
     }
 }
 
-// H1 helper: copy the user-picked URI into the app cache and invoke performRestore.
-// Runs on Dispatchers.IO; returns Result<Unit> so the UI can branch on success/failure.
-// We use the device's hardware-bound key (generateBackupKey(context)) for same-device restore;
-// the passphrase supplied by the user is forwarded for cross-device/post-uninstall unwrap.
-private suspend fun runRestore(
-    context: Context,
-    uri: Uri,
-    passphrase: CharArray?,
-): Result<Unit> = withContext(Dispatchers.IO) {
-    val cacheFile = File(context.cacheDir, "restore_input_${System.currentTimeMillis()}.enc")
-    try {
-        context.contentResolver.openInputStream(uri)?.use { input ->
-            FileOutputStream(cacheFile).use { output -> input.copyTo(output) }
-        } ?: return@withContext Result.failure(IllegalStateException("Could not open backup URI"))
-        val key = generateBackupKey(context)
-        DatabaseExporter.performRestore(context, cacheFile, key, passphrase)
-    } finally {
-        passphrase?.fill('\u0000')
-        // Best-effort cache cleanup; ignore failures to keep restore flow simple.
-        runCatching { cacheFile.delete() }
-    }
-}
+
