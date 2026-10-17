@@ -75,6 +75,7 @@ import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
@@ -498,52 +499,7 @@ fun logHistoryScreen(dao: NotificationDao, preferences: com.jeffers.notimindlite
             )
         },
         floatingActionButton = {
-            if (filteredNotifs.isNotEmpty()) {
-                Column(
-                    verticalArrangement = Arrangement.spacedBy(8.dp),
-                    horizontalAlignment = Alignment.End
-                ) {
-                    TooltipBox(
-                        positionProvider = TooltipDefaults.rememberTooltipPositionProvider(
-                                TooltipAnchorPosition.Above
-                            ),
-                        tooltip = { PlainTooltip { Text("Scroll to Top") } },
-                        state = rememberTooltipState()
-                    ) {
-                        SmallFloatingActionButton(
-                            onClick = {
-                                scope.launch {
-                                    listState.animateScrollToItem(0)
-                                }
-                            },
-                            containerColor = MaterialTheme.colorScheme.primaryContainer,
-                            contentColor = MaterialTheme.colorScheme.onPrimaryContainer
-                        ) {
-                            Icon(Icons.Default.KeyboardArrowUp, contentDescription = "Scroll to Top")
-                        }
-                    }
-
-                    TooltipBox(
-                        positionProvider = TooltipDefaults.rememberTooltipPositionProvider(
-                                TooltipAnchorPosition.Above
-                            ),
-                        tooltip = { PlainTooltip { Text("Scroll to Bottom") } },
-                        state = rememberTooltipState()
-                    ) {
-                        SmallFloatingActionButton(
-                            onClick = {
-                                scope.launch {
-                                    listState.animateScrollToItem(filteredNotifs.size - 1)
-                                }
-                            },
-                            containerColor = MaterialTheme.colorScheme.primaryContainer,
-                            contentColor = MaterialTheme.colorScheme.onPrimaryContainer
-                        ) {
-                            Icon(Icons.Default.KeyboardArrowDown, contentDescription = "Scroll to Bottom")
-                        }
-                    }
-                }
-            }
+            logHistoryScrollActions(filteredNotifs.size, listState, scope)
         }
     ) { innerPadding ->
         Column(
@@ -735,6 +691,51 @@ fun logHistoryScreen(dao: NotificationDao, preferences: com.jeffers.notimindlite
                     }
                 )
             }
+        }
+    }
+}
+
+@Composable
+private fun logHistoryScrollActions(
+    itemCount: Int,
+    listState: androidx.compose.foundation.lazy.LazyListState,
+    scope: kotlinx.coroutines.CoroutineScope
+) {
+    if (itemCount == 0) return
+    Column(
+        verticalArrangement = Arrangement.spacedBy(8.dp),
+        horizontalAlignment = Alignment.End
+    ) {
+        logHistoryScrollButton(
+            icon = Icons.Default.KeyboardArrowUp,
+            description = "Scroll to Top",
+            onClick = { scope.launch { listState.animateScrollToItem(0) } }
+        )
+        logHistoryScrollButton(
+            icon = Icons.Default.KeyboardArrowDown,
+            description = "Scroll to Bottom",
+            onClick = { scope.launch { listState.animateScrollToItem(itemCount - 1) } }
+        )
+    }
+}
+
+@Composable
+private fun logHistoryScrollButton(
+    icon: ImageVector,
+    description: String,
+    onClick: () -> Unit
+) {
+    TooltipBox(
+        positionProvider = TooltipDefaults.rememberTooltipPositionProvider(TooltipAnchorPosition.Above),
+        tooltip = { PlainTooltip { Text(description) } },
+        state = rememberTooltipState()
+    ) {
+        SmallFloatingActionButton(
+            onClick = onClick,
+            containerColor = MaterialTheme.colorScheme.primaryContainer,
+            contentColor = MaterialTheme.colorScheme.onPrimaryContainer
+        ) {
+            Icon(icon, contentDescription = description)
         }
     }
 }
