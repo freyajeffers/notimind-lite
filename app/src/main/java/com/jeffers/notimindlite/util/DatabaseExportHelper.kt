@@ -164,7 +164,7 @@ object DatabaseExportHelper {
     fun applyPrivacy(notification: NotificationEntity, context: Context?): NotificationEntity {
         val preferences = context?.let { PreferencesRepository(it.applicationContext) } ?: return notification
         fun redact(value: String): String = PiiRedactionEngine.redact(value) ?: "[REDACTED]"
-        val title = if (preferences.exportAnonymize.value || preferences.anonymizeTitles.value) {
+        val title = if (preferences.exportManager.anonymize.value || preferences.anonymizeTitles.value) {
             "[REDACTED-TITLE]"
         } else {
             notification.title

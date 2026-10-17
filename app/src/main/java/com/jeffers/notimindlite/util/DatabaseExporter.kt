@@ -225,8 +225,10 @@ object DatabaseExporter {
             val preferences = PreferencesRepository(context.applicationContext)
             validateExportRequest(preferences, isJson, passphrase, biometricAuthenticated)
             DatabaseExportHelper.cleanupExportFiles(context)
+            val encryptedExports = preferences.securityManager.encryptedExports.value
             val file = createExportFile(context, notifications, isJson, passphrase, preferences)
-            context.startActivity(buildShareIntent(context, file, isJson, preferences.securityManager.encryptedExports.value))
+            val shareIntent = buildShareIntent(context, file, isJson, encryptedExports)
+            context.startActivity(shareIntent)
         } catch (e: IllegalArgumentException) {
             Log.e(TAG, "Failed to export database: invalid argument", e)
         } catch (e: SecurityException) {
@@ -245,7 +247,7 @@ object DatabaseExporter {
         biometricAuthenticated: Boolean,
     ) {
         val requestedFormat = if (isJson) "json" else "csv"
-        val allowedFormats = preferences.exportFormats.value.split(',').map(String::trim).toSet()
+        val allowedFormats = preferences.exportManager.formats.value.split(',').map(String::trim).toSet()
         check(requestedFormat in allowedFormats) { "Export format '$requestedFormat' is disabled in Settings" }
         check(!preferences.securityManager.exportRequiresBiometric.value || biometricAuthenticated) {
             "Biometric authentication is required before exporting"

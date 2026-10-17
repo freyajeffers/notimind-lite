@@ -70,15 +70,15 @@ fun settingsPreferencesBackupSection() {
     }
 
     val preferences = remember { PreferencesRepository(context) }
-    val exportFormats by preferences.exportFormats.collectAsState()
-    val exportAnonymize by preferences.exportAnonymize.collectAsState()
+    val exportFormats by preferences.exportManager.formats.collectAsState()
+    val exportAnonymize by preferences.exportManager.anonymize.collectAsState()
 
     preferencesBackupCard(
         PreferencesBackupCardConfig(
             exportFormats = exportFormats,
             exportAnonymize = exportAnonymize,
-            onFormatsChange = preferences::setExportFormats,
-            onAnonymizeChange = preferences::setExportAnonymize,
+            onFormatsChange = preferences.exportManager::setFormats,
+            onAnonymizeChange = preferences.exportManager::setAnonymize,
             onExport = { exportLauncher.launch("notimind-preferences.json") },
             onImport = { importLauncher.launch(arrayOf("application/json", "text/json", "*/*")) },
             message = message,

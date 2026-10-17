@@ -45,6 +45,7 @@ class PreferencesRepository(context: Context) :
     val securityManager = SecurityPreferencesManager(context, profileManager)
     val displayManager = DisplayPreferencesManager(context, profileManager)
     val telemetryManager = TelemetryPreferencesManager(context, profileManager)
+    val exportManager = ExportPreferencesManager(context, profileManager)
     private val backing: android.content.SharedPreferences
         get() = deContext.getSharedPreferences(profileManager.activePreferencesName, Context.MODE_PRIVATE)
     val settingsSyncManager = SettingsSyncManager { backing }
@@ -62,6 +63,7 @@ class PreferencesRepository(context: Context) :
             securityManager.reload()
             displayManager.reload()
             telemetryManager.reload()
+            exportManager.reload()
         }
     }
 
@@ -105,8 +107,7 @@ class PreferencesRepository(context: Context) :
     private val _enableSemanticRanking = MutableStateFlow(backing.getBoolean(KEY_ENABLE_SEMANTIC_RANKING, true))
     private val _autoDeleteOnRead = MutableStateFlow(backing.getBoolean(KEY_AUTO_DELETE_ON_READ, false))
     private val _backupIntervalDays = MutableStateFlow(backing.getInt(KEY_BACKUP_INTERVAL_DAYS, 0))
-    private val _exportFormats = MutableStateFlow(backing.getString("config_export_formats", "json,csv") ?: "json,csv")
-    private val _exportAnonymize = MutableStateFlow(backing.getBoolean("config_export_anonymize", false))
+
     private val _anonymizeTitles = MutableStateFlow(backing.getBoolean(KEY_ANONYMIZE_TITLES, false))
     private val _maxCacheSizeMb = MutableStateFlow(backing.getInt(KEY_MAX_CACHE_MB, DEFAULT_MAX_CACHE_MB))
     private val _semanticWeight = MutableStateFlow(backing.getInt(KEY_SEMANTIC_WEIGHT, DEFAULT_SEMANTIC_WEIGHT))
@@ -115,8 +116,7 @@ class PreferencesRepository(context: Context) :
     val enableSemanticRanking: StateFlow<Boolean> = _enableSemanticRanking
     val autoDeleteOnRead: StateFlow<Boolean> = _autoDeleteOnRead
     val backupIntervalDays: StateFlow<Int> = _backupIntervalDays
-    val exportFormats: StateFlow<String> = _exportFormats
-    val exportAnonymize: StateFlow<Boolean> = _exportAnonymize
+
     val anonymizeTitles: StateFlow<Boolean> = _anonymizeTitles
     val maxCacheSizeMb: StateFlow<Int> = _maxCacheSizeMb
     val semanticWeight: StateFlow<Int> = _semanticWeight
@@ -161,8 +161,7 @@ class PreferencesRepository(context: Context) :
         _autoDeleteOnRead.value = backing.getBoolean(KEY_AUTO_DELETE_ON_READ, false)
 
         _backupIntervalDays.value = backing.getInt(KEY_BACKUP_INTERVAL_DAYS, 0)
-        _exportFormats.value = backing.getString("config_export_formats", "json,csv") ?: "json,csv"
-        _exportAnonymize.value = backing.getBoolean("config_export_anonymize", false)
+
         _anonymizeTitles.value = backing.getBoolean(KEY_ANONYMIZE_TITLES, false)
 
         _maxCacheSizeMb.value = backing.getInt(KEY_MAX_CACHE_MB, DEFAULT_MAX_CACHE_MB)
@@ -227,22 +226,6 @@ class PreferencesRepository(context: Context) :
         val safe = value.coerceAtLeast(0)
         backing.edit().putInt(KEY_BACKUP_INTERVAL_DAYS, safe).apply()
         _backupIntervalDays.value = safe
-    }
-
-    fun setExportFormats(value: String) {
-        val safe = value.split(',', ' ', '\n')
-            .map(String::trim)
-            .filter { it == "json" || it == "csv" || it == "ndjson" }
-            .distinct()
-            .joinToString(",")
-            .ifBlank { "json" }
-        backing.edit().putString("config_export_formats", safe).apply()
-        _exportFormats.value = safe
-    }
-
-    fun setExportAnonymize(value: Boolean) {
-        backing.edit().putBoolean("config_export_anonymize", value).apply()
-        _exportAnonymize.value = value
     }
 
     fun setAnonymizeTitles(value: Boolean) {
