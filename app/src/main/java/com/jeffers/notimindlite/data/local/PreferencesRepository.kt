@@ -44,6 +44,7 @@ class PreferencesRepository(context: Context) :
     val experimentalManager = ExperimentalPreferencesManager(context, profileManager)
     val securityManager = SecurityPreferencesManager(context, profileManager)
     val displayManager = DisplayPreferencesManager(context, profileManager)
+    val telemetryManager = TelemetryPreferencesManager(context, profileManager)
     private val backing: android.content.SharedPreferences
         get() = deContext.getSharedPreferences(profileManager.activePreferencesName, Context.MODE_PRIVATE)
     val settingsSyncManager = SettingsSyncManager { backing }
@@ -60,6 +61,7 @@ class PreferencesRepository(context: Context) :
             experimentalManager.reload()
             securityManager.reload()
             displayManager.reload()
+            telemetryManager.reload()
         }
     }
 
@@ -120,13 +122,9 @@ class PreferencesRepository(context: Context) :
     val semanticWeight: StateFlow<Int> = _semanticWeight
     val compactMode: StateFlow<Boolean> = _compactMode
 
-    private val _enableTelemetry = MutableStateFlow(backing.getBoolean(KEY_ENABLE_TELEMETRY, true))
-    private val _telemetryLevel = MutableStateFlow(backing.getString(KEY_TELEMETRY_LEVEL, "minimal") ?: "minimal")
     private val _maxDbMb = MutableStateFlow(backing.getInt(KEY_MAX_DB_MB, DEFAULT_MAX_DB_MB))
     private val _lowMemoryMode = MutableStateFlow(backing.getBoolean(KEY_LOW_MEMORY_MODE, false))
     private val _vectorCacheMax = MutableStateFlow(backing.getInt(KEY_VECTOR_CACHE_MAX, DEFAULT_VECTOR_CACHE_MAX))
-    val enableTelemetry: StateFlow<Boolean> = _enableTelemetry
-    val telemetryLevel: StateFlow<String> = _telemetryLevel
     val maxDbMb: StateFlow<Int> = _maxDbMb
     val lowMemoryMode: StateFlow<Boolean> = _lowMemoryMode
     val vectorCacheMax: StateFlow<Int> = _vectorCacheMax
@@ -171,9 +169,6 @@ class PreferencesRepository(context: Context) :
         _semanticWeight.value = backing.getInt(KEY_SEMANTIC_WEIGHT, DEFAULT_SEMANTIC_WEIGHT)
 
         _compactMode.value = backing.getBoolean(KEY_COMPACT_MODE, false)
-        _enableTelemetry.value = backing.getBoolean(KEY_ENABLE_TELEMETRY, true)
-        _telemetryLevel.value = backing.getString(KEY_TELEMETRY_LEVEL, "minimal") ?: "minimal"
-
         _maxDbMb.value = backing.getInt(KEY_MAX_DB_MB, DEFAULT_MAX_DB_MB)
         _lowMemoryMode.value = backing.getBoolean(KEY_LOW_MEMORY_MODE, false)
         _vectorCacheMax.value = backing.getInt(KEY_VECTOR_CACHE_MAX, DEFAULT_VECTOR_CACHE_MAX)
@@ -272,15 +267,6 @@ class PreferencesRepository(context: Context) :
     }
 
 
-    fun setEnableTelemetry(value: Boolean) {
-        backing.edit().putBoolean(KEY_ENABLE_TELEMETRY, value).apply()
-        _enableTelemetry.value = value
-    }
-
-    fun setTelemetryLevel(value: String) {
-        backing.edit().putString(KEY_TELEMETRY_LEVEL, value).apply()
-        _telemetryLevel.value = value
-    }
 
     fun setMaxDbMb(value: Int) {
         val safe = value.coerceIn(MIN_DB_SIZE_MB, MAX_DB_SIZE_MB)
@@ -335,8 +321,7 @@ class PreferencesRepository(context: Context) :
         private const val KEY_ANONYMIZE_TITLES = "config_anonymize_titles"
         private const val KEY_MAX_CACHE_MB = "config_max_cache_mb"
         private const val KEY_SEMANTIC_WEIGHT = "config_semantic_weight"
-        private const val KEY_ENABLE_TELEMETRY = "config_enable_telemetry"
-        private const val KEY_TELEMETRY_LEVEL = "config_telemetry_level"
+
         private const val KEY_MAX_DB_MB = "config_max_db_mb"
         private const val KEY_LOW_MEMORY_MODE = "config_low_memory_mode"
         private const val KEY_VECTOR_CACHE_MAX = "config_vector_cache_max"

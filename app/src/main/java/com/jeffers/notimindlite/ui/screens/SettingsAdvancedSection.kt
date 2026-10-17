@@ -137,8 +137,7 @@ fun settingsAdvancedSection(
     var showMigrationConfirmation by remember { mutableStateOf(false) }
     var migrationMessage by remember { mutableStateOf<String?>(null) }
     val migrationFailureMessage = stringResource(R.string.migration_settings_failure)
-    val enableTelemetry by preferencesRepository.enableTelemetry.collectAsState(initial = true)
-    val telemetryLevel by preferencesRepository.telemetryLevel.collectAsState(initial = "minimal")
+    val enableTelemetry by preferencesRepository.telemetryManager.enabled.collectAsState(initial = true)
     val maxDbMb by preferencesRepository.maxDbMb.collectAsState(initial = 512)
     val lowMemoryMode by preferencesRepository.lowMemoryMode.collectAsState(initial = false)
     val vectorCacheMax by preferencesRepository.vectorCacheMax.collectAsState(initial = 1000)
@@ -181,7 +180,7 @@ private fun advancedSettingsCard(
                 R.string.pref_enable_telemetry_summary,
                 config.enableTelemetry,
                 !BuildConfig.DEBUG,
-                config.preferencesRepository::setEnableTelemetry
+                config.preferencesRepository.telemetryManager::setEnabled
             )
             advancedSwitchRow(
                 R.string.pref_low_memory_mode_title,

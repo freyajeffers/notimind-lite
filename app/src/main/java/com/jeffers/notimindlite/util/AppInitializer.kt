@@ -59,8 +59,8 @@ object AppInitializer {
             if (FirebaseApp.getApps(context).isEmpty()) FirebaseApp.initializeApp(context)
             TelemetryManager.configure(
                 context = context,
-                enabled = preferences.enableTelemetry.value,
-                telemetryLevel = preferences.telemetryLevel.value
+                enabled = preferences.telemetryManager.enabled.value,
+                telemetryLevel = preferences.telemetryManager.level.value
             )
 
             setupInternalLogging()
