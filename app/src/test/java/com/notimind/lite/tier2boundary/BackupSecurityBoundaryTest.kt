@@ -39,18 +39,20 @@ class BackupSecurityBoundaryTest : BaseRobolectricTest() {
         FileInputStream(sourceDb).use { fis ->
             FileOutputStream(backupFile).use { fos ->
                 fos.write(iv)
-                val buffer = ByteArray(8192)
-                var bytesRead: Int
-                while (fis.read(buffer).also { bytesRead = it } != -1) {
-                    val output = cipher.update(buffer, 0, bytesRead)
-                    if (output != null) fos.write(output)
-                }
-                val finalBlock = cipher.doFinal()
-                if (finalBlock != null) fos.write(finalBlock)
+                encryptStream(fis, fos, cipher)
             }
         }
         sourceDb.delete()
         return backupFile
+    }
+
+    private fun encryptStream(input: FileInputStream, output: FileOutputStream, cipher: Cipher) {
+        val buffer = ByteArray(8192)
+        var bytesRead: Int
+        while (input.read(buffer).also { bytesRead = it } != -1) {
+            cipher.update(buffer, 0, bytesRead)?.let(output::write)
+        }
+        cipher.doFinal()?.let(output::write)
     }
 
     @Test
