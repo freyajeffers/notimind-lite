@@ -8,20 +8,15 @@ import kotlinx.coroutines.flow.asStateFlow
 import org.json.JSONArray
 import org.json.JSONObject
 
-private const val DEFAULT_MAX_CACHE_MB = 50
+
 private const val DEFAULT_SEMANTIC_WEIGHT = 50
-private const val DEFAULT_MAX_DB_MB = 512
-private const val DEFAULT_VECTOR_CACHE_MAX = 1000
+
 private const val MIN_RETENTION_DAYS = 1
 private const val MAX_RETENTION_DAYS = 3650
-private const val MIN_CACHE_SIZE_MB = 1
-private const val MAX_CACHE_SIZE_MB = 1024
+
 private const val MIN_SEMANTIC_WEIGHT = 0
 private const val MAX_SEMANTIC_WEIGHT = 100
-private const val MIN_DB_SIZE_MB = 1
-private const val MAX_DB_SIZE_MB = 4096
-private const val MIN_VECTOR_CACHE_SIZE = 1
-private const val MAX_VECTOR_CACHE_SIZE = 10000
+
 
 data class AutoExecuteRule(
     val id: String = java.util.UUID.randomUUID().toString(),
@@ -46,6 +41,7 @@ class PreferencesRepository(context: Context) :
     val displayManager = DisplayPreferencesManager(context, profileManager)
     val telemetryManager = TelemetryPreferencesManager(context, profileManager)
     val exportManager = ExportPreferencesManager(context, profileManager)
+    val storageManager = StoragePreferencesManager(context, profileManager)
     private val backing: android.content.SharedPreferences
         get() = deContext.getSharedPreferences(profileManager.activePreferencesName, Context.MODE_PRIVATE)
     val settingsSyncManager = SettingsSyncManager { backing }
@@ -64,6 +60,7 @@ class PreferencesRepository(context: Context) :
             displayManager.reload()
             telemetryManager.reload()
             exportManager.reload()
+            storageManager.reload()
         }
     }
 
@@ -104,8 +101,8 @@ class PreferencesRepository(context: Context) :
     private val _autoDeleteOnRead = MutableStateFlow(backing.getBoolean(KEY_AUTO_DELETE_ON_READ, false))
     private val _backupIntervalDays = MutableStateFlow(backing.getInt(KEY_BACKUP_INTERVAL_DAYS, 0))
 
-    private val _anonymizeTitles = MutableStateFlow(backing.getBoolean(KEY_ANONYMIZE_TITLES, false))
-    private val _maxCacheSizeMb = MutableStateFlow(backing.getInt(KEY_MAX_CACHE_MB, DEFAULT_MAX_CACHE_MB))
+
+
     private val _semanticWeight = MutableStateFlow(backing.getInt(KEY_SEMANTIC_WEIGHT, DEFAULT_SEMANTIC_WEIGHT))
 
 
@@ -113,32 +110,16 @@ class PreferencesRepository(context: Context) :
     val autoDeleteOnRead: StateFlow<Boolean> = _autoDeleteOnRead
     val backupIntervalDays: StateFlow<Int> = _backupIntervalDays
 
-    val anonymizeTitles: StateFlow<Boolean> = _anonymizeTitles
-    val maxCacheSizeMb: StateFlow<Int> = _maxCacheSizeMb
+    val anonymizeTitles: StateFlow<Boolean> = exportManager.anonymizeTitles
+
     val semanticWeight: StateFlow<Int> = _semanticWeight
 
 
-    private val _maxDbMb = MutableStateFlow(backing.getInt(KEY_MAX_DB_MB, DEFAULT_MAX_DB_MB))
-    private val _lowMemoryMode = MutableStateFlow(backing.getBoolean(KEY_LOW_MEMORY_MODE, false))
-    private val _vectorCacheMax = MutableStateFlow(backing.getInt(KEY_VECTOR_CACHE_MAX, DEFAULT_VECTOR_CACHE_MAX))
-    val maxDbMb: StateFlow<Int> = _maxDbMb
-    val lowMemoryMode: StateFlow<Boolean> = _lowMemoryMode
-    val vectorCacheMax: StateFlow<Int> = _vectorCacheMax
+    val maxDbMb: StateFlow<Int> = storageManager.maxDbMb
+    val lowMemoryMode: StateFlow<Boolean> = storageManager.lowMemoryMode
+    val vectorCacheMax: StateFlow<Int> = storageManager.vectorCacheMax
 
 
-    private val _autoActOnNotification = MutableStateFlow(
-        backing.getBoolean(KEY_AUTO_ACT_ON_NOTIFICATION, false)
-    )
-    private val _defaultReplyMethod = MutableStateFlow(
-        backing.getString(KEY_DEFAULT_REPLY_METHOD, "inline") ?: "inline"
-    )
-    private val _longPressAction = MutableStateFlow(
-        backing.getString(KEY_LONG_PRESS_ACTION, "open") ?: "open"
-    )
-
-    val autoActOnNotification: StateFlow<Boolean> = _autoActOnNotification
-    val defaultReplyMethod: StateFlow<String> = _defaultReplyMethod
-    val longPressAction: StateFlow<String> = _longPressAction
     val autoExecuteRules: StateFlow<List<AutoExecuteRule>> = automationManager.rules
 
 
@@ -155,23 +136,15 @@ class PreferencesRepository(context: Context) :
 
         _backupIntervalDays.value = backing.getInt(KEY_BACKUP_INTERVAL_DAYS, 0)
 
-        _anonymizeTitles.value = backing.getBoolean(KEY_ANONYMIZE_TITLES, false)
 
-        _maxCacheSizeMb.value = backing.getInt(KEY_MAX_CACHE_MB, DEFAULT_MAX_CACHE_MB)
+
+
         _semanticWeight.value = backing.getInt(KEY_SEMANTIC_WEIGHT, DEFAULT_SEMANTIC_WEIGHT)
 
 
-        _maxDbMb.value = backing.getInt(KEY_MAX_DB_MB, DEFAULT_MAX_DB_MB)
-        _lowMemoryMode.value = backing.getBoolean(KEY_LOW_MEMORY_MODE, false)
-        _vectorCacheMax.value = backing.getInt(KEY_VECTOR_CACHE_MAX, DEFAULT_VECTOR_CACHE_MAX)
+        // storageManager.reload() updates storage flows
 
 
-
-        _autoActOnNotification.value = backing.getBoolean(KEY_AUTO_ACT_ON_NOTIFICATION, false)
-
-        _defaultReplyMethod.value = backing.getString(KEY_DEFAULT_REPLY_METHOD, "inline") ?: "inline"
-
-        _longPressAction.value = backing.getString(KEY_LONG_PRESS_ACTION, "open") ?: "open"
 
         automationManager.reload()
     }
@@ -207,15 +180,6 @@ class PreferencesRepository(context: Context) :
         _backupIntervalDays.value = safe
     }
 
-    fun setAnonymizeTitles(value: Boolean) {
-        backing.edit().putBoolean(KEY_ANONYMIZE_TITLES, value).apply()
-        _anonymizeTitles.value = value
-    }
-    fun setMaxCacheSizeMb(value: Int) {
-        val safe = value.coerceIn(MIN_CACHE_SIZE_MB, MAX_CACHE_SIZE_MB)
-        backing.edit().putInt(KEY_MAX_CACHE_MB, safe).apply()
-        _maxCacheSizeMb.value = safe
-    }
 
     fun setSemanticWeight(value: Int) {
         val safe = value.coerceIn(MIN_SEMANTIC_WEIGHT, MAX_SEMANTIC_WEIGHT)
@@ -226,42 +190,8 @@ class PreferencesRepository(context: Context) :
 
 
 
-    fun setMaxDbMb(value: Int) {
-        val safe = value.coerceIn(MIN_DB_SIZE_MB, MAX_DB_SIZE_MB)
-        backing.edit().putInt(KEY_MAX_DB_MB, safe).apply()
-        _maxDbMb.value = safe
-    }
-
-    fun setLowMemoryMode(value: Boolean) {
-        backing.edit().putBoolean(KEY_LOW_MEMORY_MODE, value).apply()
-        _lowMemoryMode.value = value
-        com.jeffers.notimindlite.util.VectorEmbeddingHelper.setLowMemoryMode(value)
-    }
-
-    fun setVectorCacheMax(value: Int) {
-        val safe = value.coerceIn(MIN_VECTOR_CACHE_SIZE, MAX_VECTOR_CACHE_SIZE)
-        backing.edit().putInt(KEY_VECTOR_CACHE_MAX, safe).apply()
-        _vectorCacheMax.value = safe
-        com.jeffers.notimindlite.util.VectorEmbeddingHelper.updateCacheSize(safe)
-    }
 
 
-    fun setAutoActOnNotification(value: Boolean) {
-        backing.edit().putBoolean(KEY_AUTO_ACT_ON_NOTIFICATION, value).apply()
-        _autoActOnNotification.value = value
-    }
-
-    fun setDefaultReplyMethod(value: String) {
-        val safe = if (value in REPLY_METHODS) value else "inline"
-        backing.edit().putString(KEY_DEFAULT_REPLY_METHOD, safe).apply()
-        _defaultReplyMethod.value = safe
-    }
-
-    fun setLongPressAction(value: String) {
-        val safe = if (value in LONG_PRESS_ACTIONS) value else "open"
-        backing.edit().putString(KEY_LONG_PRESS_ACTION, safe).apply()
-        _longPressAction.value = safe
-    }
 
     companion object {
 
@@ -274,19 +204,15 @@ class PreferencesRepository(context: Context) :
         private const val KEY_ENABLE_SEMANTIC_RANKING = "config_enable_semantic_ranking"
         private const val KEY_AUTO_DELETE_ON_READ = "config_auto_delete_on_read"
         private const val KEY_BACKUP_INTERVAL_DAYS = "config_backup_interval_days"
-        private const val KEY_ANONYMIZE_TITLES = "config_anonymize_titles"
-        private const val KEY_MAX_CACHE_MB = "config_max_cache_mb"
+
+
         private const val KEY_SEMANTIC_WEIGHT = "config_semantic_weight"
 
-        private const val KEY_MAX_DB_MB = "config_max_db_mb"
-        private const val KEY_LOW_MEMORY_MODE = "config_low_memory_mode"
-        private const val KEY_VECTOR_CACHE_MAX = "config_vector_cache_max"
 
 
 
-        private const val KEY_AUTO_ACT_ON_NOTIFICATION = "config_auto_act_on_notification"
-        private const val KEY_DEFAULT_REPLY_METHOD = "config_default_reply_method"
-        private const val KEY_LONG_PRESS_ACTION = "config_long_press_action"
+
+
 
 
         val REPLY_METHODS = setOf("inline", "open_app", "copy")

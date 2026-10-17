@@ -63,7 +63,7 @@ fun settingsPrivacySection(preferencesRepository: PreferencesRepository) {
                 title = anonymizeTitle,
                 summary = anonymizeSummary,
                 checked = anonymizeTitles,
-                onChanged = { scope.launch { preferencesRepository.setAnonymizeTitles(it) } },
+                onChanged = { scope.launch { preferencesRepository.exportManager.setAnonymizeTitles(it) } },
                 enabled = !BuildConfig.DEBUG
             )
 

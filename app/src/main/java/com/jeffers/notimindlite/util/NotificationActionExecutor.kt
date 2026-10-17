@@ -14,7 +14,8 @@ class NotificationActionExecutor(
 ) {
     fun executeOnNotification(key: String, packageName: String, title: String): Boolean {
         val rule = matchingRule(packageName, title)
-        val actionIndex = rule?.actionIndex ?: if (preferences.autoActOnNotification.value) 0 else return false
+        val actionIndex = rule?.actionIndex
+            ?: if (preferences.automationManager.autoActOnNotification.value) 0 else return false
         return NotificationLauncher.triggerAction(key, actionIndex)
     }
 
@@ -22,7 +23,7 @@ class NotificationActionExecutor(
         context: Context,
         key: String,
         packageName: String
-    ): Boolean = when (preferences.longPressAction.value) {
+    ): Boolean = when (preferences.automationManager.longPressAction.value) {
         "reply" -> NotificationLauncher.triggerAction(key, 0)
         "dismiss" -> {
             NotificationLoggerService.dismissNotification(key)

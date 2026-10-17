@@ -186,14 +186,14 @@ private fun advancedSettingsCard(
                 R.string.pref_low_memory_mode_title,
                 R.string.pref_low_memory_mode_summary,
                 config.lowMemoryMode,
-                onCheckedChange = config.preferencesRepository::setLowMemoryMode
+                onCheckedChange = config.preferencesRepository.storageManager::setLowMemoryMode
             )
             advancedNumberRow(
                 R.string.pref_max_db_mb_title,
                 R.string.pref_max_db_mb_summary,
                 config.maxDbMb,
                 120.dp,
-                config.preferencesRepository::setMaxDbMb
+                config.preferencesRepository.storageManager::setMaxDbMb
             )
             migrationControls(
                 config.migrationVisible,
@@ -226,7 +226,7 @@ private fun migrationControls(
         R.string.pref_vector_cache_max_summary,
         vectorCacheMax,
         120.dp,
-        preferencesRepository::setVectorCacheMax
+        preferencesRepository.storageManager::setVectorCacheMax
     )
 }
 

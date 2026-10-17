@@ -32,7 +32,7 @@ fun debugSettingsSection(preferencesRepository: PreferencesRepository) {
     if (BuildConfig.DEBUG) {
         LaunchedEffect(Unit) {
             preferencesRepository.setAutoDeleteOnRead(false)
-            preferencesRepository.setAnonymizeTitles(false)
+            preferencesRepository.exportManager.setAnonymizeTitles(false)
         }
         disabledPreferenceRow(
             title = stringResource(R.string.pref_auto_delete_on_read_title),
@@ -55,7 +55,7 @@ fun debugSettingsSection(preferencesRepository: PreferencesRepository) {
             title = stringResource(R.string.pref_anonymize_titles_title),
             summary = stringResource(R.string.pref_anonymize_titles_summary),
             checked = anonymizeTitles,
-            onCheckedChange = preferencesRepository::setAnonymizeTitles
+            onCheckedChange = preferencesRepository.exportManager::setAnonymizeTitles
         )
         Text(
             text = stringResource(R.string.pref_data_search_debug_note),

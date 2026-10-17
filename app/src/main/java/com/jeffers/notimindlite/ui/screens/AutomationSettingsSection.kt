@@ -16,9 +16,12 @@ import com.jeffers.notimindlite.data.local.PreferencesRepository
 
 @Composable
 fun automationSettingsSection(preferencesRepository: PreferencesRepository) {
-    val autoActOnNotification by preferencesRepository.autoActOnNotification.collectAsState(initial = false)
-    val defaultReplyMethod by preferencesRepository.defaultReplyMethod.collectAsState(initial = "inline")
-    val longPressAction by preferencesRepository.longPressAction.collectAsState(initial = "open")
+    val autoActOnNotification by preferencesRepository.automationManager
+        .autoActOnNotification.collectAsState(initial = false)
+    val defaultReplyMethod by preferencesRepository.automationManager
+        .defaultReplyMethod.collectAsState(initial = "inline")
+    val longPressAction by preferencesRepository.automationManager
+        .longPressAction.collectAsState(initial = "open")
     val autoExecuteRules by preferencesRepository.autoExecuteRules.collectAsState(initial = emptyList())
     var rulePackage by remember { mutableStateOf("") }
     var ruleTitle by remember { mutableStateOf("") }
@@ -41,20 +44,20 @@ fun automationSettingsSection(preferencesRepository: PreferencesRepository) {
         preferenceSwitchRow(
             stringResource(R.string.pref_auto_act_title),
             stringResource(R.string.pref_auto_act_summary), autoActOnNotification,
-            preferencesRepository::setAutoActOnNotification, enabled = !BuildConfig.DEBUG
+            preferencesRepository.automationManager::setAutoActOnNotification, enabled = !BuildConfig.DEBUG
         )
         preferenceSelectRow(
             stringResource(R.string.pref_default_reply_title),
             defaultReplyMethod,
             replyOptions,
-            preferencesRepository::setDefaultReplyMethod,
+            preferencesRepository.automationManager::setDefaultReplyMethod,
             enabled = !BuildConfig.DEBUG
         )
         preferenceSelectRow(
             stringResource(R.string.pref_long_press_title),
             longPressAction,
             longPressOptions,
-            preferencesRepository::setLongPressAction,
+            preferencesRepository.automationManager::setLongPressAction,
             enabled = !BuildConfig.DEBUG
         )
         autoRulesSection(
