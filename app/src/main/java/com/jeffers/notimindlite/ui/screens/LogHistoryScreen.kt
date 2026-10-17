@@ -499,47 +499,108 @@ fun logHistoryScreen(dao: NotificationDao, preferences: com.jeffers.notimindlite
                 )
             }
 
-            if (filteredNotifs.isEmpty()) {
-                com.jeffers.notimindlite.ui.components.ActiveSearchEmptyState(
-                    title = if (searchQuery.isBlank() && selectedReasonFilter == null && selectedPackages == null)
-                        stringResource(R.string.log_history_empty_initial)
-                    else
-                        stringResource(R.string.log_history_empty_search),
-                    description = "No notifications match your current filters.",
-                    clearButtonText = "Clear All Filters",
-                    onClearClick = {
-                        searchQuery = ""
-                        selectedReasonFilter = null
-                        selectedPackages = null
-                    }
+            renderLogHistoryResults(
+                LogHistoryResultsConfig(
+                    filteredNotifs = filteredNotifs,
+                    searchQuery = searchQuery,
+                    selectedReasonFilter = selectedReasonFilter,
+                    selectedPackages = selectedPackages,
+                    setSearchQuery = { searchQuery = it },
+                    setSelectedReasonFilter = { selectedReasonFilter = it },
+                    setSelectedPackages = { selectedPackages = it },
+                    listState = listState,
+                    notificationGroups = notificationGroups,
+                    collapsedGroups = collapsedGroups,
+                    setCollapsedGroups = { collapsedGroups = it },
+                    expandedCards = expandedCards,
+                    setExpandedCards = { expandedCards = it },
+                    debouncedSearchQuery = debouncedSearchQuery,
+                    dateTimeFormatter = dateTimeFormatter,
+                    dao = dao
                 )
-            } else {
-                renderLogHistoryList(
-                    LogHistoryListConfig(
-                        listState = listState,
-                        groups = notificationGroups,
-                        collapsedGroups = collapsedGroups,
-                        setCollapsedGroups = { collapsedGroups = it },
-                        expandedCards = expandedCards,
-                        setExpandedCards = { expandedCards = it },
-                        debouncedSearchQuery = debouncedSearchQuery,
-                        dateTimeFormatter = dateTimeFormatter,
-                        dao = dao
-                    )
-                )
-            }
-            if (showPackagePicker) {
-                appPackageSelectorDialog(
-                    selectedPackages = selectedPackages ?: emptyList(),
-                    availableApps = availableApps,
-                    onDismiss = { showPackagePicker = false },
-                    onPackagesSelected = { pkgs ->
-                        selectedPackages = pkgs
-                        showPackagePicker = false
-                    }
-                )
-            }
+            )
+            renderLogHistoryPackagePicker(
+                showPackagePicker,
+                selectedPackages,
+                availableApps,
+                { showPackagePicker = it },
+                { selectedPackages = it }
+            )
         }
+    }
+}
+
+private val renderLogHistoryPackagePicker:
+    @Composable (
+        Boolean,
+        List<String>?,
+        List<Pair<String, String>>,
+        (Boolean) -> Unit,
+        (List<String>?) -> Unit
+    ) -> Unit =
+    { visible, selectedPackages, availableApps, setVisible, setPackages ->
+        if (visible) {
+            appPackageSelectorDialog(
+                selectedPackages = selectedPackages ?: emptyList(),
+                availableApps = availableApps,
+                onDismiss = { setVisible(false) },
+                onPackagesSelected = {
+                    setPackages(it)
+                    setVisible(false)
+                }
+            )
+        }
+    }
+
+private data class LogHistoryResultsConfig(
+    val filteredNotifs: List<NotificationEntity>,
+    val searchQuery: String,
+    val selectedReasonFilter: Int?,
+    val selectedPackages: List<String>?,
+    val setSearchQuery: (String) -> Unit,
+    val setSelectedReasonFilter: (Int?) -> Unit,
+    val setSelectedPackages: (List<String>?) -> Unit,
+    val listState: androidx.compose.foundation.lazy.LazyListState,
+    val notificationGroups: List<UiNotificationGroup>,
+    val collapsedGroups: Set<String>,
+    val setCollapsedGroups: (Set<String>) -> Unit,
+    val expandedCards: Set<String>,
+    val setExpandedCards: (Set<String>) -> Unit,
+    val debouncedSearchQuery: String,
+    val dateTimeFormatter: DateTimeFormatter,
+    val dao: NotificationDao
+)
+
+private val renderLogHistoryResults:
+    @Composable (LogHistoryResultsConfig) -> Unit = { config ->
+    if (config.filteredNotifs.isEmpty()) {
+        com.jeffers.notimindlite.ui.components.ActiveSearchEmptyState(
+            title = if (config.searchQuery.isBlank() &&
+                config.selectedReasonFilter == null && config.selectedPackages == null
+            ) stringResource(R.string.log_history_empty_initial)
+            else stringResource(R.string.log_history_empty_search),
+            description = "No notifications match your current filters.",
+            clearButtonText = "Clear All Filters",
+            onClearClick = {
+                config.setSearchQuery("")
+                config.setSelectedReasonFilter(null)
+                config.setSelectedPackages(null)
+            }
+        )
+    } else {
+        renderLogHistoryList(
+            LogHistoryListConfig(
+                listState = config.listState,
+                groups = config.notificationGroups,
+                collapsedGroups = config.collapsedGroups,
+                setCollapsedGroups = config.setCollapsedGroups,
+                expandedCards = config.expandedCards,
+                setExpandedCards = config.setExpandedCards,
+                debouncedSearchQuery = config.debouncedSearchQuery,
+                dateTimeFormatter = config.dateTimeFormatter,
+                dao = config.dao
+            )
+        )
     }
 }
 
