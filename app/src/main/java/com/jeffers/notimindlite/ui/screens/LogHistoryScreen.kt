@@ -342,92 +342,26 @@ fun logHistoryScreen(dao: NotificationDao, preferences: com.jeffers.notimindlite
             TopAppBar(
                 title = {},
                 actions = {
-                    if (!selectedPackages.isNullOrEmpty() || selectedReasonFilter != null || searchQuery.isNotBlank()) {
-                        IconButton(onClick = {
-                            selectedPackages = null
-                            selectedReasonFilter = null
-                            searchQuery = ""
-                            isSearchFocused = false
-                            isSearchVisible = false
-                            focusManager.clearFocus(force = true)
-                            keyboardController?.hide()
-                        }) { Icon(Icons.Default.FilterAltOff, contentDescription = "Clear filters") }
-                    }
-                    Box {
-                        val hasActiveFilters = !selectedPackages.isNullOrEmpty() || selectedReasonFilter != null
-                        TooltipBox(
-                            positionProvider = TooltipDefaults.rememberTooltipPositionProvider(
-                                TooltipAnchorPosition.Above
-                            ),
-                            tooltip = { PlainTooltip { Text(stringResource(id = R.string.log_history_filter_title)) } },
-                            state = rememberTooltipState()
-                        ) {
-                            IconButton(onClick = { showFilterMenu = true }) {
-                                Icon(
-                                    imageVector = Icons.Default.FilterList,
-                                    contentDescription = stringResource(id = R.string.log_history_filter_title),
-                                    tint = if (hasActiveFilters) {
-                                        MaterialTheme.colorScheme.primary
-                                    } else {
-                                        MaterialTheme.colorScheme.onSurface
-                                    }
-                                )
-                            }
-                        }
-                        DropdownMenu(
-                            expanded = showFilterMenu,
-                            onDismissRequest = { showFilterMenu = false }
-                        ) {
-                            DropdownMenuItem(
-                                text = {
-                                    Text(
-                                        stringResource(
-                                            id = R.string.log_history_filter_app_count,
-                                            selectedPackages?.size?.toString()
-                                                ?: stringResource(R.string.common_all)
-                                        )
-                                    )
-                                },
-                                onClick = {
-                                    showFilterMenu = false
-                                    showPackagePicker = true
-                                }
-                            )
-                            HorizontalDivider()
-                            DropdownMenuItem(
-                                text = {
-                                    Text(
-                                        stringResource(
-                                            id = R.string.log_history_filter_all_reasons,
-                                            if (selectedReasonFilter == null) "✓" else ""
-                                        )
-                                    )
-                                },
-                                onClick = {
-                                    selectedReasonFilter = null
-                                    showFilterMenu = false
-                                }
-                            )
-                            availableReasons.forEach { reasonCode ->
-                                DropdownMenuItem(
-                                    text = {
-                                        Text(
-                                            stringResource(
-                                                id = R.string.log_history_filter_reason_item,
-                                                getReasonLabel(reasonCode),
-                                                reasonCode,
-                                                if (selectedReasonFilter == reasonCode) "✓" else ""
-                                            )
-                                        )
-                                    },
-                                    onClick = {
-                                        selectedReasonFilter = reasonCode
-                                        showFilterMenu = false
-                                    }
-                                )
-                            }
-                        }
-                    }
+                        logHistoryTopActions(
+                        LogHistoryTopActionsConfig(
+                            selectedPackages = selectedPackages,
+                            selectedReasonFilter = selectedReasonFilter,
+                            searchQuery = searchQuery,
+                            isSearchFocused = isSearchFocused,
+                            isSearchVisible = isSearchVisible,
+                            focusManager = focusManager,
+                            keyboardController = keyboardController,
+                            availableReasons = availableReasons,
+                            availableApps = availableApps,
+                            showFilterMenu = showFilterMenu,
+                            setShowFilterMenu = { showFilterMenu = it },
+                            showPackagePicker = showPackagePicker,
+                            setShowPackagePicker = { showPackagePicker = it },
+                            setSelectedPackages = { selectedPackages = it },
+                            setSelectedReasonFilter = { selectedReasonFilter = it },
+                            preferences = preferences
+                        )
+                    )
 
                     Box {
                         TooltipBox(
