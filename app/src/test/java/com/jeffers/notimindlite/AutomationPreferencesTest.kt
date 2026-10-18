@@ -19,27 +19,36 @@ class AutomationPreferencesTest {
     fun automationOptionsPersistAndRulesRoundTrip() {
         val context = ApplicationProvider.getApplicationContext<Context>()
         val first = PreferencesRepository(context)
-        first.setAutoActOnNotification(true)
-        first.setDefaultReplyMethod("copy")
-        first.setLongPressAction("reply")
-        first.setAutoExecuteRules(listOf(AutoExecuteRule(id = "r1", packageName = "com.chat", titleContains = "urgent", actionIndex = 2)))
+        first.automationManager.setAutoActOnNotification(true)
+        first.automationManager.setDefaultReplyMethod("copy")
+        first.automationManager.setLongPressAction("reply")
+        first.automationManager.setRules(
+            listOf(
+                AutoExecuteRule(
+                    id = "r1",
+                    packageName = "com.chat",
+                    titleContains = "urgent",
+                    actionIndex = 2
+                )
+            )
+        )
 
         val second = PreferencesRepository(context)
-        assertTrue(second.autoActOnNotification.value)
-        assertEquals("copy", second.defaultReplyMethod.value)
-        assertEquals("reply", second.longPressAction.value)
-        assertEquals(1, second.autoExecuteRules.value.size)
-        assertEquals(2, second.autoExecuteRules.value.single().actionIndex)
+        assertTrue(second.automationManager.autoActOnNotification.value)
+        assertEquals("copy", second.automationManager.defaultReplyMethod.value)
+        assertEquals("reply", second.automationManager.longPressAction.value)
+        assertEquals(1, second.automationManager.rules.value.size)
+        assertEquals(2, second.automationManager.rules.value.single().actionIndex)
     }
 
     @Test
     fun invalidAutomationValuesUseSafeDefaults() {
         val context = ApplicationProvider.getApplicationContext<Context>()
         val repository = PreferencesRepository(context)
-        repository.setDefaultReplyMethod("unknown")
-        repository.setLongPressAction("unknown")
-        assertEquals("inline", repository.defaultReplyMethod.value)
-        assertEquals("open", repository.longPressAction.value)
-        assertFalse(repository.autoExecuteRules.value.any { it.id.isBlank() })
+        repository.automationManager.setDefaultReplyMethod("unknown")
+        repository.automationManager.setLongPressAction("unknown")
+        assertEquals("inline", repository.automationManager.defaultReplyMethod.value)
+        assertEquals("open", repository.automationManager.longPressAction.value)
+        assertFalse(repository.automationManager.rules.value.any { it.id.isBlank() })
     }
 }

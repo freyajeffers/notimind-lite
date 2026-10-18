@@ -41,7 +41,7 @@ object NotificationLauncher {
         return actionIntentCache[notifKey]?.get(actionIndex) != null
     }
 
-    fun triggerAction(context: Context, notifKey: String, actionIndex: Int): Boolean {
+    fun triggerAction(notifKey: String, actionIndex: Int): Boolean {
         val actionIntent = actionIntentCache[notifKey]?.get(actionIndex)
         if (actionIntent != null) {
             try {

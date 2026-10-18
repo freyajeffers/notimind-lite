@@ -14,6 +14,8 @@ import java.io.ByteArrayOutputStream
 import java.io.File
 import java.io.FileInputStream
 import java.io.FileOutputStream
+import java.io.IOException
+import java.security.GeneralSecurityException
 import java.security.MessageDigest
 import java.security.SecureRandom
 import javax.crypto.AEADBadTagException
@@ -22,6 +24,8 @@ import javax.crypto.KeyGenerator
 import javax.crypto.SecretKey
 import javax.crypto.spec.GCMParameterSpec
 import javax.crypto.spec.SecretKeySpec
+
+private const val AES_KEY_BITS = 256
 
 /**
  * Handles creation and restoration of encrypted backups.
@@ -59,7 +63,7 @@ object EncryptedBackupManager {
             if (!encSuccess) return false
 
             val fileHash = calculateFileHash(destinationFile)
-            val signature = generateSecureSignature(fileHash, secretKey, context)
+            val signature = generateSecureSignature(fileHash, context)
 
             val record = BackupRecord(
                 actionType = "EXPORT",
@@ -67,17 +71,19 @@ object EncryptedBackupManager {
                 signature = signature,
                 fileName = destinationFile.name,
                 logMessage = if (passphrase != null) "Passphrase-wrapped export" else "KeyStore-bound export"
-                // M4: removed `encryptionKeyBase64 = encryptionKeyBase64` — the deprecated
-                // field is retained in BackupRecord strictly for Room schema compatibility
-                // (see AppDatabase migration ALTER TABLE) but no caller may persist plaintext
-                // keys. Tests asserting on this column should be migrated separately.
             )
 
             AppDatabase.getDatabase(context).backupDao().insertRecord(record)
             AuditLogger.logBackupEvent(context, record)
             true
-        } catch (e: Exception) {
-            Log.e(TAG, "Authorized backup failed: Security operation error", e)
+        } catch (e: IOException) {
+            logError( "Authorized backup failed: IO error", e)
+            false
+        } catch (e: GeneralSecurityException) {
+            logError( "Authorized backup failed: crypto error", e)
+            false
+        } catch (e: SecurityException) {
+            logError( "Authorized backup failed: security exception", e)
             false
         }
     }
@@ -109,7 +115,7 @@ object EncryptedBackupManager {
             val isPassphraseAuthorized = passphrase != null && isFilePassphraseWrapped(fileBytes)
 
             if (localRecord == null && !isPassphraseAuthorized) {
-                Log.e(TAG, "Unauthorized backup attempt: Hash $fileHash not found in local log")
+                logError( "Unauthorized backup attempt: Hash $fileHash not found in local log")
                 return false
             }
 
@@ -130,8 +136,17 @@ object EncryptedBackupManager {
                 AuditLogger.logBackupEvent(context, importRecord)
             }
             success
-        } catch (e: Exception) {
-            Log.e(TAG, "Authorized restore failed: ${e.message}", e)
+        } catch (e: BackupFileFormat.FormatException) {
+            logError( "Authorized restore failed: invalid backup format", e)
+            false
+        } catch (e: IOException) {
+            logError( "Authorized restore failed: IO error", e)
+            false
+        } catch (e: AEADBadTagException) {
+            logError( "Authorized restore failed: authentication error (wrong passphrase or corrupted file)", e)
+            false
+        } catch (e: GeneralSecurityException) {
+            logError( "Authorized restore failed: crypto error", e)
             false
         }
     }
@@ -156,7 +171,7 @@ object EncryptedBackupManager {
     private fun isFilePassphraseWrapped(bytes: ByteArray): Boolean =
         try {
             BackupFileFormat.parse(bytes).keySource == BackupFileFormat.KEY_SOURCE_PASSPHRASE_WRAPPED
-        } catch (_: Exception) {
+        } catch (_: IllegalArgumentException) {
             false
         }
 
@@ -168,7 +183,7 @@ object EncryptedBackupManager {
     ): SecretKey? {
         val header = try {
             BackupFileFormat.parse(bytes)
-        } catch (_: Exception) {
+        } catch (_: IllegalArgumentException) {
             null
         }
 
@@ -190,7 +205,7 @@ object EncryptedBackupManager {
                 )
                 BackupKeyWrap.unwrapDek(header.wrappedDek, header.kekIv, kek)
             } catch (e: AEADBadTagException) {
-                Log.e(TAG, "Passphrase incorrect; failed to unwrap DEK", e)
+                logError( "Passphrase incorrect; failed to unwrap DEK", e)
                 null
             }
         }
@@ -246,8 +261,17 @@ object EncryptedBackupManager {
                 }
             }
             true
-        } catch (e: Exception) {
-            Log.e(TAG, "Encryption failed: ${e.message}", e)
+        } catch (e: IOException) {
+            logError( "Encryption failed: IO error", e)
+            false
+        } catch (e: GeneralSecurityException) {
+            logError( "Encryption failed: crypto error", e)
+            false
+        } catch (e: IllegalArgumentException) {
+            logError( "Encryption failed: invalid argument", e)
+            false
+        } catch (e: IllegalStateException) {
+            logError( "Encryption failed: illegal state", e)
             false
         }
     }
@@ -256,7 +280,7 @@ object EncryptedBackupManager {
         return try {
             val header = try {
                 BackupFileFormat.parse(bytes)
-            } catch (_: Exception) {
+            } catch (_: IllegalArgumentException) {
                 null
             }
 
@@ -275,8 +299,17 @@ object EncryptedBackupManager {
             val plaintext = cipher.doFinal(ciphertext)
             dest.writeBytes(plaintext)
             true
-        } catch (e: Exception) {
-            Log.e(TAG, "Decryption failed: ${e.message}", e)
+        } catch (e: IOException) {
+            logError( "Decryption failed: IO error", e)
+            false
+        } catch (e: GeneralSecurityException) {
+            logError( "Decryption failed: crypto error", e)
+            false
+        } catch (e: IllegalArgumentException) {
+            logError( "Decryption failed: invalid argument", e)
+            false
+        } catch (e: IllegalStateException) {
+            logError( "Decryption failed: illegal state", e)
             false
         }
     }
@@ -293,18 +326,14 @@ object EncryptedBackupManager {
         return digest.digest().joinToString("") { "%02x".format(it) }
     }
 
+    private fun logError(message: String, error: Throwable? = null) {
+        runCatching { Log.e(TAG, message, error) }
+    }
+
     private suspend fun generateSecureSignature(
         hash: String,
-        secretKey: SecretKey,
-        context: Context,
-    ): String {
-        return try {
-            BackupNotaryClient.getSignature(context, hash)
-        } catch (e: Exception) {
-            Log.e(TAG, "Remote notary signing failed", e)
-            throw e
-        }
-    }
+        context: Context
+    ): String = BackupNotaryClient.getSignature(context, hash)
 }
 
 /**
@@ -315,9 +344,10 @@ object EncryptedBackupManager {
  * or a Context-bound key-wrapping helper, at which point production callers do not need
  * to migrate. Tests must use the no-arg overload below, which uses plain JCE.
  */
-@Suppress("UnusedParameter")
-fun generateBackupKey(context: Context): SecretKey =
-    BackupKeyCodec.getOrCreateKey()
+fun generateBackupKey(context: Context): SecretKey {
+    context.applicationContext
+    return BackupKeyCodec.getOrCreateKey()
+}
 
 /**
  * Test-only convenience: returns a freshly generated AES-256 SecretKey via JCE.
@@ -326,4 +356,4 @@ fun generateBackupKey(context: Context): SecretKey =
  * hardware-bound and never stored on disk.
  */
 fun generateBackupKey(): SecretKey =
-    KeyGenerator.getInstance("AES").apply { init(256) }.generateKey()
+    KeyGenerator.getInstance("AES").apply { init(AES_KEY_BITS) }.generateKey()

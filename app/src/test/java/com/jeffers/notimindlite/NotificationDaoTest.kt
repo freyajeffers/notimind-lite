@@ -105,8 +105,12 @@ class NotificationDaoTest {
 
     @Test
     fun markDismissedWithReason_categorizesIntoRecentlyDismissedAndLost() = runBlocking {
-        val userSwiped = NotificationEntity(key = "k1", packageName = "p1", appName = "A1", title = "Swiped", content = "C1", isDismissed = false)
-        val appCancelled = NotificationEntity(key = "k2", packageName = "p2", appName = "A2", title = "App Cancel", content = "C2", isDismissed = false)
+        val userSwiped = NotificationEntity(
+            key = "k1", packageName = "p1", appName = "A1", title = "Swiped", content = "C1", isDismissed = false
+        )
+        val appCancelled = NotificationEntity(
+            key = "k2", packageName = "p2", appName = "A2", title = "App Cancel", content = "C2", isDismissed = false
+        )
 
         dao.insertNotification(userSwiped)
         dao.insertNotification(appCancelled)
@@ -128,7 +132,10 @@ class NotificationDaoTest {
 
     @Test
     fun updatePinnedStatus_togglesPinnedState() = runBlocking {
-        val notif = NotificationEntity(key = "pin_1", packageName = "p", appName = "A", title = "Pin Me", content = "C", isDismissed = false, isPinned = false)
+        val notif = NotificationEntity(
+            key = "pin_1", packageName = "p", appName = "A", title = "Pin Me", content = "C",
+            isDismissed = false, isPinned = false
+        )
         dao.insertNotification(notif)
 
         var pinnedList = dao.getPinnedNotificationsFlow().first()
@@ -150,12 +157,80 @@ class NotificationDaoTest {
         val totalEntities = 50_000
         val now = System.currentTimeMillis()
 
+        populatePerformanceDatabase(totalEntities, now)
+
+        val totalCount = dao.getNotificationCount()
+        assertEquals(50_000, totalCount)
+
+        // Warm up query
+        dao.getActiveNotificationsList()
+
+        // Measure SLA for indexed query over active notifications
+        val iterations = 10
+        var totalNanos = 0L
+        for (i in 1..iterations) {
+            val start = System.nanoTime()
+            val active = dao.getActiveNotificationsList()
+            val duration = System.nanoTime() - start
+            totalNanos += duration
+            assertTrue(active.isNotEmpty())
+        }
+
+        val avgMs = (totalNanos.toDouble() / iterations) / 1_000_000.0
+        assertTrue(
+            "Average active query latency over 50k rows must be sub-50ms, was ${avgMs}ms",
+            avgMs < 50.0
+        )
+    }
+
+    @Test
+    fun markAsRead_autoDeleteRemovesNotificationWhenEnabled() = runBlocking {
+        dao.insertNotification(
+            NotificationEntity(key = "privacy_read", packageName = "p", appName = "A", title = "T", content = "C")
+        )
+        dao.markAsRead("privacy_read", autoDeleteOnRead = true)
+        assertTrue(dao.getAllNotificationsList().none { it.key == "privacy_read" })
+    }
+
+    @Test
+    fun markAsRead_withoutAutoDeleteRetainsRowAndMarksRead() = runBlocking {
+        dao.insertNotification(
+            NotificationEntity(key = "privacy_keep", packageName = "p", appName = "A", title = "T", content = "C")
+        )
+        dao.markAsRead("privacy_keep", autoDeleteOnRead = false)
+        val row = dao.getAllNotificationsList().single { it.key == "privacy_keep" }
+        assertTrue(row.isRead)
+    }
+
+    @Test
+    fun clearAll_deletesAllNotifications() = runBlocking {
+        val entity = NotificationEntity(
+            key = "test_clear_1",
+            packageName = "com.example.app",
+            appName = "Test App",
+            title = "Title",
+            content = "Content",
+            postTime = System.currentTimeMillis(),
+            isDismissed = false,
+            isPersistent = false
+        )
+        dao.insert(entity)
+        val countBefore = dao.getAllNotificationsList().size
+        assertTrue(countBefore > 0)
+
+        dao.clearAll()
+        val countAfter = dao.getAllNotificationsList().size
+        assertEquals(0, countAfter)
+    }
+
+    private fun populatePerformanceDatabase(totalEntities: Int, now: Long) {
         database.runInTransaction {
             val db = database.openHelper.writableDatabase
             db.beginTransaction()
             try {
                 val appStmt = db.compileStatement(
-                    "INSERT OR IGNORE INTO apps (packageName, appName, firstSeenTime, lastSeenTime, syncStatus, lastSyncedAt) VALUES (?, ?, ?, ?, ?, ?)"
+                    "INSERT OR IGNORE INTO apps (packageName, appName, firstSeenTime, lastSeenTime, " +
+                        "syncStatus, lastSyncedAt) VALUES (?, ?, ?, ?, ?, ?)"
                 )
                 for (i in 1..totalEntities) {
                     appStmt.clearBindings()
@@ -168,7 +243,10 @@ class NotificationDaoTest {
                     appStmt.executeInsert()
                 }
                 val stmt = db.compileStatement(
-                    "INSERT INTO notifications (key, packageName, appName, title, content, postTime, lastUpdatedTime, updateCount, isDismissed, isPinned, isPersistent, isRead, isGroupSummary, priority, isOngoing, isClearable, actionsCount, smallIconRes, syncStatus, lastSyncedAt) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
+                    "INSERT INTO notifications (key, packageName, appName, title, content, postTime, " +
+                        "lastUpdatedTime, updateCount, isDismissed, isPinned, isPersistent, isRead, " +
+                        "isGroupSummary, priority, isOngoing, isClearable, actionsCount, smallIconRes, " +
+                        "syncStatus, lastSyncedAt) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
                 )
                 for (i in 1..totalEntities) {
                     stmt.clearBindings()
@@ -199,62 +277,6 @@ class NotificationDaoTest {
                 db.endTransaction()
             }
         }
-
-        val totalCount = dao.getNotificationCount()
-        assertEquals(50_000, totalCount)
-
-        // Warm up query
-        dao.getActiveNotificationsList()
-
-        // Measure SLA for indexed query over active notifications
-        val iterations = 10
-        var totalNanos = 0L
-        for (i in 1..iterations) {
-            val start = System.nanoTime()
-            val active = dao.getActiveNotificationsList()
-            val duration = System.nanoTime() - start
-            totalNanos += duration
-            assertTrue(active.isNotEmpty())
-        }
-
-        val avgMs = (totalNanos.toDouble() / iterations) / 1_000_000.0
-        assertTrue("Average active query latency over 50k rows must be sub-50ms, was ${avgMs}ms", avgMs < 50.0)
-    }
-
-    @Test
-    fun markAsRead_autoDeleteRemovesNotificationWhenEnabled() = runBlocking {
-        dao.insertNotification(NotificationEntity(key = "privacy_read", packageName = "p", appName = "A", title = "T", content = "C"))
-        dao.markAsRead("privacy_read", autoDeleteOnRead = true)
-        assertTrue(dao.getAllNotificationsList().none { it.key == "privacy_read" })
-    }
-
-    @Test
-    fun markAsRead_withoutAutoDeleteRetainsRowAndMarksRead() = runBlocking {
-        dao.insertNotification(NotificationEntity(key = "privacy_keep", packageName = "p", appName = "A", title = "T", content = "C"))
-        dao.markAsRead("privacy_keep", autoDeleteOnRead = false)
-        val row = dao.getAllNotificationsList().single { it.key == "privacy_keep" }
-        assertTrue(row.isRead)
-    }
-
-    @Test
-    fun clearAll_deletesAllNotifications() = runBlocking {
-        val entity = NotificationEntity(
-            key = "test_clear_1",
-            packageName = "com.example.app",
-            appName = "Test App",
-            title = "Title",
-            content = "Content",
-            postTime = System.currentTimeMillis(),
-            isDismissed = false,
-            isPersistent = false
-        )
-        dao.insert(entity)
-        val countBefore = dao.getAllNotificationsList().size
-        assertTrue(countBefore > 0)
-
-        dao.clearAll()
-        val countAfter = dao.getAllNotificationsList().size
-        assertEquals(0, countAfter)
     }
 }
 

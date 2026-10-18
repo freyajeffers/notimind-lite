@@ -12,21 +12,31 @@ import java.security.SecureRandom
  * JVM-testable.
  */
 object EncryptedStorage {
+    private const val AES_KEY_BYTES = 32
     private val RNG = SecureRandom()
     private const val DERIVE_INFO = "NotiMind-Lite Storage Key"
 
     /**
      * Derive a 32-byte AES-256 key from supplied master secret using HKDF-SHA256.
      */
-    fun deriveAesKey(masterSecret: ByteArray, salt: ByteArray? = null, info: ByteArray? = null): ByteArray {
+    fun deriveAesKey(
+        masterSecret: ByteArray,
+        salt: ByteArray? = null,
+        info: ByteArray? = null
+    ): ByteArray {
         val infoBytes = info ?: DERIVE_INFO.toByteArray(Charsets.UTF_8)
-        return CryptoUtils.hkdfSha256ExtractAndExpand(salt, masterSecret, infoBytes, 32)
+        return CryptoUtils.hkdfSha256ExtractAndExpand(salt, masterSecret, infoBytes, AES_KEY_BYTES)
     }
 
     /**
      * Encrypt plaintext with a derived key from masterSecret. Returns iv||ciphertext.
      */
-    fun encrypt(masterSecret: ByteArray, plaintext: ByteArray, aad: ByteArray? = null, salt: ByteArray? = null): ByteArray {
+    fun encrypt(
+        masterSecret: ByteArray,
+        plaintext: ByteArray,
+        aad: ByteArray? = null,
+        salt: ByteArray? = null
+    ): ByteArray {
         val key = deriveAesKey(masterSecret, salt)
         return CryptoUtils.aesGcmEncrypt(key, plaintext, aad)
     }
@@ -34,7 +44,12 @@ object EncryptedStorage {
     /**
      * Decrypt iv||ciphertext with a derived key from masterSecret. Returns plaintext or throws on auth failure.
      */
-    fun decrypt(masterSecret: ByteArray, ivAndCiphertext: ByteArray, aad: ByteArray? = null, salt: ByteArray? = null): ByteArray {
+    fun decrypt(
+        masterSecret: ByteArray,
+        ivAndCiphertext: ByteArray,
+        aad: ByteArray? = null,
+        salt: ByteArray? = null
+    ): ByteArray {
         val key = deriveAesKey(masterSecret, salt)
         return CryptoUtils.aesGcmDecrypt(key, ivAndCiphertext, aad)
     }
@@ -43,7 +58,7 @@ object EncryptedStorage {
      * Utility: generate a random 32-byte master secret.
      */
     fun generateMasterSecret(): ByteArray {
-        val b = ByteArray(32)
+        val b = ByteArray(AES_KEY_BYTES)
         RNG.nextBytes(b)
         return b
     }

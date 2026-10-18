@@ -5,19 +5,26 @@ import com.jeffers.notimindlite.data.local.AutoExecuteRule
 import com.jeffers.notimindlite.data.local.PreferencesRepository
 import com.jeffers.notimindlite.service.NotificationLoggerService
 
-/** Applies automation preferences to notification actions. Kept side-effect free except for the selected PendingIntent. */
+/**
+ * Applies automation preferences to notification actions.
+ * The executor only side-effects through the selected PendingIntent.
+ */
 class NotificationActionExecutor(
     private val preferences: PreferencesRepository
 ) {
-    fun executeOnNotification(context: Context, key: String, packageName: String, title: String): Boolean {
+    fun executeOnNotification(key: String, packageName: String, title: String): Boolean {
         val rule = matchingRule(packageName, title)
-        if (rule != null) return NotificationLauncher.triggerAction(context, key, rule.actionIndex)
-        if (!preferences.autoActOnNotification.value) return false
-        return NotificationLauncher.triggerAction(context, key, 0)
+        val actionIndex = rule?.actionIndex
+            ?: if (preferences.automationManager.autoActOnNotification.value) 0 else return false
+        return NotificationLauncher.triggerAction(key, actionIndex)
     }
 
-    fun executeLongPress(context: Context, key: String, packageName: String, title: String): Boolean = when (preferences.longPressAction.value) {
-        "reply" -> NotificationLauncher.triggerAction(context, key, 0)
+    fun executeLongPress(
+        context: Context,
+        key: String,
+        packageName: String
+    ): Boolean = when (preferences.automationManager.longPressAction.value) {
+        "reply" -> NotificationLauncher.triggerAction(key, 0)
         "dismiss" -> {
             NotificationLoggerService.dismissNotification(key)
             true
@@ -30,7 +37,7 @@ class NotificationActionExecutor(
     }
 
     fun matchingRule(packageName: String, title: String): AutoExecuteRule? =
-        preferences.autoExecuteRules.value.firstOrNull { rule ->
+        preferences.automationManager.rules.value.firstOrNull { rule ->
             rule.enabled && (rule.packageName.isBlank() || rule.packageName.equals(packageName, ignoreCase = true)) &&
                 (rule.titleContains.isBlank() || title.contains(rule.titleContains, ignoreCase = true))
         }

@@ -44,62 +44,67 @@ abstract class BaseRobolectricTest {
         }
     }
 
-    protected fun createDummyEntity(
-        key: String = "test_key_${System.currentTimeMillis()}_${(1..1000).random()}",
-        packageName: String = "com.example.app",
-        appName: String = "Example App",
-        title: String = "Test Title",
-        content: String = "Test Content Body",
-        postTime: Long = System.currentTimeMillis(),
-        isDismissed: Boolean = false,
-        isPersistent: Boolean = false
-    ): NotificationEntity {
+    protected data class DummyEntityParams(
+        val key: String = "test_key_${System.currentTimeMillis()}_${(1..1000).random()}",
+        val packageName: String = "com.example.app",
+        val appName: String = "Example App",
+        val title: String = "Test Title",
+        val content: String = "Test Content Body",
+        val postTime: Long = System.currentTimeMillis(),
+        val isDismissed: Boolean = false,
+        val isPersistent: Boolean = false
+    )
+
+    protected fun createDummyEntity(params: DummyEntityParams = DummyEntityParams()): NotificationEntity {
         return NotificationEntity(
-            key = key,
-            packageName = packageName,
-            appName = appName,
-            title = title,
-            content = content,
-            postTime = postTime,
-            isDismissed = isDismissed,
-            isPersistent = isPersistent
+            key = params.key,
+            packageName = params.packageName,
+            appName = params.appName,
+            title = params.title,
+            content = params.content,
+            postTime = params.postTime,
+            isDismissed = params.isDismissed,
+            isPersistent = params.isPersistent
         )
     }
 
-    @Suppress("DEPRECATION")
+    protected data class MockStatusBarParams(
+        val key: String = "com.example.app|101|null|10001",
+        val packageName: String = "com.example.app",
+        val title: String = "Mock Title",
+        val text: String = "Mock Text",
+        val postTime: Long = System.currentTimeMillis(),
+        val isOngoing: Boolean = false,
+        val isClearable: Boolean = true
+    )
+
     protected fun createMockStatusBarNotification(
-        key: String = "com.example.app|101|null|10001",
-        packageName: String = "com.example.app",
-        title: String = "Mock Title",
-        text: String = "Mock Text",
-        postTime: Long = System.currentTimeMillis(),
-        isOngoing: Boolean = false,
-        isClearable: Boolean = true
+        params: MockStatusBarParams = MockStatusBarParams()
     ): StatusBarNotification {
         val notification = Notification().apply {
             extras = Bundle().apply {
-                putCharSequence(Notification.EXTRA_TITLE, title)
-                putCharSequence(Notification.EXTRA_TEXT, text)
+                putCharSequence(Notification.EXTRA_TITLE, params.title)
+                putCharSequence(Notification.EXTRA_TEXT, params.text)
             }
-            if (isOngoing) {
+            if (params.isOngoing) {
                 flags = flags or Notification.FLAG_ONGOING_EVENT
             }
-            if (!isClearable) {
+            if (!params.isClearable) {
                 flags = flags or Notification.FLAG_NO_CLEAR
             }
         }
 
         return StatusBarNotification(
-            packageName,
-            packageName,
+            params.packageName,
+            params.packageName,
             101,
-            key,
+            params.key,
             1000,
             0,
             0,
             notification,
             Process.myUserHandle(),
-            postTime
+            params.postTime
         )
     }
 }

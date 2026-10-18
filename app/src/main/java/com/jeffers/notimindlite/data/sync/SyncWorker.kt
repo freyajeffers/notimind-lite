@@ -22,7 +22,7 @@ class SyncWorker(
     override suspend fun doWork(): Result {
         val db = AppDatabase.getDatabase(applicationContext)
         val preferences = PreferencesRepository(applicationContext)
-        return if (preferences.useSupabaseSync.value) {
+        return if (preferences.syncManager.useSupabaseSync.value) {
             syncSupabase(db, preferences)
         } else {
             syncFirebase(db, preferences)
@@ -30,7 +30,7 @@ class SyncWorker(
     }
 
     private suspend fun syncSupabase(db: AppDatabase, preferences: PreferencesRepository): Result {
-        val profileId = preferences.activeProfileId.value
+        val profileId = preferences.profileManager.activeProfileId.value
         val supabaseAuth = SupabaseAuthManager(applicationContext)
         val userId = supabaseAuth.currentSession().uid ?: return Result.success()
         SupabaseSettingsSyncRepository(supabaseAuth).restoreOrUpload(preferences, userId)
@@ -39,7 +39,7 @@ class SyncWorker(
     }
 
     private suspend fun syncFirebase(db: AppDatabase, preferences: PreferencesRepository): Result {
-        val profileId = preferences.activeProfileId.value
+        val profileId = preferences.profileManager.activeProfileId.value
         val user = com.google.firebase.auth.FirebaseAuth.getInstance().currentUser
             ?: return Result.success()
         FirebaseSettingsSyncRepository().restoreOrUpload(preferences, user.uid)
@@ -50,7 +50,7 @@ class SyncWorker(
 
     private suspend fun finishSync(preferences: PreferencesRepository, result: kotlin.Result<Int>): Result {
         return if (result.isSuccess) {
-            preferences.setLastSyncTs(System.currentTimeMillis())
+            preferences.syncManager.setLastSyncTs(System.currentTimeMillis())
             Result.success()
         } else {
             Result.retry()
@@ -59,6 +59,7 @@ class SyncWorker(
 
     companion object {
         private const val SYNC_WORK_NAME = "notimind_firestore_sync"
+        private const val PERIODIC_SYNC_INTERVAL_HOURS = 6L
 
         fun schedulePeriodicSync(context: Context) {
             val constraints = Constraints.Builder()
@@ -67,7 +68,10 @@ class SyncWorker(
                 .setRequiresDeviceIdle(true)
                 .build()
 
-            val request = PeriodicWorkRequestBuilder<SyncWorker>(6, TimeUnit.HOURS)
+            val request = PeriodicWorkRequestBuilder<SyncWorker>(
+                PERIODIC_SYNC_INTERVAL_HOURS,
+                TimeUnit.HOURS
+            )
                 .setConstraints(constraints)
                 .build()
 

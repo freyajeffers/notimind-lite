@@ -16,7 +16,14 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.core.content.ContextCompat
@@ -38,6 +45,8 @@ import com.jeffers.notimindlite.domain.clustering.DynamicClusterManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+
+private const val EXPORT_CACHE_MAX_AGE_MILLIS = 3600_000L
 
 class MainActivity : ComponentActivity() {
 
@@ -65,15 +74,15 @@ class MainActivity : ComponentActivity() {
         } else {
             "${AppDatabase.CE_DATABASE_NAME}_$profileId"
         }
-        val migrationConsentRequired = preferencesRepository.dbEncrypted.value &&
-            preferencesRepository.dbEncryptionMode.value != DbEncryptionMode.NONE &&
+        val migrationConsentRequired = preferencesRepository.securityManager.dbEncrypted.value &&
+            preferencesRepository.securityManager.dbEncryptionMode.value != DbEncryptionMode.NONE &&
             EncryptionMigrationConsent.get(applicationContext) == EncryptionMigrationConsent.Decision.UNKNOWN &&
             migrationRunner.preflight(databaseName).plaintextExists
 
         if (migrationConsentRequired) {
             setContent {
-                com.jeffers.notimindlite.ui.theme.NotiMindLiteTheme {
-                    EncryptionMigrationConsentDialog(
+                com.jeffers.notimindlite.ui.theme.notiMindLiteTheme {
+                    encryptionMigrationConsentDialog(
                         onDecision = { decision ->
                             EncryptionMigrationConsent.set(applicationContext, decision)
                             recreate()
@@ -112,15 +121,18 @@ class MainActivity : ComponentActivity() {
             // path only invokes it post-export; users who skip export entirely
             // would otherwise accumulate files forever.
             try {
-                com.jeffers.notimindlite.util.DatabaseExporter.cleanupExportFiles(applicationContext)
+                com.jeffers.notimindlite.util.DatabaseExportHelper.cleanupExportFiles(
+                    applicationContext,
+                    EXPORT_CACHE_MAX_AGE_MILLIS
+                )
             } catch (e: Exception) {
                 android.util.Log.e("MainActivity", "Failed cleaning export cache", e)
             }
         }
 
         setContent {
-            val themeAccent by preferencesRepository.themeAccent.collectAsState()
-            com.jeffers.notimindlite.ui.theme.NotiMindLiteTheme(
+            val themeAccent by preferencesRepository.displayManager.themeAccent.collectAsState()
+            com.jeffers.notimindlite.ui.theme.notiMindLiteTheme(
                 amoledTheme = themeAccent == "amoled",
                 dynamicColor = themeAccent == "system"
             ) {
@@ -161,7 +173,11 @@ class MainActivity : ComponentActivity() {
                         }
                     }
 
-                    MainNavigation(notificationDao = dao, authManager = authManager, db = database, preferencesRepository = preferencesRepository)
+                    mainNavigation(
+                        notificationDao = dao,
+                        authManager = authManager,
+                        preferencesRepository = preferencesRepository
+                    )
 
                     if (showPermissionDialog && !hasPermission) {
                         AlertDialog(
@@ -201,7 +217,7 @@ class MainActivity : ComponentActivity() {
     private suspend fun restoreSettingsAfterLogin(preferences: PreferencesRepository) {
         val session = authManager.session.value
         if (!session.isAuthenticated || session.uid == null) return
-        val result = if (preferences.useSupabaseSync.value) {
+        val result = if (preferences.syncManager.useSupabaseSync.value) {
             com.jeffers.notimindlite.data.sync.SupabaseSettingsSyncRepository(
                 com.jeffers.notimindlite.data.auth.SupabaseAuthManager(applicationContext)
             ).restoreOrUpload(preferences, session.uid)
@@ -224,9 +240,8 @@ class MainActivity : ComponentActivity() {
     }
 }
 
-@Suppress("FunctionNaming")
 @Composable
-private fun EncryptionMigrationConsentDialog(
+private fun encryptionMigrationConsentDialog(
     onDecision: (EncryptionMigrationConsent.Decision) -> Unit
 ) {
     AlertDialog(

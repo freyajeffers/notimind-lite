@@ -1,8 +1,29 @@
 package com.jeffers.notimindlite.ui.screens
 
-import androidx.compose.foundation.layout.*
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.material3.Button
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Switch
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.res.stringResource
@@ -19,14 +40,14 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
 @Composable
-fun SettingsSyncSection(preferencesRepository: PreferencesRepository) {
+fun settingsSyncSection(preferencesRepository: PreferencesRepository) {
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
-    val syncInterval by preferencesRepository.syncInterval.collectAsState(initial = 60)
-    val syncWifiOnly by preferencesRepository.syncWifiOnly.collectAsState(initial = true)
-    val syncChargingOnly by preferencesRepository.syncChargingOnly.collectAsState(initial = false)
-    val lastSyncTs by preferencesRepository.lastSyncTs.collectAsState(initial = 0L)
-    val useSupabaseSync by preferencesRepository.useSupabaseSync.collectAsState(initial = false)
+    val syncInterval by preferencesRepository.syncManager.syncInterval.collectAsState(initial = 60)
+    val syncWifiOnly by preferencesRepository.syncManager.syncWifiOnly.collectAsState(initial = true)
+    val syncChargingOnly by preferencesRepository.syncManager.syncChargingOnly.collectAsState(initial = false)
+    val lastSyncTs by preferencesRepository.syncManager.lastSyncTs.collectAsState(initial = 0L)
+    val useSupabaseSync by preferencesRepository.syncManager.useSupabaseSync.collectAsState(initial = false)
     var syncWorkId by remember { mutableStateOf<java.util.UUID?>(null) }
     val syncWorkInfo by syncWorkId?.let {
         WorkManager.getInstance(context).getWorkInfoByIdFlow(it).collectAsState(initial = null)
@@ -36,7 +57,7 @@ fun SettingsSyncSection(preferencesRepository: PreferencesRepository) {
 
     LaunchedEffect(syncWorkInfo?.state) {
         if (syncWorkInfo?.state == WorkInfo.State.SUCCEEDED) {
-            preferencesRepository.refreshLastSyncTs()
+            preferencesRepository.syncManager.refreshLastSyncTs()
         }
     }
 
@@ -50,7 +71,7 @@ fun SettingsSyncSection(preferencesRepository: PreferencesRepository) {
             syncIntervalRow(
                 syncInterval = syncInterval,
                 onChange = { value ->
-                    scope.launch { preferencesRepository.setSyncInterval(value) }
+                    scope.launch { preferencesRepository.syncManager.setSyncInterval(value) }
                 }
             )
 
@@ -58,21 +79,21 @@ fun SettingsSyncSection(preferencesRepository: PreferencesRepository) {
                 title = stringResource(R.string.pref_sync_wifi_title),
                 summary = stringResource(R.string.pref_sync_wifi_summary),
                 checked = syncWifiOnly,
-                onChecked = { scope.launch { preferencesRepository.setSyncWifiOnly(it) } }
+                onChecked = { scope.launch { preferencesRepository.syncManager.setSyncWifiOnly(it) } }
             )
 
             syncToggleRow(
                 title = stringResource(R.string.pref_sync_charging_title),
                 summary = stringResource(R.string.pref_sync_charging_summary),
                 checked = syncChargingOnly,
-                onChecked = { scope.launch { preferencesRepository.setSyncChargingOnly(it) } }
+                onChecked = { scope.launch { preferencesRepository.syncManager.setSyncChargingOnly(it) } }
             )
 
             syncToggleRow(
                 title = "Supabase cloud sync (default)",
                 summary = "Uses the existing Supabase project; disable to use Firebase sync",
                 checked = useSupabaseSync,
-                onChecked = { scope.launch { preferencesRepository.setUseSupabaseSync(it) } }
+                onChecked = { scope.launch { preferencesRepository.syncManager.setUseSupabaseSync(it) } }
             )
 
             syncNowRow(
@@ -127,8 +148,20 @@ private fun syncToggleRow(title: String, summary: String, checked: Boolean, onCh
 
 @Composable
 private fun syncNowRow(lastSyncTs: Long, syncRunning: Boolean, onClick: () -> Unit) {
-    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
-        Text(text = stringResource(R.string.pref_sync_last, if (lastSyncTs == 0L) stringResource(R.string.pref_sync_never) else java.text.DateFormat.getDateTimeInstance().format(java.util.Date(lastSyncTs))), style = MaterialTheme.typography.bodySmall)
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = androidx.compose.ui.Alignment.CenterVertically
+    ) {
+        val lastSyncText = if (lastSyncTs == 0L) {
+            stringResource(R.string.pref_sync_never)
+        } else {
+            java.text.DateFormat.getDateTimeInstance().format(java.util.Date(lastSyncTs))
+        }
+        Text(
+            text = stringResource(R.string.pref_sync_last, lastSyncText),
+            style = MaterialTheme.typography.bodySmall
+        )
         Button(onClick = onClick, enabled = !syncRunning) {
             if (syncRunning) {
                 CircularProgressIndicator(modifier = Modifier.size(18.dp), strokeWidth = 2.dp)

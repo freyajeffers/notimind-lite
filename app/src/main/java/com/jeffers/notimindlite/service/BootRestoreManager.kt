@@ -31,7 +31,9 @@ object BootRestoreManager {
      * Pass 1: Group by matching title -> Append content.
      * Pass 2: Group by matching app (packageName) if still over threshold.
      */
-    suspend fun consolidateForBoot(notifications: List<NotificationEntity>): List<BootConsolidationResult> = withContext(Dispatchers.Default) {
+    suspend fun consolidateForBoot(
+        notifications: List<NotificationEntity>
+    ): List<BootConsolidationResult> = withContext(Dispatchers.Default) {
         if (notifications.size <= GROUPING_THRESHOLD) {
             return@withContext notifications.map { 
                 BootConsolidationResult(

@@ -14,7 +14,6 @@ import androidx.room.TypeConverters
 import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
 
-@Suppress("MaxLineLength") // Entities list is exhaustive; cannot be split across annotation arrays.
 @Database(
     entities = [
         NotificationEntity::class,
@@ -29,6 +28,11 @@ import androidx.sqlite.db.SupportSQLiteDatabase
 @TypeConverters(Converters::class)
 abstract class AppDatabase : RoomDatabase() {
     abstract fun notificationDao(): NotificationDao
+
+    abstract fun notificationGroupDao(): NotificationGroupDao
+
+    abstract fun notificationGroupDetailDao(): NotificationGroupDetailDao
+    abstract fun notificationQueryDao(): NotificationQueryDao
     abstract fun appDao(): AppDao
     abstract fun backupDao(): BackupDao
 
@@ -36,6 +40,26 @@ abstract class AppDatabase : RoomDatabase() {
         const val DATABASE_VERSION = 19
         const val DE_DATABASE_NAME = "notimind_de.db"
         const val CE_DATABASE_NAME = "notimind_lite_database"
+
+        private const val DB_VERSION_1 = 1
+        private const val DB_VERSION_2 = 2
+        private const val DB_VERSION_3 = 3
+        private const val DB_VERSION_4 = 4
+        private const val DB_VERSION_5 = 5
+        private const val DB_VERSION_6 = 6
+        private const val DB_VERSION_7 = 7
+        private const val DB_VERSION_8 = 8
+        private const val DB_VERSION_9 = 9
+        private const val DB_VERSION_10 = 10
+        private const val DB_VERSION_11 = 11
+        private const val DB_VERSION_12 = 12
+        private const val DB_VERSION_13 = 13
+        private const val DB_VERSION_14 = 14
+        private const val DB_VERSION_15 = 15
+        private const val DB_VERSION_16 = 16
+        private const val DB_VERSION_17 = 17
+        private const val DB_VERSION_18 = 18
+        private const val DB_VERSION_19 = 19
 
         // SQLite PRAGMA tuning values applied on first DB open (idempotent, advisory only).
         // Centralised as constants so detekt MagicNumber rule is satisfied and the values
@@ -58,34 +82,34 @@ abstract class AppDatabase : RoomDatabase() {
         @Volatile
         private var ceProfileId: String? = null
 
-        val MIGRATION_1_2 = object : Migration(1, 2) {
+        val MIGRATION_1_2 = object : Migration(DB_VERSION_1, DB_VERSION_2) {
             override fun migrate(db: SupportSQLiteDatabase) {
                 db.execSQL("CREATE UNIQUE INDEX IF NOT EXISTS `index_notifications_key` ON `notifications` (`key`)")
             }
         }
 
-        val MIGRATION_2_3 = object : Migration(2, 3) {
+        val MIGRATION_2_3 = object : Migration(DB_VERSION_2, DB_VERSION_3) {
             override fun migrate(db: SupportSQLiteDatabase) {
                 // Ensure key unique index exists
                 db.execSQL("CREATE UNIQUE INDEX IF NOT EXISTS `index_notifications_key` ON `notifications` (`key`)")
             }
         }
 
-        val MIGRATION_3_4 = object : Migration(3, 4) {
+        val MIGRATION_3_4 = object : Migration(DB_VERSION_3, DB_VERSION_4) {
             override fun migrate(db: SupportSQLiteDatabase) {
                 db.execSQL("ALTER TABLE `notifications` ADD COLUMN `category` TEXT")
                 db.execSQL("ALTER TABLE `notifications` ADD COLUMN `channelId` TEXT")
             }
         }
 
-        val MIGRATION_4_5 = object : Migration(4, 5) {
+        val MIGRATION_4_5 = object : Migration(DB_VERSION_4, DB_VERSION_5) {
             override fun migrate(db: SupportSQLiteDatabase) {
                 db.execSQL("ALTER TABLE `notifications` ADD COLUMN `subText` TEXT")
                 db.execSQL("ALTER TABLE `notifications` ADD COLUMN `bigText` TEXT")
             }
         }
 
-        val MIGRATION_5_6 = object : Migration(5, 6) {
+        val MIGRATION_5_6 = object : Migration(DB_VERSION_5, DB_VERSION_6) {
             override fun migrate(db: SupportSQLiteDatabase) {
                 db.execSQL("ALTER TABLE `notifications` ADD COLUMN `groupKey` TEXT")
                 db.execSQL("ALTER TABLE `notifications` ADD COLUMN `isOngoing` INTEGER NOT NULL DEFAULT 0")
@@ -94,7 +118,7 @@ abstract class AppDatabase : RoomDatabase() {
             }
         }
 
-        val MIGRATION_6_7 = object : Migration(6, 7) {
+        val MIGRATION_6_7 = object : Migration(DB_VERSION_6, DB_VERSION_7) {
             override fun migrate(db: SupportSQLiteDatabase) {
                 db.execSQL("ALTER TABLE `notifications` ADD COLUMN `dismissReason` INTEGER")
                 db.execSQL("ALTER TABLE `notifications` ADD COLUMN `dismissTime` INTEGER")
@@ -104,13 +128,13 @@ abstract class AppDatabase : RoomDatabase() {
             }
         }
 
-        val MIGRATION_7_8 = object : Migration(7, 8) {
+        val MIGRATION_7_8 = object : Migration(DB_VERSION_7, DB_VERSION_8) {
             override fun migrate(db: SupportSQLiteDatabase) {
                 db.execSQL("CREATE INDEX IF NOT EXISTS `index_notifications_postTime` ON `notifications` (`postTime`)")
             }
         }
 
-        val MIGRATION_8_9 = object : Migration(8, 9) {
+        val MIGRATION_8_9 = object : Migration(DB_VERSION_8, DB_VERSION_9) {
             override fun migrate(db: SupportSQLiteDatabase) {
                 // Add new columns with safe default values to preserve existing records
                 db.execSQL("ALTER TABLE `notifications` ADD COLUMN `lastUpdatedTime` INTEGER NOT NULL DEFAULT 0")
@@ -121,15 +145,27 @@ abstract class AppDatabase : RoomDatabase() {
                 db.execSQL("ALTER TABLE `notifications` ADD COLUMN `smallIconRes` INTEGER NOT NULL DEFAULT 0")
 
                 // Add performance composite indices
-                db.execSQL("CREATE INDEX IF NOT EXISTS `index_notifications_isDismissed_postTime` ON `notifications` (`isDismissed`, `postTime`)")
-                db.execSQL("CREATE INDEX IF NOT EXISTS `index_notifications_isDismissed_dismissTime` ON `notifications` (`isDismissed`, `dismissTime`)")
-                db.execSQL("CREATE INDEX IF NOT EXISTS `index_notifications_packageName_isDismissed` ON `notifications` (`packageName`, `isDismissed`)")
-                db.execSQL("CREATE INDEX IF NOT EXISTS `index_notifications_isPinned_postTime` ON `notifications` (`isPinned`, `postTime`)")
+                db.execSQL("""
+                    CREATE INDEX IF NOT EXISTS `index_notifications_isDismissed_postTime`
+                    ON `notifications` (`isDismissed`, `postTime`)
+                """.trimIndent())
+                db.execSQL("""
+                    CREATE INDEX IF NOT EXISTS `index_notifications_isDismissed_dismissTime`
+                    ON `notifications` (`isDismissed`, `dismissTime`)
+                """.trimIndent())
+                db.execSQL("""
+                    CREATE INDEX IF NOT EXISTS `index_notifications_packageName_isDismissed`
+                    ON `notifications` (`packageName`, `isDismissed`)
+                """.trimIndent())
+                db.execSQL("""
+                    CREATE INDEX IF NOT EXISTS `index_notifications_isPinned_postTime`
+                    ON `notifications` (`isPinned`, `postTime`)
+                """.trimIndent())
                 db.execSQL("CREATE INDEX IF NOT EXISTS `index_notifications_isRead` ON `notifications` (`isRead`)")
             }
         }
 
-        val MIGRATION_9_10 = object : Migration(9, 10) {
+        val MIGRATION_9_10 = object : Migration(DB_VERSION_9, DB_VERSION_10) {
             override fun migrate(db: SupportSQLiteDatabase) {
                 // 1. Create normalized apps table
                 db.execSQL("""
@@ -153,27 +189,30 @@ abstract class AppDatabase : RoomDatabase() {
             }
         }
 
-        val MIGRATION_10_11 = object : Migration(10, 11) {
+        val MIGRATION_10_11 = object : Migration(DB_VERSION_10, DB_VERSION_11) {
             override fun migrate(db: SupportSQLiteDatabase) {
-                db.execSQL("CREATE INDEX IF NOT EXISTS `index_notifications_packageName` ON `notifications` (`packageName`)")
+                db.execSQL("""
+                    CREATE INDEX IF NOT EXISTS `index_notifications_packageName`
+                    ON `notifications` (`packageName`)
+                """.trimIndent())
             }
         }
 
-        val MIGRATION_11_12 = object : Migration(11, 12) {
+        val MIGRATION_11_12 = object : Migration(DB_VERSION_11, DB_VERSION_12) {
             override fun migrate(db: SupportSQLiteDatabase) {
                 db.execSQL("ALTER TABLE `apps` ADD COLUMN `appIconUri` TEXT")
                 db.execSQL("ALTER TABLE `notifications` ADD COLUMN `appIconUri` TEXT")
             }
         }
 
-        val MIGRATION_12_13 = object : Migration(12, 13) {
+        val MIGRATION_12_13 = object : Migration(DB_VERSION_12, DB_VERSION_13) {
             override fun migrate(db: SupportSQLiteDatabase) {
                 db.execSQL("ALTER TABLE `apps` ADD COLUMN `statusBarIconRes` INTEGER NOT NULL DEFAULT 0")
                 db.execSQL("ALTER TABLE `apps` ADD COLUMN `statusBarIconPackage` TEXT")
             }
         }
 
-        val MIGRATION_13_14 = object : Migration(13, 14) {
+        val MIGRATION_13_14 = object : Migration(DB_VERSION_13, DB_VERSION_14) {
             // NOTE [F-A, 2026-09-02 audit]: This migration manually creates the
             // `notifications_fts` contentless FTS4 table with `content=`notifications`'.
             // NotificationFtsEntity is also annotated `@Fts4(contentEntity = NotificationEntity::class)`
@@ -198,7 +237,7 @@ abstract class AppDatabase : RoomDatabase() {
             }
         }
 
-        val MIGRATION_14_15 = object : Migration(14, 15) {
+        val MIGRATION_14_15 = object : Migration(DB_VERSION_14, DB_VERSION_15) {
             override fun migrate(db: SupportSQLiteDatabase) {
                 db.execSQL("ALTER TABLE `notifications` ADD COLUMN `syncStatus` TEXT NOT NULL DEFAULT 'PENDING_UPLOAD'")
                 db.execSQL("ALTER TABLE `notifications` ADD COLUMN `lastSyncedAt` INTEGER NOT NULL DEFAULT 0")
@@ -226,7 +265,7 @@ abstract class AppDatabase : RoomDatabase() {
             }
         }
 
-        val MIGRATION_15_16 = object : Migration(15, 16) {
+        val MIGRATION_15_16 = object : Migration(DB_VERSION_15, DB_VERSION_16) {
             override fun migrate(db: SupportSQLiteDatabase) {
                 db.execSQL("ALTER TABLE `backup_records` ADD COLUMN `actionType` TEXT NOT NULL DEFAULT 'UNKNOWN'")
                 db.execSQL("ALTER TABLE `backup_records` ADD COLUMN `logMessage` TEXT")
@@ -234,7 +273,7 @@ abstract class AppDatabase : RoomDatabase() {
             }
         }
 
-        val MIGRATION_16_17 = object : Migration(16, 17) {
+        val MIGRATION_16_17 = object : Migration(DB_VERSION_16, DB_VERSION_17) {
             override fun migrate(db: SupportSQLiteDatabase) {
                 db.execSQL("ALTER TABLE `notifications` ADD COLUMN `embedding` BLOB")
             }
@@ -242,7 +281,7 @@ abstract class AppDatabase : RoomDatabase() {
 
         @Suppress("MaxLineLength", "MagicNumber") // CREATE INDEX DDL strings; cannot be safely
         // split. Migration version numbers are part of the Room schema contract.
-        val MIGRATION_17_18 = object : Migration(17, 18) {
+        val MIGRATION_17_18 = object : Migration(DB_VERSION_17, DB_VERSION_18) {
             override fun migrate(db: SupportSQLiteDatabase) {
                 db.execSQL("DROP INDEX IF EXISTS `index_notifications_packageName_isDismissed`")
                 db.execSQL("DROP INDEX IF EXISTS `index_notifications_isRead`")
@@ -270,7 +309,7 @@ abstract class AppDatabase : RoomDatabase() {
         }
 
         @Suppress("MaxLineLength", "MagicNumber", "LongMethod")
-        val MIGRATION_18_19 = object : Migration(18, 19) {
+        val MIGRATION_18_19 = object : Migration(DB_VERSION_18, DB_VERSION_19) {
             override fun migrate(db: SupportSQLiteDatabase) {
                 // 1. Ensure all notifications have non-null groupKey
                 db.execSQL("UPDATE `notifications` SET `groupKey` = `packageName` WHERE `groupKey` IS NULL OR `groupKey` = ''")
@@ -435,9 +474,18 @@ abstract class AppDatabase : RoomDatabase() {
             return deInstance ?: synchronized(this) {
                 deInstance ?: run {
                     val appContext = context.applicationContext
-                    val deContext = if (appContext.isDeviceProtectedStorage) appContext else appContext.createDeviceProtectedStorageContext()
+                    val deContext = if (appContext.isDeviceProtectedStorage) {
+                        appContext
+                    } else {
+                        appContext.createDeviceProtectedStorageContext()
+                    }
                     Room.databaseBuilder(deContext, AppDatabase::class.java, DE_DATABASE_NAME)
-                        .apply { EncryptedDatabaseFactory.openHelperFactory(deContext, DE_DATABASE_NAME)?.let(::openHelperFactory) }
+                        .apply {
+                            EncryptedDatabaseFactory.openHelperFactory(
+                                deContext,
+                                DE_DATABASE_NAME
+                            )?.let(::openHelperFactory)
+                        }
                         .addCallback(DB_CALLBACK)
                         .setJournalMode(JournalMode.WRITE_AHEAD_LOGGING)
                         .build().also { deInstance = it }
@@ -464,10 +512,15 @@ abstract class AppDatabase : RoomDatabase() {
                     val databaseName = databaseName(CE_DATABASE_NAME, profileId)
                     val preferences = PreferencesRepository(appContext)
                     val encryptionRequested =
-                        preferences.dbEncrypted.value && preferences.dbEncryptionMode.value != DbEncryptionMode.NONE
+                        preferences.securityManager.dbEncrypted.value &&
+                            preferences.securityManager.dbEncryptionMode.value != DbEncryptionMode.NONE
                     val legacyPlaintextPending = MigrationRunner(appContext).preflight(databaseName).plaintextExists
                     val consent = EncryptionMigrationConsent.get(appContext)
-                    val migrationState = if (encryptionRequested && legacyPlaintextPending && consent == EncryptionMigrationConsent.Decision.ACCEPTED) {
+                    val migrationState = if (
+                        encryptionRequested &&
+                        legacyPlaintextPending &&
+                        consent == EncryptionMigrationConsent.Decision.ACCEPTED
+                    ) {
                         MigrationRunner(appContext).migrateLegacyDatabase(databaseName)
                     } else {
                         MigrationState.NOT_REQUIRED
@@ -478,25 +531,7 @@ abstract class AppDatabase : RoomDatabase() {
                     }
                     val useEncryption = encryptionRequested &&
                         (!legacyPlaintextPending || consent == EncryptionMigrationConsent.Decision.ACCEPTED)
-                    val instance = Room.databaseBuilder(
-                        appContext,
-                        AppDatabase::class.java,
-                        databaseName
-                    )
-                    .apply {
-                        if (useEncryption) {
-                            EncryptedDatabaseFactory.openHelperFactory(appContext, databaseName)?.let(::openHelperFactory)
-                        }
-                    }
-                    .addMigrations(
-                        MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7,
-                        MIGRATION_7_8, MIGRATION_8_9, MIGRATION_9_10,
-                        MIGRATION_10_11, MIGRATION_11_12, MIGRATION_12_13, MIGRATION_13_14, MIGRATION_14_15,
-                        MIGRATION_15_16, MIGRATION_16_17, MIGRATION_17_18, MIGRATION_18_19
-                    )
-                    .addCallback(DB_CALLBACK)
-                    .setJournalMode(JournalMode.WRITE_AHEAD_LOGGING)
-                    .build()
+                    val instance = buildCeInstance(appContext, profileId)
                     ceInstance = instance
                     ceProfileId = profileId
                     INSTANCE = instance
@@ -504,6 +539,57 @@ abstract class AppDatabase : RoomDatabase() {
                 }
             }
         }
+
+    /**
+     * Extracted CE instance builder to satisfy detekt LongMethod rule on getCeInstance.
+     */
+    private fun buildCeInstance(appContext: Context, profileId: String): AppDatabase {
+        val databaseName = databaseName(CE_DATABASE_NAME, profileId)
+        val preferences = PreferencesRepository(appContext)
+        val encryptionRequested =
+            preferences.securityManager.dbEncrypted.value &&
+                preferences.securityManager.dbEncryptionMode.value != DbEncryptionMode.NONE
+        val legacyPlaintextPending = MigrationRunner(appContext).preflight(databaseName).plaintextExists
+        val consent = EncryptionMigrationConsent.get(appContext)
+        val migrationState = if (
+            encryptionRequested &&
+            legacyPlaintextPending &&
+            consent == EncryptionMigrationConsent.Decision.ACCEPTED
+        ) {
+            MigrationRunner(appContext).migrateLegacyDatabase(databaseName)
+        } else {
+            MigrationState.NOT_REQUIRED
+        }
+        when (migrationState) {
+            MigrationState.NOT_REQUIRED, MigrationState.COMPLETE -> Unit
+            else -> error("Legacy database migration did not complete safely")
+        }
+        val useEncryption = encryptionRequested &&
+            (!legacyPlaintextPending || consent == EncryptionMigrationConsent.Decision.ACCEPTED)
+
+        return Room.databaseBuilder(
+            appContext,
+            AppDatabase::class.java,
+            databaseName
+        )
+            .apply {
+                if (useEncryption) {
+                    EncryptedDatabaseFactory.openHelperFactory(
+                        appContext,
+                        databaseName
+                    )?.let(::openHelperFactory)
+                }
+            }
+            .addMigrations(
+                MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7,
+                MIGRATION_7_8, MIGRATION_8_9, MIGRATION_9_10,
+                MIGRATION_10_11, MIGRATION_11_12, MIGRATION_12_13, MIGRATION_13_14, MIGRATION_14_15,
+                MIGRATION_15_16, MIGRATION_16_17, MIGRATION_17_18, MIGRATION_18_19
+            )
+            .addCallback(DB_CALLBACK)
+            .setJournalMode(JournalMode.WRITE_AHEAD_LOGGING)
+            .build()
+    }
 
         private fun databaseName(base: String, profileId: String): String =
             if (profileId == PreferencesRepository.DEFAULT_PROFILE_ID) base else "${base}_$profileId"

@@ -2,11 +2,13 @@ package com.jeffers.notimindlite.data.sync
 
 import android.util.Log
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.FirebaseFirestoreException
 import com.jeffers.notimindlite.data.local.AppDatabase
 import com.jeffers.notimindlite.data.local.NotificationEntity
 import com.jeffers.notimindlite.data.local.SyncStatus
 import com.jeffers.notimindlite.util.SyncEncryptionHelper
 import kotlinx.coroutines.tasks.await
+import java.security.GeneralSecurityException
 import javax.crypto.SecretKey
 
 /**
@@ -18,7 +20,10 @@ class FirestoreSyncRepository(
     private val firestore: FirebaseFirestore = FirebaseFirestore.getInstance(),
     private val profileId: String = "default"
 ) {
-    private val TAG = "FirestoreSyncRepo"
+    private companion object {
+        const val TAG = "FirestoreSyncRepo"
+        const val FIRESTORE_BATCH_LIMIT = 500
+    }
 
     /**
      * Synchronizes local notifications with the cloud.
@@ -28,81 +33,101 @@ class FirestoreSyncRepository(
     // Firestore limits batch writes to 500 operations per commit. SCREAMING_SNAKE_CASE is forbidden
     // for class members by detekt's VariableNaming rule; this is a class member, so camelCase.
     private val firestoreBatchSize: Int = FIRESTORE_BATCH_LIMIT
-    private companion object {
-        const val FIRESTORE_BATCH_LIMIT = 500
-    }
+
 
     @Suppress(
-        "NestedBlockDepth", "TooGenericExceptionCaught"
+        "NestedBlockDepth"
     ) // sync() is a single-pass pipeline (upload → fetch → merge → return). try/catch at the top
     // intentionally wraps all 3 phases; nested loops (chunked batch, per-notification, per-field)
     // are required to preserve Firestore batch atomicity. Phase extraction is tracked as future work.
     suspend fun sync(userId: String, secretKey: SecretKey): Result<Int> {
         return try {
             val dao = db.notificationDao()
-            val userCol = if (profileId == "default") {
-                firestore.collection("users").document(userId).collection("notifications")
-            } else {
-                firestore.collection("users").document(userId)
-                    .collection("profiles").document(profileId).collection("notifications")
-            }
-
-            // 1. Upload unsynced local changes in batches
-            val unsynced = dao.getUnsyncedNotifications()
-                .distinctBy { it.key }
-            var syncCount = 0
-
-            if (unsynced.isNotEmpty()) {
-                val now = System.currentTimeMillis()
-                for (chunk in unsynced.chunked(firestoreBatchSize)) {
-                    val batch = firestore.batch()
-                    val syncedKeys = chunk.map { it.key }
-                    chunk.forEach { notification ->
-                        val docRef = userCol.document(notification.key)
-                        if (notification.syncStatus == SyncStatus.PENDING_DELETE) {
-                            return@forEach
-                        }
-                        batch.set(docRef, buildEncryptedNotificationMap(notification, secretKey))
-                    }
-                    batch.commit().await()
-                    dao.updateSyncStatusBatch(syncedKeys, SyncStatus.SYNCED, now)
-                    syncCount += chunk.size
-                }
-            }
-
-            // 2. Fetch remote documents and merge down
-            val snapshot = userCol.get().await()
-            val entitiesToInsert = mutableListOf<NotificationEntity>()
-            for (doc in snapshot.documents) {
-                val key = doc.getString("key") ?: doc.id
-                val existing = dao.getNotificationByKey(key)
-                val remotePostTime = doc.getLong("postTime") ?: System.currentTimeMillis()
-                val remoteLastUpdatedTime = doc.getLong("lastUpdatedTime") ?: remotePostTime
-
-                if (existing == null || remoteLastUpdatedTime > existing.lastUpdatedTime) {
-                    // Decrypt PII fields before inserting into local DB
-                    val entity = buildNotificationEntityFromRemote(
-                        doc = doc,
-                        key = key,
-                        existingId = existing?.id,
-                        remotePostTime = remotePostTime,
-                        remoteLastUpdatedTime = remoteLastUpdatedTime,
-                        secretKey = secretKey
-                    )
-                    entitiesToInsert.add(entity)
-                }
-            }
-
-            if (entitiesToInsert.isNotEmpty()) {
-                dao.insertNotifications(entitiesToInsert)
-                syncCount += entitiesToInsert.size
-            }
-
-            Result.success(syncCount)
-        } catch (e: Exception) {
-            Log.e(TAG, "Sync failed: ${e.message}", e)
+            val userCol = notificationCollection(userId)
+            val uploaded = uploadPendingNotifications(dao, userCol, secretKey)
+            val downloaded = fetchRemoteNotifications(dao, userCol, secretKey)
+            Result.success(uploaded + downloaded)
+        } catch (e: FirebaseFirestoreException) {
+            logError("Firestore sync failed: ${e.message}", e)
+            Result.failure(e)
+        } catch (e: GeneralSecurityException) {
+            logError("Encrypted sync failed", e)
+            Result.failure(e)
+        } catch (e: IllegalArgumentException) {
+            logError("Invalid sync data", e)
+            Result.failure(e)
+        } catch (e: android.database.SQLException) {
+            logError("Database sync failed", e)
+            Result.failure(e)
+        } catch (e: IllegalStateException) {
+            logError("Invalid sync state", e)
             Result.failure(e)
         }
+    }
+
+    private fun logError(message: String, error: Throwable) {
+        runCatching { Log.e(TAG, message, error) }
+    }
+
+    private fun notificationCollection(userId: String) =
+        if (profileId == "default") {
+            firestore.collection("users").document(userId).collection("notifications")
+        } else {
+            firestore.collection("users").document(userId)
+                .collection("profiles").document(profileId).collection("notifications")
+        }
+
+    private suspend fun uploadPendingNotifications(
+        dao: com.jeffers.notimindlite.data.local.NotificationDao,
+        userCol: com.google.firebase.firestore.CollectionReference,
+        secretKey: SecretKey
+    ): Int {
+        val unsynced = dao.getUnsyncedNotifications().distinctBy { it.key }
+        val now = System.currentTimeMillis()
+        var syncCount = 0
+        for (chunk in unsynced.chunked(firestoreBatchSize)) {
+            val batch = firestore.batch()
+            val syncedKeys = chunk.map { it.key }
+            chunk.forEach { notification ->
+                if (notification.syncStatus != SyncStatus.PENDING_DELETE) {
+                    val docRef = userCol.document(notification.key)
+                    batch.set(docRef, buildEncryptedNotificationMap(notification, secretKey))
+                }
+            }
+            batch.commit().await()
+            dao.updateSyncStatusBatch(syncedKeys, SyncStatus.SYNCED, now)
+            syncCount += chunk.size
+        }
+        return syncCount
+    }
+
+    private suspend fun fetchRemoteNotifications(
+        dao: com.jeffers.notimindlite.data.local.NotificationDao,
+        userCol: com.google.firebase.firestore.CollectionReference,
+        secretKey: SecretKey
+    ): Int {
+        val entitiesToInsert = userCol.get().await().documents.mapNotNull { doc ->
+            val key = doc.getString("key") ?: doc.id
+            val existing = dao.getNotificationByKey(key)
+            val remotePostTime = doc.getLong("postTime") ?: System.currentTimeMillis()
+            val remoteLastUpdatedTime = doc.getLong("lastUpdatedTime") ?: remotePostTime
+            if (existing == null || remoteLastUpdatedTime > existing.lastUpdatedTime) {
+                buildNotificationEntityFromRemote(
+                    doc = doc,
+                    key = key,
+                    existingId = existing?.id,
+                    remotePostTime = remotePostTime,
+                    remoteLastUpdatedTime = remoteLastUpdatedTime,
+                    secretKey = secretKey
+                )
+            } else {
+                null
+            }
+        }
+        if (entitiesToInsert.isNotEmpty()) {
+            dao.insertNotifications(entitiesToInsert)
+        }
+        return entitiesToInsert.size
     }
 
     /**

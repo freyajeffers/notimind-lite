@@ -31,40 +31,12 @@ object DatabaseExporter {
      * When [passphrase] is supplied, the backup is wrapped so it can be restored on
      * other devices or after app reinstall.
      */
-    @Suppress("ReturnCount")
     suspend fun performEncryptedBackup(
         context: Context,
         secretKey: SecretKey,
-        passphrase: CharArray? = null,
+        passphrase: CharArray? = null
     ): Result<File> {
-        return try {
-            val preferences = PreferencesRepository(context.applicationContext)
-            if (preferences.requirePassphrase.value && (passphrase == null || passphrase.isEmpty())) {
-                return Result.failure(IllegalArgumentException("A passphrase is required for encrypted exports"))
-            }
-            if (!NetworkUtils.isInternetAvailable(context)) {
-                return Result.failure(IllegalStateException("Active internet connection is required to create a backup"))
-            }
-
-            val dbFile = context.getDatabasePath("notifications.db")
-            if (!dbFile.exists()) return Result.failure(Exception("Database file not found"))
-
-            val backupFile = File(context.cacheDir, "notimind_backup_${System.currentTimeMillis()}.enc")
-
-            val success = EncryptedBackupManager.createAuthorizedBackup(
-                context = context,
-                sourceDbFile = dbFile,
-                destinationFile = backupFile,
-                secretKey = secretKey,
-                passphrase = passphrase,
-            )
-
-            if (success) Result.success(backupFile)
-            else Result.failure(Exception("Backup encryption or notary authorization failed"))
-        } catch (e: Exception) {
-            Log.e(TAG, "Backup process failed", e)
-            Result.failure(e)
-        }
+        return ExportFlow.performEncryptedBackup(context, secretKey, passphrase)
     }
 
     /**
@@ -103,15 +75,24 @@ object DatabaseExporter {
             )
             if (success) Result.success(Unit)
             else Result.failure(IllegalStateException("Backup restoration or authorization failed"))
-        } catch (e: Exception) {
-            Log.e(TAG, "Restore process failed", e)
+        } catch (e: java.io.IOException) {
+            Log.e(TAG, "Restore process failed: IO error", e)
+            Result.failure(e)
+        } catch (e: javax.crypto.AEADBadTagException) {
+            Log.e(TAG, "Restore process failed: authentication error (wrong passphrase or corrupted file)", e)
+            Result.failure(e)
+        } catch (e: java.security.GeneralSecurityException) {
+            Log.e(TAG, "Restore process failed: crypto error", e)
+            Result.failure(e)
+        } catch (e: SecurityException) {
+            Log.e(TAG, "Restore process failed: security exception", e)
             Result.failure(e)
         }
     }
 
     fun exportToJsonString(notifications: List<NotificationEntity>, context: Context? = null): String {
         val jsonArray = JSONArray()
-        for (notif in notifications.map { applyPrivacy(it, context) }) {
+        for (notif in notifications.map { DatabaseExportHelper.applyPrivacy(it, context) }) {
             val jsonObject = JSONObject().apply {
                 put("id", notif.id)
                 put("key", notif.key)
@@ -125,7 +106,10 @@ object DatabaseExporter {
                 put("channelId", notif.channelId ?: "")
                 put("priority", notif.priority)
                 put("postTime", notif.postTime)
-                put("postTimeFormatted", SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).format(Date(notif.postTime)))
+                put(
+                    "postTimeFormatted",
+                    SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).format(Date(notif.postTime))
+                )
                 put("isDismissed", notif.isDismissed)
                 put("dismissTime", notif.dismissTime ?: 0L)
                 put("dismissReason", notif.dismissReason ?: -1)
@@ -141,7 +125,7 @@ object DatabaseExporter {
 
     fun exportToNdjsonString(notifications: List<NotificationEntity>, context: Context? = null): String {
         val sb = StringBuilder()
-        for (notif in notifications.map { applyPrivacy(it, context) }) {
+        for (notif in notifications.map { DatabaseExportHelper.applyPrivacy(it, context) }) {
             val jsonObject = JSONObject().apply {
                 put("id", notif.id)
                 put("key", notif.key)
@@ -155,7 +139,10 @@ object DatabaseExporter {
                 put("channelId", notif.channelId ?: "")
                 put("priority", notif.priority)
                 put("postTime", notif.postTime)
-                put("postTimeFormatted", SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).format(Date(notif.postTime)))
+                put(
+                    "postTimeFormatted",
+                    SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).format(Date(notif.postTime))
+                )
                 put("isDismissed", notif.isDismissed)
                 put("dismissTime", notif.dismissTime ?: 0L)
                 put("dismissReason", notif.dismissReason ?: -1)
@@ -176,7 +163,7 @@ object DatabaseExporter {
                 writer.setIndent("  ")
                 writer.beginArray()
                 val dateFormat = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault())
-                for (notif in notifications.map { applyPrivacy(it, context) }) {
+                for (notif in notifications.map { DatabaseExportHelper.applyPrivacy(it, context) }) {
                     writer.beginObject()
                     writer.name("id").value(notif.id)
                     writer.name("key").value(notif.key)
@@ -209,64 +196,22 @@ object DatabaseExporter {
         val sb = StringBuilder()
         sb.append("ID,Package,AppName,Title,Content,PostTime,IsDismissed,DismissReason,IsPinned\n")
         val dateFormat = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault())
-        for (n in notifications.map { applyPrivacy(it, context) }) {
-            val escapedAppName = sanitizeCsvField(n.appName)
-            val escapedTitle = sanitizeCsvField(n.title)
-            val escapedContent = sanitizeCsvField(n.content)
+        for (n in notifications.map { DatabaseExportHelper.applyPrivacy(it, context) }) {
+            val escapedAppName = DatabaseExportHelper.sanitizeCsvField(n.appName)
+            val escapedTitle = DatabaseExportHelper.sanitizeCsvField(n.title)
+            val escapedContent = DatabaseExportHelper.sanitizeCsvField(n.content)
             val postTimeStr = dateFormat.format(Date(n.postTime))
-            sb.append("${n.id},${n.packageName},$escapedAppName,$escapedTitle,$escapedContent,$postTimeStr,${n.isDismissed},${n.dismissReason ?: ""},${n.isPinned}\n")
+            sb.append(
+                "${n.id},${n.packageName},$escapedAppName,$escapedTitle,$escapedContent," +
+                    "$postTimeStr,${n.isDismissed},${n.dismissReason ?: ""},${n.isPinned}\n"
+            )
         }
         return sb.toString()
     }
 
-    fun sanitizeCsvField(value: String?): String {
-        if (value == null) return "\"\""
-        var sanitized = value.replace("\"", "\"\"")
-        val trimmedSpace = sanitized.trimStart(' ')
-        if (trimmedSpace.startsWith("=") || trimmedSpace.startsWith("+") ||
-            trimmedSpace.startsWith("-") || trimmedSpace.startsWith("@") ||
-            trimmedSpace.startsWith("\t") || trimmedSpace.startsWith("\r")
-        ) {
-            sanitized = "'$sanitized"
-        }
-        return "\"$sanitized\""
-    }
 
-    private fun applyPrivacy(notification: NotificationEntity, context: Context?): NotificationEntity {
-        val preferences = context?.let { PreferencesRepository(it.applicationContext) } ?: return notification
-        fun redact(value: String): String = PiiRedactionEngine.redact(value) ?: "[REDACTED]"
-        val title = if (preferences.exportAnonymize.value || preferences.anonymizeTitles.value) "[REDACTED-TITLE]" else notification.title
-        return notification.copy(
-            title = if (preferences.redactPii.value) redact(title) else title,
-            content = if (preferences.redactPii.value) redact(notification.content) else notification.content,
-            subText = notification.subText?.let { if (preferences.redactPii.value) redact(it) else it },
-            bigText = notification.bigText?.let { if (preferences.redactPii.value) redact(it) else it }
-        )
-    }
 
-    fun getExportFileUri(context: Context, file: File): Uri {
-        return FileProvider.getUriForFile(
-            context,
-            "${context.packageName}.fileprovider",
-            file
-        )
-    }
 
-    fun cleanupExportFiles(context: Context, maxAgeMillis: Long = 3600_000L) {
-        try {
-            val cacheDir = File(context.cacheDir, "exports")
-            if (cacheDir.exists()) {
-                val now = System.currentTimeMillis()
-                cacheDir.listFiles()?.forEach { file ->
-                    if (now - file.lastModified() > maxAgeMillis) {
-                        file.delete()
-                    }
-                }
-            }
-        } catch (e: Exception) {
-            Log.e(TAG, "Failed to clean up temporary export files", e)
-        }
-    }
 
     fun shareExportFile(
         context: Context,
@@ -277,71 +222,86 @@ object DatabaseExporter {
     ) {
         try {
             val preferences = PreferencesRepository(context.applicationContext)
-            val requestedFormat = if (isJson) "json" else "csv"
-            val allowedFormats = preferences.exportFormats.value.split(',').map(String::trim).toSet()
-            check(requestedFormat in allowedFormats) { "Export format '$requestedFormat' is disabled in Settings" }
-            check(!preferences.exportRequiresBiometric.value || biometricAuthenticated) {
-                "Biometric authentication is required before exporting"
-            }
-            if (preferences.requirePassphrase.value && (passphrase == null || passphrase.isEmpty())) {
-                throw IllegalArgumentException("A passphrase is required for exports")
-            }
-            cleanupExportFiles(context)
+            validateExportRequest(preferences, isJson, passphrase, biometricAuthenticated)
+            DatabaseExportHelper.cleanupExportFiles(context)
+            val encryptedExports = preferences.securityManager.encryptedExports.value
+            val file = createExportFile(context, notifications, isJson, passphrase, preferences)
+            val shareIntent = buildShareIntent(context, file, isJson, encryptedExports)
+            context.startActivity(shareIntent)
+        } catch (e: IllegalArgumentException) {
+            Log.e(TAG, "Failed to export database: invalid argument", e)
+        } catch (e: SecurityException) {
+            Log.e(TAG, "Failed to export database: security exception", e)
+        } catch (e: java.io.IOException) {
+            Log.e(TAG, "Failed to export database: IO error", e)
+        } catch (e: java.security.GeneralSecurityException) {
+            Log.e(TAG, "Failed to export database: crypto error", e)
+        }
+    }
 
-            val encrypted = preferences.encryptedExports.value
-            val extension = if (encrypted) "enc" else if (isJson) "json" else "csv"
-            val fileName = "notimind_export_${System.currentTimeMillis()}.$extension"
+    private fun validateExportRequest(
+        preferences: PreferencesRepository,
+        isJson: Boolean,
+        passphrase: CharArray?,
+        biometricAuthenticated: Boolean,
+    ) {
+        val requestedFormat = if (isJson) "json" else "csv"
+        val allowedFormats = preferences.exportManager.formats.value.split(',').map(String::trim).toSet()
+        check(requestedFormat in allowedFormats) { "Export format '$requestedFormat' is disabled in Settings" }
+        check(!preferences.securityManager.exportRequiresBiometric.value || biometricAuthenticated) {
+            "Biometric authentication is required before exporting"
+        }
+        check(!preferences.securityManager.requirePassphrase.value || (passphrase != null && passphrase.isNotEmpty())) {
+            "A passphrase is required for exports"
+        }
+    }
 
-            val cacheDir = File(context.cacheDir, "exports")
-            if (!cacheDir.exists()) cacheDir.mkdirs()
-
-            val file = File(cacheDir, fileName)
-            file.setReadable(true, true)
-            file.setWritable(true, true)
-            if (encrypted) {
-                val plain = if (isJson) exportToJsonString(notifications, context) else exportToCsvString(notifications, context)
-                file.writeBytes(encryptExport(plain.toByteArray(Charsets.UTF_8), context, passphrase))
-            } else if (isJson) {
-                exportToJsonFile(file, notifications, context)
-            } else {
-                val fileContent = exportToCsvString(notifications, context)
-                FileWriter(file).use { writer ->
-                    writer.write(fileContent)
+    private fun createExportFile(
+        context: Context,
+        notifications: List<NotificationEntity>,
+        isJson: Boolean,
+        passphrase: CharArray?,
+        preferences: PreferencesRepository,
+    ): File {
+        val encrypted = preferences.securityManager.encryptedExports.value
+        val extension = if (encrypted) "enc" else if (isJson) "json" else "csv"
+        val file = File(context.cacheDir, "exports/notimind_export_${System.currentTimeMillis()}.$extension")
+        file.parentFile?.mkdirs()
+        file.setReadable(true, true)
+        file.setWritable(true, true)
+        when {
+            encrypted -> {
+                val plain = if (isJson) {
+                    exportToJsonString(notifications, context)
+                } else {
+                    exportToCsvString(notifications, context)
                 }
+                file.writeBytes(ExportFlow.encryptExport(plain.toByteArray(Charsets.UTF_8), context, passphrase))
             }
-
-            val uri: Uri = getExportFileUri(context, file)
-
-            val shareIntent = Intent(Intent.ACTION_SEND).apply {
-                type = if (encrypted) "application/octet-stream" else if (isJson) "application/json" else "text/csv"
-                putExtra(Intent.EXTRA_STREAM, uri)
-                addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-            }
-
-            context.startActivity(
-                Intent.createChooser(
-                    shareIntent,
-                    context.getString(R.string.export_notifications_chooser)
-                ).apply {
-                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-            })
-        } catch (e: Exception) {
-            Log.e(TAG, "Failed to export database", e)
+            isJson -> exportToJsonFile(file, notifications, context)
+            else -> FileWriter(file).use { it.write(exportToCsvString(notifications, context)) }
         }
+        return file
     }
 
-    /** AES-GCM envelope; without a passphrase the AES key is backed by Android Keystore. */
-    internal fun encryptExport(payload: ByteArray, context: Context, passphrase: CharArray?): ByteArray {
-        val salt = if (passphrase != null) BackupKeyWrap.generateSalt() else ByteArray(0)
-        val key = if (passphrase != null) {
-            BackupKeyWrap.deriveKek(passphrase, salt)
-        } else {
-            SecretKeySpec(SqlCipherKeyManager.getOrCreatePassphrase(context, "exports"), "AES")
+    private fun buildShareIntent(
+        context: Context,
+        file: File,
+        isJson: Boolean,
+        encrypted: Boolean,
+    ): Intent {
+        val uri = DatabaseExportHelper.getExportFileUri(context, file)
+        val mimeType = if (encrypted) "application/octet-stream" else if (isJson) "application/json" else "text/csv"
+        val shareIntent = Intent(Intent.ACTION_SEND).apply {
+            type = mimeType
+            putExtra(Intent.EXTRA_STREAM, uri)
+            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
         }
-        val cipher = javax.crypto.Cipher.getInstance("AES/GCM/NoPadding")
-        cipher.init(javax.crypto.Cipher.ENCRYPT_MODE, key)
-        return byteArrayOf('N'.code.toByte(), 'M'.code.toByte(), 'E'.code.toByte(), '1'.code.toByte(), salt.size.toByte()) +
-            salt + cipher.iv + cipher.doFinal(payload)
+        return Intent.createChooser(
+            shareIntent,
+            context.getString(R.string.export_notifications_chooser)
+        ).apply { addFlags(Intent.FLAG_ACTIVITY_NEW_TASK) }
     }
+
 }

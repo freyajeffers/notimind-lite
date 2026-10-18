@@ -6,7 +6,15 @@ import android.net.Uri
 import android.provider.Settings
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -58,6 +66,7 @@ import com.jeffers.notimindlite.util.DatabaseExporter
 import com.jeffers.notimindlite.domain.backup.generateBackupKey
 import com.jeffers.notimindlite.util.NetworkUtils
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.File
@@ -65,36 +74,14 @@ import java.io.FileOutputStream
 import javax.crypto.SecretKey
 
 @Composable
-fun SettingsScreen(
+fun settingsScreen(
     authManager: AuthManager,
     preferencesRepository: com.jeffers.notimindlite.data.local.PreferencesRepository
 ) {
     val session by authManager.session.collectAsState()
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
-    var syncMessage by remember { mutableStateOf<String?>(null) }
-
-    // H1: file picker + restore dialog plumbing. The picker runs on the UI thread but
-    // copies the URI to a local cache File on Dispatchers.IO before invoking performRestore.
-    // Snackbar feedback surfaces success/failure without leaving the Settings screen.
-    var selectedBackupUri by remember { mutableStateOf<Uri?>(null) }
-    var showRestoreDialog by remember { mutableStateOf(false) }
-    var showBackupKeyDialog by remember { mutableStateOf(false) }
-    var backupKeyBase64 by remember { mutableStateOf("") }
-    var pendingBackupKey by remember { mutableStateOf<SecretKey?>(null) }
     val snackbarHostState = remember { SnackbarHostState() }
-
-    val restoreSuccessMsg = stringResource(id = R.string.settings_restore_success)
-    val restoreFailureMsg = stringResource(id = R.string.settings_restore_failure)
-
-    val pickBackupLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.OpenDocument()
-    ) { uri: Uri? ->
-        if (uri == null) return@rememberLauncherForActivityResult
-        selectedBackupUri = uri
-        showRestoreDialog = true
-    }
-
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -102,83 +89,12 @@ fun SettingsScreen(
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        Spacer(modifier = Modifier.height(0.dp))
-
-        Card(
-            modifier = Modifier.fillMaxWidth(),
-            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
-        ) {
-            Column(
-                modifier = Modifier.padding(16.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                Text(
-                    text = "Account",
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.SemiBold
-                )
-
-                if (session.isAuthenticated) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(12.dp)
-                    ) {
-                        Icon(Icons.Default.Person, contentDescription = "Profile")
-                        Column {
-                            Text(
-                                text = session.displayName ?: stringResource(id = R.string.settings_default_display_name),
-                                style = MaterialTheme.typography.bodyLarge,
-                                fontWeight = FontWeight.Medium
-                            )
-                            Text(
-                                text = session.email ?: "",
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                        }
-                    }
-
-                    Button(
-                        onClick = {
-                            authManager.signOut()
-                            SyncWorker.cancelPeriodicSync(context)
-                        },
-                        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
-                    ) {
-                        Icon(Icons.AutoMirrored.Filled.Logout, contentDescription = "Sign out")
-                        Spacer(Modifier.width(8.dp))
-                        Text("Sign Out")
-                    }
-                } else {
-                    Text(
-                        text = "Sign in with Google to enable cloud backup & multi-device sync.",
-                        style = MaterialTheme.typography.bodyMedium
-                    )
-
-                    Button(
-                        onClick = {
-                            scope.launch {
-                                authManager.signInWithGoogle()
-                                SyncWorker.schedulePeriodicSync(context)
-                            }
-                        },
-                        enabled = !session.isAuthenticating,
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = MaterialTheme.colorScheme.primaryContainer,
-                            contentColor = MaterialTheme.colorScheme.onPrimaryContainer
-                        )
-                    ) {
-                        Icon(Icons.AutoMirrored.Filled.Login, contentDescription = "Sign in")
-                        Spacer(Modifier.width(8.dp))
-                        Text(if (session.isAuthenticating) "Signing In..." else "Sign in with Google")
-                    }
-
-                    session.error?.let { err ->
-                        Text(text = err, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
-                    }
-                }
-            }
-        }
+        accountSection(
+            session = session,
+            authManager = authManager,
+            scope = scope,
+            context = context
+        )
 
         // Notification Access card moved to top for discoverability
         val prefMgrTop = remember { PreferenceManager(context) }
@@ -193,184 +109,307 @@ fun SettingsScreen(
             lifecycleOwnerTop.lifecycle.addObserver(observer)
             onDispose { lifecycleOwnerTop.lifecycle.removeObserver(observer) }
         }
-        Card(
-            modifier = Modifier.fillMaxWidth(),
-            colors = CardDefaults.cardColors(
-                containerColor = if (listenerGrantedTop)
-                    MaterialTheme.colorScheme.surfaceVariant
-                else
-                    MaterialTheme.colorScheme.errorContainer
-            )
-        ) {
-            Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                Text(text = stringResource(id = R.string.settings_section_listener), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
-                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                    Icon(imageVector = if (listenerGrantedTop) Icons.Default.Notifications else Icons.Default.NotificationsOff, contentDescription = if (listenerGrantedTop) "Notification access enabled" else "Notification access disabled", tint = if (listenerGrantedTop) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error)
-                    Text(text = stringResource(id = if (listenerGrantedTop) R.string.settings_listener_granted_desc else R.string.settings_listener_missing_desc), style = MaterialTheme.typography.bodyMedium, modifier = Modifier.weight(1f))
-                }
-                Button(onClick = { val intent = Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS); intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK); context.startActivity(intent) }, colors = ButtonDefaults.buttonColors(containerColor = if (listenerGrantedTop) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.error, contentColor = if (listenerGrantedTop) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onError)) {
-                    Text(stringResource(id = if (listenerGrantedTop) R.string.settings_listener_open else R.string.settings_listener_grant))
-                }
-            }
-        }
+        notificationAccessCard(context, listenerGrantedTop)
 
-        SettingsSyncSection(preferencesRepository = preferencesRepository)
+        settingsSyncSection(preferencesRepository = preferencesRepository)
 
-        // Boot & Restore card placed near top for quick opt-in/out.
-        Card(modifier = Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)) {
-            Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                Text(text = stringResource(id = R.string.settings_section_restore), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(Icons.Default.Restore, contentDescription = "Restore")
-                    Spacer(Modifier.width(8.dp))
-                    Column(modifier = Modifier.weight(1f)) {
-                        Text(text = stringResource(id = R.string.settings_restore_on_boot_title), style = MaterialTheme.typography.bodyLarge)
-                        Text(text = stringResource(id = R.string.settings_restore_on_boot_desc), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    }
-                    Switch(checked = prefMgrTop.isRestoreOnBootEnabled() && listenerGrantedTop, enabled = listenerGrantedTop && !BuildConfig.DEBUG, onCheckedChange = { prefMgrTop.setRestoreOnBootEnabled(it) })
-                }
-                OutlinedButton(onClick = { pickBackupLauncher.launch(arrayOf("application/octet-stream", "*/*")) }, modifier = Modifier.fillMaxWidth(), colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.primary)) {
-                    Icon(Icons.Default.Restore, contentDescription = "Restore")
-                    Spacer(Modifier.width(8.dp))
-                    Text("Restore Backup Manually")
-                }
-                OutlinedButton(
-                    onClick = {
-                        if (!NetworkUtils.isInternetAvailable(context)) {
-                            syncMessage = "An active internet connection is required to create a backup"
-                        } else {
-                            val secretKey = generateBackupKey(context)
-                            pendingBackupKey = secretKey
-                            backupKeyBase64 = com.jeffers.notimindlite.data.local.BackupKeyCodec.encode(secretKey)
-                            showBackupKeyDialog = true
-                        }
-                    },
-                    enabled = !BuildConfig.DEBUG,
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Icon(Icons.Default.Restore, contentDescription = "Encrypted backup")
-                    Spacer(Modifier.width(8.dp))
-                    Text("Create Encrypted Backup")
-                }
-            }
-        }
+        settingsBackupSection(
+            prefMgr = prefMgrTop,
+            listenerGranted = listenerGrantedTop,
+            snackbarHostState = snackbarHostState
+        )
 
         // Continue with other sections
-        SettingsCaptureSection(preferencesRepository = preferencesRepository)
-        ProfileManagerSection(repository = preferencesRepository)
-        SettingsPreferencesSection(preferencesRepository = preferencesRepository)
-        SettingsPrivacySection(preferencesRepository = preferencesRepository)
-        SettingsAdvancedSection(
+        settingsCaptureSection(preferencesRepository = preferencesRepository)
+        profileManagerSection(repository = preferencesRepository.profileManager)
+        settingsPreferencesSection(preferencesRepository = preferencesRepository)
+        settingsPrivacySection(preferencesRepository = preferencesRepository)
+        settingsAdvancedSection(
             preferencesRepository = preferencesRepository,
             onMigrationCompleted = { (context as? android.app.Activity)?.recreate() }
         )
-        SettingsPreferencesBackupSection()
-
-
-        // F-N usability [2026-09-06]: version footer — gives users a build identifier
-        // they can quote in support tickets. Looked up via PackageManager at composable
-        // scope (not inside try/catch around a composable) so the build info is cached
-        // for recomposition.
-        val versionName = remember {
-            runCatching {
-                context.packageManager.getPackageInfo(context.packageName, 0).versionName ?: "?"
-            }.getOrDefault("?")
-        }
-        val versionCode = remember {
-            runCatching {
-                val info = context.packageManager.getPackageInfo(context.packageName, 0)
-                if (BuildConfig.SUPPORTS_LONG_VERSION_CODE) {
-                    info.longVersionCode.toInt()
-                } else {
-                    @Suppress("DEPRECATION")
-                    info.versionCode
-                }
-            }.getOrDefault(0)
-        }
-        Spacer(modifier = Modifier.height(8.dp))
-        Text(
-            text = stringResource(id = R.string.settings_version_footer, versionName, versionCode),
-            style = MaterialTheme.typography.labelSmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(vertical = 8.dp),
-        )
-
-        // H1: render the restore dialog (if a backup file has been picked). The dialog reads
-        // the passphrase from the user; the snackbar host inside the Column surfaces the
-        // outcome of performRestore() without leaving the Settings screen.
-        val currentUri = selectedBackupUri
-        if (showRestoreDialog && currentUri != null) {
-            val pickedDisplayName = currentUri.lastPathSegment
-                ?: stringResource(id = R.string.settings_restore_picked_default_name)
-            RestoreBackupDialog(
-                fileName = pickedDisplayName,
-                onDismiss = { showRestoreDialog = false },
-                onConfirm = { passphrase ->
-                    showRestoreDialog = false
-                    val uriToRestore = currentUri
-                    scope.launch {
-                        val result = runRestore(
-                            context = context,
-                            uri = uriToRestore,
-                            passphrase = passphrase,
-                        )
-                        val msg = if (result.isSuccess) restoreSuccessMsg else restoreFailureMsg
-                        snackbarHostState.showSnackbar(msg)
-                    }
-                },
-            )
-        }
-
-        if (showBackupKeyDialog && pendingBackupKey != null) {
-            BackupKeyDialog(
-                keyBase64 = backupKeyBase64,
-                onDismiss = {
-                    showBackupKeyDialog = false
-                    pendingBackupKey = null
-                },
-                onConfirm = { passphrase ->
-                    showBackupKeyDialog = false
-                    val secretKey = pendingBackupKey
-                    pendingBackupKey = null
-                    if (secretKey != null) {
-                        scope.launch {
-                            val result = DatabaseExporter.performEncryptedBackup(context, secretKey, passphrase)
-                            syncMessage = if (result.isSuccess) {
-                                "Backup created successfully"
-                            } else {
-                                "Backup failed: ${result.exceptionOrNull()?.localizedMessage}"
-                            }
-                        }
-                    }
-                }
-            )
-        }
+        settingsPreferencesBackupSection()
+        settingsVersionFooter(context)
 
         SnackbarHost(hostState = snackbarHostState)
     }
 }
 
-// H1 helper: copy the user-picked URI into the app cache and invoke performRestore.
-// Runs on Dispatchers.IO; returns Result<Unit> so the UI can branch on success/failure.
-// We use the device's hardware-bound key (generateBackupKey(context)) for same-device restore;
-// the passphrase supplied by the user is forwarded for cross-device/post-uninstall unwrap.
-private suspend fun runRestore(
-    context: Context,
-    uri: Uri,
-    passphrase: CharArray?,
-): Result<Unit> = withContext(Dispatchers.IO) {
-    val cacheFile = File(context.cacheDir, "restore_input_${System.currentTimeMillis()}.enc")
-    try {
-        context.contentResolver.openInputStream(uri)?.use { input ->
-            FileOutputStream(cacheFile).use { output -> input.copyTo(output) }
-        } ?: return@withContext Result.failure(IllegalStateException("Could not open backup URI"))
-        val key = generateBackupKey(context)
-        DatabaseExporter.performRestore(context, cacheFile, key, passphrase)
-    } finally {
-        passphrase?.fill('\u0000')
-        // Best-effort cache cleanup; ignore failures to keep restore flow simple.
-        runCatching { cacheFile.delete() }
+@Composable
+private fun settingsBackupSection(
+    prefMgr: PreferenceManager,
+    listenerGranted: Boolean,
+    snackbarHostState: SnackbarHostState
+) {
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
+    var selectedBackupUri by remember { mutableStateOf<Uri?>(null) }
+    var showRestoreDialog by remember { mutableStateOf(false) }
+    var showBackupKeyDialog by remember { mutableStateOf(false) }
+    var backupKeyBase64 by remember { mutableStateOf("") }
+    var pendingBackupKey by remember { mutableStateOf<SecretKey?>(null) }
+    val pickBackupLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.OpenDocument()
+    ) { uri: Uri? ->
+        if (uri != null) {
+            selectedBackupUri = uri
+            showRestoreDialog = true
+        }
+    }
+    restoreCard(
+        prefMgr = prefMgr,
+        listenerGranted = listenerGranted,
+        onPickBackup = { pickBackupLauncher.launch(arrayOf("application/octet-stream", "*/*")) },
+        onCreateBackup = {
+            if (NetworkUtils.isInternetAvailable(context)) {
+                val secretKey = generateBackupKey(context)
+                pendingBackupKey = secretKey
+                backupKeyBase64 = com.jeffers.notimindlite.data.local.BackupKeyCodec.encode(secretKey)
+                showBackupKeyDialog = true
+            }
+        }
+    )
+    restoreDialogs(
+        config = RestoreDialogConfig(
+            context = context,
+            scope = scope,
+            selectedBackupUri = selectedBackupUri,
+            showRestoreDialog = showRestoreDialog,
+            restoreSuccessMsg = stringResource(R.string.settings_restore_success),
+            restoreFailureMsg = stringResource(R.string.settings_restore_failure),
+            backupKeyBase64 = backupKeyBase64,
+            pendingBackupKey = pendingBackupKey,
+            showBackupKeyDialog = showBackupKeyDialog,
+            onRestoreDismiss = { showRestoreDialog = false },
+            onBackupDismiss = {
+                showBackupKeyDialog = false
+                pendingBackupKey = null
+            },
+            snackbarHostState = snackbarHostState,
+            onSyncMessage = {}
+        )
+    )
+}
+
+@Composable
+private fun settingsVersionFooter(context: Context) {
+    val versionName = remember { getVersionName(context) }
+    val versionCode = remember { getVersionCode(context) }
+    Spacer(modifier = Modifier.height(8.dp))
+    Text(
+        text = stringResource(id = R.string.settings_version_footer, versionName, versionCode),
+        style = MaterialTheme.typography.labelSmall,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 8.dp)
+    )
+}
+
+private fun getVersionName(context: Context): String =
+    runCatching {
+        context.packageManager.getPackageInfo(context.packageName, 0).versionName ?: "?"
+    }.getOrDefault("?")
+
+private fun getVersionCode(context: Context): Int =
+    runCatching {
+        val info = context.packageManager.getPackageInfo(context.packageName, 0)
+        info.longVersionCode.toInt()
+    }.getOrDefault(0)
+
+@Composable
+private fun notificationAccessCard(context: Context, listenerGranted: Boolean) {
+    val cardColor = if (listenerGranted) {
+        MaterialTheme.colorScheme.surfaceVariant
+    } else {
+        MaterialTheme.colorScheme.errorContainer
+    }
+    val listenerIcon = if (listenerGranted) {
+        Icons.Default.Notifications
+    } else {
+        Icons.Default.NotificationsOff
+    }
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(containerColor = cardColor)
+    ) {
+        Column(
+            modifier = Modifier.padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            Text(
+                text = stringResource(id = R.string.settings_section_listener),
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.SemiBold
+            )
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                Icon(
+                    imageVector = listenerIcon,
+                    contentDescription = if (listenerGranted) {
+                        "Notification access enabled"
+                    } else {
+                        "Notification access disabled"
+                    },
+                    tint = if (listenerGranted) {
+                        MaterialTheme.colorScheme.primary
+                    } else {
+                        MaterialTheme.colorScheme.error
+                    }
+                )
+                Text(
+                    text = stringResource(
+                        id = if (listenerGranted) {
+                            R.string.settings_listener_granted_desc
+                        } else {
+                            R.string.settings_listener_missing_desc
+                        }
+                    ),
+                    style = MaterialTheme.typography.bodyMedium,
+                    modifier = Modifier.weight(1f)
+                )
+            }
+            notificationAccessButton(context, listenerGranted)
+        }
     }
 }
+
+@Composable
+private fun notificationAccessButton(context: Context, listenerGranted: Boolean) {
+    val containerColor = if (listenerGranted) {
+        MaterialTheme.colorScheme.primaryContainer
+    } else {
+        MaterialTheme.colorScheme.error
+    }
+    val contentColor = if (listenerGranted) {
+        MaterialTheme.colorScheme.onPrimaryContainer
+    } else {
+        MaterialTheme.colorScheme.onError
+    }
+    val actionLabel = if (listenerGranted) {
+        R.string.settings_listener_open
+    } else {
+        R.string.settings_listener_grant
+    }
+    Button(
+        onClick = {
+            val intent = Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS)
+            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            context.startActivity(intent)
+        },
+        colors = ButtonDefaults.buttonColors(
+            containerColor = containerColor,
+            contentColor = contentColor
+        )
+    ) {
+        Text(stringResource(id = actionLabel))
+    }
+}
+
+@Composable
+private fun accountSection(
+    session: UserSession,
+    authManager: AuthManager,
+    scope: CoroutineScope,
+    context: Context
+) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
+    ) {
+        Column(
+            modifier = Modifier.padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            Text(
+                text = "Account",
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.SemiBold
+            )
+            if (session.isAuthenticated) {
+                authenticatedAccount(session, authManager, context)
+            } else {
+                unauthenticatedAccount(session, authManager, scope, context)
+            }
+        }
+    }
+}
+
+@Composable
+private fun authenticatedAccount(
+    session: UserSession,
+    authManager: AuthManager,
+    context: Context
+) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        Icon(Icons.Default.Person, contentDescription = "Profile")
+        Column {
+            Text(
+                text = session.displayName
+                    ?: stringResource(id = R.string.settings_default_display_name),
+                style = MaterialTheme.typography.bodyLarge,
+                fontWeight = FontWeight.Medium
+            )
+            Text(
+                text = session.email ?: "",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+    }
+    Button(
+        onClick = {
+            authManager.signOut()
+            SyncWorker.cancelPeriodicSync(context)
+        },
+        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
+    ) {
+        Icon(Icons.AutoMirrored.Filled.Logout, contentDescription = "Sign out")
+        Spacer(Modifier.width(8.dp))
+        Text("Sign Out")
+    }
+}
+
+@Composable
+private fun unauthenticatedAccount(
+    session: UserSession,
+    authManager: AuthManager,
+    scope: CoroutineScope,
+    context: Context
+) {
+    Text(
+        text = "Sign in with Google to enable cloud backup & multi-device sync.",
+        style = MaterialTheme.typography.bodyMedium
+    )
+    Button(
+        onClick = {
+            scope.launch {
+                authManager.signInWithGoogle()
+                SyncWorker.schedulePeriodicSync(context)
+            }
+        },
+        enabled = !session.isAuthenticating,
+        colors = ButtonDefaults.buttonColors(
+            containerColor = MaterialTheme.colorScheme.primaryContainer,
+            contentColor = MaterialTheme.colorScheme.onPrimaryContainer
+        )
+    ) {
+        Icon(Icons.AutoMirrored.Filled.Login, contentDescription = "Sign in")
+        Spacer(Modifier.width(8.dp))
+        Text(if (session.isAuthenticating) "Signing In..." else "Sign in with Google")
+    }
+    session.error?.let { error ->
+        Text(
+            text = error,
+            color = MaterialTheme.colorScheme.error,
+            style = MaterialTheme.typography.bodySmall
+        )
+    }
+}
+
+

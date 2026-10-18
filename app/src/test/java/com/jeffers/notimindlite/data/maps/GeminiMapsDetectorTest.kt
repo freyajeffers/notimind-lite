@@ -1,4 +1,4 @@
-package com.jeffers.notimindlite
+package com.jeffers.notimindlite.data.maps
 
 import com.jeffers.notimindlite.data.maps.GeminiMapsDetector
 import com.jeffers.notimindlite.domain.entity.ActionableEntityExtractor

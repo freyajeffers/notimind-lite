@@ -32,8 +32,12 @@ class UnlockReceiver : BroadcastReceiver() {
                 try {
                     val ceDb = AppDatabase.getCeInstance(context)
                     DatabaseMigrator.executeRawDbMergeAndRebuildFts(context, ceDb)
-                } catch (e: Exception) {
-                    Log.e("UnlockReceiver", "Failed during unlock migration: ${e.message}", e)
+                } catch (e: android.database.SQLException) {
+                    Log.e("UnlockReceiver", "Database error during unlock migration", e)
+                } catch (e: IllegalStateException) {
+                    Log.e("UnlockReceiver", "Illegal state during unlock migration", e)
+                } catch (e: SecurityException) {
+                    Log.e("UnlockReceiver", "Permission denied during unlock migration", e)
                 } finally {
                     pendingResult?.finish()
                 }

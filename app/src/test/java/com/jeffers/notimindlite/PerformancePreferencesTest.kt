@@ -15,7 +15,7 @@ import org.robolectric.annotation.Config
 class PerformancePreferencesTest {
     @Test fun defaultsAreSafe() {
         val prefs = PreferencesRepository(ApplicationProvider.getApplicationContext())
-        assertEquals(PreferencesRepository.DEFAULT_THREAD_POOL_SIZE, prefs.getThreadPoolSize())
+        assertEquals(2, prefs.getThreadPoolSize())
         assertTrue(prefs.isEmbeddingOffloadEnabled())
     }
 

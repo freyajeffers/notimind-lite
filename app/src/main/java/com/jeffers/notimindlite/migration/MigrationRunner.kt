@@ -174,15 +174,19 @@ class MigrationRunner(
 
   fun migrateOpenedDatabases(request: MigrationRequest): MigrationResult {
     val copyResult = orchestrator.copyAndVerify(request.source, request.target, request.batchSize)
-    if (copyResult.state != MigrationState.VERIFYING) return copyResult
-    if (!request.executeCutover) return copyResult.copy(state = MigrationState.CUTOVER_PENDING)
-    request.closeDatabases()
-    val cutoverResult = orchestrator.atomicCutover(
-      request.plaintextFile,
-      request.encryptedTempFile,
-      request.quarantineFile
-    )
-    return orchestrator.finalizeSuccessfulCutover(cutoverResult)
+    return when {
+      copyResult.state != MigrationState.VERIFYING -> copyResult
+      !request.executeCutover -> copyResult.copy(state = MigrationState.CUTOVER_PENDING)
+      else -> {
+        request.closeDatabases()
+        val cutoverResult = orchestrator.atomicCutover(
+          request.plaintextFile,
+          request.encryptedTempFile,
+          request.quarantineFile
+        )
+        orchestrator.finalizeSuccessfulCutover(cutoverResult)
+      }
+    }
   }
 
   /**

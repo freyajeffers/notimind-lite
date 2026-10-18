@@ -11,25 +11,42 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
-import com.jeffers.notimindlite.data.local.PreferencesRepository
+import com.jeffers.notimindlite.data.local.ProfilePreferencesManager
 import com.jeffers.notimindlite.BuildConfig
 
 /** Compose-only profile manager. Each profile has independent settings and Room storage. */
 @Composable
-fun ProfileManagerSection(repository: PreferencesRepository) {
+fun profileManagerSection(repository: ProfilePreferencesManager) {
     val context = LocalContext.current
     val profiles by repository.profiles.collectAsState()
     val activeId by repository.activeProfileId.collectAsState()
     var newName by remember { mutableStateOf("") }
-    val exportLauncher = rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("application/json")) { uri ->
-        if (uri != null) context.contentResolver.openOutputStream(uri)?.use { it.write(repository.exportProfile().toByteArray()) }
+    val exportLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.CreateDocument("application/json")
+    ) { uri ->
+        if (uri != null) {
+            context.contentResolver.openOutputStream(uri)?.use {
+                it.write(repository.exportProfile().toByteArray())
+            }
+        }
     }
-    val importLauncher = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
-        if (uri != null) context.contentResolver.openInputStream(uri)?.bufferedReader()?.use { repository.importProfile(it.readText()) }
+    val importLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.OpenDocument()
+    ) { uri ->
+        if (uri != null) {
+            context.contentResolver.openInputStream(uri)?.bufferedReader()?.use {
+                repository.importProfile(it.readText())
+            }
+        }
     }
     Card(modifier = Modifier.fillMaxWidth()) {
         Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -37,16 +54,29 @@ fun ProfileManagerSection(repository: PreferencesRepository) {
             profiles.forEach { profile ->
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                     Text(if (profile.id == activeId) "✓ ${profile.name}" else profile.name)
-                    if (profile.id != activeId) OutlinedButton(onClick = { repository.setActiveProfile(profile.id) }) { Text("Use") }
+                    if (profile.id != activeId) {
+                        OutlinedButton(onClick = { repository.setActiveProfile(profile.id) }) {
+                            Text("Use")
+                        }
+                    }
                 }
             }
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 OutlinedTextField(value = newName, onValueChange = { newName = it }, label = { Text("New profile") })
-                Button(onClick = { repository.createProfile(newName); newName = "" }, enabled = newName.isNotBlank()) { Text("Add") }
+                Button(
+                    onClick = { repository.createProfile(newName); newName = "" },
+                    enabled = newName.isNotBlank()
+                ) { Text("Add") }
             }
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                OutlinedButton(onClick = { exportLauncher.launch("notimind-profile.json") }, enabled = !BuildConfig.DEBUG) { Text("Export") }
-                OutlinedButton(onClick = { importLauncher.launch(arrayOf("application/json", "text/plain")) }, enabled = !BuildConfig.DEBUG) { Text("Import") }
+                OutlinedButton(
+                    onClick = { exportLauncher.launch("notimind-profile.json") },
+                    enabled = !BuildConfig.DEBUG
+                ) { Text("Export") }
+                OutlinedButton(
+                    onClick = { importLauncher.launch(arrayOf("application/json", "text/plain")) },
+                    enabled = !BuildConfig.DEBUG
+                ) { Text("Import") }
             }
         }
     }
