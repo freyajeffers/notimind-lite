@@ -85,7 +85,7 @@ class SyncIntegrationPairwiseTest : BaseRobolectricTest() {
 
         val mockCol = mockCollection()
         val mockSnapshot = mockk<QuerySnapshot>()
-        val mockDoc = mockk<QueryDocumentSnapshot>()
+        val mockDoc = mockk<QueryDocumentSnapshot>(relaxed = true)
 
         every { mockCol.get() } returns Tasks.forResult(mockSnapshot)
         every { mockSnapshot.documents } returns listOf(mockDoc)
@@ -116,7 +116,7 @@ class SyncIntegrationPairwiseTest : BaseRobolectricTest() {
 
         val mockCol = mockCollection()
         val mockSnapshot = mockk<QuerySnapshot>()
-        val mockDoc = mockk<QueryDocumentSnapshot>()
+        val mockDoc = mockk<QueryDocumentSnapshot>(relaxed = true)
 
         every { mockCol.get() } returns Tasks.forResult(mockSnapshot)
         every { mockSnapshot.documents } returns listOf(mockDoc)

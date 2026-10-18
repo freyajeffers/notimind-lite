@@ -11,6 +11,7 @@ import com.jeffers.notimindlite.data.local.NotificationDao
 import com.jeffers.notimindlite.data.local.NotificationEntity
 import com.jeffers.notimindlite.data.local.SyncStatus
 import com.jeffers.notimindlite.data.sync.FirestoreSyncRepository
+import com.jeffers.notimindlite.util.SyncEncryptionHelper
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
@@ -64,8 +65,8 @@ class SyncIntegrationPairwiseSupportTest {
         every { mockSnapshot.documents } returns listOf(mockDoc)
         every { mockDoc.getString("key") } returns key
         every { mockDoc.getLong("lastUpdatedTime") } returns 2000L
-        every { mockDoc.getString("title") } returns "Remote Title"
-        every { mockDoc.getString("content") } returns "Remote Content"
+        every { mockDoc.getString("title") } returns SyncEncryptionHelper.encrypt("Remote Title", secretKey)
+        every { mockDoc.getString("content") } returns SyncEncryptionHelper.encrypt("Remote Content", secretKey)
         every { mockDoc.getString("packageName") } returns "p1"
         every { mockDoc.getString("appName") } returns "a1"
         every { mockDoc.getLong("postTime") } returns 500L
@@ -102,8 +103,8 @@ class SyncIntegrationPairwiseSupportTest {
         every { mockSnapshot.documents } returns listOf(mockDoc)
         every { mockDoc.getString("key") } returns key
         every { mockDoc.getLong("lastUpdatedTime") } returns 2000L
-        every { mockDoc.getString("title") } returns "Remote Title"
-        every { mockDoc.getString("content") } returns "Remote Content"
+        every { mockDoc.getString("title") } returns SyncEncryptionHelper.encrypt("Remote Title", secretKey)
+        every { mockDoc.getString("content") } returns SyncEncryptionHelper.encrypt("Remote Content", secretKey)
         every { mockDoc.getString("packageName") } returns "p1"
         every { mockDoc.getString("appName") } returns "a1"
         every { mockDoc.getLong("postTime") } returns 500L
@@ -129,7 +130,7 @@ class SyncIntegrationPairwiseSupportTest {
         every { mockDoc.getString("key") } returns "notif_1"
         every { mockDoc.getString("title") } returns null
         every { mockDoc.getLong("lastUpdatedTime") } returns 1000L
-        every { mockDoc.getString("content") } returns "Content"
+        every { mockDoc.getString("content") } returns SyncEncryptionHelper.encrypt("Content", secretKey)
         every { mockDoc.getString("packageName") } returns "p1"
         every { mockDoc.getString("appName") } returns "a1"
         every { mockDoc.getLong("postTime") } returns 500L
