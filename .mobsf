@@ -1,0 +1,10 @@
+---
+ignore-paths:
+  - build/
+  - app/build/
+  - .gradle/
+
+ignore-rules:
+  # App targets SDK 36 (Android 15+). StrandHogg 2.0 (targetSdk < 29) is patched at platform level.
+  # AGP 9 deprecates <uses-sdk> in AndroidManifest.xml, causing mobsfscan to fallback to SDK 26.
+  - android_task_hijacking2
