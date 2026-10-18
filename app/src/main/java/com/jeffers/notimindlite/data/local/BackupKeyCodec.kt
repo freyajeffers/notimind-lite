@@ -36,19 +36,18 @@ object BackupKeyCodec {
 
         val keyGenerator = KeyGenerator.getInstance(KeyProperties.KEY_ALGORITHM_AES, ANDROID_KEYSTORE)
         val purposes = KeyProperties.PURPOSE_ENCRYPT or KeyProperties.PURPOSE_DECRYPT
-        val baseSpec = KeyGenParameterSpec.Builder(KEY_ALIAS, purposes)
+        val baseSpec = KeyGenParameterSpec
+            .Builder(KEY_ALIAS, purposes)
             .setBlockModes(KeyProperties.BLOCK_MODE_GCM)
             .setEncryptionPaddings(KeyProperties.ENCRYPTION_PADDING_NONE)
             .setKeySize(AES_KEY_SIZE_BITS)
         var generatedKey: SecretKey? = null
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
-            try {
-                keyGenerator.init(baseSpec.setIsStrongBoxBacked(true).build())
-                generatedKey = keyGenerator.generateKey()
-            } catch (_: Exception) {
-                // StrongBox is optional; use the platform Keystore/TEE fallback.
-            }
+        try {
+            keyGenerator.init(baseSpec.setIsStrongBoxBacked(true).build())
+            generatedKey = keyGenerator.generateKey()
+        } catch (_: Exception) {
+            // StrongBox is optional; use the platform Keystore/TEE fallback.
         }
 
         if (generatedKey == null) {

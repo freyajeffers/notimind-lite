@@ -1,13 +1,14 @@
 package com.jeffers.notimindlite.receiver
 
+import android.app.NotificationChannel
+import android.app.NotificationManager
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
-import android.app.NotificationChannel
-import android.app.NotificationManager
 import com.jeffers.notimindlite.R
+
 /**
  * SnoozeReminderReceiver handles the trigger of the snooze alarm.
  * It creates a local notification to remind the user of the snoozed item.
@@ -22,11 +23,10 @@ class SnoozeReminderReceiver : BroadcastReceiver() {
         val title = intent.getStringExtra("ORIGINAL_TITLE") ?: "Snoozed Notification"
         val content = intent.getStringExtra("ORIGINAL_CONTENT") ?: "Time to review this item."
 
-        
-
         createNotificationChannel(context)
 
-        val notification = NotificationCompat.Builder(context, CHANNEL_ID)
+        val notification = NotificationCompat
+            .Builder(context, CHANNEL_ID)
             .setSmallIcon(android.R.drawable.ic_dialog_info)
             .setContentTitle(context.getString(R.string.snooze_reminder_title))
             .setContentText("$title: $content")
@@ -34,8 +34,16 @@ class SnoozeReminderReceiver : BroadcastReceiver() {
             .setAutoCancel(true)
             .build()
 
-        with(NotificationManagerCompat.from(context)) {
-            notify(notifId.hashCode(), notification)
+        try {
+            if (androidx.core.content.ContextCompat.checkSelfPermission(
+                    context,
+                    android.Manifest.permission.POST_NOTIFICATIONS,
+                ) == android.content.pm.PackageManager.PERMISSION_GRANTED
+            ) {
+                NotificationManagerCompat.from(context).notify(notifId.hashCode(), notification)
+            }
+        } catch (_: SecurityException) {
+            // Ignored if notification permission is rejected or revoked
         }
     }
 

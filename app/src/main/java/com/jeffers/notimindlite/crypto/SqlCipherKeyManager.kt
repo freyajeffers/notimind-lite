@@ -2,16 +2,16 @@ package com.jeffers.notimindlite.crypto
 
 import android.content.Context
 import android.os.Build
-import android.util.Log
 import android.util.Base64
+import android.util.Log
 import java.nio.ByteBuffer
 import java.security.KeyStore
+import java.util.concurrent.ConcurrentHashMap
 import javax.crypto.Cipher
 import javax.crypto.KeyGenerator
 import javax.crypto.SecretKey
 import javax.crypto.spec.GCMParameterSpec
 import javax.crypto.spec.SecretKeySpec
-import java.util.concurrent.ConcurrentHashMap
 
 /** Provides a stable SQLCipher passphrase encrypted by an Android Keystore key. */
 object SqlCipherKeyManager {
@@ -50,25 +50,24 @@ object SqlCipherKeyManager {
             val generator = KeyGenerator.getInstance(KEY_ALGORITHM, KEYSTORE)
             val purposes = android.security.keystore.KeyProperties.PURPOSE_ENCRYPT or
                 android.security.keystore.KeyProperties.PURPOSE_DECRYPT
-            val baseSpec = android.security.keystore.KeyGenParameterSpec.Builder(alias, purposes)
+            val baseSpec = android.security.keystore.KeyGenParameterSpec
+                .Builder(alias, purposes)
                 .setBlockModes(android.security.keystore.KeyProperties.BLOCK_MODE_GCM)
                 .setEncryptionPaddings(android.security.keystore.KeyProperties.ENCRYPTION_PADDING_NONE)
             var generatedKey: SecretKey? = null
 
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
-                try {
-                    generator.init(baseSpec.setIsStrongBoxBacked(true).build())
-                    generatedKey = generator.generateKey()
-                } catch (e: java.security.InvalidAlgorithmParameterException) {
-                    // StrongBox not available or parameters rejected; fall back to non-StrongBox
-                    Log.w("SqlCipherKeyManager", "StrongBox key generation rejected, falling back", e)
-                } catch (e: java.security.ProviderException) {
-                    // Provider failure (StrongBox provider missing/unavailable)
-                    Log.w("SqlCipherKeyManager", "StrongBox provider unavailable, falling back", e)
-                } catch (e: SecurityException) {
-                    // Permission / security manager blocked StrongBox usage
-                    Log.w("SqlCipherKeyManager", "Security exception during StrongBox init", e)
-                }
+            try {
+                generator.init(baseSpec.setIsStrongBoxBacked(true).build())
+                generatedKey = generator.generateKey()
+            } catch (e: java.security.InvalidAlgorithmParameterException) {
+                // StrongBox not available or parameters rejected; fall back to non-StrongBox
+                Log.w("SqlCipherKeyManager", "StrongBox key generation rejected, falling back", e)
+            } catch (e: java.security.ProviderException) {
+                // Provider failure (StrongBox provider missing/unavailable)
+                Log.w("SqlCipherKeyManager", "StrongBox provider unavailable, falling back", e)
+            } catch (e: SecurityException) {
+                // Permission / security manager blocked StrongBox usage
+                Log.w("SqlCipherKeyManager", "Security exception during StrongBox init", e)
             }
 
             if (generatedKey == null) {
@@ -109,7 +108,8 @@ object SqlCipherKeyManager {
         val cipher = Cipher.getInstance(TRANSFORMATION)
         cipher.init(Cipher.ENCRYPT_MODE, keyFor(databaseName))
         val ciphertext = cipher.doFinal(plaintext)
-        return ByteBuffer.allocate(IV_BYTES + ciphertext.size)
+        return ByteBuffer
+            .allocate(IV_BYTES + ciphertext.size)
             .put(cipher.iv)
             .put(ciphertext)
             .array()

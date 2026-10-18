@@ -8,19 +8,22 @@ import android.content.IntentFilter
 import android.content.res.Configuration
 import android.os.Bundle
 import android.util.Log
-import com.jeffers.notimindlite.util.AppIconCache
 import com.jeffers.notimindlite.data.local.AppDatabase
 import com.jeffers.notimindlite.data.local.PreferencesRepository
+import com.jeffers.notimindlite.util.AppIconCache
 import com.jeffers.notimindlite.util.DatabaseLockManager
 
-class NotiMindApp : Application(), android.content.ComponentCallbacks2 {
+class NotiMindApp :
+    Application(),
+    android.content.ComponentCallbacks2 {
     companion object {
         private const val TAG = "NotiMindApp"
     }
 
     override fun onCreate() {
         super.onCreate()
-        com.jeffers.notimindlite.util.AppInitializer.initialize(this)
+        com.jeffers.notimindlite.util.AppInitializer
+            .initialize(this)
         runCatching {
             val prefs = PreferencesRepository(this)
             if (prefs.securityManager.autoLockDb.value || prefs.securityManager.appLockEnabled.value) {
@@ -46,16 +49,24 @@ class NotiMindApp : Application(), android.content.ComponentCallbacks2 {
                     AppDatabase.resetInstance()
                 }
             }
+
             android.content.ComponentCallbacks2.TRIM_MEMORY_RUNNING_LOW,
             android.content.ComponentCallbacks2.TRIM_MEMORY_RUNNING_CRITICAL -> {
                 AppIconCache.clearCache()
-                com.jeffers.notimindlite.util.VectorEmbeddingHelper.clearCache()
+                com.jeffers.notimindlite.util.VectorEmbeddingHelper
+                    .clearCache()
                 Log.w(TAG, "Running Low/Critical: Forced cache clear")
             }
+
             android.content.ComponentCallbacks2.TRIM_MEMORY_COMPLETE -> {
                 AppIconCache.clearCache()
-                com.jeffers.notimindlite.util.VectorEmbeddingHelper.clearCache()
+                com.jeffers.notimindlite.util.VectorEmbeddingHelper
+                    .clearCache()
                 Log.w(TAG, "Trim Memory Complete: Final cache clear")
+            }
+
+            else -> {
+                // Other trim memory levels do not require aggressive cache evictions
             }
         }
     }

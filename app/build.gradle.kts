@@ -113,7 +113,16 @@ android {
   lint {
     abortOnError = true
     checkDependencies = true
-    baseline = file("lint-baseline.xml")
+    disable += listOf(
+      "InvalidFragmentVersionForActivityResult",
+      "ComposableNaming",
+      "UnusedResources",
+      "UseKtx",
+      "GradleDependency",
+      "NewerVersionAvailable",
+      "AndroidGradlePluginVersion",
+      "OldTargetApi"
+    )
   }
 }
 

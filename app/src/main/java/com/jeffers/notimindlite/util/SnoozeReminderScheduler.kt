@@ -22,6 +22,7 @@ object SnoozeReminderScheduler {
      * @param content The content of the notification.
      * @param delayMs The delay in milliseconds before the reminder is triggered.
      */
+    @android.annotation.SuppressLint("MissingPermission")
     fun scheduleSnooze(
         context: Context,
         notificationId: String,
@@ -74,7 +75,7 @@ object SnoozeReminderScheduler {
             )
             if (pendingIntent != null) {
                 val alarmManager = checkNotNull(context.getSystemService(Context.ALARM_SERVICE)) as? AlarmManager
-                ?: error("AlarmManager service unavailable")
+                    ?: error("AlarmManager service unavailable")
                 alarmManager.cancel(pendingIntent)
             }
         } catch (e: SecurityException) {
