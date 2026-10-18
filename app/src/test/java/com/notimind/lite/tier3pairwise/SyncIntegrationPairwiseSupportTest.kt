@@ -57,7 +57,7 @@ class SyncIntegrationPairwiseSupportTest {
         // Remote version: newer (2000L)
         val mockCol = mockk<CollectionReference>()
         val mockSnapshot = mockk<QuerySnapshot>()
-        val mockDoc = mockk<QueryDocumentSnapshot>()
+        val mockDoc = mockk<QueryDocumentSnapshot>(relaxed = true)
         
         every { mockFirestore.collection("users").document(userId).collection("notifications") } returns mockCol
         every { mockCol.get() } returns Tasks.forResult(mockSnapshot)
@@ -72,7 +72,11 @@ class SyncIntegrationPairwiseSupportTest {
 
         repository.sync(userId, secretKey)
 
-        coVerify { mockDao.insertNotification(match { it.title == "Remote Title" && it.content == "Remote Content" }) }
+        coVerify {
+            mockDao.insertNotifications(match { items ->
+                items.size == 1 && items[0].title == "Remote Title" && items[0].content == "Remote Content"
+            })
+        }
     }
 
     @Test
@@ -91,7 +95,7 @@ class SyncIntegrationPairwiseSupportTest {
         // Remote version: older (2000L)
         val mockCol = mockk<CollectionReference>()
         val mockSnapshot = mockk<QuerySnapshot>()
-        val mockDoc = mockk<QueryDocumentSnapshot>()
+        val mockDoc = mockk<QueryDocumentSnapshot>(relaxed = true)
         
         every { mockFirestore.collection("users").document(userId).collection("notifications") } returns mockCol
         every { mockCol.get() } returns Tasks.forResult(mockSnapshot)
@@ -115,7 +119,7 @@ class SyncIntegrationPairwiseSupportTest {
         
         val mockCol = mockk<CollectionReference>()
         val mockSnapshot = mockk<QuerySnapshot>()
-        val mockDoc = mockk<QueryDocumentSnapshot>()
+        val mockDoc = mockk<QueryDocumentSnapshot>(relaxed = true)
         
         every { mockFirestore.collection("users").document(userId).collection("notifications") } returns mockCol
         every { mockCol.get() } returns Tasks.forResult(mockSnapshot)

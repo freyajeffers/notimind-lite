@@ -56,6 +56,9 @@ class FirestoreSyncRepository(
         } catch (e: IllegalArgumentException) {
             logError("Invalid sync data", e)
             Result.failure(e)
+        } catch (e: android.database.SQLException) {
+            logError("Database sync failed", e)
+            Result.failure(e)
         } catch (e: IllegalStateException) {
             logError("Invalid sync state", e)
             Result.failure(e)
