@@ -22,27 +22,35 @@ class SyncWorker(
     override suspend fun doWork(): Result {
         val db = AppDatabase.getDatabase(applicationContext)
         val preferences = PreferencesRepository(applicationContext)
-        val profileId = preferences.activeProfileId.value
-        if (preferences.useSupabaseSync.value) {
-            val supabaseAuth = SupabaseAuthManager(applicationContext)
-            val userId = supabaseAuth.currentSession().uid ?: return Result.success()
-            SupabaseSettingsSyncRepository(supabaseAuth).restoreOrUpload(preferences, userId)
-            val repository = SupabaseSyncRepository(db, supabaseAuth, profileId)
-            return if (repository.sync().isSuccess) {
-                preferences.setLastSyncTs(System.currentTimeMillis())
-                Result.success()
-            } else Result.retry()
+        return if (preferences.syncManager.useSupabaseSync.value) {
+            syncSupabase(db, preferences)
+        } else {
+            syncFirebase(db, preferences)
         }
-        val user = com.google.firebase.auth.FirebaseAuth.getInstance().currentUser ?: return Result.success()
-        FirebaseSettingsSyncRepository().restoreOrUpload(preferences, user.uid)
-        val repository = FirestoreSyncRepository(db, profileId = profileId)
-        
-        // Use a stable device-bound key for background sync (Android KeyStore-backed).
-        val secretKey = generateBackupKey(applicationContext)
+    }
 
-        val result = repository.sync(user.uid, secretKey)
+    private suspend fun syncSupabase(db: AppDatabase, preferences: PreferencesRepository): Result {
+        val profileId = preferences.profileManager.activeProfileId.value
+        val supabaseAuth = SupabaseAuthManager(applicationContext)
+        val userId = supabaseAuth.currentSession().uid ?: return Result.success()
+        SupabaseSettingsSyncRepository(supabaseAuth).restoreOrUpload(preferences, userId)
+        val result = SupabaseSyncRepository(db, supabaseAuth, profileId).sync()
+        return finishSync(preferences, result)
+    }
+
+    private suspend fun syncFirebase(db: AppDatabase, preferences: PreferencesRepository): Result {
+        val profileId = preferences.profileManager.activeProfileId.value
+        val user = com.google.firebase.auth.FirebaseAuth.getInstance().currentUser
+            ?: return Result.success()
+        FirebaseSettingsSyncRepository().restoreOrUpload(preferences, user.uid)
+        val secretKey = generateBackupKey(applicationContext)
+        val result = FirestoreSyncRepository(db, profileId = profileId).sync(user.uid, secretKey)
+        return finishSync(preferences, result)
+    }
+
+    private suspend fun finishSync(preferences: PreferencesRepository, result: kotlin.Result<Int>): Result {
         return if (result.isSuccess) {
-            preferences.setLastSyncTs(System.currentTimeMillis())
+            preferences.syncManager.setLastSyncTs(System.currentTimeMillis())
             Result.success()
         } else {
             Result.retry()
@@ -51,6 +59,7 @@ class SyncWorker(
 
     companion object {
         private const val SYNC_WORK_NAME = "notimind_firestore_sync"
+        private const val PERIODIC_SYNC_INTERVAL_HOURS = 6L
 
         fun schedulePeriodicSync(context: Context) {
             val constraints = Constraints.Builder()
@@ -59,7 +68,10 @@ class SyncWorker(
                 .setRequiresDeviceIdle(true)
                 .build()
 
-            val request = PeriodicWorkRequestBuilder<SyncWorker>(6, TimeUnit.HOURS)
+            val request = PeriodicWorkRequestBuilder<SyncWorker>(
+                PERIODIC_SYNC_INTERVAL_HOURS,
+                TimeUnit.HOURS
+            )
                 .setConstraints(constraints)
                 .build()
 

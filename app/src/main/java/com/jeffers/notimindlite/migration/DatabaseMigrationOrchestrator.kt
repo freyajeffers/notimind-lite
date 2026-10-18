@@ -50,7 +50,11 @@ class DatabaseMigrationOrchestrator(
         verified += targetCount
       }
       MigrationResult(MigrationState.VERIFYING, copied, verified)
-    } catch (failure: Throwable) {
+    } catch (failure: android.database.sqlite.SQLiteException) {
+      MigrationResult(MigrationState.ROLLBACK_REQUIRED, 0, 0, failure = failure)
+    } catch (failure: IllegalStateException) {
+      MigrationResult(MigrationState.ROLLBACK_REQUIRED, 0, 0, failure = failure)
+    } catch (failure: SecurityException) {
       MigrationResult(MigrationState.ROLLBACK_REQUIRED, 0, 0, failure = failure)
     }
   }
@@ -64,36 +68,23 @@ class DatabaseMigrationOrchestrator(
     encryptedTempFile: File,
     quarantineFile: File
   ): MigrationResult {
-    if (!plaintextFile.isFile || !encryptedTempFile.isFile) {
-      return MigrationResult(
+    return when {
+      !plaintextFile.isFile || !encryptedTempFile.isFile -> MigrationResult(
         MigrationState.RETRYABLE_FAILURE,
         0,
         0,
         failure = IllegalStateException("Migration files are missing or are not regular files")
       )
-    }
-    if (quarantineFile.exists()) {
-      return MigrationResult(
+      quarantineFile.exists() -> MigrationResult(
         MigrationState.RETRYABLE_FAILURE,
         0,
         0,
         failure = IllegalStateException("Quarantine file already exists: ${quarantineFile.name}")
       )
-    }
-
-    return try {
-      fileOps.rename(plaintextFile, quarantineFile)
-      try {
-        fileOps.rename(encryptedTempFile, plaintextFile)
-      } catch (promotionFailure: Throwable) {
-        fileOps.rename(quarantineFile, plaintextFile)
-        throw promotionFailure
-      }
-      MigrationResult(MigrationState.COMPLETE, 0, 0, backupFile = quarantineFile)
-    } catch (failure: Throwable) {
-      MigrationResult(MigrationState.ROLLBACK_REQUIRED, 0, 0, failure = failure)
+      else -> performCutover(plaintextFile, encryptedTempFile, quarantineFile, fileOps)
     }
   }
+
 
   /**
    * Permanently removes the quarantine copies after the encrypted database is active.
@@ -210,6 +201,26 @@ class DatabaseMigrationOrchestrator(
     private const val ROOM_MASTER_TABLE = "room_master_table"
     private const val ANDROID_METADATA_TABLE = "android_metadata"
   }
+}
+
+private fun performCutover(
+  plaintextFile: File,
+  encryptedTempFile: File,
+  quarantineFile: File,
+  fileOps: MigrationFileOps
+): MigrationResult = try {
+  fileOps.rename(plaintextFile, quarantineFile)
+  try {
+    fileOps.rename(encryptedTempFile, plaintextFile)
+  } catch (promotionFailure: IllegalStateException) {
+    fileOps.rename(quarantineFile, plaintextFile)
+    throw promotionFailure
+  }
+  MigrationResult(MigrationState.COMPLETE, 0, 0, backupFile = quarantineFile)
+} catch (failure: IllegalStateException) {
+  MigrationResult(MigrationState.ROLLBACK_REQUIRED, 0, 0, failure = failure)
+} catch (failure: SecurityException) {
+  MigrationResult(MigrationState.ROLLBACK_REQUIRED, 0, 0, failure = failure)
 }
 
 interface MigrationFileOps {

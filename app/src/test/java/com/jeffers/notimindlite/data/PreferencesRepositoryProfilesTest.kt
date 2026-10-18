@@ -2,6 +2,7 @@ package com.jeffers.notimindlite.data
 
 import androidx.test.core.app.ApplicationProvider
 import com.jeffers.notimindlite.data.local.PreferencesRepository
+import com.jeffers.notimindlite.data.local.ProfilePreferencesManager
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Before
@@ -22,13 +23,14 @@ class PreferencesRepositoryProfilesTest {
 
     @Test fun profileSettingsAndExportAreIsolated() {
         val repository = PreferencesRepository(context)
-        val profile = repository.createProfile("Work")
-        assertTrue(repository.setActiveProfile(profile.id))
-        repository.setEnableSync(false)
-        assertEquals(false, repository.enableSync.value)
-        assertTrue(repository.setActiveProfile(PreferencesRepository.DEFAULT_PROFILE_ID))
-        assertEquals(true, repository.enableSync.value)
-        val imported = repository.importProfile(repository.exportProfile(profile.id))
+        val profiles = repository.profileManager
+        val profile = profiles.createProfile("Work")
+        assertTrue(profiles.setActiveProfile(profile.id))
+        repository.syncManager.setEnableSync(false)
+        assertEquals(false, repository.syncManager.enableSync.value)
+        assertTrue(profiles.setActiveProfile(ProfilePreferencesManager.DEFAULT_PROFILE_ID))
+        assertEquals(true, repository.syncManager.enableSync.value)
+        val imported = profiles.importProfile(profiles.exportProfile(profile.id))
         assertTrue(imported.id != profile.id)
     }
 }

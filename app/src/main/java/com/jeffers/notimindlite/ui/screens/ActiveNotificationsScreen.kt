@@ -18,7 +18,20 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.isImeVisible
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.lazy.LazyColumn
@@ -42,8 +55,35 @@ import com.jeffers.notimindlite.ui.components.groupNotifications
 import org.json.JSONArray
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.outlined.BookmarkBorder
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material3.Badge
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.PlainTooltip
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SmallFloatingActionButton
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TooltipAnchorPosition
+import androidx.compose.material3.TooltipBox
+import androidx.compose.material3.TooltipDefaults
+import androidx.compose.material3.rememberTooltipState
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.saveable.rememberSaveable
 import android.util.Log
 import androidx.compose.ui.Alignment
@@ -58,8 +98,6 @@ import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
-import androidx.compose.foundation.layout.isImeVisible
-import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
 
@@ -70,6 +108,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.jeffers.notimindlite.R
@@ -78,18 +117,16 @@ import com.jeffers.notimindlite.data.local.NotificationEntity
 import com.jeffers.notimindlite.data.local.PreferenceManager
 import com.jeffers.notimindlite.data.local.PreferencesRepository
 import com.jeffers.notimindlite.service.NotificationLoggerService
-import com.jeffers.notimindlite.ui.dialogs.AppPackageSelectorDialog
+import com.jeffers.notimindlite.ui.dialogs.appPackageSelectorDialog
 import com.jeffers.notimindlite.ui.components.ActiveFilterChip
-import com.jeffers.notimindlite.ui.components.ActiveFilterChipsRow
+import com.jeffers.notimindlite.ui.components.activeFilterChipsRow
 import com.jeffers.notimindlite.ui.components.ActiveFirstRunEmptyState
 import com.jeffers.notimindlite.ui.components.ActivePermissionEmptyState
 import com.jeffers.notimindlite.ui.components.ActiveSearchEmptyState
-import com.jeffers.notimindlite.ui.components.ActionableChips
+import com.jeffers.notimindlite.ui.components.actionableChips
 
 import com.jeffers.notimindlite.domain.search.HybridSearchEngine
 import com.jeffers.notimindlite.util.NotificationLauncher
-import com.jeffers.notimindlite.data.auth.AuthManager
-import com.jeffers.notimindlite.data.local.AppDatabase
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -108,44 +145,95 @@ fun checkNotificationPermission(context: Context): Boolean {
     return flat != null && flat.contains(context.packageName)
 }
 
+private const val REASON_CODE_OFFSET = 1
+private const val PRIORITY_MIN = -2
+private const val PRIORITY_LOW = -1
+private const val PRIORITY_DEFAULT = 0
+private const val PRIORITY_HIGH = 1
+private const val PRIORITY_MAX = 2
+private const val SEARCH_MIN_LENGTH = 2
+private const val MAX_SEARCH_SUGGESTIONS = 4
+private const val SEARCH_DEBOUNCE_MS = 100L
+
+private val REASON_LABELS = listOf(
+    R.string.reason_1,
+    R.string.reason_2,
+    R.string.reason_3,
+    R.string.reason_4,
+    R.string.reason_5,
+    R.string.reason_6,
+    R.string.reason_7,
+    R.string.reason_8,
+    R.string.reason_9,
+    R.string.reason_10,
+    R.string.reason_11,
+    R.string.reason_12,
+    R.string.reason_13,
+    R.string.reason_14,
+    R.string.reason_15,
+    R.string.reason_16,
+    R.string.reason_17,
+    R.string.reason_18,
+    R.string.reason_19,
+    R.string.reason_20,
+    R.string.reason_21,
+    R.string.reason_22,
+    R.string.reason_23,
+    R.string.reason_24
+).mapIndexed { index, label -> index + REASON_CODE_OFFSET to label }.toMap()
+
 fun getReasonLabel(reason: Int?): Int {
-    return when (reason) {
-        1 -> R.string.reason_1
-        2 -> R.string.reason_2
-        3 -> R.string.reason_3
-        4 -> R.string.reason_4
-        5 -> R.string.reason_5
-        6 -> R.string.reason_6
-        7 -> R.string.reason_7
-        8 -> R.string.reason_8
-        9 -> R.string.reason_9
-        10 -> R.string.reason_10
-        11 -> R.string.reason_11
-        12 -> R.string.reason_12
-        13 -> R.string.reason_13
-        14 -> R.string.reason_14
-        15 -> R.string.reason_15
-        16 -> R.string.reason_16
-        17 -> R.string.reason_17
-        18 -> R.string.reason_18
-        19 -> R.string.reason_19
-        20 -> R.string.reason_20
-        21 -> R.string.reason_21
-        22 -> R.string.reason_22
-        23 -> R.string.reason_23
-        24 -> R.string.reason_24
-        else -> if (reason != null) R.string.reason_unknown else R.string.reason_system
+    return reason?.let { REASON_LABELS[it] } ?: if (reason == null) {
+        R.string.reason_system
+    } else {
+        R.string.reason_unknown
     }
 }
 
 fun getPriorityLabel(priority: Int): String {
     return when (priority) {
-        -2 -> "Min"
-        -1 -> "Low"
-        0 -> "Default"
-        1 -> "High"
-        2 -> "Max"
+        PRIORITY_MIN -> "Min"
+        PRIORITY_LOW -> "Low"
+        PRIORITY_DEFAULT -> "Default"
+        PRIORITY_HIGH -> "High"
+        PRIORITY_MAX -> "Max"
         else -> "Unknown ($priority)"
+    }
+}
+
+private fun notificationSectionOrder(
+    expandedSection: String,
+    hasPinnedNotifications: Boolean
+): List<NotificationSection> {
+    val defaultList = if (hasPinnedNotifications) {
+        listOf(
+            NotificationSection.PINNED,
+            NotificationSection.ACTIVE,
+            NotificationSection.FILTERED,
+            NotificationSection.DISMISSED,
+            NotificationSection.LOST
+        )
+    } else {
+        listOf(
+            NotificationSection.ACTIVE,
+            NotificationSection.FILTERED,
+            NotificationSection.DISMISSED,
+            NotificationSection.LOST
+        )
+    }
+    val selected = defaultList.find { it.keyName == expandedSection }
+    return if (selected != null) listOf(selected) + defaultList.filter { it != selected } else defaultList
+}
+
+private val notificationSearchSuggestions:
+    (String, List<NotificationEntity>) -> List<String> = { query, notifications ->
+    if (query.length < SEARCH_MIN_LENGTH) {
+        emptyList()
+    } else {
+        (notifications.map { it.appName } + notifications.map { it.title })
+            .filter { it.contains(query, ignoreCase = true) }
+            .distinct()
+            .take(MAX_SEARCH_SUGGESTIONS)
     }
 }
 
@@ -153,17 +241,25 @@ enum class NotificationSection(val keyName: String, val title: String, val subti
     PINNED("PINNED", "Pinned Notifications", "Flagged & saved notifications for later reference"),
     ACTIVE("ACTIVE", "Active Notifications", "Currently active status bar notifications (sorted by time received)"),
     FILTERED("FILTERED", "Filtered Notifications", "System, clutter, spam, and auto-filtered notifications"),
-    DISMISSED("DISMISSED", "Recently Dismissed", "User swiped, clicked, or cleared notifications (sorted by time dismissed)"),
+    DISMISSED(
+        "DISMISSED",
+        "Recently Dismissed",
+        "User swiped, clicked, or cleared notifications (sorted by time dismissed)"
+    ),
     LOST("LOST", "Lost Notifications", "App cancelled or package changed notifications (sorted by time dismissed)")
 }
 
 @Composable
-fun AppIconImage(appIconUri: String?, modifier: Modifier = Modifier.size(20.dp)) {
+fun appIconImage(appIconUri: String?, modifier: Modifier = Modifier.size(20.dp)) {
     val imageBitmap = remember(appIconUri) {
         if (!appIconUri.isNullOrEmpty()) {
             try {
                 BitmapFactory.decodeFile(appIconUri)?.asImageBitmap()
-            } catch (e: Exception) {
+            } catch (e: SecurityException) {
+                Log.w("ActiveNotifications", "Unable to read notification icon", e)
+                null
+            } catch (e: IllegalArgumentException) {
+                Log.w("ActiveNotifications", "Invalid notification icon path", e)
                 null
             }
         } else {
@@ -180,61 +276,99 @@ fun AppIconImage(appIconUri: String?, modifier: Modifier = Modifier.size(20.dp))
     }
 }
 
+private data class ActiveNotificationLifecycleConfig(
+    val searchQuery: String,
+    val selectedPackages: List<String>?,
+    val lifecycleOwner: LifecycleOwner,
+    val context: Context,
+    val preferences: PreferencesRepository,
+    val setDebouncedSearchQuery: (String) -> Unit,
+    val setIsGranted: (Boolean) -> Unit
+)
+
+private val activeNotificationLifecycle: @Composable (ActiveNotificationLifecycleConfig) -> Unit = { config ->
+    LaunchedEffect(config.searchQuery) {
+        config.preferences.sharedSearchManager.setQuery(config.searchQuery)
+        delay(SEARCH_DEBOUNCE_MS)
+        config.setDebouncedSearchQuery(config.searchQuery)
+    }
+    LaunchedEffect(config.selectedPackages) {
+        config.preferences.sharedSearchManager.setPackages(config.selectedPackages)
+    }
+    DisposableEffect(config.lifecycleOwner) {
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_RESUME) {
+                config.setIsGranted(checkNotificationPermission(config.context))
+            }
+        }
+        config.lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose { config.lifecycleOwner.lifecycle.removeObserver(observer) }
+    }
+}
+
+private data class ActiveNotificationsScaffoldConfig(
+    val selectedPackages: List<String>?,
+    val searchQuery: String,
+    val onClearFilters: () -> Unit,
+    val onOpenPackagePicker: () -> Unit,
+    val onToggleSearch: () -> Unit,
+    val listState: androidx.compose.foundation.lazy.LazyListState,
+    val content: @Composable (PaddingValues) -> Unit
+)
+
+private val activeNotificationsLayout: @Composable (ActiveNotificationsScaffoldConfig) -> Unit = { config ->
+    Scaffold(
+        topBar = {
+            activeNotificationsTopBar(
+                selectedPackages = config.selectedPackages,
+                searchQuery = config.searchQuery,
+                onClearFilters = config.onClearFilters,
+                onOpenPackagePicker = config.onOpenPackagePicker,
+                onToggleSearch = config.onToggleSearch
+            )
+        },
+        floatingActionButton = { activeNotificationsFab(config.listState) },
+        content = { innerPadding -> config.content(innerPadding) }
+    )
+}
+
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class, ExperimentalLayoutApi::class)
-@Composable
-fun ActiveNotificationsScreen(dao: NotificationDao, authManager: AuthManager, db: AppDatabase, preferences: PreferencesRepository) {
+private val renderActiveNotificationsScreen:
+    @Composable (NotificationDao, PreferencesRepository) -> Unit =
+    { dao, preferences ->
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
     val prefManager = remember { PreferenceManager(context) }
-    val compactMode by preferences.compactMode.collectAsState()
-    val showAppIcons by preferences.showAppIcons.collectAsState()
-    val groupByApp by preferences.groupByApp.collectAsState()
-    val sortOrder by preferences.sortOrder.collectAsState()
-    val previewLength by preferences.previewLength.collectAsState()
+    val compactMode by preferences.displayManager.compactMode.collectAsState()
+    val showAppIcons by preferences.displayManager.showAppIcons.collectAsState()
+    val groupByApp by preferences.displayManager.groupByApp.collectAsState()
+    val sortOrder by preferences.displayManager.sortOrder.collectAsState()
+    val previewLength by preferences.displayManager.previewLength.collectAsState()
 
-    // F-K fix: persist user-meaningful state across process death / rotation.
-    // - expandedSection: user's last-toggled section (was lost; PrefManager was only
-    //   read on initial composition, never written back on toggle).
-    // - searchQuery, isSearchExplicitlyOpened, selectedPackages: user input state.
-    // - isGranted, expandedCards, dismissingKeys, showBackupKeyDialog, currentBackupKey,
-    //   currentPendingSecretKey, showPackagePicker, debouncedSearchQuery, isSearchFocused:
-    //   transient UI / derived / security-sensitive; do not save.
+
     var expandedSection by rememberSaveable { mutableStateOf(prefManager.getExpandedSection()) }
     var expandedCards by remember { mutableStateOf(setOf<String>()) }
     var collapsedGroups by remember { mutableStateOf(setOf<String>()) }
     var isGranted by remember { mutableStateOf(checkNotificationPermission(context)) }
-    var searchQuery by rememberSaveable { mutableStateOf(preferences.sharedSearchQuery.value) }
+    var searchQuery by rememberSaveable { mutableStateOf(preferences.sharedSearchManager.query.value) }
     var debouncedSearchQuery by remember { mutableStateOf("") }
     var isSearchExplicitlyOpened by rememberSaveable { mutableStateOf(false) }
-    val recentSearches by preferences.recentSearches.collectAsState()
+    val recentSearches by preferences.sharedSearchManager.recentSearches.collectAsState()
     val focusManager = LocalFocusManager.current
     val keyboardController = LocalSoftwareKeyboardController.current
-    LaunchedEffect(searchQuery) { preferences.setSharedSearchQuery(searchQuery) }
-
-
-
-    LaunchedEffect(searchQuery) {
-        delay(100L)
-        debouncedSearchQuery = searchQuery
-    }
-
-
-    // F-K fix: selectedPackages is user filter state — persist across process death.
-    var selectedPackages by remember { mutableStateOf(preferences.sharedSelectedPackages.value) }
+    var selectedPackages by remember { mutableStateOf(preferences.sharedSearchManager.packages.value) }
     var showPackagePicker by remember { mutableStateOf(false) }
-    LaunchedEffect(selectedPackages) { preferences.setSharedSelectedPackages(selectedPackages) }
-
-    DisposableEffect(lifecycleOwner) {
-        val observer = LifecycleEventObserver { _, event ->
-            if (event == Lifecycle.Event.ON_RESUME) {
-                isGranted = checkNotificationPermission(context)
-            }
-        }
-        lifecycleOwner.lifecycle.addObserver(observer)
-        onDispose {
-            lifecycleOwner.lifecycle.removeObserver(observer)
-        }
-    }
+    activeNotificationLifecycle(
+        ActiveNotificationLifecycleConfig(
+            searchQuery = searchQuery,
+            selectedPackages = selectedPackages,
+            lifecycleOwner = lifecycleOwner,
+            context = context,
+            preferences = preferences,
+            setDebouncedSearchQuery = { debouncedSearchQuery = it },
+            setIsGranted = { isGranted = it }
+        )
+    )
 
     val pinnedNotifs by dao.getPinnedNotificationsFlow().collectAsState(initial = emptyList())
     val activeNotifs by dao.getActiveNotificationsFlow().collectAsState(initial = emptyList())
@@ -253,62 +387,10 @@ fun ActiveNotificationsScreen(dao: NotificationDao, authManager: AuthManager, db
         allActiveList.map { it.packageName to it.appName }
     }
 
-    var dismissingKeys by remember { mutableStateOf(setOf<String>()) }
     val scope = rememberCoroutineScope()
 
     val sectionOrder = remember(expandedSection, pinnedNotifs.size) {
-        val defaultList = if (pinnedNotifs.isNotEmpty()) {
-            listOf(NotificationSection.PINNED, NotificationSection.ACTIVE, NotificationSection.FILTERED, NotificationSection.DISMISSED, NotificationSection.LOST)
-        } else {
-            listOf(NotificationSection.ACTIVE, NotificationSection.FILTERED, NotificationSection.DISMISSED, NotificationSection.LOST)
-        }
-        val selected = defaultList.find { it.keyName == expandedSection }
-        if (selected != null) {
-            listOf(selected) + defaultList.filter { it != selected }
-        } else {
-            defaultList
-        }
-    }
-
-    val notificationsBySection by remember {
-        derivedStateOf {
-            NotificationSection.entries.associateWith { section ->
-                val rawList = when (section) {
-                    NotificationSection.PINNED -> pinnedNotifs
-                    NotificationSection.ACTIVE -> activeNotifs
-                    NotificationSection.FILTERED -> filteredNotifs
-                    NotificationSection.DISMISSED -> recentlyDismissed
-                    NotificationSection.LOST -> lostNotifs
-                }.distinctBy { "${it.packageName}_${it.title}_${it.content}" }
-
-                val filtered = if (!selectedPackages.isNullOrEmpty()) {
-                    rawList.filter { selectedPackages!!.contains(it.packageName) }
-                } else {
-                    rawList
-                }
-
-                if (debouncedSearchQuery.isBlank()) {
-                    filtered
-                } else {
-                    // F-G read-side [2026-09-02 audit, resolved via H-wire commit]:
-                    // Replaced naive title/content substring filter with
-                    // HybridSearchEngine (FTS4 + semantic vector, RRF-fused).
-                    HybridSearchEngine.searchAndRankBlocking(filtered, debouncedSearchQuery)
-                }
-            }
-        }
-    }
-
-    val totalLazyItemCount by remember {
-        derivedStateOf {
-            var count = 2
-            sectionOrder.forEach { section ->
-                count += 1
-                val items = notificationsBySection[section] ?: emptyList()
-                count += if (items.isEmpty()) 1 else items.size
-            }
-            count
-        }
+        notificationSectionOrder(expandedSection, pinnedNotifs.isNotEmpty())
     }
 
     val listState = rememberLazyListState()
@@ -323,459 +405,350 @@ fun ActiveNotificationsScreen(dao: NotificationDao, authManager: AuthManager, db
     var isSearchFocused by remember { mutableStateOf(false) }
     val imeVisible = WindowInsets.isImeVisible
 
-    // Auto-hide when keyboard is dismissed (IME no longer visible) AND the field lost focus
+
     LaunchedEffect(isSearchFocused, imeVisible, searchQuery) {
         if (!imeVisible && !isSearchFocused && searchQuery.isBlank()) {
             isSearchExplicitlyOpened = false
         }
     }
 
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = {},
-                actions = {
-                    if (!selectedPackages.isNullOrEmpty() || searchQuery.isNotBlank()) {
-                        IconButton(onClick = {
-                            selectedPackages = null
-                            searchQuery = ""
-                            isSearchFocused = false
-                            isSearchExplicitlyOpened = false
-                            focusManager.clearFocus(force = true)
-                            keyboardController?.hide()
-                        }) {
-                            Icon(Icons.Default.FilterAltOff, contentDescription = "Clear filters")
-                        }
-                    }
-                    TooltipBox(
-                        positionProvider = TooltipDefaults.rememberTooltipPositionProvider(TooltipAnchorPosition.Above),
-                        tooltip = { PlainTooltip { Text(stringResource(id = R.string.active_notifications_filter_apps)) } },
-                        state = rememberTooltipState()
+    activeNotificationsScaffoldWrapper(
+        ActiveNotificationsScaffoldWrapperConfig(
+            selectedPackages = selectedPackages,
+            searchQuery = searchQuery,
+            isSearchExplicitlyOpened = isSearchExplicitlyOpened,
+            isSearchFocused = isSearchFocused,
+            focusManager = focusManager,
+            keyboardController = keyboardController,
+            searchFocusRequester = searchFocusRequester,
+            scope = scope,
+            listState = listState,
+            onSetSelectedPackages = { selectedPackages = it },
+            onSetSearchQuery = { searchQuery = it },
+            onSetSearchFocused = { isSearchFocused = it },
+            onSetSearchExplicitlyOpened = { isSearchExplicitlyOpened = it },
+            onOpenPackagePicker = { showPackagePicker = true },
+            content = { innerPadding ->
+                Box(modifier = Modifier.fillMaxSize()) {
+                    val searchSuggestions = remember(
+                        searchQuery,
+                        pinnedNotifs,
+                        activeNotifs,
+                        filteredNotifs,
+                        recentlyDismissed,
+                        lostNotifs
                     ) {
-                        IconButton(onClick = { showPackagePicker = true }) {
-                            Icon(
-                                Icons.Default.FilterList,
-                                contentDescription = stringResource(id = R.string.active_notifications_filter_apps),
-                                tint = if (!selectedPackages.isNullOrEmpty()) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
-                            )
-                        }
-                    }
-                    TooltipBox(
-                        positionProvider = TooltipDefaults.rememberTooltipPositionProvider(TooltipAnchorPosition.Above),
-                        tooltip = { PlainTooltip { Text(stringResource(id = R.string.common_search)) } },
-                        state = rememberTooltipState()
-                    ) {
-                        IconButton(onClick = {
-                            if (isSearchExplicitlyOpened || searchQuery.isNotEmpty() || isSearchFocused) {
-                                isSearchExplicitlyOpened = false
-                                isSearchFocused = false
-                                searchQuery = ""
-                            } else {
-                                isSearchExplicitlyOpened = true
-                                scope.launch { listState.animateScrollToItem(0); searchFocusRequester.requestFocus() }
-                            }
-                        }) {
-                            Icon(Icons.Default.Search, contentDescription = stringResource(id = R.string.common_search))
-                        }
-                    }
-                }
-            )
-        },
-        floatingActionButton = {
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                SmallFloatingActionButton(
-                    modifier = Modifier.semantics { contentDescription = "PageUpButton" },
-                    onClick = {
-                        val first = listState.layoutInfo.visibleItemsInfo.firstOrNull()?.index ?: 0
-                        val page = listState.layoutInfo.visibleItemsInfo.size.coerceAtLeast(1)
-                        scope.launch { listState.animateScrollToItem((first - page).coerceAtLeast(0)) }
-                    },
-                ) {
-                    Icon(Icons.Default.KeyboardArrowUp, contentDescription = "Page up")
-                }
-                SmallFloatingActionButton(
-                    modifier = Modifier.semantics { contentDescription = "PageDownButton" },
-                    onClick = {
-                        val first = listState.layoutInfo.visibleItemsInfo.firstOrNull()?.index ?: 0
-                        val page = listState.layoutInfo.visibleItemsInfo.size.coerceAtLeast(1)
-                        scope.launch { listState.animateScrollToItem(first + page) }
-                    },
-                ) {
-                    Icon(Icons.Default.KeyboardArrowDown, contentDescription = "Page down")
-                }
-            }
-        }
-    ) { innerPadding ->
-        Box(modifier = Modifier.fillMaxSize()) {
-            LazyColumn(
-                state = listState,
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(innerPadding)
-                    .padding(horizontal = 16.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp),
-                contentPadding = PaddingValues(vertical = 12.dp)
-            ) {
-                item(key = "active_search_header") {
-                    AnimatedVisibility(
-                        visible = isSearchExplicitlyOpened || searchQuery.isNotEmpty() || isSearchFocused,
-                        enter = fadeIn() + expandVertically(),
-                        exit = fadeOut() + shrinkVertically()
-                    ) {
-                        val searchSuggestions = remember(searchQuery, pinnedNotifs, activeNotifs, filteredNotifs, recentlyDismissed, lostNotifs) {
-                            if (searchQuery.length < 2) emptyList()
-                            else {
-                                val allNotifs = pinnedNotifs + activeNotifs + filteredNotifs + recentlyDismissed + lostNotifs
-                                (allNotifs.map { it.appName } + allNotifs.map { it.title })
-                                    .filter { it.contains(searchQuery, ignoreCase = true) }
-                                    .distinct()
-                                    .take(4)
-                            }
-                        }
-                        var expandedDropdown by remember { mutableStateOf(false) }
-
-                        LaunchedEffect(searchSuggestions, recentSearches) {
-                            expandedDropdown = searchSuggestions.isNotEmpty() || recentSearches.isNotEmpty()
-                        }
-
-                        // Ensure dropdown appears promptly when the user types — sometimes
-                        // recomposition ordering delays the searchSuggestions-driven effect.
-                        LaunchedEffect(searchQuery) {
-                            if (searchQuery.length >= 2) {
-                                expandedDropdown = searchSuggestions.isNotEmpty()
-                            } else if (searchQuery.isBlank()) {
-                                expandedDropdown = recentSearches.isNotEmpty()
-                            }
-                        }
-
-                        Box(modifier = Modifier.fillMaxWidth()) {
-                            OutlinedTextField(
-                                value = searchQuery,
-                                onValueChange = { searchQuery = it },
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(bottom = 6.dp)
-                                    .focusRequester(searchFocusRequester)
-                                    .onFocusChanged { isSearchFocused = it.isFocused }
-                                    .semantics { contentDescription = "ActiveSearchField" },
-                                placeholder = { Text("Search") },
-                                leadingIcon = { Icon(Icons.Default.Search, contentDescription = "Search") },
-                                trailingIcon = {
-                                    if (searchQuery.isNotEmpty()) {
-                                        IconButton(onClick = { searchQuery = "" }) {
-                                            Icon(Icons.Default.Close, contentDescription = "Clear Search")
-                                        }
-                                    }
-                                },
-                                singleLine = true,
-                                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
-                                keyboardActions = KeyboardActions(onDone = {
-                                    val query = searchQuery.trim()
-                                    if (query.isNotEmpty()) {
-                                        preferences.addRecentSearch(query)
-                                    }
-                                    focusManager.clearFocus(force = true)
-                                    keyboardController?.hide()
-                                }),
-                                shape = RoundedCornerShape(12.dp)
-                            )
-
-                            DropdownMenu(
-                                expanded = expandedDropdown && (searchSuggestions.isNotEmpty() || (searchQuery.isBlank() && recentSearches.isNotEmpty())),
-                                onDismissRequest = { expandedDropdown = false },
-                                properties = androidx.compose.ui.window.PopupProperties(focusable = false),
-                                modifier = Modifier.fillMaxWidth(0.9f)
-                            ) {
-                                // Show recent searches that match the current query (or all recent when blank)
-                                val matchingRecent = remember(searchQuery, recentSearches) {
-                                    if (searchQuery.isBlank()) recentSearches
-                                    else recentSearches.filter { it.contains(searchQuery, ignoreCase = true) }
-                                }
-                                matchingRecent.forEach { recent ->
-                                    DropdownMenuItem(
-                                        text = { Text(recent) },
-                                        trailingIcon = { IconButton(onClick = { preferences.removeRecentSearch(recent) }) { Icon(Icons.Default.Close, contentDescription = "Remove recent search") } },
-                                        onClick = { searchQuery = recent; expandedDropdown = false }
-                                    )
-                                }
-                                if (matchingRecent.isNotEmpty()) {
-                                    DropdownMenuItem(
-                                        text = { Text("Clear recent searches") },
-                                        onClick = { preferences.resetRecentSearches(); expandedDropdown = false }
-                                    )
-                                }
-
-                                // Suggestions from notification content (de-duplicated)
-                                searchSuggestions.forEach { suggestion ->
-                                    DropdownMenuItem(
-                                        text = { Text(suggestion, fontSize = 14.sp) },
-                                        onClick = {
-                                            searchQuery = suggestion
-                                            expandedDropdown = false
-                                        }
-                                    )
-                                }
-                            }
-                        }
-                    }
-                }
-
-
-                // F-N usability [2026-09-06]: surface empty-state Composables when the
-                // entire DB is empty or a query returned no matches. Distinguishes three
-                // scenarios: (1) permission missing → guidance + CTA, (2) permission OK
-                // but no notifications captured yet → first-run guidance, (3) permission
-                // OK + DB has rows but a query/filter returned nothing → search-empty
-                // guidance with a clear-search escape hatch.
-                val hasAnyData = activeNotifs.isNotEmpty() ||
-                    filteredNotifs.isNotEmpty() ||
-                    pinnedNotifs.isNotEmpty() ||
-                    recentlyDismissed.isNotEmpty() ||
-                    lostNotifs.isNotEmpty()
-                val isSearching = debouncedSearchQuery.isNotBlank() ||
-                    !selectedPackages.isNullOrEmpty()
-                if (!hasAnyData) {
-                    item(key = "active_empty_state") {
-                        if (!isGranted) {
-                            ActivePermissionEmptyState(
-                                title = stringResource(id = R.string.active_empty_permission_title),
-                                description = stringResource(id = R.string.active_empty_permission_desc),
-                                step1 = stringResource(id = R.string.active_empty_permission_step1),
-                                step2 = stringResource(id = R.string.active_empty_permission_step2),
-                                step3 = stringResource(id = R.string.active_empty_permission_step3),
-                                grantButtonText = stringResource(id = R.string.active_empty_permission_grant),
-                                onGrantClick = {
-                                    val intent = Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS)
-                                    intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                                    context.startActivity(intent)
-                                }
-                            )
-                        } else if (isSearching) {
-                            ActiveSearchEmptyState(
-                                title = stringResource(id = R.string.active_empty_search_title),
-                                description = stringResource(
-                                    id = R.string.active_empty_search_desc,
-                                    debouncedSearchQuery
-                                ),
-                                clearButtonText = stringResource(id = R.string.active_empty_search_clear),
-                                onClearClick = {
-                                    searchQuery = ""
-                                    selectedPackages = null
-                                }
-                            )
-                        } else {
-                            ActiveFirstRunEmptyState(
-                                title = stringResource(id = R.string.active_empty_first_run_title),
-                                description = stringResource(id = R.string.active_empty_first_run_desc),
-                                hint = stringResource(id = R.string.active_empty_first_run_hint)
-                            )
-                        }
-                    }
-                }
-
-                // F-N usability [2026-09-06]: active-filter chip row, only shown when
-                // at least one filter is set, so users always know *why* their list is
-                // shorter than expected and can clear the filter with one tap.
-                val activeChips = mutableListOf<ActiveFilterChip>()
-                if (debouncedSearchQuery.isNotBlank()) {
-                    activeChips += ActiveFilterChip(text = "\"${debouncedSearchQuery}\"") {
-                        searchQuery = ""
-                    }
-                }
-                selectedPackages?.takeIf { it.isNotEmpty() }?.let { pkgs ->
-                    activeChips += ActiveFilterChip(
-                        text = "${pkgs.size} app${if (pkgs.size == 1) "" else "s"}"
-                    ) { selectedPackages = null }
-                }
-                if (activeChips.isNotEmpty()) {
-                    item(key = "active_filter_chips") {
-                        ActiveFilterChipsRow(
-                            label = stringResource(id = R.string.active_filter_chips_label),
-                            chips = activeChips,
-                            clearAllLabel = stringResource(id = R.string.active_filter_chips_clear_all),
-                            onClearAll = {
-                                searchQuery = ""
-                                selectedPackages = null
-                            }
+                        notificationSearchSuggestions(
+                            searchQuery,
+                            pinnedNotifs + activeNotifs + filteredNotifs + recentlyDismissed + lostNotifs
                         )
                     }
+                    renderActiveNotificationsList(
+                        ActiveNotificationsListConfig(
+                            listState = listState,
+                            innerPadding = innerPadding,
+                            searchQuery = searchQuery,
+                            searchSuggestions = searchSuggestions,
+                            recentSearches = recentSearches,
+                            isSearchVisible = isSearchExplicitlyOpened || searchQuery.isNotEmpty() || isSearchFocused,
+                            searchFocusRequester = searchFocusRequester,
+                            preferences = preferences,
+                            focusManager = focusManager,
+                            keyboardController = keyboardController,
+                            isGranted = isGranted,
+                            debouncedSearchQuery = debouncedSearchQuery,
+                            selectedPackages = selectedPackages,
+                            context = context,
+                            pinnedNotifs = pinnedNotifs,
+                            activeNotifs = activeNotifs,
+                            filteredNotifs = filteredNotifs,
+                            recentlyDismissed = recentlyDismissed,
+                            lostNotifs = lostNotifs,
+                            sectionOrder = sectionOrder,
+                            expandedSection = expandedSection,
+                            collapsedGroups = collapsedGroups,
+                            expandedCards = expandedCards,
+                            dateTimeFormatter = dateTimeFormatter,
+                            dao = dao,
+                            showAppIcons = showAppIcons,
+                            compactMode = compactMode,
+                            groupByApp = groupByApp,
+                            sortOrder = sortOrder,
+                            previewLength = previewLength,
+                            onSearchChanged = { searchQuery = it },
+                            onFocusChanged = { isSearchFocused = it },
+                            onClear = {
+                                searchQuery = ""
+                                selectedPackages = null
+                            },
+                            onSetPackages = { selectedPackages = it },
+                            onSetCollapsedGroups = { collapsedGroups = it },
+                            onSetExpandedCards = { expandedCards = it },
+                            toggleSection = ::toggleSection
+                        )
+                    )
                 }
-
-                sectionOrder.forEach { section ->
-                    val isExpanded = expandedSection == section.keyName
-                    val rawItemsList = when (section) {
-                        NotificationSection.PINNED -> pinnedNotifs
-                        NotificationSection.ACTIVE -> activeNotifs
-                        NotificationSection.FILTERED -> filteredNotifs
-                        NotificationSection.DISMISSED ->
-                            recentlyDismissed.sortedByDescending { it.dismissTime ?: it.postTime }
-                        NotificationSection.LOST -> lostNotifs
-                    }.distinctBy { "${it.packageName}_${it.title}_${it.content}" }
-
-                    val filteredList = if (!selectedPackages.isNullOrEmpty()) {
-                        rawItemsList.filter { selectedPackages!!.contains(it.packageName) }
-                    } else {
-                        rawItemsList
-                    }
-
-                    val itemsList = if (debouncedSearchQuery.isBlank()) filteredList
-                    else {
-                        // F-G read-side [2026-09-02 audit]: HybridSearchEngine
-                        // composes FTS4 keyword scoring with semantic-vector
-                        // cosine scoring via Reciprocal Rank Fusion.
-                        HybridSearchEngine.searchAndRankBlocking(filteredList, debouncedSearchQuery)
-                    }
-
-                    stickyHeader(key = "sticky_header_${section.keyName}") {
-                        Surface(
-                            modifier = Modifier.fillMaxWidth(),
-                            color = MaterialTheme.colorScheme.background,
-                            shadowElevation = if (isExpanded) 2.dp else 0.dp
-                        ) {
-                            Card(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(vertical = 4.dp)
-                                    .clickable { toggleSection(section.keyName) }
-                            ) {
-                                Row(
-                                    modifier = Modifier.padding(14.dp),
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    horizontalArrangement = Arrangement.SpaceBetween
-                                ) {
-                                    Column(modifier = Modifier.weight(1f)) {
-                                        Text(
-                                            text = section.title,
-                                            style = MaterialTheme.typography.titleMedium,
-                                            fontWeight = FontWeight.Bold
-                                        )
-                                        Text(
-                                            text = section.subtitle,
-                                            style = MaterialTheme.typography.bodySmall,
-                                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                                        )
-                                    }
-                                    Spacer(modifier = Modifier.width(8.dp))
-                                    Badge(
-                                        containerColor = MaterialTheme.colorScheme.secondaryContainer,
-                                        contentColor = MaterialTheme.colorScheme.onSecondaryContainer
-                                    ) {
-                                        Text(
-                                            text = "${itemsList.size}",
-                                            style = MaterialTheme.typography.labelMedium,
-                                            modifier = Modifier.padding(horizontal = 4.dp, vertical = 2.dp)
-                                        )
-                                    }
-                                    Spacer(modifier = Modifier.width(8.dp))
-                                    Icon(
-                                        imageVector = if (isExpanded) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
-                                        contentDescription = null
-                                    )
-                                }
-                            }
-                        }
-                    }
-
-                    if (isExpanded) {
-                        val notificationGroups = groupNotifications(itemsList, groupByApp, sortOrder)
-                        items(
-                            items = notificationGroups,
-                            key = { group -> "group_${section.keyName}_${group.groupKey}" }
-                        ) { group ->
-                            val isGroupExpanded = !collapsedGroups.contains(group.groupKey)
-                            if (group.items.size == 1) {
-                                val item = group.items[0]
-                                val cardExpanded = expandedCards.contains(item.key)
-                                LogNotificationCard(
-                                    item = item,
-                                    dateTimeFormatter = dateTimeFormatter,
-                                    dao = dao,
-                                    isExpanded = cardExpanded,
-                                            highlightQuery = debouncedSearchQuery,
-                                    showAppIcon = showAppIcons,
-                                    compactMode = compactMode,
-                                    previewLength = previewLength,
-                                    onToggleExpand = {
-                                        expandedCards = if (cardExpanded) expandedCards - item.key else expandedCards + item.key
-                                    }
-                                )
-                            } else {
-                                NotificationGroupCard(
-                                    group = group,
-                                    dateTimeFormatter = dateTimeFormatter,
-                                    dao = dao,
-                                    isGroupExpanded = isGroupExpanded,
-                                    onToggleGroupExpand = {
-                                        collapsedGroups = if (collapsedGroups.contains(group.groupKey)) {
-                                            collapsedGroups - group.groupKey
-                                        } else {
-                                            collapsedGroups + group.groupKey
-                                        }
-                                    },
-                                    renderChildCard = { childItem ->
-                                        val cardExpanded = expandedCards.contains(childItem.key)
-                                        LogNotificationCard(
-                                            item = childItem,
-                                            dateTimeFormatter = dateTimeFormatter,
-                                            dao = dao,
-                                            isExpanded = cardExpanded,
-                                            highlightQuery = debouncedSearchQuery,
-                                    showAppIcon = showAppIcons,
-                                    compactMode = compactMode,
-                                    previewLength = previewLength,
-                                            onToggleExpand = {
-                                                expandedCards = if (cardExpanded) {
-                                                    expandedCards - childItem.key
-                                                } else {
-                                                    expandedCards + childItem.key
-                                                }
-                                            }
-                                        )
-                                    }
-                                )
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-    if (showPackagePicker) {
-        AppPackageSelectorDialog(
-            selectedPackages = selectedPackages ?: emptyList(),
-            availableApps = availableApps,
-            onDismiss = { showPackagePicker = false },
-            onPackagesSelected = { pkgs ->
-                selectedPackages = pkgs
-                showPackagePicker = false
             }
         )
+    )
+
+    renderActivePackagePicker(showPackagePicker, selectedPackages, availableApps) { pkgs, visible ->
+        selectedPackages = pkgs
+        showPackagePicker = visible
     }
 
 }
 
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class, ExperimentalLayoutApi::class)
+@Composable
+fun activeNotificationsScreen(dao: NotificationDao, preferences: PreferencesRepository) {
+    renderActiveNotificationsScreen(dao, preferences)
+}
+
+private data class ActiveNotificationsScaffoldWrapperConfig(
+    val selectedPackages: List<String>?,
+    val searchQuery: String,
+    val isSearchExplicitlyOpened: Boolean,
+    val isSearchFocused: Boolean,
+    val focusManager: androidx.compose.ui.focus.FocusManager,
+    val keyboardController: androidx.compose.ui.platform.SoftwareKeyboardController?,
+    val searchFocusRequester: FocusRequester,
+    val scope: kotlinx.coroutines.CoroutineScope,
+    val listState: androidx.compose.foundation.lazy.LazyListState,
+    val onSetSelectedPackages: (List<String>?) -> Unit,
+    val onSetSearchQuery: (String) -> Unit,
+    val onSetSearchFocused: (Boolean) -> Unit,
+    val onSetSearchExplicitlyOpened: (Boolean) -> Unit,
+    val onOpenPackagePicker: () -> Unit,
+    val content: @Composable (PaddingValues) -> Unit
+)
+
+private val activeNotificationsScaffoldWrapper:
+    @Composable (ActiveNotificationsScaffoldWrapperConfig) -> Unit = { config ->
+    activeNotificationsLayout(
+        ActiveNotificationsScaffoldConfig(
+            selectedPackages = config.selectedPackages,
+            searchQuery = config.searchQuery,
+            onClearFilters = {
+                config.onSetSelectedPackages(null)
+                config.onSetSearchQuery("")
+                config.onSetSearchFocused(false)
+                config.onSetSearchExplicitlyOpened(false)
+                config.focusManager.clearFocus(force = true)
+                config.keyboardController?.hide()
+            },
+            onOpenPackagePicker = config.onOpenPackagePicker,
+            onToggleSearch = {
+                if (config.isSearchExplicitlyOpened || config.searchQuery.isNotEmpty() || config.isSearchFocused) {
+                    config.onSetSearchExplicitlyOpened(false)
+                    config.onSetSearchFocused(false)
+                    config.onSetSearchQuery("")
+                } else {
+                    config.onSetSearchExplicitlyOpened(true)
+                    config.scope.launch {
+                        config.listState.animateScrollToItem(0)
+                        config.searchFocusRequester.requestFocus()
+                    }
+                }
+            },
+            listState = config.listState,
+            content = config.content
+        )
+    )
+}
+
+private val renderActivePackagePicker:
+    @Composable (Boolean, List<String>?, List<Pair<String, String>>, (List<String>?, Boolean) -> Unit) -> Unit =
+    { visible, selectedPackages, availableApps, onChanged ->
+        if (visible) {
+            appPackageSelectorDialog(
+                selectedPackages = selectedPackages ?: emptyList(),
+                availableApps = availableApps,
+                onDismiss = { onChanged(selectedPackages, false) },
+                onPackagesSelected = { onChanged(it, false) }
+            )
+        }
+    }
+
+private data class ActiveNotificationsListConfig(
+    val listState: androidx.compose.foundation.lazy.LazyListState,
+    val innerPadding: PaddingValues,
+    val searchQuery: String,
+    val searchSuggestions: List<String>,
+    val recentSearches: List<String>,
+    val isSearchVisible: Boolean,
+    val searchFocusRequester: FocusRequester,
+    val preferences: PreferencesRepository,
+    val focusManager: androidx.compose.ui.focus.FocusManager,
+    val keyboardController: androidx.compose.ui.platform.SoftwareKeyboardController?,
+    val isGranted: Boolean,
+    val debouncedSearchQuery: String,
+    val selectedPackages: List<String>?,
+    val context: Context,
+    val pinnedNotifs: List<NotificationEntity>,
+    val activeNotifs: List<NotificationEntity>,
+    val filteredNotifs: List<NotificationEntity>,
+    val recentlyDismissed: List<NotificationEntity>,
+    val lostNotifs: List<NotificationEntity>,
+    val sectionOrder: List<NotificationSection>,
+    val expandedSection: String,
+    val collapsedGroups: Set<String>,
+    val expandedCards: Set<String>,
+    val dateTimeFormatter: DateTimeFormatter,
+    val dao: NotificationDao,
+    val showAppIcons: Boolean,
+    val compactMode: Boolean,
+    val groupByApp: Boolean,
+    val sortOrder: String,
+    val previewLength: Int,
+    val onSearchChanged: (String) -> Unit,
+    val onFocusChanged: (Boolean) -> Unit,
+    val onClear: () -> Unit,
+    val onSetPackages: (List<String>?) -> Unit,
+    val onSetCollapsedGroups: (Set<String>) -> Unit,
+    val onSetExpandedCards: (Set<String>) -> Unit,
+    val toggleSection: (String) -> Unit
+)
+
+@Composable
+private fun renderActiveNotificationsList(config: ActiveNotificationsListConfig) {
+    LazyColumn(
+        state = config.listState,
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(config.innerPadding)
+            .padding(horizontal = 16.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp),
+        contentPadding = PaddingValues(vertical = 12.dp)
+    ) {
+        activeSearchHeader(
+            ActiveSearchHeaderConfig(
+                searchQuery = config.searchQuery,
+                searchSuggestions = config.searchSuggestions,
+                recentSearches = config.recentSearches,
+                isVisible = config.isSearchVisible,
+                focusRequester = config.searchFocusRequester,
+                preferences = config.preferences,
+                onQueryChanged = config.onSearchChanged,
+                onFocusChanged = config.onFocusChanged,
+                onDone = {
+                    val query = config.searchQuery.trim()
+                    if (query.isNotEmpty()) config.preferences.sharedSearchManager.addRecentSearch(query)
+                    config.focusManager.clearFocus(force = true)
+                    config.keyboardController?.hide()
+                }
+            )
+        )
+        val hasAnyData = config.activeNotifs.isNotEmpty() ||
+            config.filteredNotifs.isNotEmpty() ||
+            config.pinnedNotifs.isNotEmpty() ||
+            config.recentlyDismissed.isNotEmpty() ||
+            config.lostNotifs.isNotEmpty()
+        val isSearching = config.debouncedSearchQuery.isNotBlank() ||
+            !config.selectedPackages.isNullOrEmpty()
+        activeNotificationsEmptyStateItem(
+            ActiveNotificationsEmptyStateConfig(
+                hasAnyData = hasAnyData,
+                isGranted = config.isGranted,
+                isSearching = isSearching,
+                debouncedSearchQuery = config.debouncedSearchQuery,
+                context = config.context,
+                onClear = config.onClear
+            )
+        )
+        activeFilterChipsItem(
+            searchQuery = config.debouncedSearchQuery,
+            selectedPackages = config.selectedPackages,
+            onClearSearch = { config.onSearchChanged("") },
+            onClearPackages = { config.onSetPackages(null) },
+            onClearAll = config.onClear
+        )
+        renderActiveNotificationSections(config)
+    }
+}
+
+private val renderActiveNotificationSections:
+    androidx.compose.foundation.lazy.LazyListScope.(ActiveNotificationsListConfig) -> Unit = { config ->
+    renderNotificationSections(
+        ActiveNotificationSectionsConfig(
+            sectionOrder = config.sectionOrder,
+            expandedSection = config.expandedSection,
+            pinnedNotifs = config.pinnedNotifs,
+            activeNotifs = config.activeNotifs,
+            filteredNotifs = config.filteredNotifs,
+            recentlyDismissed = config.recentlyDismissed,
+            lostNotifs = config.lostNotifs,
+            selectedPackages = config.selectedPackages,
+            debouncedSearchQuery = config.debouncedSearchQuery,
+            groupByApp = config.groupByApp,
+            sortOrder = config.sortOrder,
+            collapsedGroups = config.collapsedGroups,
+            setCollapsedGroups = config.onSetCollapsedGroups,
+            expandedCards = config.expandedCards,
+            setExpandedCards = config.onSetExpandedCards,
+            dateTimeFormatter = config.dateTimeFormatter,
+            dao = config.dao,
+            showAppIcons = config.showAppIcons,
+            compactMode = config.compactMode,
+            previewLength = config.previewLength,
+            toggleSection = config.toggleSection
+        )
+    )
+}
+
+private data class ActiveNotificationsEmptyStateConfig(
+    val hasAnyData: Boolean,
+    val isGranted: Boolean,
+    val isSearching: Boolean,
+    val debouncedSearchQuery: String,
+    val context: Context,
+    val onClear: () -> Unit
+)
+
+private fun androidx.compose.foundation.lazy.LazyListScope.activeNotificationsEmptyStateItem(
+    config: ActiveNotificationsEmptyStateConfig
+) {
+    if (config.hasAnyData) return
+    item(key = "active_empty_state") {
+        activeEmptyState(
+            isGranted = config.isGranted,
+            isSearching = config.isSearching,
+            debouncedSearchQuery = config.debouncedSearchQuery,
+            onGrantClick = {
+                val intent = Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS)
+                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                config.context.startActivity(intent)
+            },
+            onClearClick = config.onClear
+        )
+    }
+}
+
+data class LogNotificationCardConfig(
+    val item: NotificationEntity,
+    val dateTimeFormatter: DateTimeFormatter,
+    val dao: NotificationDao,
+    val isExpanded: Boolean,
+    val highlightQuery: String = "",
+    val onToggleExpand: () -> Unit,
+    val showAppIcon: Boolean = true,
+    val compactMode: Boolean = false,
+    val previewLength: Int = 140
+)
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-@Suppress(
-    "CyclomaticComplexMethod",
-    "LongMethod",
-    "FunctionNaming"
-) // LogNotificationCard renders the full History row (header + chips + action menu + dismiss +
-// actions count + expanded panel) in one Composable; splitting it into sub-Composables would
-// require lifting expanded state out of the row, breaking local `remember` reuse. Composable
-// PascalCase is required by the Compose API and detekt's FunctionNaming rule does not exempt it.
-fun LogNotificationCard(
-    item: NotificationEntity,
-    dateTimeFormatter: DateTimeFormatter,
-    dao: NotificationDao,
-    isExpanded: Boolean,
-    highlightQuery: String = "",
-    onToggleExpand: () -> Unit,
-    showAppIcon: Boolean = true,
-    compactMode: Boolean = false,
-    previewLength: Int = 140
-) {
+fun logNotificationCard(config: LogNotificationCardConfig) {
+    val item = config.item
+    val dateTimeFormatter = config.dateTimeFormatter
+    val dao = config.dao
+    val isExpanded = config.isExpanded
+    val highlightQuery = config.highlightQuery
+    val onToggleExpand = config.onToggleExpand
+    val showAppIcon = config.showAppIcon
+    val compactMode = config.compactMode
+    val previewLength = config.previewLength
+    
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
 
@@ -793,340 +766,48 @@ fun LogNotificationCard(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier.weight(1f)
-                ) {
-                    if (showAppIcon) AppIconImage(appIconUri = item.appIconUri)
-                    if (showAppIcon && !item.appIconUri.isNullOrEmpty()) {
-                        Spacer(modifier = Modifier.width(6.dp))
-                    }
-                    Text(
-                        text = item.appName,
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 13.sp,
-                        color = MaterialTheme.colorScheme.primary
-                    )
-                }
-
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    TooltipBox(
-                        positionProvider = TooltipDefaults.rememberTooltipPositionProvider(TooltipAnchorPosition.Above),
-                        tooltip = { PlainTooltip { Text(if (item.isPinned) "Unpin notification" else "Pin notification") } },
-                        state = rememberTooltipState()
-                    ) {
-                        IconButton(
-                            onClick = {
-                                scope.launch {
-                                    dao.updatePinnedStatus(item.key, !item.isPinned)
-                                }
-                            },
-                            modifier = Modifier.size(24.dp)
-                        ) {
-                            Icon(
-                                imageVector = if (item.isPinned) Icons.Default.Bookmark else Icons.Outlined.BookmarkBorder,
-                                contentDescription = if (item.isPinned) "Unpin" else "Pin",
-                                tint = if (item.isPinned) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                        }
-                    }
-
-                    Spacer(modifier = Modifier.width(6.dp))
-                    if (item.isDismissed) {
-                        Surface(
-                            color = MaterialTheme.colorScheme.secondary.copy(alpha = 0.2f),
-                            shape = MaterialTheme.shapes.extraSmall
-                        ) {
-                            Text(
-                                text = stringResource(id = getReasonLabel(item.dismissReason)),
-                                fontSize = 10.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = MaterialTheme.colorScheme.secondary,
-                                modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
-                            )
-                        }
-                        Spacer(modifier = Modifier.width(6.dp))
-                    }
-
-                    TooltipBox(
-                        positionProvider = TooltipDefaults.rememberTooltipPositionProvider(TooltipAnchorPosition.Above),
-                        tooltip = { PlainTooltip { Text("Open notification") } },
-                        state = rememberTooltipState()
-                    ) {
-                        IconButton(
-                            onClick = {
-                                NotificationLauncher.launchNotification(context, item.packageName, item.key, item.intentUri)
-                            },
-                            modifier = Modifier.size(24.dp)
-                        ) {
-                            Icon(
-                                imageVector = Icons.AutoMirrored.Filled.OpenInNew,
-                                contentDescription = "Open notification"
-                            )
-                        }
-                    }
-                }
+                activeNotificationHeader(config)
             }
 
             if (!isExpanded) {
-                if (item.title.isNotEmpty()) {
-                    Text(
-                        text = highlightSearchText(item.title, highlightQuery),
-                        style = MaterialTheme.typography.bodyMedium,
-                        fontWeight = FontWeight.SemiBold,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                        modifier = Modifier.padding(top = 4.dp)
-                    )
-                }
-                if (item.content.isNotEmpty()) {
-                    Text(
-                        text = highlightSearchText(item.content.take(previewLength), highlightQuery),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        maxLines = 2,
-                        overflow = TextOverflow.Ellipsis,
-                        modifier = Modifier.padding(top = 2.dp)
-                    )
-                }
+                notificationCollapsedContent(config)
             }
 
             if (isExpanded) {
-                Column(modifier = Modifier.padding(top = 8.dp)) {
-                    Text(
-                        text = highlightSearchText(item.title, highlightQuery),
-                        style = MaterialTheme.typography.bodyLarge,
-                        fontWeight = FontWeight.SemiBold,
-                        maxLines = 3,
-                        overflow = TextOverflow.Ellipsis
-                    )
-                    Spacer(modifier = Modifier.height(4.dp))
-                    Text(
-                        text = item.content,
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        maxLines = 10,
-                        overflow = TextOverflow.Ellipsis
-                    )
-                    if (!item.subText.isNullOrEmpty()) {
-                        Spacer(modifier = Modifier.height(2.dp))
-                        Text(
-                            text = item.subText,
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.75f)
-                        )
-                    }
-                    if (!item.bigText.isNullOrEmpty() && item.bigText != item.content) {
-                        Spacer(modifier = Modifier.height(4.dp))
-                        Text(
-                            text = item.bigText,
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.85f)
-                        )
-                    }
-                    @Suppress("SwallowedException")
-                    val inboxLines = remember(item.inboxLinesJson) {
-                        if (item.inboxLinesJson.isNullOrBlank()) {
-                            emptyList()
-                        } else {
-                            try {
-                                val array = JSONArray(item.inboxLinesJson)
-                                (0 until array.length()).mapNotNull { idx ->
-                                    val str = array.optString(idx)
-                                    str.takeIf { it.isNotBlank() }
-                                }
-                            } catch (_: org.json.JSONException) {
-                                emptyList()
-                            }
-                        }
-                    }
-                    if (inboxLines.isNotEmpty()) {
-                        Spacer(modifier = Modifier.height(6.dp))
-                        Surface(
-                            shape = RoundedCornerShape(6.dp),
-                            color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.35f),
-                            modifier = Modifier.fillMaxWidth()
-                        ) {
-                            Column(
-                                modifier = Modifier.padding(8.dp),
-                                verticalArrangement = Arrangement.spacedBy(2.dp)
-                            ) {
-                                Text(
-                                    text = "Inbox Lines (${inboxLines.size})",
-                                    style = MaterialTheme.typography.labelSmall,
-                                    fontWeight = FontWeight.Bold,
-                                    color = MaterialTheme.colorScheme.primary
-                                )
-                                inboxLines.forEach { line ->
-                                    Row(
-                                        modifier = Modifier.fillMaxWidth(),
-                                        verticalAlignment = Alignment.Top
-                                    ) {
-                                        Text(
-                                            text = "• ",
-                                            style = MaterialTheme.typography.bodySmall,
-                                            color = MaterialTheme.colorScheme.primary
-                                        )
-                                        Text(
-                                            text = line,
-                                            style = MaterialTheme.typography.bodySmall,
-                                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                                        )
-                                    }
-                                }
-                            }
-                        }
-                    }
-                    Spacer(modifier = Modifier.height(8.dp))
-                    NotificationExpandedAttributes(
-                        item = item,
-                        dateTimeFormatter = dateTimeFormatter
-                    )
-                }
+                activeNotificationExpandedContent(
+                    item = item,
+                    dateTimeFormatter = dateTimeFormatter,
+                    highlightQuery = highlightQuery
+                )
             }
         }
     }
 }
 
 @Composable
-@Suppress("FunctionNaming", "LongMethod", "CyclomaticComplexMethod")
-fun NotificationExpandedAttributes(
-    item: NotificationEntity,
-    dateTimeFormatter: DateTimeFormatter,
-    modifier: Modifier = Modifier
-) {
-    Surface(
-        shape = RoundedCornerShape(8.dp),
-        color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.45f),
-        modifier = modifier.fillMaxWidth()
-    ) {
-        Column(
-            modifier = Modifier.padding(10.dp),
-            verticalArrangement = Arrangement.spacedBy(4.dp)
-        ) {
-            Text(
-                text = "Notification Attributes",
-                style = MaterialTheme.typography.labelMedium,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.primary
-            )
-            AttributeRow(label = "Package", value = item.packageName)
-            if (item.appName.isNotBlank() && item.appName != item.packageName) {
-                AttributeRow(label = "App Name", value = item.appName)
-            }
-            if (!item.channelId.isNullOrEmpty()) {
-                AttributeRow(label = "Channel ID", value = item.channelId)
-            }
-            if (!item.category.isNullOrEmpty()) {
-                AttributeRow(label = "Category", value = item.category)
-            }
-            AttributeRow(label = "Priority", value = getPriorityLabel(item.priority))
-            AttributeRow(label = "Time Received", value = dateTimeFormatter.format(Instant.ofEpochMilli(item.postTime)))
-            if (item.lastUpdatedTime > 0 && item.lastUpdatedTime != item.postTime) {
-                AttributeRow(
-                    label = "Last Updated",
-                    value = dateTimeFormatter.format(Instant.ofEpochMilli(item.lastUpdatedTime))
-                )
-            }
-            if (item.updateCount > 1) {
-                AttributeRow(label = "Update Count", value = "${item.updateCount}")
-            }
-            if (item.dismissTime != null && item.dismissTime > 0) {
-                AttributeRow(
-                    label = "Time Dismissed",
-                    value = dateTimeFormatter.format(Instant.ofEpochMilli(item.dismissTime))
-                )
-            }
-            if (item.dismissReason != null) {
-                AttributeRow(label = "Dismiss Reason", value = stringResource(id = getReasonLabel(item.dismissReason)))
-            }
-            if (item.isOngoing) {
-                AttributeRow(label = "Ongoing", value = "Yes")
-            }
-            if (item.isPersistent) {
-                AttributeRow(label = "Persistent", value = "Yes")
-            }
-            if (!item.isClearable) {
-                AttributeRow(label = "Clearable", value = "No")
-            }
-            if (item.isPinned) {
-                AttributeRow(label = "Pinned", value = "Yes")
-            }
-            if (item.isRead) {
-                AttributeRow(label = "Read Status", value = "Read")
-            }
-            if (item.isGroupSummary) {
-                AttributeRow(label = "Group Summary", value = "Yes")
-            }
-            if (!item.groupKey.isNullOrEmpty()) {
-                AttributeRow(label = "Group Key", value = item.groupKey)
-            }
-            if (item.actionsCount > 0) {
-                AttributeRow(label = "Actions Count", value = "${item.actionsCount}")
-            }
-            if (!item.actionLabels.isNullOrEmpty()) {
-                AttributeRow(label = "Action Labels", value = item.actionLabels)
-            }
-            if (!item.intentUri.isNullOrEmpty()) {
-                AttributeRow(label = "Intent URI", value = item.intentUri)
-            }
-            if (item.smallIconRes != 0) {
-                AttributeRow(label = "Small Icon Res", value = "0x${item.smallIconRes.toString(16).uppercase()}")
-            }
-            if (!item.appIconUri.isNullOrEmpty()) {
-                AttributeRow(label = "App Icon URI", value = item.appIconUri)
-            }
-            AttributeRow(label = "Sync Status", value = item.syncStatus.name)
-            if (item.lastSyncedAt > 0) {
-                AttributeRow(
-                    label = "Last Synced",
-                    value = dateTimeFormatter.format(Instant.ofEpochMilli(item.lastSyncedAt))
-                )
-            }
-            if (item.embedding != null) {
-                AttributeRow(label = "Vector Embedding", value = "128-dim Indexed")
-            }
-            if (item.id > 0) {
-                AttributeRow(label = "Database ID", value = "#${item.id}")
-            }
-            AttributeRow(label = "Key", value = item.key)
-        }
-    }
-}
+private fun notificationCollapsedContent(config: LogNotificationCardConfig) {
+    val item = config.item
+    val highlightQuery = config.highlightQuery
+    val previewLength = config.previewLength
 
-@Composable
-@Suppress("FunctionNaming") // Composable PascalCase required by Compose API; detekt rule does not exempt.
-fun AttributeRow(label: String, value: String) {
-    // Column weights: label column gets 35%, value column gets 65% of the row width.
-    val (labelWeight, valueWeight) = labelValueWeights
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.Top
-    ) {
+    if (item.title.isNotEmpty()) {
         Text(
-            text = label,
-            style = MaterialTheme.typography.labelSmall,
+            text = highlightSearchText(item.title, highlightQuery),
+            style = MaterialTheme.typography.bodyMedium,
             fontWeight = FontWeight.SemiBold,
-            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = LABEL_ALPHA),
-            modifier = Modifier.weight(labelWeight)
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+            modifier = Modifier.padding(top = 4.dp)
         )
+    }
+    if (item.content.isNotEmpty()) {
         Text(
-            text = value,
+            text = highlightSearchText(item.content.take(previewLength), highlightQuery),
             style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurface,
-            modifier = Modifier.weight(valueWeight)
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            maxLines = 2,
+            overflow = TextOverflow.Ellipsis,
+            modifier = Modifier.padding(top = 2.dp)
         )
     }
 }
-
-// Pair of (label column weight, value column weight) used by AttributeRow.
-// Defined at file scope so detekt's MagicNumber rule does not fire inside the Composable.
-// Weights are required by Compose's Modifier.weight(...) signature and cannot be hidden behind a
-// factory without changing the call shape.
-// Note: top-level const vals must be SCREAMING_SNAKE_CASE per detekt's TopLevelPropertyNaming
-// rule (the inverse of VariableNaming for class members).
-private const val LABEL_WEIGHT = 0.35f
-private const val VALUE_WEIGHT = 0.65f
-private const val LABEL_ALPHA = 0.8f
-private val labelValueWeights: Pair<Float, Float> = LABEL_WEIGHT to VALUE_WEIGHT

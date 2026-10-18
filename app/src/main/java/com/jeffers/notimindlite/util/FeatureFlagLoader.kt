@@ -3,14 +3,20 @@ package com.jeffers.notimindlite.util
 import java.net.HttpURLConnection
 import java.net.URL
 
+private const val CONNECT_TIMEOUT_MILLIS = 5_000
+private const val READ_TIMEOUT_MILLIS = 5_000
+private const val HTTP_SUCCESS_MIN = 200
+private const val HTTP_SUCCESS_MAX = 299
+
 private fun fetchFeatureFlagsUrl(url: String): String? {
     val connection = (URL(url).openConnection() as HttpURLConnection).apply {
-        connectTimeout = 5_000
-        readTimeout = 5_000
+        connectTimeout = CONNECT_TIMEOUT_MILLIS
+        readTimeout = READ_TIMEOUT_MILLIS
         requestMethod = "GET"
     }
     return try {
-        if (connection.responseCode !in 200..299) null
+        if (connection.responseCode !in HTTP_SUCCESS_MIN..HTTP_SUCCESS_MAX
+        ) null
         else connection.inputStream.bufferedReader().use { it.readText() }
     } finally {
         connection.disconnect()
@@ -47,9 +53,12 @@ class FeatureFlagLoader(private val fetch: (String) -> String? = ::fetchFeatureF
     }
 
     fun loadFromUrl(url: String): Boolean {
-        if (url.isBlank()) return false
-        val body = runCatching { fetch(url) }.getOrNull() ?: return false
-        return runCatching { load(body); true }.getOrDefault(false)
+        return if (url.isBlank()) {
+            false
+        } else {
+            val body = runCatching { fetch(url) }.getOrNull()
+            if (body == null) false else runCatching { load(body); true }.getOrDefault(false)
+        }
     }
 
     fun setTestModeFlags(serialized: String) {
@@ -67,16 +76,20 @@ class FeatureFlagLoader(private val fetch: (String) -> String? = ::fetchFeatureF
 
     private fun parseFlags(serialized: String, allowList: Boolean = false): Set<String> {
         val trimmed = serialized.trim()
-        if (trimmed.isEmpty()) return emptySet()
-        if (allowList && !trimmed.startsWith("{")) {
-            return trimmed.split(',', '\n', ';').map(::normalize).filter(String::isNotBlank).toSet()
+        return when {
+            trimmed.isEmpty() -> emptySet()
+            allowList && !trimmed.startsWith("{") -> {
+                trimmed.split(',', '\n', ';').map(::normalize).filter(String::isNotBlank).toSet()
+            }
+            else -> {
+                // Keep parsing independent of Android's org.json stubs so JVM unit tests and
+                // release builds have identical fail-closed behavior.
+                Regex("\\\"([^\\\"]+)\\\"\\s*:\\s*true", RegexOption.IGNORE_CASE)
+                    .findAll(trimmed)
+                    .map { normalize(it.groupValues[1]) }
+                    .toSet()
+            }
         }
-        // Keep parsing independent of Android's org.json stubs so JVM unit tests and
-        // release builds have identical fail-closed behavior.
-        return Regex("\\\"([^\\\"]+)\\\"\\s*:\\s*true", RegexOption.IGNORE_CASE)
-            .findAll(trimmed)
-            .map { normalize(it.groupValues[1]) }
-            .toSet()
     }
 
     private fun normalize(value: String): String = value.trim().lowercase().replace('-', '_')

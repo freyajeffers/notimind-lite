@@ -2,14 +2,32 @@ package com.jeffers.notimindlite.ui.screens
 
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.foundation.layout.*
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.Button
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Switch
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import android.content.Context
+import android.net.Uri
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import android.annotation.SuppressLint
 import com.jeffers.notimindlite.R
 import com.jeffers.notimindlite.data.local.PreferencesRepository
 import com.jeffers.notimindlite.BuildConfig
@@ -19,10 +37,8 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.util.Locale
 
-@SuppressLint("LocalContextGetResourceValueCall")
-@Suppress("LongMethod", "FunctionNaming")
 @Composable
-fun SettingsPreferencesBackupSection() {
+fun settingsPreferencesBackupSection() {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     var message by remember { mutableStateOf<String?>(null) }
@@ -30,75 +46,68 @@ fun SettingsPreferencesBackupSection() {
     val strExported = stringResource(R.string.pref_backup_exported)
     val strImported = stringResource(R.string.pref_backup_imported)
     val strFailed = stringResource(R.string.pref_backup_failed)
-    val exportLauncher = rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("application/json")) { uri ->
+    val exportLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.CreateDocument("application/json")
+    ) { uri ->
         if (uri != null) scope.launch {
-            val result = runCatching {
-                withContext(Dispatchers.IO) {
-                    val temp = java.io.File(context.cacheDir, "preferences-export.json")
-                    PreferencesBackup.exportPreferences(context, temp.absolutePath)
-                    context.contentResolver.openOutputStream(uri)?.use { out -> temp.inputStream().use { it.copyTo(out) } }
-                        ?: error("Unable to open destination")
-                    temp.delete()
-                }
-                true
-            }
+            val result = runCatching { exportPreferencesToUri(context, uri) }
             message = if (result.isSuccess) {
                 strExported
             } else {
-                // For parameterized strings, format the prefetched localized resource with the error message.
-                String.format(Locale.getDefault(), strFailed, result.exceptionOrNull()?.message ?: "unknown error")
+                backupFailureMessage(strFailed, result)
             }
         }
     }
     val importLauncher = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
         if (uri != null) scope.launch {
-            val result = runCatching {
-                withContext(Dispatchers.IO) {
-                    val temp = java.io.File(context.cacheDir, "preferences-import.json")
-                    context.contentResolver.openInputStream(uri)?.use { input -> temp.outputStream().use { input.copyTo(it) } }
-                        ?: error("Unable to open source")
-                    PreferencesBackup.importPreferences(context, temp.absolutePath)
-                    temp.delete()
-                }
-                true
-            }
+            val result = runCatching { importPreferencesFromUri(context, uri) }
             message = if (result.isSuccess) {
                 strImported
             } else {
-                String.format(Locale.getDefault(), strFailed, result.exceptionOrNull()?.message ?: "unknown error")
+                backupFailureMessage(strFailed, result)
             }
         }
     }
 
     val preferences = remember { PreferencesRepository(context) }
-    val exportFormats by preferences.exportFormats.collectAsState()
-    val exportAnonymize by preferences.exportAnonymize.collectAsState()
+    val exportFormats by preferences.exportManager.formats.collectAsState()
+    val exportAnonymize by preferences.exportManager.anonymize.collectAsState()
 
-    Card(modifier = Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)) {
-        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-            Text(stringResource(R.string.pref_backup_settings_title), style = MaterialTheme.typography.titleMedium)
-            Text(stringResource(R.string.pref_backup_settings_summary), style = MaterialTheme.typography.bodySmall)
-            OutlinedTextField(
-                value = exportFormats,
-                onValueChange = preferences::setExportFormats,
-                label = { Text(stringResource(R.string.pref_export_formats)) },
-                supportingText = { Text(stringResource(R.string.pref_export_formats_summary)) },
-                singleLine = true,
-                modifier = Modifier.fillMaxWidth(),
-                enabled = !BuildConfig.DEBUG
-            )
-            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                Column(Modifier.weight(1f)) {
-                    Text(stringResource(R.string.pref_export_anonymize), style = MaterialTheme.typography.bodyLarge)
-                    Text(stringResource(R.string.pref_export_anonymize_summary), style = MaterialTheme.typography.bodySmall)
-                }
-                Switch(checked = exportAnonymize, onCheckedChange = preferences::setExportAnonymize, enabled = !BuildConfig.DEBUG)
-            }
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                Button(onClick = { exportLauncher.launch("notimind-preferences.json") }, enabled = !BuildConfig.DEBUG) { Text(stringResource(R.string.pref_backup_export)) }
-                OutlinedButton(onClick = { importLauncher.launch(arrayOf("application/json", "text/json", "*/*")) }, enabled = !BuildConfig.DEBUG) { Text(stringResource(R.string.pref_backup_import)) }
-            }
-            message?.let { Text(it, style = MaterialTheme.typography.bodySmall) }
-        }
+    preferencesBackupCard(
+        PreferencesBackupCardConfig(
+            exportFormats = exportFormats,
+            exportAnonymize = exportAnonymize,
+            onFormatsChange = preferences.exportManager::setFormats,
+            onAnonymizeChange = preferences.exportManager::setAnonymize,
+            onExport = { exportLauncher.launch("notimind-preferences.json") },
+            onImport = { importLauncher.launch(arrayOf("application/json", "text/json", "*/*")) },
+            message = message,
+            enabled = !BuildConfig.DEBUG
+        )
+    )
+}
+
+private fun backupFailureMessage(template: String, result: Result<*>): String =
+    String.format(Locale.getDefault(), template, result.exceptionOrNull()?.message ?: "unknown error")
+
+private suspend fun exportPreferencesToUri(context: Context, uri: Uri) {
+    withContext(Dispatchers.IO) {
+        val temp = java.io.File(context.cacheDir, "preferences-export.json")
+        PreferencesBackup.exportPreferences(context, temp.absolutePath)
+        context.contentResolver.openOutputStream(uri)?.use { output ->
+            temp.inputStream().use { input -> input.copyTo(output) }
+        } ?: error("Unable to open destination")
+        temp.delete()
+    }
+}
+
+private suspend fun importPreferencesFromUri(context: Context, uri: Uri) {
+    withContext(Dispatchers.IO) {
+        val temp = java.io.File(context.cacheDir, "preferences-import.json")
+        context.contentResolver.openInputStream(uri)?.use { input ->
+            temp.outputStream().use { output -> input.copyTo(output) }
+        } ?: error("Unable to open source")
+        PreferencesBackup.importPreferences(context, temp.absolutePath)
+        temp.delete()
     }
 }

@@ -12,11 +12,23 @@ object EncryptedDatabaseFactory {
     private var sqlCipherLoaded = false
 
     fun openHelperFactory(context: Context, databaseName: String): SupportSQLiteOpenHelper.Factory? {
-        if (Build.FINGERPRINT == "robolectric" || isRobolectricRuntime() || !isAndroidRuntime()) return null
         val preferences = PreferencesRepository(context.applicationContext)
-        if (!preferences.dbEncrypted.value || preferences.dbEncryptionMode.value == DbEncryptionMode.NONE) return null
+        return when {
+            Build.FINGERPRINT == "robolectric" || isRobolectricRuntime() || !isAndroidRuntime() -> null
+            !preferences.securityManager.dbEncrypted.value ||
+                preferences.securityManager.dbEncryptionMode.value == DbEncryptionMode.NONE -> null
+            else -> createFactory(context, databaseName, preferences)
+        }
+    }
+
+    private fun createFactory(
+        context: Context,
+        databaseName: String,
+        preferences: PreferencesRepository
+    ): SupportSQLiteOpenHelper.Factory {
         ensureSqlCipherLoaded()
-        val useKeystore = preferences.useKeystore.value && preferences.dbEncryptionMode.value == DbEncryptionMode.KEYSTORE
+        val useKeystore = preferences.securityManager.useKeystore.value &&
+            preferences.securityManager.dbEncryptionMode.value == DbEncryptionMode.KEYSTORE
         val passphrase = SqlCipherKeyManager.getOrCreatePassphrase(context, databaseName, useKeystore)
         // SupportOpenHelperFactory retains the supplied array until the helper opens.
         // Copy before clearing the caller-owned array; clearing this same array breaks

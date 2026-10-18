@@ -1,9 +1,12 @@
-package com.jeffers.notimindlite.migration
+package com.notimind.lite.tier1feature
 
 import com.notimind.lite.base.BaseRobolectricTest
 import androidx.room.Room
 import com.jeffers.notimindlite.data.local.AppDatabase
 import com.jeffers.notimindlite.data.local.NotificationEntity
+import com.jeffers.notimindlite.migration.DatabaseMigrationOrchestrator
+import com.jeffers.notimindlite.migration.MigrationState
+import com.jeffers.notimindlite.migration.MigrationFileOps
 import java.io.File
 import java.nio.file.Files
 import org.junit.Assert.assertEquals

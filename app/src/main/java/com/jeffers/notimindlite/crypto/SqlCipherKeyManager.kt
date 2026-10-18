@@ -2,6 +2,7 @@ package com.jeffers.notimindlite.crypto
 
 import android.content.Context
 import android.os.Build
+import android.util.Log
 import android.util.Base64
 import java.nio.ByteBuffer
 import java.security.KeyStore
@@ -30,18 +31,18 @@ object SqlCipherKeyManager {
         val encoded = prefs.getString(VALUE, null)
         if (encoded != null) {
             val payload = Base64.decode(encoded, Base64.NO_WRAP)
-            return if (useKeystore) decrypt(appContext, databaseName, payload) else payload
+            return if (useKeystore) decrypt(databaseName, payload) else payload
         }
 
         val passphrase = ByteArray(PASSPHRASE_BYTES).also { java.security.SecureRandom().nextBytes(it) }
-        val encrypted = if (useKeystore) encrypt(appContext, databaseName, passphrase) else passphrase
+        val encrypted = if (useKeystore) encrypt(databaseName, passphrase) else passphrase
         check(prefs.edit().putString(VALUE, Base64.encodeToString(encrypted, Base64.NO_WRAP)).commit()) {
             "Unable to persist SQLCipher passphrase"
         }
         return passphrase
     }
 
-    private fun keyFor(context: Context, databaseName: String): SecretKey {
+    private fun keyFor(databaseName: String): SecretKey {
         val alias = "notimind_sqlcipher_$databaseName"
         return try {
             val keyStore = KeyStore.getInstance(KEYSTORE).apply { load(null) }
@@ -58,9 +59,15 @@ object SqlCipherKeyManager {
                 try {
                     generator.init(baseSpec.setIsStrongBoxBacked(true).build())
                     generatedKey = generator.generateKey()
-                } catch (_: Exception) {
-                    // StrongBox is optional. Retry in the TEE-backed/default Keystore
-                    // provider before treating the provider as unavailable.
+                } catch (e: java.security.InvalidAlgorithmParameterException) {
+                    // StrongBox not available or parameters rejected; fall back to non-StrongBox
+                    Log.w("SqlCipherKeyManager", "StrongBox key generation rejected, falling back", e)
+                } catch (e: java.security.ProviderException) {
+                    // Provider failure (StrongBox provider missing/unavailable)
+                    Log.w("SqlCipherKeyManager", "StrongBox provider unavailable, falling back", e)
+                } catch (e: SecurityException) {
+                    // Permission / security manager blocked StrongBox usage
+                    Log.w("SqlCipherKeyManager", "Security exception during StrongBox init", e)
                 }
             }
 
@@ -69,19 +76,38 @@ object SqlCipherKeyManager {
                 generatedKey = generator.generateKey()
             }
             generatedKey
-        } catch (e: Exception) {
+        } catch (e: java.security.GeneralSecurityException) {
+            Log.w("SqlCipherKeyManager", "AndroidKeyStore unavailable or failed", e)
             check(Build.FINGERPRINT == "robolectric") {
                 "AndroidKeyStore is required for SQLCipher passphrase protection"
             }
             robolectricKeys.getOrPut(alias) {
-                SecretKeySpec(ByteArray(PASSPHRASE_BYTES).also { java.security.SecureRandom().nextBytes(it) }, KEY_ALGORITHM)
+                SecretKeySpec(
+                    ByteArray(PASSPHRASE_BYTES).also {
+                        java.security.SecureRandom().nextBytes(it)
+                    },
+                    KEY_ALGORITHM
+                )
+            }
+        } catch (e: java.io.IOException) {
+            Log.w("SqlCipherKeyManager", "I/O error accessing KeyStore", e)
+            check(Build.FINGERPRINT == "robolectric") {
+                "AndroidKeyStore is required for SQLCipher passphrase protection"
+            }
+            robolectricKeys.getOrPut(alias) {
+                SecretKeySpec(
+                    ByteArray(PASSPHRASE_BYTES).also {
+                        java.security.SecureRandom().nextBytes(it)
+                    },
+                    KEY_ALGORITHM
+                )
             }
         }
     }
 
-    private fun encrypt(context: Context, databaseName: String, plaintext: ByteArray): ByteArray {
+    private fun encrypt(databaseName: String, plaintext: ByteArray): ByteArray {
         val cipher = Cipher.getInstance(TRANSFORMATION)
-        cipher.init(Cipher.ENCRYPT_MODE, keyFor(context, databaseName))
+        cipher.init(Cipher.ENCRYPT_MODE, keyFor(databaseName))
         val ciphertext = cipher.doFinal(plaintext)
         return ByteBuffer.allocate(IV_BYTES + ciphertext.size)
             .put(cipher.iv)
@@ -89,12 +115,12 @@ object SqlCipherKeyManager {
             .array()
     }
 
-    private fun decrypt(context: Context, databaseName: String, payload: ByteArray): ByteArray {
+    private fun decrypt(databaseName: String, payload: ByteArray): ByteArray {
         require(payload.size > IV_BYTES) { "Invalid SQLCipher key payload" }
         val iv = payload.copyOfRange(0, IV_BYTES)
         val ciphertext = payload.copyOfRange(IV_BYTES, payload.size)
         val cipher = Cipher.getInstance(TRANSFORMATION)
-        cipher.init(Cipher.DECRYPT_MODE, keyFor(context, databaseName), GCMParameterSpec(TAG_BITS, iv))
+        cipher.init(Cipher.DECRYPT_MODE, keyFor(databaseName), GCMParameterSpec(TAG_BITS, iv))
         return cipher.doFinal(ciphertext)
     }
 }

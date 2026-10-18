@@ -20,7 +20,7 @@ object DatabaseLockManager {
 
     fun lockIfEnabled(context: Context) {
         val preferences = PreferencesRepository(context.applicationContext)
-        if (preferences.autoLockDb.value || preferences.appLockEnabled.value) lock()
+        if (preferences.securityManager.autoLockDb.value && preferences.securityManager.appLockEnabled.value) lock()
     }
 
     fun requireUnlocked() {

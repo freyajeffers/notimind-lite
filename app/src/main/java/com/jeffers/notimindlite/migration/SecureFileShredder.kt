@@ -15,14 +15,17 @@ import java.nio.file.LinkOption
 object SecureFileShredder {
     private const val DEFAULT_CHUNK_SIZE = 1024 * 1024
 
-    @Suppress("ReturnCount")
     fun shred(file: File, chunkSize: Int = DEFAULT_CHUNK_SIZE): Boolean {
         require(chunkSize > 0) { "chunkSize must be positive" }
         val path = file.toPath()
-        if (!Files.exists(path, LinkOption.NOFOLLOW_LINKS)) return true
-        if (Files.isSymbolicLink(path) || !Files.isRegularFile(path, LinkOption.NOFOLLOW_LINKS)) return false
+        return when {
+            !Files.exists(path, LinkOption.NOFOLLOW_LINKS) -> true
+            Files.isSymbolicLink(path) || !Files.isRegularFile(path, LinkOption.NOFOLLOW_LINKS) -> false
+            else -> shredRegularFile(file, path, chunkSize)
+        }
+    }
 
-        return try {
+    private fun shredRegularFile(file: File, path: java.nio.file.Path, chunkSize: Int): Boolean = try {
             RandomAccessFile(file, "rw").use { randomAccessFile ->
                 val length = randomAccessFile.length()
                 val zeros = ByteArray(chunkSize)
@@ -38,5 +41,4 @@ object SecureFileShredder {
         } catch (_: Exception) {
             false
         }
-    }
 }

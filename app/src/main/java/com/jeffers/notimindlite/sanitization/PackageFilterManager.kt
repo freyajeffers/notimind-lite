@@ -4,7 +4,10 @@ package com.jeffers.notimindlite.sanitization
  * PackageFilterManager maintains a small, testable set of package allow/deny rules.
  * It is intentionally simple and deterministic.
  */
-class PackageFilterManager(private val blacklist: Set<String> = emptySet(), private val whitelist: Set<String> = emptySet()) {
+class PackageFilterManager(
+    private val blacklist: Set<String> = emptySet(),
+    private val whitelist: Set<String> = emptySet()
+) {
 
     /**
      * Returns true if the package should be accepted (ingested). Rules:
@@ -12,17 +15,22 @@ class PackageFilterManager(private val blacklist: Set<String> = emptySet(), priv
      * - Otherwise, packages in blacklist are rejected.
      */
     fun shouldAccept(packageName: String?): Boolean {
-        if (packageName == null) return false
-        if (whitelist.isNotEmpty()) {
-            return whitelist.contains(packageName)
+        return when {
+            packageName == null -> false
+            whitelist.isNotEmpty() -> whitelist.contains(packageName)
+            else -> !blacklist.contains(packageName)
         }
-        return !blacklist.contains(packageName)
     }
 
     companion object {
         fun default(): PackageFilterManager {
             // example runtime blacklist; production should load from config
-            return PackageFilterManager(blacklist = setOf("com.android.shell", "com.google.android.googlequicksearchbox"))
+            return PackageFilterManager(
+                blacklist = setOf(
+                    "com.android.shell",
+                    "com.google.android.googlequicksearchbox"
+                )
+            )
         }
     }
 }

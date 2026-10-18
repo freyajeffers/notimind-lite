@@ -6,6 +6,8 @@ import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.withStyle
 
+private const val HIGHLIGHT_COLOR = 0xFFFFD54F
+
 fun highlightSearchText(text: String, query: String): AnnotatedString {
     val tokens = query.trim().split(Regex("\\s+"))
         .map { it.trim().trim { ch -> !ch.isLetterOrDigit() } }
@@ -26,7 +28,7 @@ fun highlightSearchText(text: String, query: String): AnnotatedString {
         var cursor = 0
         merged.forEach { range ->
             if (cursor < range.first) append(text.substring(cursor, range.first))
-            withStyle(SpanStyle(background = Color(0xFFFFD54F), color = Color.Black)) {
+            withStyle(SpanStyle(background = Color(HIGHLIGHT_COLOR), color = Color.Black)) {
                 append(text.substring(range.first, range.last + 1))
             }
             cursor = range.last + 1

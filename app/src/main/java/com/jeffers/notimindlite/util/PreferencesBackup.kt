@@ -39,7 +39,7 @@ object PreferencesBackup {
      */
     fun importPreferences(context: Context, inPath: String) {
         val file = File(inPath)
-        if (!file.exists()) throw IllegalArgumentException("Import file not found: $inPath")
+        require(file.exists()) { "Import file not found: $inPath" }
         val text = file.readText()
         val jo = JSONObject(text)
         val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)

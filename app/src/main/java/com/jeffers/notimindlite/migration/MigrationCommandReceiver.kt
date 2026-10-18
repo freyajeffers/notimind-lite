@@ -57,16 +57,18 @@ class MigrationCommandReceiver : BroadcastReceiver() {
 
         try {
             val result = MigrationRunner(context).migrateOpenedDatabases(
-                source = sourceHelper.writableDatabase,
-                target = target.openHelper.writableDatabase,
-                plaintextFile = sourceFile,
-                encryptedTempFile = encryptedTempFile,
-                quarantineFile = quarantineFile,
-                closeDatabases = {
-                    sourceHelper.close()
-                    target.close()
-                },
-                executeCutover = false
+                MigrationRequest(
+                    source = sourceHelper.writableDatabase,
+                    target = target.openHelper.writableDatabase,
+                    plaintextFile = sourceFile,
+                    encryptedTempFile = encryptedTempFile,
+                    quarantineFile = quarantineFile,
+                    closeDatabases = {
+                        sourceHelper.close()
+                        target.close()
+                    },
+                    executeCutover = false
+                )
             )
             File(context.filesDir, REPORT_NAME).writeText(
                 "state=${result.state}\ncopiedRows=${result.copiedRows}\n" +

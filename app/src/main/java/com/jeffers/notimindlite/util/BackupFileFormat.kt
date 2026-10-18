@@ -63,7 +63,7 @@ internal object BackupFileFormat {
         override fun hashCode(): Int = System.identityHashCode(this)
     }
 
-    class FormatException(message: String, cause: Throwable? = null) : RuntimeException(message, cause)
+    class FormatException(message: String, cause: Throwable? = null) : IllegalArgumentException(message, cause)
 
     private fun fail(message: String): Nothing = throw FormatException(message)
 

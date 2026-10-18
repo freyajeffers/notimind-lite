@@ -77,7 +77,9 @@ class CryptoUtilsTest {
         assertArrayEquals(out1, out2)
 
         // Changing info must yield different key
-        val outDifferentInfo = CryptoUtils.hkdfSha256ExtractAndExpand(salt, ikm, "different-info".toByteArray(Charsets.UTF_8), 32)
+        val outDifferentInfo = CryptoUtils.hkdfSha256ExtractAndExpand(
+            salt, ikm, "different-info".toByteArray(Charsets.UTF_8), 32
+        )
         assertFalse(out1.contentEquals(outDifferentInfo))
     }
 }
