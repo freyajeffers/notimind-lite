@@ -58,7 +58,10 @@ class SyncIntegrationPairwiseSupportTest {
         // Remote version: newer (2000L)
         val mockCol = mockk<CollectionReference>()
         val mockSnapshot = mockk<QuerySnapshot>()
-        val mockDoc = mockk<QueryDocumentSnapshot>(relaxed = true)
+        val mockDoc = mockk<QueryDocumentSnapshot>()
+        every { mockDoc.getString(any()) } returns null
+        every { mockDoc.getLong(any()) } returns null
+        every { mockDoc.getBoolean(any()) } returns null
         
         every { mockFirestore.collection("users").document(userId).collection("notifications") } returns mockCol
         every { mockCol.get() } returns Tasks.forResult(mockSnapshot)
@@ -96,7 +99,10 @@ class SyncIntegrationPairwiseSupportTest {
         // Remote version: older (2000L)
         val mockCol = mockk<CollectionReference>()
         val mockSnapshot = mockk<QuerySnapshot>()
-        val mockDoc = mockk<QueryDocumentSnapshot>(relaxed = true)
+        val mockDoc = mockk<QueryDocumentSnapshot>()
+        every { mockDoc.getString(any()) } returns null
+        every { mockDoc.getLong(any()) } returns null
+        every { mockDoc.getBoolean(any()) } returns null
         
         every { mockFirestore.collection("users").document(userId).collection("notifications") } returns mockCol
         every { mockCol.get() } returns Tasks.forResult(mockSnapshot)
@@ -120,7 +126,10 @@ class SyncIntegrationPairwiseSupportTest {
         
         val mockCol = mockk<CollectionReference>()
         val mockSnapshot = mockk<QuerySnapshot>()
-        val mockDoc = mockk<QueryDocumentSnapshot>(relaxed = true)
+        val mockDoc = mockk<QueryDocumentSnapshot>()
+        every { mockDoc.getString(any()) } returns null
+        every { mockDoc.getLong(any()) } returns null
+        every { mockDoc.getBoolean(any()) } returns null
         
         every { mockFirestore.collection("users").document(userId).collection("notifications") } returns mockCol
         every { mockCol.get() } returns Tasks.forResult(mockSnapshot)
