@@ -139,6 +139,9 @@ class NotificationLoggerService : NotificationListenerService() {
                 bitmap.compress(Bitmap.CompressFormat.PNG, ICON_COMPRESSION_QUALITY, out)
             }
             iconFile.absolutePath
+        } catch (e: android.content.pm.PackageManager.NameNotFoundException) {
+            Log.w(TAG, "Application package unavailable for package=$packageName", e)
+            null
         } catch (e: FileNotFoundException) {
             Log.w(TAG, "Icon file unavailable for package=$packageName", e)
             null

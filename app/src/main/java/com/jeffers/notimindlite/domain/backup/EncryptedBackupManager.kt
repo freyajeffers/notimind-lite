@@ -77,13 +77,13 @@ object EncryptedBackupManager {
             AuditLogger.logBackupEvent(context, record)
             true
         } catch (e: IOException) {
-            Log.e(TAG, "Authorized backup failed: IO error", e)
+            logError( "Authorized backup failed: IO error", e)
             false
         } catch (e: GeneralSecurityException) {
-            Log.e(TAG, "Authorized backup failed: crypto error", e)
+            logError( "Authorized backup failed: crypto error", e)
             false
         } catch (e: SecurityException) {
-            Log.e(TAG, "Authorized backup failed: security exception", e)
+            logError( "Authorized backup failed: security exception", e)
             false
         }
     }
@@ -115,7 +115,7 @@ object EncryptedBackupManager {
             val isPassphraseAuthorized = passphrase != null && isFilePassphraseWrapped(fileBytes)
 
             if (localRecord == null && !isPassphraseAuthorized) {
-                Log.e(TAG, "Unauthorized backup attempt: Hash $fileHash not found in local log")
+                logError( "Unauthorized backup attempt: Hash $fileHash not found in local log")
                 return false
             }
 
@@ -136,14 +136,17 @@ object EncryptedBackupManager {
                 AuditLogger.logBackupEvent(context, importRecord)
             }
             success
+        } catch (e: BackupFileFormat.FormatException) {
+            logError( "Authorized restore failed: invalid backup format", e)
+            false
         } catch (e: IOException) {
-            Log.e(TAG, "Authorized restore failed: IO error", e)
+            logError( "Authorized restore failed: IO error", e)
             false
         } catch (e: AEADBadTagException) {
-            Log.e(TAG, "Authorized restore failed: authentication error (wrong passphrase or corrupted file)", e)
+            logError( "Authorized restore failed: authentication error (wrong passphrase or corrupted file)", e)
             false
         } catch (e: GeneralSecurityException) {
-            Log.e(TAG, "Authorized restore failed: crypto error", e)
+            logError( "Authorized restore failed: crypto error", e)
             false
         }
     }
@@ -202,7 +205,7 @@ object EncryptedBackupManager {
                 )
                 BackupKeyWrap.unwrapDek(header.wrappedDek, header.kekIv, kek)
             } catch (e: AEADBadTagException) {
-                Log.e(TAG, "Passphrase incorrect; failed to unwrap DEK", e)
+                logError( "Passphrase incorrect; failed to unwrap DEK", e)
                 null
             }
         }
@@ -259,16 +262,16 @@ object EncryptedBackupManager {
             }
             true
         } catch (e: IOException) {
-            Log.e(TAG, "Encryption failed: IO error", e)
+            logError( "Encryption failed: IO error", e)
             false
         } catch (e: GeneralSecurityException) {
-            Log.e(TAG, "Encryption failed: crypto error", e)
+            logError( "Encryption failed: crypto error", e)
             false
         } catch (e: IllegalArgumentException) {
-            Log.e(TAG, "Encryption failed: invalid argument", e)
+            logError( "Encryption failed: invalid argument", e)
             false
         } catch (e: IllegalStateException) {
-            Log.e(TAG, "Encryption failed: illegal state", e)
+            logError( "Encryption failed: illegal state", e)
             false
         }
     }
@@ -297,16 +300,16 @@ object EncryptedBackupManager {
             dest.writeBytes(plaintext)
             true
         } catch (e: IOException) {
-            Log.e(TAG, "Decryption failed: IO error", e)
+            logError( "Decryption failed: IO error", e)
             false
         } catch (e: GeneralSecurityException) {
-            Log.e(TAG, "Decryption failed: crypto error", e)
+            logError( "Decryption failed: crypto error", e)
             false
         } catch (e: IllegalArgumentException) {
-            Log.e(TAG, "Decryption failed: invalid argument", e)
+            logError( "Decryption failed: invalid argument", e)
             false
         } catch (e: IllegalStateException) {
-            Log.e(TAG, "Decryption failed: illegal state", e)
+            logError( "Decryption failed: illegal state", e)
             false
         }
     }
@@ -321,6 +324,10 @@ object EncryptedBackupManager {
             }
         }
         return digest.digest().joinToString("") { "%02x".format(it) }
+    }
+
+    private fun logError(message: String, error: Throwable? = null) {
+        runCatching { Log.e(TAG, message, error) }
     }
 
     private suspend fun generateSecureSignature(

@@ -48,18 +48,22 @@ class FirestoreSyncRepository(
             val downloaded = fetchRemoteNotifications(dao, userCol, secretKey)
             Result.success(uploaded + downloaded)
         } catch (e: FirebaseFirestoreException) {
-            Log.e(TAG, "Firestore sync failed: ${e.message}", e)
+            logError("Firestore sync failed: ${e.message}", e)
             Result.failure(e)
         } catch (e: GeneralSecurityException) {
-            Log.e(TAG, "Encrypted sync failed", e)
+            logError("Encrypted sync failed", e)
             Result.failure(e)
         } catch (e: IllegalArgumentException) {
-            Log.e(TAG, "Invalid sync data", e)
+            logError("Invalid sync data", e)
             Result.failure(e)
         } catch (e: IllegalStateException) {
-            Log.e(TAG, "Invalid sync state", e)
+            logError("Invalid sync state", e)
             Result.failure(e)
         }
+    }
+
+    private fun logError(message: String, error: Throwable) {
+        runCatching { Log.e(TAG, message, error) }
     }
 
     private fun notificationCollection(userId: String) =
