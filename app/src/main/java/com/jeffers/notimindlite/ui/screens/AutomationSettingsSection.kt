@@ -22,7 +22,7 @@ fun automationSettingsSection(preferencesRepository: PreferencesRepository) {
         .defaultReplyMethod.collectAsState(initial = "inline")
     val longPressAction by preferencesRepository.automationManager
         .longPressAction.collectAsState(initial = "open")
-    val autoExecuteRules by preferencesRepository.autoExecuteRules.collectAsState(initial = emptyList())
+    val autoExecuteRules by preferencesRepository.automationManager.rules.collectAsState(initial = emptyList())
     var rulePackage by remember { mutableStateOf("") }
     var ruleTitle by remember { mutableStateOf("") }
     var ruleAction by remember { mutableStateOf("0") }

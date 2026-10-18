@@ -15,7 +15,11 @@ object KeyManager {
     fun getOrCreateMasterKeyAlias(context: Context?, alias: String?): String {
         // Preferred runtime: androidx.security.crypto.MasterKeys.getOrCreate(...)
         try {
-            val cls = Class.forName("androidx.security.crypto.MasterKeys")
+            val cls = Class.forName(
+                "androidx.security.crypto.MasterKeys",
+                true,
+                context?.classLoader ?: KeyManager::class.java.classLoader
+            )
             val field = cls.getField("AES256_GCM_SPEC")
             val spec = field.get(null)
             val method = cls.getMethod("getOrCreate", spec::class.java)
@@ -40,9 +44,6 @@ object KeyManager {
             Log.w(TAG, "Invalid argument when invoking MasterKeys; using fallback alias", e)
         }
 
-        // Deterministic fallback alias (safe for testing; in production prefer AndroidX Security)
-        // Use the provided context when available to form a slightly more unique alias
-        // so the `context` parameter is meaningfully used and Detekt doesn't flag it.
-        return alias ?: context?.packageName?.let { "${it}.notimind_master_key" } ?: "notimind_master_key"
+        return alias ?: "notimind_master_key"
     }
 }

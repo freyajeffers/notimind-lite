@@ -37,7 +37,7 @@ class NotificationActionExecutor(
     }
 
     fun matchingRule(packageName: String, title: String): AutoExecuteRule? =
-        preferences.autoExecuteRules.value.firstOrNull { rule ->
+        preferences.automationManager.rules.value.firstOrNull { rule ->
             rule.enabled && (rule.packageName.isBlank() || rule.packageName.equals(packageName, ignoreCase = true)) &&
                 (rule.titleContains.isBlank() || title.contains(rule.titleContains, ignoreCase = true))
         }

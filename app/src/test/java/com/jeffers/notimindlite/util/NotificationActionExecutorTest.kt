@@ -20,7 +20,7 @@ class NotificationActionExecutorTest {
     @Test
     fun matchingRuleSelectsConfiguredActionForNotificationTrigger() {
         val preferences = PreferencesRepository(context)
-        preferences.setAutoExecuteRules(listOf(AutoExecuteRule("chat", "com.chat", "urgent", 2)))
+        preferences.automationManager.setRules(listOf(AutoExecuteRule("chat", "com.chat", "urgent", 2)))
         val executor = NotificationActionExecutor(preferences)
         assertEquals(2, executor.matchingRule("com.chat", "Urgent: build failed")?.actionIndex)
         assertTrue(executor.matchingRule("com.mail", "Urgent") == null)
@@ -29,8 +29,8 @@ class NotificationActionExecutorTest {
     @Test
     fun notificationWithoutAutomationDoesNotTrigger() {
         val preferences = PreferencesRepository(context)
-        preferences.setAutoActOnNotification(false)
-        preferences.setAutoExecuteRules(emptyList())
+        preferences.automationManager.setAutoActOnNotification(false)
+        preferences.automationManager.setRules(emptyList())
         val executor = NotificationActionExecutor(preferences)
         assertFalse(executor.executeOnNotification("missing", "com.chat", "hello"))
     }

@@ -1,6 +1,6 @@
 package com.jeffers.notimindlite.util
 
-import android.util.Base64
+import java.util.Base64
 import java.nio.ByteBuffer
 import java.security.SecureRandom
 import javax.crypto.Cipher
@@ -34,14 +34,14 @@ object SyncEncryptionHelper {
             .put(ciphertext)
             .array()
             
-        return Base64.encodeToString(combined, Base64.NO_WRAP)
+        return Base64.getEncoder().encodeToString(combined)
     }
 
     /**
      * Decrypts ciphertext that has a prepended IV.
      */
     fun decrypt(encryptedBase64: String, secretKey: SecretKey): String {
-        val combined = Base64.decode(encryptedBase64, Base64.NO_WRAP)
+        val combined = Base64.getDecoder().decode(encryptedBase64)
         require(combined.size >= IV_LENGTH) { "Invalid encrypted data: too short" }
         
         val iv = combined.sliceArray(0 until IV_LENGTH)

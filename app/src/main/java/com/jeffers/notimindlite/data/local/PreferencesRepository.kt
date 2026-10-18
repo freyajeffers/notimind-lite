@@ -120,7 +120,6 @@ class PreferencesRepository(context: Context) :
     val vectorCacheMax: StateFlow<Int> = storageManager.vectorCacheMax
 
 
-    val autoExecuteRules: StateFlow<List<AutoExecuteRule>> = automationManager.rules
 
 
 

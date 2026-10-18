@@ -3,6 +3,7 @@ package com.jeffers.notimindlite
 import android.content.Context
 import androidx.test.core.app.ApplicationProvider
 import com.jeffers.notimindlite.data.local.NotificationEntity
+import com.jeffers.notimindlite.util.DatabaseExportHelper
 import com.jeffers.notimindlite.util.DatabaseExporter
 import org.json.JSONArray
 import org.junit.Assert.assertEquals
@@ -99,8 +100,8 @@ class DatabaseExporterTest {
     @Test
     fun testExportAppliesPrivacyPreferences() {
         val preferences = com.jeffers.notimindlite.data.local.PreferencesRepository(context)
-        preferences.setAnonymizeTitles(true)
-        preferences.setRedactPii(true)
+        preferences.exportManager.setAnonymizeTitles(true)
+        preferences.securityManager.setRedactPii(true)
         val entity = NotificationEntity(
             key = "privacy", packageName = "p", appName = "App", title = "Secret title",
             content = "Email me at user@example.com"
@@ -110,7 +111,7 @@ class DatabaseExporterTest {
         assertEquals("[REDACTED-TITLE]", obj.getString("title"))
         assertTrue(obj.getString("content").contains("[REDACTED-EMAIL]"))
 
-        preferences.setAnonymizeTitles(false)
+        preferences.exportManager.setAnonymizeTitles(false)
     }
 
     @Test
@@ -121,7 +122,7 @@ class DatabaseExporterTest {
         val dummyFile = File(exportsDir, "test_export.csv")
         dummyFile.writeText("test content")
 
-        val uri = DatabaseExporter.getExportFileUri(context, dummyFile)
+        val uri = DatabaseExportHelper.getExportFileUri(context, dummyFile)
         assertNotNull(uri)
         assertEquals("content", uri.scheme)
         assertEquals("${context.packageName}.fileprovider", uri.authority)
@@ -141,7 +142,7 @@ class DatabaseExporterTest {
         recentFile.writeText("{}")
         recentFile.setLastModified(System.currentTimeMillis())
 
-        DatabaseExporter.cleanupExportFiles(context, maxAgeMillis = 3600_000L) // 1 hour max age
+        DatabaseExportHelper.cleanupExportFiles(context, maxAgeMillis = 3600_000L) // 1 hour max age
 
         assertFalse("Old export file should be deleted", oldFile.exists())
         assertTrue("Recent export file should be retained", recentFile.exists())

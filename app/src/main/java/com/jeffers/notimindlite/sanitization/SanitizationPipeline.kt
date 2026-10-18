@@ -35,7 +35,7 @@ class SanitizationPipeline(
         // Return raw fields when redaction is disabled; nulls become empty strings.
         val isRedactionEnabled = context?.let {
             PreferencesRepository(it).securityManager.redactPii.value
-        } ?: false
+        } ?: true
 
         return when {
             !packageFilterManager.shouldAccept(packageName) -> null

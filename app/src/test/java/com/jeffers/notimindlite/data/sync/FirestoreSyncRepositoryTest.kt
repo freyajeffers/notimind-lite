@@ -14,7 +14,6 @@ import com.jeffers.notimindlite.data.local.NotificationEntity
 import com.jeffers.notimindlite.data.local.SyncStatus
 import com.jeffers.notimindlite.domain.backup.generateBackupKey
 import com.jeffers.notimindlite.util.SyncEncryptionHelper
-import io.mockk.any
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every

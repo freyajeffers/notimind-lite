@@ -5,17 +5,19 @@ import com.google.firebase.firestore.CollectionReference
 import com.google.firebase.firestore.DocumentReference
 import com.google.firebase.firestore.QuerySnapshot
 import com.google.firebase.firestore.QueryDocumentSnapshot
+import com.google.android.gms.tasks.Tasks
 import com.jeffers.notimindlite.data.local.AppDatabase
 import com.jeffers.notimindlite.data.local.NotificationDao
 import com.jeffers.notimindlite.data.local.NotificationEntity
 import com.jeffers.notimindlite.data.local.SyncStatus
 import com.jeffers.notimindlite.data.sync.FirestoreSyncRepository
-import io.mockk.any
+import io.mockk.coEvery
+import io.mockk.coVerify
 import io.mockk.every
-import io.mockk.exactly
 import io.mockk.mockk
 import io.mockk.verify
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.tasks.await
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
@@ -49,8 +51,8 @@ class SyncIntegrationPairwiseSupportTest {
             key = key, packageName = "p1", appName = "a1", title = "Local Title", content = "Local Content",
             lastUpdatedTime = 1000L, syncStatus = SyncStatus.SYNCED
         )
-        every { mockDao.getNotificationByKey(key) } returns localNotif
-        every { mockDao.getUnsyncedNotifications() } returns emptyList()
+        coEvery { mockDao.getNotificationByKey(key) } returns localNotif
+        coEvery { mockDao.getUnsyncedNotifications() } returns emptyList()
         
         // Remote version: newer (2000L)
         val mockCol = mockk<CollectionReference>()
@@ -58,9 +60,7 @@ class SyncIntegrationPairwiseSupportTest {
         val mockDoc = mockk<QueryDocumentSnapshot>()
         
         every { mockFirestore.collection("users").document(userId).collection("notifications") } returns mockCol
-        every { mockCol.get() } returns mockk {
-            every { await() } returns mockSnapshot
-        }
+        every { mockCol.get() } returns Tasks.forResult(mockSnapshot)
         every { mockSnapshot.documents } returns listOf(mockDoc)
         every { mockDoc.getString("key") } returns key
         every { mockDoc.getLong("lastUpdatedTime") } returns 2000L
@@ -72,9 +72,7 @@ class SyncIntegrationPairwiseSupportTest {
 
         repository.sync(userId, secretKey)
 
-        verify { 
-            mockDao.insertNotification(match { it.title == "Remote Title" && it.content == "Remote Content" }) 
-        }
+        coVerify { mockDao.insertNotification(match { it.title == "Remote Title" && it.content == "Remote Content" }) }
     }
 
     @Test
@@ -87,8 +85,8 @@ class SyncIntegrationPairwiseSupportTest {
             key = key, packageName = "p1", appName = "a1", title = "Local Title", content = "Local Content",
             lastUpdatedTime = 3000L, syncStatus = SyncStatus.SYNCED
         )
-        every { mockDao.getNotificationByKey(key) } returns localNotif
-        every { mockDao.getUnsyncedNotifications() } returns emptyList()
+        coEvery { mockDao.getNotificationByKey(key) } returns localNotif
+        coEvery { mockDao.getUnsyncedNotifications() } returns emptyList()
         
         // Remote version: older (2000L)
         val mockCol = mockk<CollectionReference>()
@@ -96,9 +94,7 @@ class SyncIntegrationPairwiseSupportTest {
         val mockDoc = mockk<QueryDocumentSnapshot>()
         
         every { mockFirestore.collection("users").document(userId).collection("notifications") } returns mockCol
-        every { mockCol.get() } returns mockk {
-            every { await() } returns mockSnapshot
-        }
+        every { mockCol.get() } returns Tasks.forResult(mockSnapshot)
         every { mockSnapshot.documents } returns listOf(mockDoc)
         every { mockDoc.getString("key") } returns key
         every { mockDoc.getLong("lastUpdatedTime") } returns 2000L
@@ -110,7 +106,7 @@ class SyncIntegrationPairwiseSupportTest {
 
         repository.sync(userId, secretKey)
 
-        verify(exactly = 0) { mockDao.insertNotification(any()) }
+        coVerify(exactly = 0) { mockDao.insertNotification(any()) }
     }
 
     @Test
@@ -122,9 +118,7 @@ class SyncIntegrationPairwiseSupportTest {
         val mockDoc = mockk<QueryDocumentSnapshot>()
         
         every { mockFirestore.collection("users").document(userId).collection("notifications") } returns mockCol
-        every { mockCol.get() } returns mockk {
-            every { await() } returns mockSnapshot
-        }
+        every { mockCol.get() } returns Tasks.forResult(mockSnapshot)
         every { mockSnapshot.documents } returns listOf(mockDoc)
         
         // Key is present, but title is missing

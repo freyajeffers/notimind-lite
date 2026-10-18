@@ -25,7 +25,6 @@ import javax.crypto.spec.SecretKeySpec
 object DatabaseExporter {
 
     private const val TAG = "DatabaseExporter"
-    val cleanupExportFiles = DatabaseExportHelper::cleanupExportFiles
 
     /**
      * Orchestrates a full encrypted backup of the local database.

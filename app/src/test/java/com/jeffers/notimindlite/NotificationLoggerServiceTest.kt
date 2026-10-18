@@ -183,7 +183,7 @@ class NotificationLoggerServiceTest : BaseRobolectricTest() {
         }
     }
 
-    private fun assertNoNotifications(message: String) {
+    private suspend fun assertNoNotifications(message: String) {
         assertEquals(message, 0, dao.getAllNotificationsList().size)
     }
 }

@@ -121,7 +121,7 @@ class MainActivity : ComponentActivity() {
             // path only invokes it post-export; users who skip export entirely
             // would otherwise accumulate files forever.
             try {
-                com.jeffers.notimindlite.util.DatabaseExporter.cleanupExportFiles(
+                com.jeffers.notimindlite.util.DatabaseExportHelper.cleanupExportFiles(
                     applicationContext,
                     EXPORT_CACHE_MAX_AGE_MILLIS
                 )
