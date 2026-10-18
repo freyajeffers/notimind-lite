@@ -7,6 +7,8 @@ import android.net.Uri
 import android.util.Log
 import android.util.LruCache
 import java.io.InputStream
+import java.io.FileNotFoundException
+import java.io.IOException
 
 /**
  * AppIconCache provides memory-efficient caching of decoded app icons.
@@ -15,28 +17,40 @@ import java.io.InputStream
  */
 object AppIconCache {
     private const val TAG = "AppIconCache"
+    private const val KIBIBYTE = 1024
+    private const val CACHE_MEMORY_FRACTION = 8
+    private const val DEFAULT_TARGET_SIZE = 64
     
-    private val cacheSize = (Runtime.getRuntime().maxMemory() / 1024).toInt() / 8
+    private val cacheSize = (Runtime.getRuntime().maxMemory() / KIBIBYTE).toInt() /
+        CACHE_MEMORY_FRACTION
     
     private val iconCache = object : LruCache<String, Bitmap>(cacheSize) {
         override fun sizeOf(key: String, value: Bitmap): Int {
-            return value.byteCount / 1024
+            return value.byteCount / KIBIBYTE
         }
     }
 
-    fun getIcon(context: Context, uri: String?, targetSize: Int = 64): Bitmap? {
-        if (uri == null) return null
-        iconCache.get(uri)?.let { return it }
-        
-        return try {
-            val bitmap = decodeSampledBitmapFromUri(context, uri, targetSize)
-            if (bitmap != null) {
-                iconCache.put(uri, bitmap)
+    fun getIcon(context: Context, uri: String?, targetSize: Int = DEFAULT_TARGET_SIZE): Bitmap? {
+        val cached = uri?.let { iconCache.get(it) }
+        return if (uri == null || cached != null) {
+            cached
+        } else {
+            try {
+                val bitmap = decodeSampledBitmapFromUri(context, uri, targetSize)
+                if (bitmap != null) {
+                    iconCache.put(uri, bitmap)
+                }
+                bitmap
+            } catch (e: FileNotFoundException) {
+                Log.w(TAG, "Icon not found for uri=$uri", e)
+                null
+            } catch (e: SecurityException) {
+                Log.e(TAG, "Security exception reading icon for uri=$uri", e)
+                null
+            } catch (e: IOException) {
+                Log.e(TAG, "I/O error decoding icon for uri=$uri", e)
+                null
             }
-            bitmap
-        } catch (e: Exception) {
-            Log.e(TAG, "Failed to load icon for $uri", e)
-            null
         }
     }
 
@@ -59,7 +73,17 @@ object AppIconCache {
             context.contentResolver.openInputStream(uri)?.use { inputStream ->
                 BitmapFactory.decodeStream(inputStream, null, options)
             }
-        } catch (e: Exception) {
+        } catch (e: FileNotFoundException) {
+            Log.w(TAG, "Icon file not found: $uriString", e)
+            null
+        } catch (e: SecurityException) {
+            Log.e(TAG, "Security exception opening icon stream: $uriString", e)
+            null
+        } catch (e: IllegalArgumentException) {
+            Log.w(TAG, "Malformed uri for icon: $uriString", e)
+            null
+        } catch (e: IOException) {
+            Log.e(TAG, "I/O error decoding icon: $uriString", e)
             null
         }
     }

@@ -43,10 +43,10 @@ class PreferenceManager(context: Context) {
         prefs.edit { putBoolean("strict_privacy", enabled) }
     }
 
-    private val PREF_LAST_UPDATE_TIME = "pref_last_update_time"
+    private val prefLastUpdateTime = "pref_last_update_time"
 
     fun setLastUpdateTime(time: Long) {
-        prefs.edit { putLong(PREF_LAST_UPDATE_TIME, time) }
+        prefs.edit { putLong(prefLastUpdateTime, time) }
     }
 
     // Toggle for PII redaction (disabled by default)

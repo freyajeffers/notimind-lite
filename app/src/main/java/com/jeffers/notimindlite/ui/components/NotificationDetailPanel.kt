@@ -1,13 +1,17 @@
 package com.jeffers.notimindlite.ui.components
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -21,7 +25,7 @@ import java.time.format.DateTimeFormatter
  * It is displayed when a notification card in the LogHistoryScreen is expanded.
  */
 @Composable
-fun NotificationDetailPanel(
+fun notificationDetailPanel(
     item: NotificationEntity,
     dateTimeFormatter: DateTimeFormatter
 ) {
@@ -36,25 +40,25 @@ fun NotificationDetailPanel(
             .padding(12.dp),
         verticalArrangement = Arrangement.spacedBy(6.dp)
     ) {
-        DetailRow(label = stringResource(R.string.notification_detail_package), value = item.packageName)
-        DetailRow(label = stringResource(R.string.notification_detail_app_name), value = item.appName)
-        DetailRow(label = stringResource(R.string.notification_detail_priority), value = item.priority.toString())
-        DetailRow(
+        detailRow(label = stringResource(R.string.notification_detail_package), value = item.packageName)
+        detailRow(label = stringResource(R.string.notification_detail_app_name), value = item.appName)
+        detailRow(label = stringResource(R.string.notification_detail_priority), value = item.priority.toString())
+        detailRow(
             label = stringResource(R.string.notification_detail_channel_id),
             value = item.channelId ?: stringResource(R.string.notification_detail_unknown)
         )
-        DetailRow(
+        detailRow(
             label = stringResource(R.string.notification_detail_post_time),
             value = dateTimeFormatter.format(java.time.Instant.ofEpochMilli(item.postTime))
         )
-        DetailRow(label = stringResource(R.string.notification_detail_dismiss_time), value = item.dismissTime?.let {
+        detailRow(label = stringResource(R.string.notification_detail_dismiss_time), value = item.dismissTime?.let {
             dateTimeFormatter.format(java.time.Instant.ofEpochMilli(it))
         } ?: stringResource(R.string.notification_detail_not_available))
     }
 }
 
 @Composable
-private fun DetailRow(label: String, value: String) {
+private fun detailRow(label: String, value: String) {
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.SpaceBetween,

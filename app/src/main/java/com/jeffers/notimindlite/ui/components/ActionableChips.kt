@@ -1,16 +1,33 @@
 package com.jeffers.notimindlite.ui.components
 
+import android.content.ActivityNotFoundException
 import android.content.Intent
 import android.net.Uri
-import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.OpenInNew
 import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.Place
 import androidx.compose.material.icons.filled.Share
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material3.AssistChip
+import androidx.compose.material3.AssistChipDefaults
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.Icon
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.Text
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -30,7 +47,7 @@ import com.jeffers.notimindlite.R
 import com.jeffers.notimindlite.domain.entity.ActionableEntityExtractor
 
 @Composable
-fun ActionableChips(
+fun actionableChips(
     text: String,
     modifier: Modifier = Modifier
 ) {
@@ -45,44 +62,21 @@ fun ActionableChips(
         verticalAlignment = Alignment.CenterVertically
     ) {
         entities.forEach { entity ->
-            ActionChip(entity = entity)
+            actionChip(entity = entity)
             Spacer(modifier = Modifier.width(8.dp))
         }
     }
 }
 
 @Composable
-@Suppress("CyclomaticComplexMethod", "LongMethod", "FunctionNaming")
-private fun ActionChip(
+private fun actionChip(
     entity: ActionableEntityExtractor.ActionableEntity
 ) {
     var expanded by remember { mutableStateOf(false) }
     val context = LocalContext.current
     val clipboardManager = LocalClipboardManager.current
 
-    val config = when (entity.type) {
-        ActionableEntityExtractor.EntityType.OTP -> 
-            ActionChipConfig(
-                Icons.Default.ContentCopy,
-                stringResource(R.string.actionable_entity_otp),
-                MaterialTheme.colorScheme.primaryContainer,
-                MaterialTheme.colorScheme.onPrimaryContainer
-            )
-        ActionableEntityExtractor.EntityType.URL ->
-            ActionChipConfig(
-                icon = Icons.AutoMirrored.Filled.OpenInNew,
-                label = stringResource(R.string.actionable_entity_link),
-                containerColor = MaterialTheme.colorScheme.secondaryContainer,
-                onColor = MaterialTheme.colorScheme.onSecondaryContainer
-            )
-        ActionableEntityExtractor.EntityType.LOCATION -> 
-            ActionChipConfig(
-                Icons.Default.Place,
-                stringResource(R.string.actionable_entity_place),
-                MaterialTheme.colorScheme.tertiaryContainer,
-                MaterialTheme.colorScheme.onTertiaryContainer
-            )
-    }
+    val config = actionChipConfig(entity)
 
     val actionDescription = stringResource(
         R.string.actionable_action_suffix,
@@ -126,80 +120,133 @@ private fun ActionChip(
             }
         )
 
-        DropdownMenu(
-            expanded = expanded,
-            onDismissRequest = { expanded = false }
-        ) {
-            DropdownMenuItem(
-                text = {
-                    Text(
-                        when (entity.type) {
-                            ActionableEntityExtractor.EntityType.OTP -> stringResource(R.string.actionable_copy_code)
-                            ActionableEntityExtractor.EntityType.URL -> stringResource(R.string.actionable_copy_link)
-                            ActionableEntityExtractor.EntityType.LOCATION ->
-                                stringResource(R.string.actionable_copy_address)
-                        }
-                    )
-                },
-                onClick = {
-                    clipboardManager.setText(AnnotatedString(entity.value))
-                    expanded = false
-                },
-            leadingIcon = { Icon(Icons.Default.ContentCopy, contentDescription = "Copy", modifier = Modifier.size(18.dp)) }
+        actionChipMenu(
+            ActionChipMenuParams(
+                entity = entity,
+                expanded = expanded,
+                context = context,
+                clipboardManager = clipboardManager,
+                shareViaLabel = shareViaLabel,
+                onDismiss = { expanded = false }
             )
-
-            if (entity.type == ActionableEntityExtractor.EntityType.URL || entity.type == ActionableEntityExtractor.EntityType.LOCATION) {
-                DropdownMenuItem(
-                    text = {
-                        Text(
-                            if (entity.type == ActionableEntityExtractor.EntityType.URL) {
-                                stringResource(R.string.actionable_open_browser)
-                            } else {
-                                stringResource(R.string.actionable_open_maps)
-                            }
-                        )
-                    },
-                    onClick = {
-                        try {
-                            val uriString = if (entity.type == ActionableEntityExtractor.EntityType.URL) {
-                                entity.value
-                            } else {
-                                "geo:0,0?q=${Uri.encode(entity.value)}"
-                            }
-                            val intent = Intent(Intent.ACTION_VIEW, Uri.parse(uriString)).apply {
-                                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                            }
-                            context.startActivity(intent)
-                        } catch (e: Exception) { }
-                        expanded = false
-                    },
-                    leadingIcon = {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.OpenInNew,
-                            contentDescription = "Open",
-                            modifier = Modifier.size(18.dp)
-                        )
-                    }
-                )
-            }
-
-            DropdownMenuItem(
-                text = { Text(stringResource(R.string.actionable_share)) },
-                onClick = {
-                    val shareIntent = Intent(Intent.ACTION_SEND).apply {
-                        type = "text/plain"
-                        putExtra(Intent.EXTRA_TEXT, entity.value)
-                    }
-                    context.startActivity(
-                        Intent.createChooser(shareIntent, shareViaLabel)
-                    )
-                    expanded = false
-                },
-                leadingIcon = { Icon(Icons.Default.Share, contentDescription = stringResource(R.string.actionable_share), modifier = Modifier.size(18.dp)) }
-            )
-        }
+        )
     }
 }
+
+@Composable
+private fun actionChipConfig(
+    entity: ActionableEntityExtractor.ActionableEntity
+): ActionChipConfig = when (entity.type) {
+    ActionableEntityExtractor.EntityType.OTP -> ActionChipConfig(
+        Icons.Default.ContentCopy,
+        stringResource(R.string.actionable_entity_otp),
+        MaterialTheme.colorScheme.primaryContainer,
+        MaterialTheme.colorScheme.onPrimaryContainer
+    )
+    ActionableEntityExtractor.EntityType.URL -> ActionChipConfig(
+        icon = Icons.AutoMirrored.Filled.OpenInNew,
+        label = stringResource(R.string.actionable_entity_link),
+        containerColor = MaterialTheme.colorScheme.secondaryContainer,
+        onColor = MaterialTheme.colorScheme.onSecondaryContainer
+    )
+    ActionableEntityExtractor.EntityType.LOCATION -> ActionChipConfig(
+        Icons.Default.Place,
+        stringResource(R.string.actionable_entity_place),
+        MaterialTheme.colorScheme.tertiaryContainer,
+        MaterialTheme.colorScheme.onTertiaryContainer
+    )
+}
+
+@Composable
+private fun actionChipMenu(params: ActionChipMenuParams) {
+    val entity = params.entity
+    val expanded = params.expanded
+    val context = params.context
+    val clipboardManager = params.clipboardManager
+    val shareViaLabel = params.shareViaLabel
+    val onDismiss = params.onDismiss
+    DropdownMenu(expanded = expanded, onDismissRequest = onDismiss) {
+        DropdownMenuItem(
+            text = { Text(menuLabelForCopy(entity)) },
+            onClick = {
+                clipboardManager.setText(AnnotatedString(entity.value))
+                onDismiss()
+            },
+            leadingIcon = {
+                Icon(Icons.Default.ContentCopy, contentDescription = "Copy", modifier = Modifier.size(18.dp))
+            }
+        )
+        val canOpenExternally = entity.type == ActionableEntityExtractor.EntityType.URL ||
+            entity.type == ActionableEntityExtractor.EntityType.LOCATION
+        if (canOpenExternally) {
+            externalActionMenuItem(entity, context, onDismiss)
+        }
+        DropdownMenuItem(
+            text = { Text(stringResource(R.string.actionable_share)) },
+            onClick = {
+                val shareIntent = Intent(Intent.ACTION_SEND).apply {
+                    type = "text/plain"
+                    putExtra(Intent.EXTRA_TEXT, entity.value)
+                }
+                context.startActivity(Intent.createChooser(shareIntent, shareViaLabel))
+                onDismiss()
+            },
+            leadingIcon = {
+                Icon(
+                    Icons.Default.Share,
+                    contentDescription = stringResource(R.string.actionable_share),
+                    modifier = Modifier.size(18.dp)
+                )
+            }
+        )
+    }
+}
+
+@Composable
+private fun externalActionMenuItem(
+    entity: ActionableEntityExtractor.ActionableEntity,
+    context: android.content.Context,
+    onDismiss: () -> Unit
+) {
+    DropdownMenuItem(
+        text = {
+            Text(
+                if (entity.type == ActionableEntityExtractor.EntityType.URL) {
+                    stringResource(R.string.actionable_open_browser)
+                } else {
+                    stringResource(R.string.actionable_open_maps)
+                }
+            )
+        },
+        onClick = {
+            try {
+                val intent = Intent(Intent.ACTION_VIEW, Uri.parse(externalUriFor(entity))).apply {
+                    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                }
+                context.startActivity(intent)
+            } catch (_: ActivityNotFoundException) {
+                // No compatible external handler is installed.
+            }
+            onDismiss()
+        },
+        leadingIcon = {
+            Icon(
+                Icons.AutoMirrored.Filled.OpenInNew,
+                contentDescription = "Open",
+                modifier = Modifier.size(18.dp)
+            )
+        }
+    )
+}
+
+private data class ActionChipMenuParams(
+    val entity: ActionableEntityExtractor.ActionableEntity,
+    val expanded: Boolean,
+    val context: android.content.Context,
+    val clipboardManager: androidx.compose.ui.platform.ClipboardManager,
+    val shareViaLabel: String,
+    val onDismiss: () -> Unit
+)
 
 data class ActionChipConfig(
     val icon: ImageVector,
@@ -207,3 +254,20 @@ data class ActionChipConfig(
     val containerColor: Color,
     val onColor: Color
 )
+
+@Composable
+private fun menuLabelForCopy(
+    entity: ActionableEntityExtractor.ActionableEntity
+): String = when (entity.type) {
+    ActionableEntityExtractor.EntityType.OTP -> stringResource(R.string.actionable_copy_code)
+    ActionableEntityExtractor.EntityType.URL -> stringResource(R.string.actionable_copy_link)
+    ActionableEntityExtractor.EntityType.LOCATION -> stringResource(R.string.actionable_copy_address)
+}
+
+private fun externalUriFor(
+    entity: ActionableEntityExtractor.ActionableEntity
+): String = if (entity.type == ActionableEntityExtractor.EntityType.URL) {
+    entity.value
+} else {
+    "geo:0,0?q=${Uri.encode(entity.value)}"
+}

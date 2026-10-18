@@ -4,6 +4,7 @@ import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
 import com.jeffers.notimindlite.data.local.AppDatabase
 import com.jeffers.notimindlite.data.local.NotificationDao
+import com.jeffers.notimindlite.data.local.NotificationGroupDao
 import com.jeffers.notimindlite.data.local.NotificationEntity
 import com.jeffers.notimindlite.ui.components.groupNotifications
 import kotlinx.coroutines.flow.first
@@ -25,6 +26,7 @@ class NotificationGroupingTest {
 
     private lateinit var database: AppDatabase
     private lateinit var dao: NotificationDao
+    private lateinit var groupDao: NotificationGroupDao
 
     @Before
     fun setUp() {
@@ -33,6 +35,7 @@ class NotificationGroupingTest {
             .allowMainThreadQueries()
             .build()
         dao = database.notificationDao()
+        groupDao = database.notificationGroupDao()
     }
 
     @After
@@ -140,18 +143,18 @@ class NotificationGroupingTest {
 
         dao.insertNotifications(listOf(notif1, notif2))
 
-        val groups = dao.getAllGroupsWithChildrenFlow().first()
+        val groups = groupDao.getAllGroupsWithChildrenFlow().first()
         assertEquals(1, groups.size)
         assertEquals("slack_general", groups[0].group.groupKey)
         assertEquals(2, groups[0].notifications.size)
 
-        val appWithRelations = dao.getAppWithGroupsAndNotifications("com.slack").first()
+        val appWithRelations = groupDao.getAppWithGroupsAndNotifications("com.slack").first()
         assertNotNull(appWithRelations)
         assertEquals("com.slack", appWithRelations?.app?.packageName)
         assertEquals(1, appWithRelations?.groups?.size)
         assertEquals(2, appWithRelations?.notifications?.size)
 
-        val notifWithRelations = dao.getNotificationWithGroupAndApp("n1").first()
+        val notifWithRelations = groupDao.getNotificationWithGroupAndApp("n1").first()
         assertNotNull(notifWithRelations)
         assertEquals("n1", notifWithRelations?.notification?.key)
         assertEquals("slack_general", notifWithRelations?.group?.groupKey)

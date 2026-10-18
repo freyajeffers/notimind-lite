@@ -13,7 +13,6 @@ import java.util.*
  */
 object SnoozeReminderScheduler {
     private const val TAG = "SnoozeScheduler"
-    private const val CHANNEL_ID = "snooze_reminders"
 
     /**
      * Schedules a reminder notification for a specific notification item.
@@ -44,7 +43,8 @@ object SnoozeReminderScheduler {
                 PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
             )
 
-            val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
+            val alarmManager = checkNotNull(context.getSystemService(Context.ALARM_SERVICE)) as? AlarmManager
+                ?: error("AlarmManager service unavailable")
             val triggerAt = System.currentTimeMillis() + delayMs
 
             if (alarmManager.canScheduleExactAlarms()) {
@@ -52,11 +52,14 @@ object SnoozeReminderScheduler {
             } else {
                 alarmManager.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, triggerAt, pendingIntent)
             }
-            
-            
-            
-        } catch (e: Exception) {
-            Log.e(TAG, "Failed to schedule snooze reminder", e)
+        } catch (e: SecurityException) {
+            Log.e(TAG, "Permission denied scheduling snooze reminder for $notificationId", e)
+        } catch (e: IllegalArgumentException) {
+            Log.e(TAG, "Invalid argument scheduling snooze reminder for $notificationId", e)
+        } catch (e: ClassCastException) {
+            Log.e(TAG, "System service type mismatch scheduling snooze reminder", e)
+        } catch (e: IllegalStateException) {
+            Log.e(TAG, "Missing system service scheduling snooze reminder", e)
         }
     }
 
@@ -70,12 +73,18 @@ object SnoozeReminderScheduler {
                 PendingIntent.FLAG_NO_CREATE or PendingIntent.FLAG_IMMUTABLE
             )
             if (pendingIntent != null) {
-                val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
+                val alarmManager = checkNotNull(context.getSystemService(Context.ALARM_SERVICE)) as? AlarmManager
+                ?: error("AlarmManager service unavailable")
                 alarmManager.cancel(pendingIntent)
-                
             }
-        } catch (e: Exception) {
-            Log.e(TAG, "Failed to cancel snooze reminder", e)
+        } catch (e: SecurityException) {
+            Log.e(TAG, "Permission denied cancelling snooze reminder for $notificationId", e)
+        } catch (e: IllegalArgumentException) {
+            Log.e(TAG, "Invalid argument cancelling snooze reminder for $notificationId", e)
+        } catch (e: ClassCastException) {
+            Log.e(TAG, "System service type mismatch cancelling snooze reminder", e)
+        } catch (e: IllegalStateException) {
+            Log.e(TAG, "Missing system service cancelling snooze reminder", e)
         }
     }
 }

@@ -3,9 +3,13 @@ package com.jeffers.notimindlite
 import android.content.Context
 import androidx.test.core.app.ApplicationProvider
 import com.jeffers.notimindlite.data.local.NotificationEntity
+import com.jeffers.notimindlite.util.DatabaseExportHelper
 import com.jeffers.notimindlite.util.DatabaseExporter
 import org.json.JSONArray
-import org.junit.Assert.*
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -59,12 +63,24 @@ class DatabaseExporterTest {
 
     @Test
     fun testCsvFormulaInjectionSanitization() {
-        val entityEqual = NotificationEntity(key = "k1", packageName = "p", appName = "App", title = "=1+1", content = "=SUM(A1:A10)")
-        val entityPlus = NotificationEntity(key = "k2", packageName = "p", appName = "App", title = "+1-2", content = "+1+1")
-        val entityMinus = NotificationEntity(key = "k3", packageName = "p", appName = "App", title = "-1+2", content = "-cmd|' /C calc'!A0")
-        val entityAt = NotificationEntity(key = "k4", packageName = "p", appName = "App", title = "@SUM(1,2)", content = "@appName")
-        val entityTab = NotificationEntity(key = "k5", packageName = "p", appName = "App", title = "\tTabbed", content = "\rCarriage")
-        val entityLeadingSpaceFormula = NotificationEntity(key = "k6", packageName = "p", appName = "App", title = "   =1+1", content = "  +2")
+        val entityEqual = NotificationEntity(
+            key = "k1", packageName = "p", appName = "App", title = "=1+1", content = "=SUM(A1:A10)"
+        )
+        val entityPlus = NotificationEntity(
+            key = "k2", packageName = "p", appName = "App", title = "+1-2", content = "+1+1"
+        )
+        val entityMinus = NotificationEntity(
+            key = "k3", packageName = "p", appName = "App", title = "-1+2", content = "-cmd|' /C calc'!A0"
+        )
+        val entityAt = NotificationEntity(
+            key = "k4", packageName = "p", appName = "App", title = "@SUM(1,2)", content = "@appName"
+        )
+        val entityTab = NotificationEntity(
+            key = "k5", packageName = "p", appName = "App", title = "\tTabbed", content = "\rCarriage"
+        )
+        val entityLeadingSpaceFormula = NotificationEntity(
+            key = "k6", packageName = "p", appName = "App", title = "   =1+1", content = "  +2"
+        )
 
         val csvString = DatabaseExporter.exportToCsvString(
             listOf(entityEqual, entityPlus, entityMinus, entityAt, entityTab, entityLeadingSpaceFormula)
@@ -84,15 +100,18 @@ class DatabaseExporterTest {
     @Test
     fun testExportAppliesPrivacyPreferences() {
         val preferences = com.jeffers.notimindlite.data.local.PreferencesRepository(context)
-        preferences.setAnonymizeTitles(true)
-        preferences.setRedactPii(true)
-        val entity = NotificationEntity(key = "privacy", packageName = "p", appName = "App", title = "Secret title", content = "Email me at user@example.com")
+        preferences.exportManager.setAnonymizeTitles(true)
+        preferences.securityManager.setRedactPii(true)
+        val entity = NotificationEntity(
+            key = "privacy", packageName = "p", appName = "App", title = "Secret title",
+            content = "Email me at user@example.com"
+        )
 
         val obj = JSONArray(DatabaseExporter.exportToJsonString(listOf(entity), context)).getJSONObject(0)
         assertEquals("[REDACTED-TITLE]", obj.getString("title"))
         assertTrue(obj.getString("content").contains("[REDACTED-EMAIL]"))
 
-        preferences.setAnonymizeTitles(false)
+        preferences.exportManager.setAnonymizeTitles(false)
     }
 
     @Test
@@ -103,7 +122,7 @@ class DatabaseExporterTest {
         val dummyFile = File(exportsDir, "test_export.csv")
         dummyFile.writeText("test content")
 
-        val uri = DatabaseExporter.getExportFileUri(context, dummyFile)
+        val uri = DatabaseExportHelper.getExportFileUri(context, dummyFile)
         assertNotNull(uri)
         assertEquals("content", uri.scheme)
         assertEquals("${context.packageName}.fileprovider", uri.authority)
@@ -123,7 +142,7 @@ class DatabaseExporterTest {
         recentFile.writeText("{}")
         recentFile.setLastModified(System.currentTimeMillis())
 
-        DatabaseExporter.cleanupExportFiles(context, maxAgeMillis = 3600_000L) // 1 hour max age
+        DatabaseExportHelper.cleanupExportFiles(context, maxAgeMillis = 3600_000L) // 1 hour max age
 
         assertFalse("Old export file should be deleted", oldFile.exists())
         assertTrue("Recent export file should be retained", recentFile.exists())

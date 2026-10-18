@@ -8,7 +8,12 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -28,7 +33,7 @@ private const val SPLASH_HANDOFF_DELAY_MS = 450L
  * It handles initial resource loading and transitions to the main navigation.
  */
 @Composable
-fun SplashScreen(onTimeout: () -> Unit) {
+fun splashScreen(onTimeout: () -> Unit) {
     var scale by remember { mutableFloatStateOf(INITIAL_SPLASH_SCALE) }
 
     LaunchedEffect(Unit) {
