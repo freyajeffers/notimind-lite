@@ -6,14 +6,21 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import org.json.JSONArray
 
-class SharedSearchStateManager(context: Context, private val profileManager: ProfilePreferencesManager) {
+class SharedSearchStateManager(
+    context: Context,
+    private val profileManager: ProfilePreferencesManager
+) {
     private val appContext = context.applicationContext
-    private val preferences get() = appContext.createDeviceProtectedStorageContext()
+    private val preferences get() = appContext
+        .createDeviceProtectedStorageContext()
         .getSharedPreferences(profileManager.activePreferencesName, Context.MODE_PRIVATE)
     private val _query = MutableStateFlow(preferences.getString(KEY_QUERY, "") ?: "")
     private val _packages = MutableStateFlow<List<String>?>(
-        preferences.getString(KEY_PACKAGES, null)
-            ?.split(',')?.filter(String::isNotBlank)?.ifEmpty { null }
+        preferences
+            .getString(KEY_PACKAGES, null)
+            ?.split(',')
+            ?.filter(String::isNotBlank)
+            ?.ifEmpty { null }
     )
     private val _reason = MutableStateFlow(preferences.getInt(KEY_REASON, -1).let { if (it >= 0) it else null })
     private val _recentSearches = MutableStateFlow(readRecentSearches())
@@ -25,8 +32,11 @@ class SharedSearchStateManager(context: Context, private val profileManager: Pro
 
     fun reload() {
         _query.value = preferences.getString(KEY_QUERY, "") ?: ""
-        _packages.value = preferences.getString(KEY_PACKAGES, null)
-            ?.split(',')?.filter(String::isNotBlank)?.ifEmpty { null }
+        _packages.value = preferences
+            .getString(KEY_PACKAGES, null)
+            ?.split(',')
+            ?.filter(String::isNotBlank)
+            ?.ifEmpty { null }
         _reason.value = preferences.getInt(KEY_REASON, -1).let { if (it >= 0) it else null }
         _recentSearches.value = readRecentSearches()
     }

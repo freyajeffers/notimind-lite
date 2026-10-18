@@ -37,15 +37,13 @@ object NotificationLauncher {
         actionIntentCache.clear()
     }
 
-    fun isActionAvailable(notifKey: String, actionIndex: Int): Boolean {
-        return actionIntentCache[notifKey]?.get(actionIndex) != null
-    }
+    fun isActionAvailable(notifKey: String, actionIndex: Int): Boolean =
+        actionIntentCache[notifKey]?.get(actionIndex) != null
 
     fun triggerAction(notifKey: String, actionIndex: Int): Boolean {
         val actionIntent = actionIntentCache[notifKey]?.get(actionIndex)
         if (actionIntent != null) {
             try {
-                
                 actionIntent.send()
                 return true
             } catch (e: PendingIntent.CanceledException) {
@@ -64,7 +62,6 @@ object NotificationLauncher {
         // 1. Try live in-memory PendingIntent
         if (pendingIntent != null) {
             try {
-                
                 pendingIntent.send()
                 launched = true
             } catch (e: PendingIntent.CanceledException) {
@@ -75,7 +72,6 @@ object NotificationLauncher {
         // 2. Try restored persistent intentUri
         if (!launched && !intentUri.isNullOrBlank()) {
             try {
-                
                 val parsedIntent = Intent.parseUri(intentUri, Intent.URI_INTENT_SCHEME)
                 if (packageName.isNotBlank()) {
                     parsedIntent.setPackage(packageName)
@@ -99,7 +95,6 @@ object NotificationLauncher {
         // 3. Fallback to package main launch intent
         if (!launched) {
             try {
-                
                 val launchIntent = context.packageManager.getLaunchIntentForPackage(packageName)
                 if (launchIntent != null) {
                     launchIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)

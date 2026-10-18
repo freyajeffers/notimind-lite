@@ -6,7 +6,6 @@ import org.junit.Test
 import javax.crypto.AEADBadTagException
 
 class EncryptedStorageTest {
-
     @Test
     fun `encrypt decrypt roundtrip with derived key`() {
         val master = EncryptedStorage.generateMasterSecret()

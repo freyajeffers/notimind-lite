@@ -8,6 +8,7 @@ import java.util.concurrent.Executors
 /** Shared bounded pool for embedding and maintenance work. */
 object PerformanceExecutors {
     @Volatile private var configuredSize = -1
+
     @Volatile private var executor: ExecutorService? = null
 
     fun embeddingExecutor(context: Context): ExecutorService {

@@ -16,13 +16,13 @@ object GeminiMapsDetector {
     private val KEYWORDS_REGEX = LOCATION_KEYWORDS.joinToString("|")
 
     private val ADDRESS_PATTERN = Regex(
-        "\\b(\\d{1,5}\\s+[A-Za-z0-9\\s]+?\\b(?:$KEYWORDS_REGEX)\\b)", 
+        "\\b(\\d{1,5}\\s+[A-Za-z0-9\\s]+?\\b(?:$KEYWORDS_REGEX)\\b)",
         RegexOption.IGNORE_CASE
     )
 
     fun detect(text: String): List<ActionableEntityExtractor.ActionableEntity> {
         val foundEntities = mutableListOf<ActionableEntityExtractor.ActionableEntity>()
-        
+
         val matches = ADDRESS_PATTERN.findAll(text)
         for (match in matches) {
             val rawText = match.value.trim()

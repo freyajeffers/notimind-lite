@@ -10,15 +10,16 @@ import org.junit.Test
 import java.io.File
 
 class ExportSanitizationBoundaryTest : BaseRobolectricTest() {
-
     @Test
     fun tc_EXP_001_jsonExportValidSchemaAndEscaping() {
-        val entity1 = createDummyEntity(DummyEntityParams(
-            key = "k_json_1",
-            title = "Title with \"quotes\" and \n newlines",
-            content = "Content with \\ slashes and \t tabs"
-         ))
-        val entity2 = createDummyEntity(DummyEntityParams(key = "k_json_2", title = "Simple", content = "Simple" ))
+        val entity1 = createDummyEntity(
+            DummyEntityParams(
+                key = "k_json_1",
+                title = "Title with \"quotes\" and \n newlines",
+                content = "Content with \\ slashes and \t tabs"
+            )
+        )
+        val entity2 = createDummyEntity(DummyEntityParams(key = "k_json_2", title = "Simple", content = "Simple"))
 
         val jsonStr = DatabaseExporter.exportToJsonString(listOf(entity1, entity2))
         assertNotNull(jsonStr)
@@ -69,7 +70,7 @@ class ExportSanitizationBoundaryTest : BaseRobolectricTest() {
 
     @Test
     fun tc_EXP_003_shareExportFileAndCleanup() {
-        val notifications = listOf(createDummyEntity(DummyEntityParams(key = "share_k1" )))
+        val notifications = listOf(createDummyEntity(DummyEntityParams(key = "share_k1")))
 
         DatabaseExporter.shareExportFile(context, notifications, isJson = true)
         DatabaseExporter.shareExportFile(context, notifications, isJson = false)

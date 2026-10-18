@@ -12,7 +12,6 @@ import org.robolectric.annotation.Config
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [33])
 class KeyManagerTest {
-
     @Test
     fun `getOrCreateMasterKeyAlias returns valid alias string`() {
         val context = ApplicationProvider.getApplicationContext<Context>()

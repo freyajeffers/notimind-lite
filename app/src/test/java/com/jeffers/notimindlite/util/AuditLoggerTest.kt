@@ -17,7 +17,6 @@ import org.robolectric.annotation.Config
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [33])
 class AuditLoggerTest {
-
     private lateinit var context: Context
 
     @Before
@@ -36,7 +35,7 @@ class AuditLoggerTest {
     fun testSignAndVerifyLogEntry() {
         val deviceId = AuditLogger.getDeviceId(context)
         val rawData = "123456789|TEST_EVENT|$deviceId|details"
-        
+
         val signature = AuditLogger.signLogEntry(rawData, deviceId)
         assertNotNull(signature)
         assertTrue(signature.isNotBlank())

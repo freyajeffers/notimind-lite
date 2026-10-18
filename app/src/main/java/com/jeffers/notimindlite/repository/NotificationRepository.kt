@@ -8,7 +8,9 @@ import com.jeffers.notimindlite.domain.entity.Resource
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
-class NotificationRepository(private val context: Context) {
+class NotificationRepository(
+    private val context: Context
+) {
     private val dao = AppDatabase.getDatabase(context).notificationDao()
 
     suspend fun searchFts(query: String): Resource<List<NotificationEntity>> = withContext(Dispatchers.IO) {

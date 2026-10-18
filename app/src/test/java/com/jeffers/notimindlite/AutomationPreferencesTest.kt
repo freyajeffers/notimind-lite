@@ -38,7 +38,12 @@ class AutomationPreferencesTest {
         assertEquals("copy", second.automationManager.defaultReplyMethod.value)
         assertEquals("reply", second.automationManager.longPressAction.value)
         assertEquals(1, second.automationManager.rules.value.size)
-        assertEquals(2, second.automationManager.rules.value.single().actionIndex)
+        assertEquals(
+            2,
+            second.automationManager.rules.value
+                .single()
+                .actionIndex
+        )
     }
 
     @Test
@@ -49,6 +54,9 @@ class AutomationPreferencesTest {
         repository.automationManager.setLongPressAction("unknown")
         assertEquals("inline", repository.automationManager.defaultReplyMethod.value)
         assertEquals("open", repository.automationManager.longPressAction.value)
-        assertFalse(repository.automationManager.rules.value.any { it.id.isBlank() })
+        assertFalse(
+            repository.automationManager.rules.value
+                .any { it.id.isBlank() }
+        )
     }
 }

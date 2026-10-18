@@ -1,9 +1,11 @@
 package com.jeffers.notimindlite.data.auth
 
 import android.content.Context
-import android.util.Base64
 import android.security.keystore.KeyGenParameterSpec
 import android.security.keystore.KeyProperties
+import android.util.Base64
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import org.json.JSONObject
 import java.io.IOException
 import java.net.HttpURLConnection
@@ -12,13 +14,13 @@ import javax.crypto.Cipher
 import javax.crypto.KeyGenerator
 import javax.crypto.SecretKey
 import javax.crypto.spec.GCMParameterSpec
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
 
 /**
  * Secure storage and refresh helper for Supabase session tokens.
  */
-class SupabaseSessionStore(private val context: Context) {
+class SupabaseSessionStore(
+    private val context: Context
+) {
     private companion object {
         const val HTTP_SUCCESS_MIN = 200
         const val HTTP_SUCCESS_MAX = 299
@@ -26,6 +28,7 @@ class SupabaseSessionStore(private val context: Context) {
         const val GCM_IV_BYTES = 12
         const val KEY_ALIAS = "notimind_supabase_session"
     }
+
     private val prefs = context.getSharedPreferences("supabase_auth", Context.MODE_PRIVATE)
 
     suspend fun refreshSessionIfNeeded(supabaseUrl: String, anonKey: String): Result<String> =
@@ -66,27 +69,38 @@ class SupabaseSessionStore(private val context: Context) {
         return Result.success(token)
     }
 
-    fun saveAccessToken(token: String) { saveSecret("access_token", token) }
-    fun saveRefreshToken(token: String) { saveSecret("refresh_token", token) }
+    fun saveAccessToken(token: String) {
+        saveSecret("access_token", token)
+    }
+
+    fun saveRefreshToken(token: String) {
+        saveSecret("refresh_token", token)
+    }
+
     fun readAccessToken(): String? = readSecret("access_token")
 
     private fun secretKey(): SecretKey {
-        val store = java.security.KeyStore.getInstance("AndroidKeyStore").apply { load(null) }
+        val store = java.security.KeyStore
+            .getInstance("AndroidKeyStore")
+            .apply { load(null) }
         (store.getKey(KEY_ALIAS, null) as? SecretKey)?.let { return it }
-        return KeyGenerator.getInstance(KeyProperties.KEY_ALGORITHM_AES, "AndroidKeyStore").apply {
-            val spec = KeyGenParameterSpec.Builder(
-                KEY_ALIAS,
-                KeyProperties.PURPOSE_ENCRYPT or KeyProperties.PURPOSE_DECRYPT
-            )
-                .setBlockModes(KeyProperties.BLOCK_MODE_GCM)
-                .setEncryptionPaddings(KeyProperties.ENCRYPTION_PADDING_NONE)
-                .build()
-            init(spec)
-        }.generateKey()
+        return KeyGenerator
+            .getInstance(KeyProperties.KEY_ALGORITHM_AES, "AndroidKeyStore")
+            .apply {
+                val spec = KeyGenParameterSpec
+                    .Builder(
+                        KEY_ALIAS,
+                        KeyProperties.PURPOSE_ENCRYPT or KeyProperties.PURPOSE_DECRYPT
+                    ).setBlockModes(KeyProperties.BLOCK_MODE_GCM)
+                    .setEncryptionPaddings(KeyProperties.ENCRYPTION_PADDING_NONE)
+                    .build()
+                init(spec)
+            }.generateKey()
     }
 
     private fun saveSecret(name: String, value: String) {
-        val cipher = Cipher.getInstance("AES/GCM/NoPadding")
+        val cipher = Cipher
+            .getInstance("AES/GCM/NoPadding")
             .apply { init(Cipher.ENCRYPT_MODE, secretKey()) }
         val encrypted = cipher.iv + cipher.doFinal(value.toByteArray())
         prefs.edit().putString("secret_$name", Base64.encodeToString(encrypted, Base64.NO_WRAP)).apply()
@@ -95,14 +109,16 @@ class SupabaseSessionStore(private val context: Context) {
     private fun readSecret(name: String): String? = prefs.getString("secret_$name", null)?.let {
         runCatching {
             val bytes = Base64.decode(it, Base64.NO_WRAP)
-            Cipher.getInstance("AES/GCM/NoPadding").apply {
-                init(
-                    Cipher.DECRYPT_MODE,
-                    secretKey(),
-                    GCMParameterSpec(GCM_TAG_BITS, bytes.copyOfRange(0, GCM_IV_BYTES))
-                )
-            }.doFinal(bytes.copyOfRange(GCM_IV_BYTES, bytes.size)).toString(Charsets.UTF_8)
+            Cipher
+                .getInstance("AES/GCM/NoPadding")
+                .apply {
+                    init(
+                        Cipher.DECRYPT_MODE,
+                        secretKey(),
+                        GCMParameterSpec(GCM_TAG_BITS, bytes.copyOfRange(0, GCM_IV_BYTES))
+                    )
+                }.doFinal(bytes.copyOfRange(GCM_IV_BYTES, bytes.size))
+                .toString(Charsets.UTF_8)
         }.getOrNull()
     } ?: prefs.getString(name, null)
-
 }

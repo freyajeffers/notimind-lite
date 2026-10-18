@@ -11,7 +11,6 @@ import org.junit.Test
 import org.robolectric.Robolectric
 
 class DynamicDebounceBoundaryTest : BaseRobolectricTest() {
-
     @Test
     fun tc_DEB_001_smart30sDynamicDebounceValidation() = runTest {
         val serviceController = Robolectric.buildService(NotificationLoggerService::class.java)
@@ -25,12 +24,14 @@ class DynamicDebounceBoundaryTest : BaseRobolectricTest() {
         )
 
         val key = "com.chat.app|1001|null|10001"
-        val sbn1 = createMockStatusBarNotification(MockStatusBarParams(
-            key = key,
-            packageName = "com.chat.app",
-            title = "Alice",
-            text = "Hello!"
-        ))
+        val sbn1 = createMockStatusBarNotification(
+            MockStatusBarParams(
+                key = key,
+                packageName = "com.chat.app",
+                title = "Alice",
+                text = "Hello!"
+            )
+        )
 
         // First post: should insert into DB
         service.onNotificationPosted(sbn1)
@@ -40,12 +41,14 @@ class DynamicDebounceBoundaryTest : BaseRobolectricTest() {
         assertEquals("First notification post should be logged", 1, allNotifs.size)
 
         // Second post: identical key, title, text within 30s -> should be debounced (suppressed)
-        val sbnDuplicate = createMockStatusBarNotification(MockStatusBarParams(
-            key = key,
-            packageName = "com.chat.app",
-            title = "Alice",
-            text = "Hello!"
-        ))
+        val sbnDuplicate = createMockStatusBarNotification(
+            MockStatusBarParams(
+                key = key,
+                packageName = "com.chat.app",
+                title = "Alice",
+                text = "Hello!"
+            )
+        )
         service.onNotificationPosted(sbnDuplicate)
         Thread.sleep(100)
 
@@ -53,12 +56,14 @@ class DynamicDebounceBoundaryTest : BaseRobolectricTest() {
         assertEquals("Duplicate identical notification within 30s must be suppressed", 1, allNotifs.size)
 
         // Third post: same key, but content updated ("Hello again!") -> should BYPASS debounce instantly
-        val sbnUpdated = createMockStatusBarNotification(MockStatusBarParams(
-            key = key,
-            packageName = "com.chat.app",
-            title = "Alice",
-            text = "Hello again!"
-        ))
+        val sbnUpdated = createMockStatusBarNotification(
+            MockStatusBarParams(
+                key = key,
+                packageName = "com.chat.app",
+                title = "Alice",
+                text = "Hello again!"
+            )
+        )
         service.onNotificationPosted(sbnUpdated)
         Thread.sleep(100)
 

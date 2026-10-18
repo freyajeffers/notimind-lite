@@ -5,8 +5,8 @@ import android.util.Log
 import com.google.android.play.core.integrity.IntegrityManagerFactory
 import com.google.android.play.core.integrity.IntegrityTokenRequest
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
 import kotlinx.coroutines.tasks.await
+import kotlinx.coroutines.withContext
 import java.net.HttpURLConnection
 import java.net.URL
 import java.util.*
@@ -21,7 +21,7 @@ object BackupNotaryClient {
     private const val NOTARY_SERVER_URL = "https://api.notimind.lite/v1/internal/sign-hash"
     private const val NOTARY_CONNECT_TIMEOUT_MS = 5_000
     private const val NOTARY_READ_TIMEOUT_MS = 5_000
-    
+
     /**
      * Requests a secure signature for a given file hash from the NotiMind Notary Server.
      * Flow: Play Integrity Token -> Server Verification -> Signature Delivery.
@@ -36,10 +36,10 @@ object BackupNotaryClient {
             val integrityManager = IntegrityManagerFactory.create(context)
             val nonce = UUID.randomUUID().toString()
             val integrityToken = requestIntegrityToken(integrityManager, nonce)
-            
+
             // 2. Send the hash and token to the Notary Server
             val signature = fetchSignatureFromServer(fileHash, integrityToken)
-            
+
             signature
         } catch (e: java.net.SocketTimeoutException) {
             AppLogger.e(TAG, "Notary signature retrieval timed out: ${e.message}", e)
@@ -66,36 +66,35 @@ object BackupNotaryClient {
         manager: com.google.android.play.core.integrity.IntegrityManager,
         nonce: String
     ): String {
-        val request = IntegrityTokenRequest.builder()
+        val request = IntegrityTokenRequest
+            .builder()
             .setNonce(nonce)
             .build()
-            
+
         val response = manager.requestIntegrityToken(request).await()
         return response.token()
     }
 
-    private suspend fun fetchSignatureFromServer(hash: String, token: String): String {
-        return try {
-            val connection = URL(NOTARY_SERVER_URL).openConnection() as HttpURLConnection
-            connection.requestMethod = "POST"
-            connection.doOutput = true
-            connection.setRequestProperty("Content-Type", "application/json")
-            connection.connectTimeout = NOTARY_CONNECT_TIMEOUT_MS
-            connection.readTimeout = NOTARY_READ_TIMEOUT_MS
+    private suspend fun fetchSignatureFromServer(hash: String, token: String): String = try {
+        val connection = URL(NOTARY_SERVER_URL).openConnection() as HttpURLConnection
+        connection.requestMethod = "POST"
+        connection.doOutput = true
+        connection.setRequestProperty("Content-Type", "application/json")
+        connection.connectTimeout = NOTARY_CONNECT_TIMEOUT_MS
+        connection.readTimeout = NOTARY_READ_TIMEOUT_MS
 
-            val payload = "{\"hash\":\"$hash\", \"token\":\"$token\"}"
-            connection.outputStream.use { it.write(payload.toByteArray(Charsets.UTF_8)) }
+        val payload = "{\"hash\":\"$hash\", \"token\":\"$token\"}"
+        connection.outputStream.use { it.write(payload.toByteArray(Charsets.UTF_8)) }
 
-            check(connection.responseCode == HttpURLConnection.HTTP_OK) {
-                "Notary server returned ${connection.responseCode}"
-            }
-            connection.inputStream.bufferedReader().use { it.readText().trim() }
-        } catch (e: java.net.MalformedURLException) {
-            Log.e(TAG, "Notary URL invalid", e)
-            throw java.io.IOException("Notary URL invalid", e)
-        } catch (e: java.io.IOException) {
-            Log.e(TAG, "Notary server unavailable or IO error", e)
-            throw e
+        check(connection.responseCode == HttpURLConnection.HTTP_OK) {
+            "Notary server returned ${connection.responseCode}"
         }
+        connection.inputStream.bufferedReader().use { it.readText().trim() }
+    } catch (e: java.net.MalformedURLException) {
+        Log.e(TAG, "Notary URL invalid", e)
+        throw java.io.IOException("Notary URL invalid", e)
+    } catch (e: java.io.IOException) {
+        Log.e(TAG, "Notary server unavailable or IO error", e)
+        throw e
     }
 }

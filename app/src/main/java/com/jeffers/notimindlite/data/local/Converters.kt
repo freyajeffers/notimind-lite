@@ -29,12 +29,8 @@ class Converters {
     }
 
     @TypeConverter
-    fun fromSyncStatus(value: SyncStatus?): String? {
-        return value?.name
-    }
+    fun fromSyncStatus(value: SyncStatus?): String? = value?.name
 
     @TypeConverter
-    fun toSyncStatus(value: String?): SyncStatus? {
-        return if (value != null) SyncStatus.valueOf(value) else null
-    }
+    fun toSyncStatus(value: String?): SyncStatus? = if (value != null) SyncStatus.valueOf(value) else null
 }

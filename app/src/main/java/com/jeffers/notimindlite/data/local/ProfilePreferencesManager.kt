@@ -8,9 +8,12 @@ import org.json.JSONArray
 import org.json.JSONObject
 import java.util.UUID
 
-class ProfilePreferencesManager(context: Context) {
+class ProfilePreferencesManager(
+    context: Context
+) {
     private val appContext = context.applicationContext
-    private val store = appContext.createDeviceProtectedStorageContext()
+    private val store = appContext
+        .createDeviceProtectedStorageContext()
         .getSharedPreferences(PROFILE_STORE, Context.MODE_PRIVATE)
     private var activeId = store.getString(KEY_ACTIVE_PROFILE, DEFAULT_PROFILE_ID) ?: DEFAULT_PROFILE_ID
     private val _profiles = MutableStateFlow(readProfiles())
@@ -22,7 +25,9 @@ class ProfilePreferencesManager(context: Context) {
     var onProfileChanged: (() -> Unit)? = null
 
     fun createProfile(name: String): Profile {
-        val clean = name.trim().take(MAX_PROFILE_NAME_LENGTH)
+        val clean = name
+            .trim()
+            .take(MAX_PROFILE_NAME_LENGTH)
             .ifBlank { "Profile ${_profiles.value.size + 1}" }
         val profile = Profile(UUID.randomUUID().toString(), clean, System.currentTimeMillis())
         writeProfiles((_profiles.value + profile).distinctBy { it.id })
@@ -58,11 +63,13 @@ class ProfilePreferencesManager(context: Context) {
         val profile = _profiles.value.first { it.id == id }
         return JSONObject()
             .put("version", PROFILE_EXPORT_VERSION)
-            .put("profile", JSONObject()
-                .put("id", profile.id)
-                .put("name", profile.name)
-                .put("createdAt", profile.createdAt))
-            .put("settings", settings)
+            .put(
+                "profile",
+                JSONObject()
+                    .put("id", profile.id)
+                    .put("name", profile.name)
+                    .put("createdAt", profile.createdAt)
+            ).put("settings", settings)
             .toString()
     }
 
@@ -70,7 +77,8 @@ class ProfilePreferencesManager(context: Context) {
         val root = JSONObject(serialized)
         require(root.optInt("version", 0) == PROFILE_EXPORT_VERSION) { "Unsupported profile export" }
         val source = root.getJSONObject("profile")
-        val id = source.optString("id")
+        val id = source
+            .optString("id")
             .takeIf { it.matches(PROFILE_ID) }
             ?.takeIf { candidate -> _profiles.value.none { it.id == candidate } }
             ?: UUID.randomUUID().toString()
@@ -113,8 +121,11 @@ class ProfilePreferencesManager(context: Context) {
     }.getOrDefault(listOf(Profile(DEFAULT_PROFILE_ID, "Default", 0L)))
 
     private fun writeProfiles(value: List<Profile>) {
-        val safe = if (value.any { it.id == DEFAULT_PROFILE_ID }) value
-        else listOf(Profile(DEFAULT_PROFILE_ID, "Default", 0L)) + value
+        val safe = if (value.any { it.id == DEFAULT_PROFILE_ID }) {
+            value
+        } else {
+            listOf(Profile(DEFAULT_PROFILE_ID, "Default", 0L)) + value
+        }
         store.edit().putString(KEY_PROFILES, encodeProfiles(safe)).apply()
         _profiles.value = safe
     }

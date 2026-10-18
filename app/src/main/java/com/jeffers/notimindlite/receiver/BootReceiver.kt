@@ -9,8 +9,8 @@ import android.content.Intent
 import android.os.UserManager
 import android.service.notification.NotificationListenerService
 import android.util.Log
-import com.jeffers.notimindlite.R
 import androidx.core.app.NotificationCompat
+import com.jeffers.notimindlite.R
 import com.jeffers.notimindlite.data.local.AppDatabase
 import com.jeffers.notimindlite.service.BootRestoreManager
 import com.jeffers.notimindlite.service.NotificationLoggerService
@@ -24,7 +24,6 @@ import kotlinx.coroutines.launch
  * standard boot completion (BOOT_COMPLETED), and package update events.
  */
 class BootReceiver : BroadcastReceiver() {
-
     private val receiverScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
     companion object {
@@ -46,9 +45,11 @@ class BootReceiver : BroadcastReceiver() {
     private fun handleAction(context: Context, action: String) {
         when {
             action == Intent.ACTION_MY_PACKAGE_REPLACED -> {
-                com.jeffers.notimindlite.data.local.PreferenceManager(context)
+                com.jeffers.notimindlite.data.local
+                    .PreferenceManager(context)
                     .setLastUpdateTime(System.currentTimeMillis())
             }
+
             isBootAction(action) -> {
                 val userManager = context.getSystemService(Context.USER_SERVICE) as? UserManager
                 scheduleBootRestore(context, userManager?.isUserUnlocked ?: true)
@@ -64,7 +65,8 @@ class BootReceiver : BroadcastReceiver() {
         receiverScope.launch {
             try {
                 requestListenerRebind(context)
-                val preferences = com.jeffers.notimindlite.data.local.PreferenceManager(context)
+                val preferences = com.jeffers.notimindlite.data.local
+                    .PreferenceManager(context)
                 if (!preferences.isRestoreOnBootEnabled() || !isUserUnlocked) {
                     logRestoreSkipped(isUserUnlocked)
                     return@launch
@@ -129,7 +131,8 @@ class BootReceiver : BroadcastReceiver() {
     ) {
         val firstId = item.originalIds.first()
         val notificationId = (firstId.hashCode() and POSITIVE_INT_MASK) + RESTORED_NOTIFICATION_OFFSET
-        val notification = NotificationCompat.Builder(context, CHANNEL_ID_RESTORED)
+        val notification = NotificationCompat
+            .Builder(context, CHANNEL_ID_RESTORED)
             .setSmallIcon(android.R.drawable.stat_notify_chat)
             .setContentTitle("${item.appName}: ${item.summaryTitle}")
             .setContentText(item.summaryContent)

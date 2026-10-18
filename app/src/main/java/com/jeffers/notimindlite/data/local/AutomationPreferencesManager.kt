@@ -7,9 +7,13 @@ import kotlinx.coroutines.flow.asStateFlow
 import org.json.JSONArray
 import org.json.JSONObject
 
-class AutomationPreferencesManager(context: Context, private val profileManager: ProfilePreferencesManager) {
+class AutomationPreferencesManager(
+    context: Context,
+    private val profileManager: ProfilePreferencesManager
+) {
     private val appContext = context.applicationContext
-    private val preferences get() = appContext.createDeviceProtectedStorageContext()
+    private val preferences get() = appContext
+        .createDeviceProtectedStorageContext()
         .getSharedPreferences(profileManager.activePreferencesName, Context.MODE_PRIVATE)
     private val _rules = MutableStateFlow(readRules())
     private val _autoActOnNotification = MutableStateFlow(
@@ -78,14 +82,16 @@ class AutomationPreferencesManager(context: Context, private val profileManager:
         }
     }.getOrDefault(emptyList())
 
-    private fun encodeRules(rules: List<AutoExecuteRule>): String = JSONArray(rules.map { rule ->
-        JSONObject()
-            .put("id", rule.id)
-            .put("packageName", rule.packageName)
-            .put("titleContains", rule.titleContains)
-            .put("actionIndex", rule.actionIndex)
-            .put("enabled", rule.enabled)
-    }).toString()
+    private fun encodeRules(rules: List<AutoExecuteRule>): String = JSONArray(
+        rules.map { rule ->
+            JSONObject()
+                .put("id", rule.id)
+                .put("packageName", rule.packageName)
+                .put("titleContains", rule.titleContains)
+                .put("actionIndex", rule.actionIndex)
+                .put("enabled", rule.enabled)
+        }
+    ).toString()
 
     private companion object {
         const val KEY_RULES = "config_auto_execute_rules"

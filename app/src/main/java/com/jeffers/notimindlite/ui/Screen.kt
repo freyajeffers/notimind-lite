@@ -29,7 +29,11 @@ import com.jeffers.notimindlite.ui.screens.logHistoryScreen
 import com.jeffers.notimindlite.ui.screens.settingsScreen
 import com.jeffers.notimindlite.ui.screens.splashScreen
 
-sealed class Screen(val route: String, val title: Int, val icon: @Composable () -> Unit) {
+sealed class Screen(
+    val route: String,
+    val title: Int,
+    val icon: @Composable () -> Unit
+) {
     object Active : Screen(
         route = "active",
         title = R.string.nav_active_title,
@@ -40,6 +44,7 @@ sealed class Screen(val route: String, val title: Int, val icon: @Composable () 
             )
         }
     )
+
     object History : Screen(
         route = "history",
         title = R.string.nav_history_title,
@@ -50,6 +55,7 @@ sealed class Screen(val route: String, val title: Int, val icon: @Composable () 
             )
         }
     )
+
     object Settings : Screen(
         route = "settings",
         title = R.string.nav_settings_title,

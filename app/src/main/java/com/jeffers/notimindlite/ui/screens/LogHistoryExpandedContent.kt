@@ -14,14 +14,14 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.res.stringResource
 import com.jeffers.notimindlite.R
 import com.jeffers.notimindlite.data.local.NotificationEntity
-import java.time.format.DateTimeFormatter
 import org.json.JSONArray
+import java.time.format.DateTimeFormatter
 
 @Composable
 internal fun logHistoryExpandedContent(
@@ -72,7 +72,8 @@ internal fun logHistoryExpandedContent(
 private fun inboxLinesPanel(inboxLines: List<String>) {
     Spacer(modifier = Modifier.height(6.dp))
     Surface(
-        shape = androidx.compose.foundation.shape.RoundedCornerShape(6.dp),
+        shape = androidx.compose.foundation.shape
+            .RoundedCornerShape(6.dp),
         color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.35f),
         modifier = Modifier.fillMaxWidth()
     ) {

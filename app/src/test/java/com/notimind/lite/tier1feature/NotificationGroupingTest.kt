@@ -4,8 +4,8 @@ import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
 import com.jeffers.notimindlite.data.local.AppDatabase
 import com.jeffers.notimindlite.data.local.NotificationDao
-import com.jeffers.notimindlite.data.local.NotificationGroupDao
 import com.jeffers.notimindlite.data.local.NotificationEntity
+import com.jeffers.notimindlite.data.local.NotificationGroupDao
 import com.jeffers.notimindlite.ui.components.groupNotifications
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
@@ -23,7 +23,6 @@ import org.robolectric.annotation.Config
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [33])
 class NotificationGroupingTest {
-
     private lateinit var database: AppDatabase
     private lateinit var dao: NotificationDao
     private lateinit var groupDao: NotificationGroupDao
@@ -31,7 +30,8 @@ class NotificationGroupingTest {
     @Before
     fun setUp() {
         val context = ApplicationProvider.getApplicationContext<android.content.Context>()
-        database = Room.inMemoryDatabaseBuilder(context, AppDatabase::class.java)
+        database = Room
+            .inMemoryDatabaseBuilder(context, AppDatabase::class.java)
             .allowMainThreadQueries()
             .build()
         dao = database.notificationDao()

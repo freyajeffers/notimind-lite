@@ -5,10 +5,14 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 
-class DisplayPreferencesManager(context: Context, private val profileManager: ProfilePreferencesManager) {
+class DisplayPreferencesManager(
+    context: Context,
+    private val profileManager: ProfilePreferencesManager
+) {
     private val appContext = context.applicationContext
     private val preferences
-        get() = appContext.createDeviceProtectedStorageContext()
+        get() = appContext
+            .createDeviceProtectedStorageContext()
             .getSharedPreferences(profileManager.activePreferencesName, Context.MODE_PRIVATE)
 
     private val _showAppIcons = MutableStateFlow(preferences.getBoolean(KEY_SHOW_APP_ICONS, true))

@@ -18,7 +18,6 @@ abstract class NotificationDao :
     NotificationSearchQueries,
     NotificationReadStateQueries,
     NotificationCountQueries {
-
     @Transaction
     open suspend fun insert(entity: NotificationEntity): Long {
         val effectiveGroupKey = entity.groupKey?.ifBlank { null } ?: entity.packageName
@@ -53,9 +52,7 @@ abstract class NotificationDao :
     }
 
     @Transaction
-    open suspend fun insertNotification(notification: NotificationEntity): Long {
-        return insert(notification)
-    }
+    open suspend fun insertNotification(notification: NotificationEntity): Long = insert(notification)
 
     @Transaction
     open suspend fun insertNotifications(notifications: List<NotificationEntity>): List<Long> {
@@ -97,9 +94,8 @@ abstract class NotificationDao :
         return insertNotificationsDirect(normalizedNotifications)
     }
 
-
-
-    @Query("""
+    @Query(
+        """
         UPDATE notifications 
         SET isDismissed = 1, dismissTime = :dismissTime 
         WHERE key = :key 
@@ -110,7 +106,8 @@ abstract class NotificationDao :
                AND title != '' 
                AND content != ''
            )
-    """)
+    """
+    )
     abstract suspend fun markDismissedByMatching(
         key: String,
         packageName: String,
@@ -119,7 +116,8 @@ abstract class NotificationDao :
         dismissTime: Long = System.currentTimeMillis()
     )
 
-    @Query("""
+    @Query(
+        """
         UPDATE notifications 
         SET isDismissed = 1, dismissReason = :reason,
             dismissTime = CAST(strftime('%s', 'now') AS INTEGER) * 1000
@@ -131,7 +129,8 @@ abstract class NotificationDao :
                AND title != '' 
                AND content != ''
            )
-    """)
+    """
+    )
     abstract suspend fun markDismissedWithReasonByMatching(
         key: String,
         packageName: String,
@@ -156,18 +155,18 @@ abstract class NotificationDao :
         dismissTime: Long = System.currentTimeMillis()
     )
 
-    @Query("""
+    @Query(
+        """
         UPDATE notifications
         SET isDismissed = 1, dismissReason = :reason, dismissTime = :dismissTime
         WHERE key IN (:keys)
-    """)
+    """
+    )
     abstract suspend fun markDismissedWithReasonBatch(
         keys: List<String>,
         reason: Int,
         dismissTime: Long = System.currentTimeMillis()
     )
-
-
 
     @Transaction
     open suspend fun updateEmbeddingsBatch(items: List<Pair<Long, ByteArray>>) {
@@ -175,7 +174,6 @@ abstract class NotificationDao :
             updateEmbedding(id, embedding)
         }
     }
-
 
     // moved maintenance queries to NotificationMaintenanceOperations
 }

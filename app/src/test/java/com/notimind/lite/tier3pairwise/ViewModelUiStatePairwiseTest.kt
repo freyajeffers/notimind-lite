@@ -8,7 +8,6 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class ViewModelUiStatePairwiseTest : BaseRobolectricTest() {
-
     @Test
     fun tc_T3_003_viewModelFlowStateAndRoomDbRecompositionSync() = runTest {
         // Initial state: empty DB

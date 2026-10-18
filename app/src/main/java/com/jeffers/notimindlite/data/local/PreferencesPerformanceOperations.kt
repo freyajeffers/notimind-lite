@@ -4,18 +4,29 @@ import android.content.Context
 
 interface PreferencesPerformanceOperations {
     fun getThreadPoolSize(): Int
+
     fun setThreadPoolSize(value: Int)
+
     fun getEmbeddingRateMs(): Long
+
     fun setEmbeddingRateMs(value: Long)
+
     fun getDbCompactionDays(): Int
+
     fun setDbCompactionDays(value: Int)
+
     fun getReindexDays(): Int
+
     fun setReindexDays(value: Int)
+
     fun isEmbeddingOffloadEnabled(): Boolean
+
     fun setEmbeddingOffloadEnabled(value: Boolean)
 }
 
-internal class PreferencesPerformanceOperationsImpl(context: Context) : PreferencesPerformanceOperations {
+internal class PreferencesPerformanceOperationsImpl(
+    context: Context
+) : PreferencesPerformanceOperations {
     private val preferences = context.applicationContext
         .createDeviceProtectedStorageContext()
         .getSharedPreferences(

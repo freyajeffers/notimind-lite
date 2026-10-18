@@ -14,7 +14,6 @@ import org.junit.Test
 import org.robolectric.Robolectric
 
 class NotificationServiceDbPairwiseTest : BaseRobolectricTest() {
-
     @Test
     fun tc_T3_001_serviceAndRoomDbPairwiseNotificationLifecycle() = runTest {
         val serviceController = Robolectric.buildService(NotificationLoggerService::class.java)
@@ -27,12 +26,14 @@ class NotificationServiceDbPairwiseTest : BaseRobolectricTest() {
             "${context.packageName}/${NotificationLoggerService::class.java.canonicalName}"
         )
 
-        val sbn = createMockStatusBarNotification(MockStatusBarParams(
-            key = "com.chat.app|101|null|1001",
-            packageName = "com.chat.app",
-            title = "Alice",
-            text = "Hey there!"
-        ))
+        val sbn = createMockStatusBarNotification(
+            MockStatusBarParams(
+                key = "com.chat.app|101|null|1001",
+                packageName = "com.chat.app",
+                title = "Alice",
+                text = "Hey there!"
+            )
+        )
 
         // 1. Post notification
         service.onNotificationPosted(sbn)
@@ -69,18 +70,20 @@ class NotificationServiceDbPairwiseTest : BaseRobolectricTest() {
         )
 
         // Insert initial active notifications
-        dao.insertNotification(createDummyEntity(DummyEntityParams(key = "boot_k1", isDismissed = false )))
-        dao.insertNotification(createDummyEntity(DummyEntityParams(key = "boot_k2", isDismissed = false )))
+        dao.insertNotification(createDummyEntity(DummyEntityParams(key = "boot_k1", isDismissed = false)))
+        dao.insertNotification(createDummyEntity(DummyEntityParams(key = "boot_k2", isDismissed = false)))
 
         val jobs = listOf(
             async(Dispatchers.IO) {
                 // Simulate service ingestion
-                val sbn = createMockStatusBarNotification(MockStatusBarParams(
-                    key = "live_k3",
-                    packageName = "com.live.app",
-                    title = "Live Title",
-                    text = "Live Content"
-                ))
+                val sbn = createMockStatusBarNotification(
+                    MockStatusBarParams(
+                        key = "live_k3",
+                        packageName = "com.live.app",
+                        title = "Live Title",
+                        text = "Live Content"
+                    )
+                )
                 service.onNotificationPosted(sbn)
             },
             async(Dispatchers.IO) {

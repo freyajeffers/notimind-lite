@@ -19,7 +19,6 @@ import javax.crypto.KeyGenerator
 import javax.crypto.SecretKey
 
 class BackupKeyWrapTest {
-
     private fun generateDek(): SecretKey =
         KeyGenerator.getInstance("AES").apply { init(256) }.generateKey()
 

@@ -32,30 +32,35 @@ import org.junit.Test
  *     empty for blank to avoid an unbounded scan).
  */
 class HybridSearchEngineReadPathTest : BaseRobolectricTest() {
-
     @Test
     fun tc_R2_T1_H001_ftsOnlyHitRanksFirst() = runTest {
-        val auth = createDummyEntity(DummyEntityParams(
-            key = "k_auth",
-            packageName = "com.auth.app",
-            appName = "Authenticator",
-            title = "Login code",
-            content = "Your authentication code is 123456"
-         ))
-        val weather = createDummyEntity(DummyEntityParams(
-            key = "k_weather",
-            packageName = "com.weather.app",
-            appName = "Weather",
-            title = "Sunny",
-            content = "It will be sunny today"
-         ))
-        val unrelated = createDummyEntity(DummyEntityParams(
-            key = "k_other",
-            packageName = "com.other.app",
-            appName = "Other",
-            title = "Dinner plans",
-            content = "Pizza at eight"
-         ))
+        val auth = createDummyEntity(
+            DummyEntityParams(
+                key = "k_auth",
+                packageName = "com.auth.app",
+                appName = "Authenticator",
+                title = "Login code",
+                content = "Your authentication code is 123456"
+            )
+        )
+        val weather = createDummyEntity(
+            DummyEntityParams(
+                key = "k_weather",
+                packageName = "com.weather.app",
+                appName = "Weather",
+                title = "Sunny",
+                content = "It will be sunny today"
+            )
+        )
+        val unrelated = createDummyEntity(
+            DummyEntityParams(
+                key = "k_other",
+                packageName = "com.other.app",
+                appName = "Other",
+                title = "Dinner plans",
+                content = "Pizza at eight"
+            )
+        )
 
         listOf(auth, weather, unrelated).forEach { dao.insertNotification(it) }
 
@@ -78,34 +83,41 @@ class HybridSearchEngineReadPathTest : BaseRobolectricTest() {
     fun tc_R2_T1_H002_semanticLegFindsResultsWhenFtsMisses() = runTest {
         // Seed three notifications whose text has zero token overlap with
         // the query but whose embeddings are cosine-similar to it.
-        val morning = createDummyEntity(DummyEntityParams(
-            key = "k_morning",
-            packageName = "com.brew.app",
-            appName = "Brew",
-            title = "Coffee ready",
-            content = "Espresso is brewed and waiting for you"
-         ))
-        val evening = createDummyEntity(DummyEntityParams(
-            key = "k_evening",
-            packageName = "com.cinema.app",
-            appName = "Cinema",
-            title = "Movie night",
-            content = "Opening show at nine pm"
-         ))
-        val target = createDummyEntity(DummyEntityParams(
-            key = "k_target",
-            packageName = "com.kitchen.app",
-            appName = "Kitchen",
-            title = "Cafe latte",
-            content = "Cup of joe ready in the kitchen"
-         ))
+        val morning = createDummyEntity(
+            DummyEntityParams(
+                key = "k_morning",
+                packageName = "com.brew.app",
+                appName = "Brew",
+                title = "Coffee ready",
+                content = "Espresso is brewed and waiting for you"
+            )
+        )
+        val evening = createDummyEntity(
+            DummyEntityParams(
+                key = "k_evening",
+                packageName = "com.cinema.app",
+                appName = "Cinema",
+                title = "Movie night",
+                content = "Opening show at nine pm"
+            )
+        )
+        val target = createDummyEntity(
+            DummyEntityParams(
+                key = "k_target",
+                packageName = "com.kitchen.app",
+                appName = "Kitchen",
+                title = "Cafe latte",
+                content = "Cup of joe ready in the kitchen"
+            )
+        )
 
         val all = listOf(morning, evening, target)
         // Pre-compute embeddings so the semantic leg has data to score.
         // Same call site production uses post-commit f279324.
         // Convert to ByteArray at the call site (H-fix): Room can't bind
         // FloatArray directly as a query parameter.
-        val converter = com.jeffers.notimindlite.data.local.Converters()
+        val converter = com.jeffers.notimindlite.data.local
+            .Converters()
         val embeddingsBytes = all.map {
             converter.fromFloatArray(
                 VectorEmbeddingHelper.computeEmbedding(
@@ -143,7 +155,7 @@ class HybridSearchEngineReadPathTest : BaseRobolectricTest() {
 
     @Test
     fun tc_R2_T1_H003_blankQueryReturnsEmpty() = runTest {
-        val e = createDummyEntity(DummyEntityParams(key = "k_blank", title = "Anything", content = "Stuff" ))
+        val e = createDummyEntity(DummyEntityParams(key = "k_blank", title = "Anything", content = "Stuff"))
         dao.insertNotification(e)
 
         val results = HybridSearchEngine.searchAndRank(context, "   ")
@@ -161,11 +173,13 @@ class HybridSearchEngineReadPathTest : BaseRobolectricTest() {
         // raised concerns about FTS trigger coexistence; this test pins
         // the FTS leg as observable via HybridSearchEngine.
         // NOTE: FTS4 tokenizes hyphens as separators; use a single token.
-        val e = createDummyEntity(DummyEntityParams(
-            key = "k_needle",
-            title = "NeedleInHaystack",
-            content = "uniqueHaystackToken"
-         ))
+        val e = createDummyEntity(
+            DummyEntityParams(
+                key = "k_needle",
+                title = "NeedleInHaystack",
+                content = "uniqueHaystackToken"
+            )
+        )
         dao.insertNotification(e)
 
         val results = HybridSearchEngine.searchAndRank(context, "uniqueHaystackToken")

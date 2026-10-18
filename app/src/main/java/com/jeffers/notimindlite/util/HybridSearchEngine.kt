@@ -10,23 +10,27 @@ import kotlinx.coroutines.flow.Flow
  */
 object HybridSearchEngine {
     fun search(context: Context, query: String): Flow<List<NotificationEntity>> =
-        com.jeffers.notimindlite.domain.search.HybridSearchEngine.search(context, query)
+        com.jeffers.notimindlite.domain.search.HybridSearchEngine
+            .search(context, query)
 
     fun searchAndRankBlocking(
         notifications: List<NotificationEntity>,
         query: String
     ): List<NotificationEntity> =
-        com.jeffers.notimindlite.domain.search.HybridSearchEngine.searchAndRankBlocking(notifications, query)
+        com.jeffers.notimindlite.domain.search.HybridSearchEngine
+            .searchAndRankBlocking(notifications, query)
 
     suspend fun searchAndRank(
         notifications: List<NotificationEntity>,
         query: String
     ): List<NotificationEntity> =
-        com.jeffers.notimindlite.domain.search.HybridSearchEngine.searchAndRank(notifications, query)
+        com.jeffers.notimindlite.domain.search.HybridSearchEngine
+            .searchAndRank(notifications, query)
 
     suspend fun searchAndRank(
         context: Context,
         query: String
     ): List<NotificationEntity> =
-        com.jeffers.notimindlite.domain.search.HybridSearchEngine.searchAndRank(context, query)
+        com.jeffers.notimindlite.domain.search.HybridSearchEngine
+            .searchAndRank(context, query)
 }

@@ -16,8 +16,8 @@ import org.robolectric.Shadows
 import org.robolectric.shadows.ShadowNotificationManager
 
 class EndToEndAppLifecycleTest : BaseRobolectricTest() {
-
     @Test
+    @Suppress("LongMethod")
     fun tc_T4_001_fullEndToEndApplicationLifecycleSimulation() = runTest {
         val serviceController = Robolectric.buildService(NotificationLoggerService::class.java)
         val service = serviceController.create().get()
@@ -47,13 +47,15 @@ class EndToEndAppLifecycleTest : BaseRobolectricTest() {
             val parts = titleContent.split(": ")
             val title = parts[0]
             val text = parts[1]
-            createMockStatusBarNotification(MockStatusBarParams(
-                key = "$pkg|${100 + idx}|null|${1000 + idx}",
-                packageName = pkg,
-                title = title,
-                text = text,
-                postTime = System.currentTimeMillis() + idx * 1000
-            ))
+            createMockStatusBarNotification(
+                MockStatusBarParams(
+                    key = "$pkg|${100 + idx}|null|${1000 + idx}",
+                    packageName = pkg,
+                    title = title,
+                    text = text,
+                    postTime = System.currentTimeMillis() + idx * 1000
+                )
+            )
         }
 
         for (sbn in sbns) {
@@ -86,7 +88,14 @@ class EndToEndAppLifecycleTest : BaseRobolectricTest() {
             it.appName == "Slack" || it.title.contains("Slack") || it.content.contains("v1.2")
         }
         assertEquals(1, slackMatch.size)
-        assertEquals("Slack", slackMatch[0].packageName.replace("com.", "").replace("android", "").capitalize())
+        assertEquals(
+            "Slack",
+            slackMatch[0]
+                .packageName
+                .replace("com.", "")
+                .replace("android", "")
+                .capitalize()
+        )
 
         // Phase 6: Log Purge & Synchronization Reset
         dao.clearAll()

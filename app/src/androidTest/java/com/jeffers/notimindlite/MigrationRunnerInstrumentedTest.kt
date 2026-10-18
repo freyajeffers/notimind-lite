@@ -9,12 +9,13 @@ import org.junit.runner.RunWith
 
 @RunWith(AndroidJUnit4::class)
 class MigrationRunnerInstrumentedTest {
-  @Test
-  fun featureFlagOffDoesNotTouchDatabase() {
-    val context = androidx.test.core.app.ApplicationProvider.getApplicationContext<android.content.Context>()
-    val state = kotlinx.coroutines.runBlocking {
-      MigrationRunner(context).runMigrationIfNeeded(featureFlag = false)
+    @Test
+    fun featureFlagOffDoesNotTouchDatabase() {
+        val context = androidx.test.core.app.ApplicationProvider
+            .getApplicationContext<android.content.Context>()
+        val state = kotlinx.coroutines.runBlocking {
+            MigrationRunner(context).runMigrationIfNeeded(featureFlag = false)
+        }
+        assertEquals(MigrationState.NOT_REQUIRED, state)
     }
-    assertEquals(MigrationState.NOT_REQUIRED, state)
-  }
 }

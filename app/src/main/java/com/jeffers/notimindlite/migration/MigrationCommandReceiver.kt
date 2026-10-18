@@ -44,16 +44,17 @@ class MigrationCommandReceiver : BroadcastReceiver() {
         check(!quarantineFile.exists()) { "Quarantine file already exists; refusing to proceed" }
 
         val sourceHelper = plaintextHelper(context, sourceFile.name)
-        val target = Room.databaseBuilder(
-            context,
-            AppDatabase::class.java,
-            encryptedTempFile.name
-        ).apply {
-            // Use the production database identity so the promoted file can be reopened after cutover.
-            EncryptedDatabaseFactory
-                .openHelperFactory(context, databaseName)
-                ?.let(::openHelperFactory)
-        }.build()
+        val target = Room
+            .databaseBuilder(
+                context,
+                AppDatabase::class.java,
+                encryptedTempFile.name
+            ).apply {
+                // Use the production database identity so the promoted file can be reopened after cutover.
+                EncryptedDatabaseFactory
+                    .openHelperFactory(context, databaseName)
+                    ?.let(::openHelperFactory)
+            }.build()
 
         try {
             val result = MigrationRunner(context).migrateOpenedDatabases(
@@ -126,13 +127,15 @@ class MigrationCommandReceiver : BroadcastReceiver() {
     private fun plaintextHelper(context: Context, name: String): SupportSQLiteOpenHelper {
         val callback = object : SupportSQLiteOpenHelper.Callback(AppDatabase.DATABASE_VERSION) {
             override fun onCreate(db: androidx.sqlite.db.SupportSQLiteDatabase) = Unit
+
             override fun onUpgrade(
                 db: androidx.sqlite.db.SupportSQLiteDatabase,
                 oldVersion: Int,
                 newVersion: Int
             ) = Unit
         }
-        val configuration = SupportSQLiteOpenHelper.Configuration.builder(context)
+        val configuration = SupportSQLiteOpenHelper.Configuration
+            .builder(context)
             .name(name)
             .callback(callback)
             .build()

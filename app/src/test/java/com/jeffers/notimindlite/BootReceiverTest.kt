@@ -16,7 +16,6 @@ import org.robolectric.annotation.Config
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [33])
 class BootReceiverTest {
-
     @Test
     fun bootReceiver_handlesBootCompletedIntentWithoutCrashing() = runBlocking {
         val context = ApplicationProvider.getApplicationContext<Context>()

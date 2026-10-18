@@ -47,7 +47,9 @@ object VectorEmbeddingHelper {
     fun setLowMemoryMode(enabled: Boolean) = configure(enabled)
 
     fun isLowMemoryMode(): Boolean = lowMemoryMode
+
     fun cacheCapacity(): Int = cacheSize
+
     fun embeddingBatchSize(): Int = if (lowMemoryMode) LOW_MEMORY_BATCH_SIZE else DEFAULT_BATCH_SIZE
 
     fun updateCacheSize(newSize: Int) = configure(lowMemoryMode, newSize)

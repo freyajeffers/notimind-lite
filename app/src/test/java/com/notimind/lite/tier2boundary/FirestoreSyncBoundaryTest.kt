@@ -34,7 +34,6 @@ import javax.crypto.spec.SecretKeySpec
 @Config(sdk = [33])
 @OptIn(ExperimentalCoroutinesApi::class)
 class FirestoreSyncBoundaryTest {
-
     private lateinit var mockDb: AppDatabase
     private lateinit var mockDao: NotificationDao
     private lateinit var mockFirestore: FirebaseFirestore

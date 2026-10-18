@@ -6,12 +6,12 @@ import android.net.Uri
 import android.util.Log
 import androidx.core.content.FileProvider
 import com.jeffers.notimindlite.R
+import com.jeffers.notimindlite.crypto.SqlCipherKeyManager
 import com.jeffers.notimindlite.data.local.AppDatabase
-import com.jeffers.notimindlite.domain.backup.EncryptedBackupManager
 import com.jeffers.notimindlite.data.local.NotificationEntity
 import com.jeffers.notimindlite.data.local.PreferencesRepository
+import com.jeffers.notimindlite.domain.backup.EncryptedBackupManager
 import com.jeffers.notimindlite.sanitization.PiiRedactionEngine
-import com.jeffers.notimindlite.crypto.SqlCipherKeyManager
 import org.json.JSONArray
 import org.json.JSONObject
 import java.io.File
@@ -23,7 +23,6 @@ import javax.crypto.SecretKey
 import javax.crypto.spec.SecretKeySpec
 
 object DatabaseExporter {
-
     private const val TAG = "DatabaseExporter"
 
     /**
@@ -35,9 +34,7 @@ object DatabaseExporter {
         context: Context,
         secretKey: SecretKey,
         passphrase: CharArray? = null
-    ): Result<File> {
-        return ExportFlow.performEncryptedBackup(context, secretKey, passphrase)
-    }
+    ): Result<File> = ExportFlow.performEncryptedBackup(context, secretKey, passphrase)
 
     /**
      * Restores an encrypted backup file into the local database.
@@ -73,8 +70,11 @@ object DatabaseExporter {
                 secretKey = secretKey,
                 passphrase = passphrase,
             )
-            if (success) Result.success(Unit)
-            else Result.failure(IllegalStateException("Backup restoration or authorization failed"))
+            if (success) {
+                Result.success(Unit)
+            } else {
+                Result.failure(IllegalStateException("Backup restoration or authorization failed"))
+            }
         } catch (e: java.io.IOException) {
             Log.e(TAG, "Restore process failed: IO error", e)
             Result.failure(e)
@@ -209,10 +209,6 @@ object DatabaseExporter {
         return sb.toString()
     }
 
-
-
-
-
     fun shareExportFile(
         context: Context,
         notifications: List<NotificationEntity>,
@@ -246,7 +242,10 @@ object DatabaseExporter {
         biometricAuthenticated: Boolean,
     ) {
         val requestedFormat = if (isJson) "json" else "csv"
-        val allowedFormats = preferences.exportManager.formats.value.split(',').map(String::trim).toSet()
+        val allowedFormats = preferences.exportManager.formats.value
+            .split(',')
+            .map(String::trim)
+            .toSet()
         check(requestedFormat in allowedFormats) { "Export format '$requestedFormat' is disabled in Settings" }
         check(!preferences.securityManager.exportRequiresBiometric.value || biometricAuthenticated) {
             "Biometric authentication is required before exporting"
@@ -264,7 +263,13 @@ object DatabaseExporter {
         preferences: PreferencesRepository,
     ): File {
         val encrypted = preferences.securityManager.encryptedExports.value
-        val extension = if (encrypted) "enc" else if (isJson) "json" else "csv"
+        val extension = if (encrypted) {
+            "enc"
+        } else if (isJson) {
+            "json"
+        } else {
+            "csv"
+        }
         val file = File(context.cacheDir, "exports/notimind_export_${System.currentTimeMillis()}.$extension")
         file.parentFile?.mkdirs()
         file.setReadable(true, true)
@@ -278,8 +283,14 @@ object DatabaseExporter {
                 }
                 file.writeBytes(ExportFlow.encryptExport(plain.toByteArray(Charsets.UTF_8), context, passphrase))
             }
-            isJson -> exportToJsonFile(file, notifications, context)
-            else -> FileWriter(file).use { it.write(exportToCsvString(notifications, context)) }
+
+            isJson -> {
+                exportToJsonFile(file, notifications, context)
+            }
+
+            else -> {
+                FileWriter(file).use { it.write(exportToCsvString(notifications, context)) }
+            }
         }
         return file
     }
@@ -291,17 +302,23 @@ object DatabaseExporter {
         encrypted: Boolean,
     ): Intent {
         val uri = DatabaseExportHelper.getExportFileUri(context, file)
-        val mimeType = if (encrypted) "application/octet-stream" else if (isJson) "application/json" else "text/csv"
+        val mimeType = if (encrypted) {
+            "application/octet-stream"
+        } else if (isJson) {
+            "application/json"
+        } else {
+            "text/csv"
+        }
         val shareIntent = Intent(Intent.ACTION_SEND).apply {
             type = mimeType
             putExtra(Intent.EXTRA_STREAM, uri)
             addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
             addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
         }
-        return Intent.createChooser(
-            shareIntent,
-            context.getString(R.string.export_notifications_chooser)
-        ).apply { addFlags(Intent.FLAG_ACTIVITY_NEW_TASK) }
+        return Intent
+            .createChooser(
+                shareIntent,
+                context.getString(R.string.export_notifications_chooser)
+            ).apply { addFlags(Intent.FLAG_ACTIVITY_NEW_TASK) }
     }
-
 }

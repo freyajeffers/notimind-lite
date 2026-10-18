@@ -16,7 +16,6 @@ import org.robolectric.annotation.Config
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [33])
 class RestoredNotificationAutoDismissTest {
-
     private lateinit var context: Context
     private lateinit var notificationManager: NotificationManager
 

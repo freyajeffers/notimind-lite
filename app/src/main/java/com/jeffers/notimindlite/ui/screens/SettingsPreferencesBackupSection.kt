@@ -1,5 +1,7 @@
 package com.jeffers.notimindlite.ui.screens
 
+import android.content.Context
+import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
@@ -23,14 +25,12 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import android.content.Context
-import android.net.Uri
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import com.jeffers.notimindlite.BuildConfig
 import com.jeffers.notimindlite.R
 import com.jeffers.notimindlite.data.local.PreferencesRepository
-import com.jeffers.notimindlite.BuildConfig
 import com.jeffers.notimindlite.util.PreferencesBackup
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -49,22 +49,26 @@ fun settingsPreferencesBackupSection() {
     val exportLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.CreateDocument("application/json")
     ) { uri ->
-        if (uri != null) scope.launch {
-            val result = runCatching { exportPreferencesToUri(context, uri) }
-            message = if (result.isSuccess) {
-                strExported
-            } else {
-                backupFailureMessage(strFailed, result)
+        if (uri != null) {
+            scope.launch {
+                val result = runCatching { exportPreferencesToUri(context, uri) }
+                message = if (result.isSuccess) {
+                    strExported
+                } else {
+                    backupFailureMessage(strFailed, result)
+                }
             }
         }
     }
     val importLauncher = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
-        if (uri != null) scope.launch {
-            val result = runCatching { importPreferencesFromUri(context, uri) }
-            message = if (result.isSuccess) {
-                strImported
-            } else {
-                backupFailureMessage(strFailed, result)
+        if (uri != null) {
+            scope.launch {
+                val result = runCatching { importPreferencesFromUri(context, uri) }
+                message = if (result.isSuccess) {
+                    strImported
+                } else {
+                    backupFailureMessage(strFailed, result)
+                }
             }
         }
     }

@@ -30,11 +30,11 @@ import javax.crypto.spec.SecretKeySpec
  * the caller path is "probe then degrade"; logging would add noise without adding safety.
  */
 @Suppress("SwallowedException", "TooManyFunctions")
-// 11 functions cover: device id resolution, HMAC sign/verify, persistent log append/read/parse,
-// data-clearance detection, backup event logging, Firestore upload — each maps to a documented
-// audit-logging concern. Extracting to a manager class would split the public-API surface for
-// callers (BootReceiver, SyncWorker, Settings screen) without changing behavior.
 object AuditLogger {
+    // 11 functions cover: device id resolution, HMAC sign/verify, persistent log append/read/parse,
+    // data-clearance detection, backup event logging, Firestore upload — each maps to a documented
+    // audit-logging concern. Extracting to a manager class would split the public-API surface for
+    // callers (BootReceiver, SyncWorker, Settings screen) without changing behavior.
     private const val TAG = "AuditLogger"
     private const val LOG_FILE_NAME = "notimind_persistent_audit.log"
     private const val HMAC_KEY_SALT = "NotiMind_TamperProof_Audit_Key_Salt_2026"
@@ -59,6 +59,7 @@ object AuditLogger {
      * Resolves the effective user identifier for Firestore logging.
      * Uses FirebaseAuth UID if logged in, otherwise falls back to the device's ANDROID_ID.
      */
+    @android.annotation.SuppressLint("HardwareIds")
     fun resolveUserId(context: Context): String {
         val authUid = try {
             FirebaseAuth.getInstance().currentUser?.uid
@@ -88,13 +89,12 @@ object AuditLogger {
     /**
      * Retrieves the unique device identifier.
      */
-    fun getDeviceId(context: Context): String {
-        return try {
-            Settings.Secure.getString(context.contentResolver, Settings.Secure.ANDROID_ID)
-                ?: "unknown_device_${Build.MODEL}"
-        } catch (e: SecurityException) {
-            "unknown_device_${Build.MODEL}"
-        }
+    @android.annotation.SuppressLint("HardwareIds")
+    fun getDeviceId(context: Context): String = try {
+        Settings.Secure.getString(context.contentResolver, Settings.Secure.ANDROID_ID)
+            ?: "unknown_device_${Build.MODEL}"
+    } catch (e: SecurityException) {
+        "unknown_device_${Build.MODEL}"
     }
 
     /**
@@ -218,7 +218,7 @@ object AuditLogger {
         val deviceId = getDeviceId(context)
         val userId = resolveUserId(context)
         val details = "action=${record.actionType},hash=${record.fileHash},file=${record.fileName}"
-        
+
         val signature = appendPersistentLog(context, "BACKUP_${record.actionType}", details)
 
         uploadAuditLogToFirestore(
@@ -280,15 +280,15 @@ object AuditLogger {
             val logId = "${entry.timestamp}_${entry.eventType}_${entry.deviceId.take(logIdDevicePrefixLen)}"
 
             // Save under user-scoped collection and global audit collection
-            firestore.collection(usersCollection)
+            firestore
+                .collection(usersCollection)
                 .document(entry.userId)
                 .collection(auditLogsSubcollection)
                 .document(logId)
                 .set(logData, SetOptions.merge())
                 .addOnSuccessListener {
                     Log.d(TAG, "Audit log synced to Firestore: $logId for user ${entry.userId}")
-                }
-                .addOnFailureListener { e ->
+                }.addOnFailureListener { e ->
                     Log.w(TAG, "Failed to sync audit log to Firestore (will retry on next sync): ${e.message}")
                 }
         } catch (e: IllegalStateException) {

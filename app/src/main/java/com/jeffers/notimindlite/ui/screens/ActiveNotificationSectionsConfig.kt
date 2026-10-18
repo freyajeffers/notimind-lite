@@ -27,20 +27,37 @@ internal data class ActiveNotificationSectionsConfig(
     val toggleSection: (String) -> Unit
 )
 
+@Suppress("LongMethod")
 internal fun LazyListScope.renderNotificationSections(config: ActiveNotificationSectionsConfig) {
     config.sectionOrder.forEach { section ->
         val isExpanded = config.expandedSection == section.keyName
         val rawItemsList = when (section) {
-            NotificationSection.PINNED -> config.pinnedNotifs
-            NotificationSection.ACTIVE -> config.activeNotifs
-            NotificationSection.FILTERED -> config.filteredNotifs
-            NotificationSection.DISMISSED -> config.recentlyDismissed
-                .sortedByDescending { it.dismissTime ?: it.postTime }
-            NotificationSection.LOST -> config.lostNotifs
+            NotificationSection.PINNED -> {
+                config.pinnedNotifs
+            }
+
+            NotificationSection.ACTIVE -> {
+                config.activeNotifs
+            }
+
+            NotificationSection.FILTERED -> {
+                config.filteredNotifs
+            }
+
+            NotificationSection.DISMISSED -> {
+                config.recentlyDismissed
+                    .sortedByDescending { it.dismissTime ?: it.postTime }
+            }
+
+            NotificationSection.LOST -> {
+                config.lostNotifs
+            }
         }.distinctBy { "${it.packageName}_${it.title}_${it.content}" }
         val filteredList = if (!config.selectedPackages.isNullOrEmpty()) {
             rawItemsList.filter { config.selectedPackages!!.contains(it.packageName) }
-        } else rawItemsList
+        } else {
+            rawItemsList
+        }
         val itemsList = if (config.debouncedSearchQuery.isBlank()) {
             filteredList
         } else {

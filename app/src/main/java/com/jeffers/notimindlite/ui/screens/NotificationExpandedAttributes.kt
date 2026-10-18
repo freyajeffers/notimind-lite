@@ -3,8 +3,8 @@ package com.jeffers.notimindlite.ui.screens
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -19,7 +19,6 @@ import androidx.compose.ui.unit.dp
 import com.jeffers.notimindlite.data.local.NotificationEntity
 import java.time.Instant
 import java.time.format.DateTimeFormatter
-
 
 @Composable
 fun notificationExpandedAttributes(

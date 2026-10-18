@@ -10,7 +10,6 @@ import org.junit.Test
 import javax.crypto.AEADBadTagException
 
 class CryptoUtilsTest {
-
     @Test
     fun `aes gcm encrypt and decrypt round trip with correct key`() {
         val key = ByteArray(32) { (it + 1).toByte() }

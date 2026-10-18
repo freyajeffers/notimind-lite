@@ -9,7 +9,6 @@ import org.junit.rules.TestWatcher
 import org.junit.runner.Description
 
 class RoomDatabaseRule : TestWatcher() {
-
     lateinit var database: AppDatabase
         private set
 
@@ -18,7 +17,8 @@ class RoomDatabaseRule : TestWatcher() {
 
     override fun starting(description: Description?) {
         val context = ApplicationProvider.getApplicationContext<Context>()
-        database = Room.inMemoryDatabaseBuilder(context, AppDatabase::class.java)
+        database = Room
+            .inMemoryDatabaseBuilder(context, AppDatabase::class.java)
             .allowMainThreadQueries()
             .build()
         dao = database.notificationDao()

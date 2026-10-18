@@ -12,10 +12,10 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.res.stringResource
 import com.jeffers.notimindlite.R
 import com.jeffers.notimindlite.data.local.NotificationEntity
 import java.time.format.DateTimeFormatter
@@ -36,8 +36,7 @@ fun notificationDetailPanel(
             .background(
                 color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
                 shape = RoundedCornerShape(8.dp)
-            )
-            .padding(12.dp),
+            ).padding(12.dp),
         verticalArrangement = Arrangement.spacedBy(6.dp)
     ) {
         detailRow(label = stringResource(R.string.notification_detail_package), value = item.packageName)
@@ -51,9 +50,12 @@ fun notificationDetailPanel(
             label = stringResource(R.string.notification_detail_post_time),
             value = dateTimeFormatter.format(java.time.Instant.ofEpochMilli(item.postTime))
         )
-        detailRow(label = stringResource(R.string.notification_detail_dismiss_time), value = item.dismissTime?.let {
-            dateTimeFormatter.format(java.time.Instant.ofEpochMilli(it))
-        } ?: stringResource(R.string.notification_detail_not_available))
+        detailRow(
+            label = stringResource(R.string.notification_detail_dismiss_time),
+            value = item.dismissTime?.let {
+                dateTimeFormatter.format(java.time.Instant.ofEpochMilli(it))
+            } ?: stringResource(R.string.notification_detail_not_available)
+        )
     }
 }
 

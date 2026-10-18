@@ -13,7 +13,6 @@ import org.junit.Test
 import java.io.File
 
 class ArchitectureSetupTest : BaseRobolectricTest() {
-
     @Test
     fun tc_R1_T1_001_zeroAiFirebaseDependencyAudit() {
         val rootDir = File("../../..")
@@ -60,11 +59,13 @@ class ArchitectureSetupTest : BaseRobolectricTest() {
 
         val requestedPermissions = packageInfo.requestedPermissions?.toList() ?: emptyList()
         val postNotificationsMsg = "POST_NOTIFICATIONS permission must be declared"
-        assertTrue(postNotificationsMsg,
+        assertTrue(
+            postNotificationsMsg,
             requestedPermissions.contains("android.permission.POST_NOTIFICATIONS")
         )
         val bootCompletedMsg = "RECEIVE_BOOT_COMPLETED permission must be declared"
-        assertTrue(bootCompletedMsg,
+        assertTrue(
+            bootCompletedMsg,
             requestedPermissions.contains("android.permission.RECEIVE_BOOT_COMPLETED")
         )
 

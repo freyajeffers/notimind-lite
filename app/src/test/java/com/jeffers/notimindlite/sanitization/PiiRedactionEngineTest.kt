@@ -1,12 +1,11 @@
 package com.jeffers.notimindlite.sanitization
 
-import org.junit.Test
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertNull
 import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertNull
+import org.junit.Test
 
 class PiiRedactionEngineTest {
-
     @Test
     fun `redact email inside text`() {
         val input = "Contact me at alice@example.com for details"

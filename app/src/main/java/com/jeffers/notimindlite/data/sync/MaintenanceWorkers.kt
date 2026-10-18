@@ -11,18 +11,31 @@ import com.jeffers.notimindlite.data.local.PreferencesRepository
 import com.jeffers.notimindlite.util.DatabaseMigrator
 import java.util.concurrent.TimeUnit
 
-class DatabaseCompactionWorker(context: Context, params: WorkerParameters) : CoroutineWorker(context, params) {
+class DatabaseCompactionWorker(
+    context: Context,
+    params: WorkerParameters
+) : CoroutineWorker(context, params) {
     override suspend fun doWork(): Result = try {
-        AppDatabase.getDatabase(applicationContext).openHelper.writableDatabase.execSQL("VACUUM")
+        AppDatabase
+            .getDatabase(applicationContext)
+            .openHelper.writableDatabase
+            .execSQL("VACUUM")
         Result.success()
-    } catch (_: Exception) { Result.retry() }
+    } catch (_: Exception) {
+        Result.retry()
+    }
 }
 
-class EmbeddingReindexWorker(context: Context, params: WorkerParameters) : CoroutineWorker(context, params) {
+class EmbeddingReindexWorker(
+    context: Context,
+    params: WorkerParameters
+) : CoroutineWorker(context, params) {
     override suspend fun doWork(): Result = try {
         DatabaseMigrator.vectorizeExistingNotifications(applicationContext)
         Result.success()
-    } catch (_: Exception) { Result.retry() }
+    } catch (_: Exception) {
+        Result.retry()
+    }
 }
 
 object MaintenanceScheduler {

@@ -59,7 +59,6 @@ import org.robolectric.annotation.Config
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [33])
 class MigrationTest {
-
     @get:Rule
     val helper: MigrationTestHelper = MigrationTestHelper(
         InstrumentationRegistry.getInstrumentation(),
@@ -131,18 +130,19 @@ class MigrationTest {
             AppDatabase.MIGRATION_17_18
         )
         migrated.use { opened ->
-            opened.query(
-                "SELECT key, title FROM notifications WHERE key = ?",
-                arrayOf<Any>("migration_test_key")
-            ).use { cursor ->
-                assertTrue("Inserted row must survive the 17 -> 18 migration", cursor.moveToFirst())
-                val titleIdx = cursor.getColumnIndexOrThrow("title")
-                assertEquals(
-                    "Title must be preserved",
-                    "Migration Title",
-                    cursor.getString(titleIdx)
-                )
-            }
+            opened
+                .query(
+                    "SELECT key, title FROM notifications WHERE key = ?",
+                    arrayOf<Any>("migration_test_key")
+                ).use { cursor ->
+                    assertTrue("Inserted row must survive the 17 -> 18 migration", cursor.moveToFirst())
+                    val titleIdx = cursor.getColumnIndexOrThrow("title")
+                    assertEquals(
+                        "Title must be preserved",
+                        "Migration Title",
+                        cursor.getString(titleIdx)
+                    )
+                }
         }
     }
 
@@ -165,13 +165,14 @@ class MigrationTest {
                 )
             )
             AppDatabase.MIGRATION_18_19.migrate(v18)
-            v18.query(
-                "SELECT notificationCount FROM notification_groups WHERE groupKey = ?",
-                arrayOf<Any>("com.migration.test")
-            ).use { cursor ->
-                assertTrue("Migration must backfill notification_groups", cursor.moveToFirst())
-                assertEquals(1, cursor.getInt(cursor.getColumnIndexOrThrow("notificationCount")))
-            }
+            v18
+                .query(
+                    "SELECT notificationCount FROM notification_groups WHERE groupKey = ?",
+                    arrayOf<Any>("com.migration.test")
+                ).use { cursor ->
+                    assertTrue("Migration must backfill notification_groups", cursor.moveToFirst())
+                    assertEquals(1, cursor.getInt(cursor.getColumnIndexOrThrow("notificationCount")))
+                }
         }
     }
 
@@ -181,11 +182,11 @@ class MigrationTest {
      */
     @Test
     fun smoke_notificationRoundTripSucceedsAtCurrentSchema() = runBlocking {
-        db = Room.inMemoryDatabaseBuilder(
-            ApplicationProvider.getApplicationContext(),
-            AppDatabase::class.java
-        )
-            .allowMainThreadQueries()
+        db = Room
+            .inMemoryDatabaseBuilder(
+                ApplicationProvider.getApplicationContext(),
+                AppDatabase::class.java
+            ).allowMainThreadQueries()
             .build()
         db!!.openHelper.writableDatabase.execSQL("PRAGMA foreign_keys = OFF;")
 

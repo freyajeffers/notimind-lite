@@ -10,7 +10,9 @@ import org.json.JSONObject
 import java.net.HttpURLConnection
 import java.net.URL
 
-class SupabaseSettingsSyncRepository(private val auth: SupabaseAuthManager) : SettingsSyncRepository {
+class SupabaseSettingsSyncRepository(
+    private val auth: SupabaseAuthManager
+) : SettingsSyncRepository {
     private companion object {
         const val HTTP_SUCCESS_MIN = 200
         const val HTTP_SUCCESS_MAX = 299
@@ -71,7 +73,10 @@ class SupabaseSettingsSyncRepository(private val auth: SupabaseAuthManager) : Se
         c.setRequestProperty("Authorization", "Bearer $token")
         c.setRequestProperty("Content-Type", "application/json")
         prefer?.let { c.setRequestProperty("Prefer", it) }
-        if (body != null) { c.doOutput = true; c.outputStream.use { it.write(body.toByteArray()) } }
+        if (body != null) {
+            c.doOutput = true
+            c.outputStream.use { it.write(body.toByteArray()) }
+        }
         val responseCode = c.responseCode
         val stream = if (responseCode in HTTP_SUCCESS_MIN..HTTP_SUCCESS_MAX) {
             c.inputStream

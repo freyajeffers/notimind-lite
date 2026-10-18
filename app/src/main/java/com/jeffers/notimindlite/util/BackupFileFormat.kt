@@ -46,6 +46,7 @@ internal object BackupFileFormat {
         val ciphertext: ByteArray,
     ) {
         override fun equals(other: Any?): Boolean = this === other
+
         override fun hashCode(): Int = System.identityHashCode(this)
     }
 
@@ -60,10 +61,14 @@ internal object BackupFileFormat {
         val ciphertext: ByteArray,
     ) {
         override fun equals(other: Any?): Boolean = this === other
+
         override fun hashCode(): Int = System.identityHashCode(this)
     }
 
-    class FormatException(message: String, cause: Throwable? = null) : IllegalArgumentException(message, cause)
+    class FormatException(
+        message: String,
+        cause: Throwable? = null
+    ) : IllegalArgumentException(message, cause)
 
     private fun fail(message: String): Nothing = throw FormatException(message)
 
@@ -125,12 +130,14 @@ internal object BackupFileFormat {
 
             val meta = when (keySource) {
                 KEY_SOURCE_PASSPHRASE_WRAPPED -> readWrappedMetadata(dis)
+
                 KEY_SOURCE_KEYSTORE_ONLY -> WrappedDekMetadata(
                     salt = ByteArray(0),
                     iterations = 0,
                     kekIv = ByteArray(0),
                     wrappedDek = ByteArray(0),
                 )
+
                 else -> fail("Unknown key source: $keySource")
             }
 

@@ -18,7 +18,6 @@ import org.junit.Test
 import org.robolectric.annotation.Config
 
 class ArchitectureBoundaryTest : BaseRobolectricTest() {
-
     @Test
     fun tc_R1_T2_001_absenceOfInternetPermissionAudit() {
         val packageManager = context.packageManager
@@ -87,11 +86,12 @@ class ArchitectureBoundaryTest : BaseRobolectricTest() {
 
     @Test
     fun tc_R1_T2_005_multithreadedSingletonConcurrency() = runBlocking {
-        val instances = (1..20).map {
-            async(Dispatchers.IO) {
-                AppDatabase.getDatabase(context)
-            }
-        }.awaitAll()
+        val instances = (1..20)
+            .map {
+                async(Dispatchers.IO) {
+                    AppDatabase.getDatabase(context)
+                }
+            }.awaitAll()
 
         val firstInstance = instances.first()
         for (instance in instances) {

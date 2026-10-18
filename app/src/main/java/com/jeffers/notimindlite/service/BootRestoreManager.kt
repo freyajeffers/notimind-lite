@@ -17,7 +17,7 @@ data class BootConsolidationResult(
 )
 
 /**
- * BootRestoreManager handles the logic for grouping active notifications 
+ * BootRestoreManager handles the logic for grouping active notifications
  * when re-injecting them into the system after a device reboot.
  */
 object BootRestoreManager {
@@ -27,7 +27,7 @@ object BootRestoreManager {
     /**
      * Processes the list of active notifications to be restored on boot.
      * If the count exceeds [GROUPING_THRESHOLD], applies multi-pass grouping.
-     * 
+     *
      * Pass 1: Group by matching title -> Append content.
      * Pass 2: Group by matching app (packageName) if still over threshold.
      */
@@ -35,7 +35,7 @@ object BootRestoreManager {
         notifications: List<NotificationEntity>
     ): List<BootConsolidationResult> = withContext(Dispatchers.Default) {
         if (notifications.size <= GROUPING_THRESHOLD) {
-            return@withContext notifications.map { 
+            return@withContext notifications.map {
                 BootConsolidationResult(
                     summaryTitle = it.title,
                     summaryContent = it.content,
@@ -48,7 +48,8 @@ object BootRestoreManager {
         Log.i(TAG, "Restoring ${notifications.size} notifications on boot. Threshold exceeded. Grouping...")
 
         // Pass 1: Group by Title
-        var groups = notifications.groupBy { it.title }
+        var groups = notifications
+            .groupBy { it.title }
             .map { (title, members) ->
                 if (members.size <= 1) {
                     val first = members.first()
@@ -66,8 +67,9 @@ object BootRestoreManager {
         // Pass 2: Group by App if still over threshold
         if (groups.size > GROUPING_THRESHOLD) {
             Log.i(TAG, "Still over threshold (${groups.size}). Grouping by App...")
-            
-            groups = notifications.groupBy { it.packageName }
+
+            groups = notifications
+                .groupBy { it.packageName }
                 .map { (pkg, members) ->
                     val first = members.first()
                     BootConsolidationResult(

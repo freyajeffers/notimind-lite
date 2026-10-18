@@ -17,7 +17,6 @@ import org.junit.runner.RunWith
 
 @RunWith(AndroidJUnit4::class)
 class AppDatabaseInstrumentedTest {
-
     private lateinit var database: AppDatabase
     private lateinit var dao: NotificationDao
 

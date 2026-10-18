@@ -14,19 +14,19 @@ import java.util.concurrent.atomic.AtomicBoolean
 
 /**
  * AppInitializer handles the streamlined startup logic for NotiMind Lite.
- * It ensures that critical system components (Firebase, Database, Logger) 
+ * It ensures that critical system components (Firebase, Database, Logger)
  * are initialized exactly once and in the correct order.
  */
 object AppInitializer {
     private const val TAG = "AppInitializer"
     private val isInitialized = AtomicBoolean(false)
+
     @Volatile private var activeFeatureFlags: FeatureFlagLoader = FeatureFlagLoader()
 
     fun featureFlags(): FeatureFlagLoader = activeFeatureFlags
 
     fun initialize(context: Context) {
         if (isInitialized.getAndSet(true)) {
-            
             return
         }
 
@@ -38,7 +38,9 @@ object AppInitializer {
                 loader.setTestModeFlags(preferences.experimentalManager.testModeFlags.value)
                 activeFeatureFlags = loader
             }
-            if (preferences.experimentalManager.featureFlagsUrl.value.isNotBlank()) {
+            if (preferences.experimentalManager.featureFlagsUrl.value
+                    .isNotBlank()
+            ) {
                 kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.Dispatchers.IO).launch {
                     featureFlags.loadFromUrl(preferences.experimentalManager.featureFlagsUrl.value)
                 }
@@ -91,6 +93,5 @@ object AppInitializer {
 
     private fun setupInternalLogging() {
         // Placeholder for internal logger setup
-        
     }
 }

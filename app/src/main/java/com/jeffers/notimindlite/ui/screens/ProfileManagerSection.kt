@@ -20,8 +20,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
-import com.jeffers.notimindlite.data.local.ProfilePreferencesManager
 import com.jeffers.notimindlite.BuildConfig
+import com.jeffers.notimindlite.data.local.ProfilePreferencesManager
 
 /** Compose-only profile manager. Each profile has independent settings and Room storage. */
 @Composable
@@ -64,7 +64,10 @@ fun profileManagerSection(repository: ProfilePreferencesManager) {
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 OutlinedTextField(value = newName, onValueChange = { newName = it }, label = { Text("New profile") })
                 Button(
-                    onClick = { repository.createProfile(newName); newName = "" },
+                    onClick = {
+                        repository.createProfile(newName)
+                        newName = ""
+                    },
                     enabled = newName.isNotBlank()
                 ) { Text("Add") }
             }

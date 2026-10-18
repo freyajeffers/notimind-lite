@@ -21,7 +21,6 @@ class SanitizationPipeline(
     private val packageFilterManager: PackageFilterManager = PackageFilterManager.default(),
     private val redactor: PiiRedactionEngine = PiiRedactionEngine
 ) {
-
     /**
      * Returns SanitizationResult or null to drop.
      */

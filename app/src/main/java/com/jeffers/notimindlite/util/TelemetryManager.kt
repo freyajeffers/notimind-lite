@@ -8,6 +8,7 @@ object TelemetryManager {
     enum class Level { MINIMAL, STANDARD, FULL }
 
     @Volatile private var enabled = false
+
     @Volatile private var level = Level.MINIMAL
 
     /** Configure policy without requiring an Android Context; useful for headless callers/tests. */
@@ -32,6 +33,7 @@ object TelemetryManager {
     }
 
     fun isEnabled(): Boolean = enabled
+
     fun currentLevel(): Level = level
 
     /** Returns whether an event at [requiredLevel] may be sent. */

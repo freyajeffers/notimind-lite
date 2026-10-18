@@ -12,7 +12,6 @@ import org.robolectric.annotation.Config
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [33])
 class PreferenceManagerTest {
-
     @Test
     fun preferenceManager_defaultsToNoneAndPersistsState() {
         val context = ApplicationProvider.getApplicationContext<Context>()

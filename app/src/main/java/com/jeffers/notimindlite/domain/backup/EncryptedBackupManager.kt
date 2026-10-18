@@ -77,13 +77,13 @@ object EncryptedBackupManager {
             AuditLogger.logBackupEvent(context, record)
             true
         } catch (e: IOException) {
-            logError( "Authorized backup failed: IO error", e)
+            logError("Authorized backup failed: IO error", e)
             false
         } catch (e: GeneralSecurityException) {
-            logError( "Authorized backup failed: crypto error", e)
+            logError("Authorized backup failed: crypto error", e)
             false
         } catch (e: SecurityException) {
-            logError( "Authorized backup failed: security exception", e)
+            logError("Authorized backup failed: security exception", e)
             false
         }
     }
@@ -115,7 +115,7 @@ object EncryptedBackupManager {
             val isPassphraseAuthorized = passphrase != null && isFilePassphraseWrapped(fileBytes)
 
             if (localRecord == null && !isPassphraseAuthorized) {
-                logError( "Unauthorized backup attempt: Hash $fileHash not found in local log")
+                logError("Unauthorized backup attempt: Hash $fileHash not found in local log")
                 return false
             }
 
@@ -137,16 +137,16 @@ object EncryptedBackupManager {
             }
             success
         } catch (e: BackupFileFormat.FormatException) {
-            logError( "Authorized restore failed: invalid backup format", e)
+            logError("Authorized restore failed: invalid backup format", e)
             false
         } catch (e: IOException) {
-            logError( "Authorized restore failed: IO error", e)
+            logError("Authorized restore failed: IO error", e)
             false
         } catch (e: AEADBadTagException) {
-            logError( "Authorized restore failed: authentication error (wrong passphrase or corrupted file)", e)
+            logError("Authorized restore failed: authentication error (wrong passphrase or corrupted file)", e)
             false
         } catch (e: GeneralSecurityException) {
-            logError( "Authorized restore failed: crypto error", e)
+            logError("Authorized restore failed: crypto error", e)
             false
         }
     }
@@ -155,7 +155,8 @@ object EncryptedBackupManager {
         val record = AppDatabase.getDatabase(context).backupDao().getRecordByHash(fileHash)
         if (record != null) return record
 
-        val persistentEntry = AuditLogger.readAndVerifyPersistentLogs(context)
+        val persistentEntry = AuditLogger
+            .readAndVerifyPersistentLogs(context)
             .find { it.details.contains(fileHash) && it.isValid }
         return persistentEntry?.let {
             BackupRecord(
@@ -205,7 +206,7 @@ object EncryptedBackupManager {
                 )
                 BackupKeyWrap.unwrapDek(header.wrappedDek, header.kekIv, kek)
             } catch (e: AEADBadTagException) {
-                logError( "Passphrase incorrect; failed to unwrap DEK", e)
+                logError("Passphrase incorrect; failed to unwrap DEK", e)
                 null
             }
         }
@@ -219,61 +220,59 @@ object EncryptedBackupManager {
         dest: File,
         key: SecretKey,
         passphrase: CharArray?,
-    ): Boolean {
-        return try {
-            val cipher = Cipher.getInstance(ALGORITHM)
-            val dataIv = ByteArray(IV_LENGTH).apply { SecureRandom().nextBytes(this) }
-            cipher.init(Cipher.ENCRYPT_MODE, key, GCMParameterSpec(TAG_LENGTH, dataIv))
+    ): Boolean = try {
+        val cipher = Cipher.getInstance(ALGORITHM)
+        val dataIv = ByteArray(IV_LENGTH).apply { SecureRandom().nextBytes(this) }
+        cipher.init(Cipher.ENCRYPT_MODE, key, GCMParameterSpec(TAG_LENGTH, dataIv))
 
-            val cipherOut = ByteArrayOutputStream()
-            FileInputStream(source).use { fis ->
-                val buffer = ByteArray(BUFFER_SIZE)
-                var bytesRead: Int
-                while (fis.read(buffer).also { bytesRead = it } != -1) {
-                    val output = cipher.update(buffer, 0, bytesRead)
-                    if (output != null) cipherOut.write(output)
-                }
-                val finalBlock = cipher.doFinal()
-                if (finalBlock != null) cipherOut.write(finalBlock)
+        val cipherOut = ByteArrayOutputStream()
+        FileInputStream(source).use { fis ->
+            val buffer = ByteArray(BUFFER_SIZE)
+            var bytesRead: Int
+            while (fis.read(buffer).also { bytesRead = it } != -1) {
+                val output = cipher.update(buffer, 0, bytesRead)
+                if (output != null) cipherOut.write(output)
             }
-
-            val ciphertext = cipherOut.toByteArray()
-
-            if (passphrase != null) {
-                val salt = BackupKeyWrap.generateSalt()
-                val kek = BackupKeyWrap.deriveKek(passphrase, salt)
-                val (kekIv, wrappedDek) = BackupKeyWrap.wrapDek(key, kek)
-                val wrappedBytes = BackupFileFormat.writeWrapped(
-                    BackupFileFormat.WrappedPayload(
-                        salt = salt,
-                        iterations = BackupFileFormat.PBKDF2_ITERATIONS,
-                        kekIv = kekIv,
-                        wrappedDek = wrappedDek,
-                        dataIv = dataIv,
-                        ciphertext = ciphertext,
-                    )
-                )
-                dest.writeBytes(wrappedBytes)
-            } else {
-                FileOutputStream(dest).use { fos ->
-                    fos.write(dataIv)
-                    fos.write(ciphertext)
-                }
-            }
-            true
-        } catch (e: IOException) {
-            logError( "Encryption failed: IO error", e)
-            false
-        } catch (e: GeneralSecurityException) {
-            logError( "Encryption failed: crypto error", e)
-            false
-        } catch (e: IllegalArgumentException) {
-            logError( "Encryption failed: invalid argument", e)
-            false
-        } catch (e: IllegalStateException) {
-            logError( "Encryption failed: illegal state", e)
-            false
+            val finalBlock = cipher.doFinal()
+            if (finalBlock != null) cipherOut.write(finalBlock)
         }
+
+        val ciphertext = cipherOut.toByteArray()
+
+        if (passphrase != null) {
+            val salt = BackupKeyWrap.generateSalt()
+            val kek = BackupKeyWrap.deriveKek(passphrase, salt)
+            val (kekIv, wrappedDek) = BackupKeyWrap.wrapDek(key, kek)
+            val wrappedBytes = BackupFileFormat.writeWrapped(
+                BackupFileFormat.WrappedPayload(
+                    salt = salt,
+                    iterations = BackupFileFormat.PBKDF2_ITERATIONS,
+                    kekIv = kekIv,
+                    wrappedDek = wrappedDek,
+                    dataIv = dataIv,
+                    ciphertext = ciphertext,
+                )
+            )
+            dest.writeBytes(wrappedBytes)
+        } else {
+            FileOutputStream(dest).use { fos ->
+                fos.write(dataIv)
+                fos.write(ciphertext)
+            }
+        }
+        true
+    } catch (e: IOException) {
+        logError("Encryption failed: IO error", e)
+        false
+    } catch (e: GeneralSecurityException) {
+        logError("Encryption failed: crypto error", e)
+        false
+    } catch (e: IllegalArgumentException) {
+        logError("Encryption failed: invalid argument", e)
+        false
+    } catch (e: IllegalStateException) {
+        logError("Encryption failed: illegal state", e)
+        false
     }
 
     private fun performDecryption(bytes: ByteArray, dest: File, key: SecretKey): Boolean {
@@ -300,16 +299,16 @@ object EncryptedBackupManager {
             dest.writeBytes(plaintext)
             true
         } catch (e: IOException) {
-            logError( "Decryption failed: IO error", e)
+            logError("Decryption failed: IO error", e)
             false
         } catch (e: GeneralSecurityException) {
-            logError( "Decryption failed: crypto error", e)
+            logError("Decryption failed: crypto error", e)
             false
         } catch (e: IllegalArgumentException) {
-            logError( "Decryption failed: invalid argument", e)
+            logError("Decryption failed: invalid argument", e)
             false
         } catch (e: IllegalStateException) {
-            logError( "Decryption failed: illegal state", e)
+            logError("Decryption failed: illegal state", e)
             false
         }
     }

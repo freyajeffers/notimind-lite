@@ -1,11 +1,11 @@
 package com.notimind.lite.tier3pairwise
 
-import com.google.firebase.firestore.FirebaseFirestore
+import com.google.android.gms.tasks.Tasks
 import com.google.firebase.firestore.CollectionReference
 import com.google.firebase.firestore.DocumentReference
-import com.google.firebase.firestore.QuerySnapshot
+import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.QueryDocumentSnapshot
-import com.google.android.gms.tasks.Tasks
+import com.google.firebase.firestore.QuerySnapshot
 import com.jeffers.notimindlite.data.local.AppDatabase
 import com.jeffers.notimindlite.data.local.NotificationDao
 import com.jeffers.notimindlite.data.local.NotificationEntity
@@ -25,7 +25,6 @@ import org.junit.Test
 import javax.crypto.spec.SecretKeySpec
 
 class SyncIntegrationPairwiseSupportTest {
-
     private lateinit var mockDb: AppDatabase
     private lateinit var mockDao: NotificationDao
     private lateinit var mockFirestore: FirebaseFirestore
@@ -37,7 +36,7 @@ class SyncIntegrationPairwiseSupportTest {
         mockDb = mockk()
         mockDao = mockk(relaxed = true)
         mockFirestore = mockk()
-        
+
         every { mockDb.notificationDao() } returns mockDao
         repository = FirestoreSyncRepository(mockDb, mockFirestore)
     }
@@ -46,7 +45,7 @@ class SyncIntegrationPairwiseSupportTest {
     fun `sync should resolve conflict using Last Write Wins - Remote Wins`() = runBlocking {
         val userId = "user123"
         val key = "notif_conflict"
-        
+
         // Local version: older (1000L)
         val localNotif = NotificationEntity(
             key = key, packageName = "p1", appName = "a1", title = "Local Title", content = "Local Content",
@@ -54,7 +53,7 @@ class SyncIntegrationPairwiseSupportTest {
         )
         coEvery { mockDao.getNotificationByKey(key) } returns localNotif
         coEvery { mockDao.getUnsyncedNotifications() } returns emptyList()
-        
+
         // Remote version: newer (2000L)
         val mockCol = mockk<CollectionReference>()
         val mockSnapshot = mockk<QuerySnapshot>()
@@ -62,7 +61,7 @@ class SyncIntegrationPairwiseSupportTest {
         every { mockDoc.getString(any()) } returns null
         every { mockDoc.getLong(any()) } returns null
         every { mockDoc.getBoolean(any()) } returns null
-        
+
         every { mockFirestore.collection("users").document(userId).collection("notifications") } returns mockCol
         every { mockCol.get() } returns Tasks.forResult(mockSnapshot)
         every { mockSnapshot.documents } returns listOf(mockDoc)
@@ -77,9 +76,11 @@ class SyncIntegrationPairwiseSupportTest {
         repository.sync(userId, secretKey)
 
         coVerify {
-            mockDao.insertNotifications(match { items ->
-                items.size == 1 && items[0].title == "Remote Title" && items[0].content == "Remote Content"
-            })
+            mockDao.insertNotifications(
+                match { items ->
+                    items.size == 1 && items[0].title == "Remote Title" && items[0].content == "Remote Content"
+                }
+            )
         }
     }
 
@@ -87,7 +88,7 @@ class SyncIntegrationPairwiseSupportTest {
     fun `sync should resolve conflict using Last Write Wins - Local Wins`() = runBlocking {
         val userId = "user123"
         val key = "notif_conflict"
-        
+
         // Local version: newer (3000L)
         val localNotif = NotificationEntity(
             key = key, packageName = "p1", appName = "a1", title = "Local Title", content = "Local Content",
@@ -95,7 +96,7 @@ class SyncIntegrationPairwiseSupportTest {
         )
         coEvery { mockDao.getNotificationByKey(key) } returns localNotif
         coEvery { mockDao.getUnsyncedNotifications() } returns emptyList()
-        
+
         // Remote version: older (2000L)
         val mockCol = mockk<CollectionReference>()
         val mockSnapshot = mockk<QuerySnapshot>()
@@ -103,7 +104,7 @@ class SyncIntegrationPairwiseSupportTest {
         every { mockDoc.getString(any()) } returns null
         every { mockDoc.getLong(any()) } returns null
         every { mockDoc.getBoolean(any()) } returns null
-        
+
         every { mockFirestore.collection("users").document(userId).collection("notifications") } returns mockCol
         every { mockCol.get() } returns Tasks.forResult(mockSnapshot)
         every { mockSnapshot.documents } returns listOf(mockDoc)
@@ -123,18 +124,18 @@ class SyncIntegrationPairwiseSupportTest {
     @Test
     fun `sync should maintain data integrity when remote doc is partially missing`() = runBlocking {
         val userId = "user123"
-        
+
         val mockCol = mockk<CollectionReference>()
         val mockSnapshot = mockk<QuerySnapshot>()
         val mockDoc = mockk<QueryDocumentSnapshot>()
         every { mockDoc.getString(any()) } returns null
         every { mockDoc.getLong(any()) } returns null
         every { mockDoc.getBoolean(any()) } returns null
-        
+
         every { mockFirestore.collection("users").document(userId).collection("notifications") } returns mockCol
         every { mockCol.get() } returns Tasks.forResult(mockSnapshot)
         every { mockSnapshot.documents } returns listOf(mockDoc)
-        
+
         // Key is present, but title is missing
         every { mockDoc.getString("key") } returns "notif_1"
         every { mockDoc.getString("title") } returns null

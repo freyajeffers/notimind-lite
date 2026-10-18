@@ -7,8 +7,15 @@ import android.os.Bundle
 import android.util.Log
 import org.json.JSONArray
 
-class NotificationParsingHelper(private val packageManager: PackageManager) {
-    data class TitleContent(val title: String, val content: String, val subText: String?, val bigText: String?)
+class NotificationParsingHelper(
+    private val packageManager: PackageManager
+) {
+    data class TitleContent(
+        val title: String,
+        val content: String,
+        val subText: String?,
+        val bigText: String?
+    )
 
     fun parseTitleAndContent(extras: Bundle?): TitleContent {
         val conversationTitle = extras?.getCharSequence(Notification.EXTRA_CONVERSATION_TITLE)?.toString()
@@ -27,37 +34,31 @@ class NotificationParsingHelper(private val packageManager: PackageManager) {
         return TitleContent(title, content, subText, bigText)
     }
 
-    fun extractInboxLinesJson(extras: Bundle?): String? {
-        return try {
-            val textLines = extras?.getCharSequenceArray(Notification.EXTRA_TEXT_LINES)
-            if (!textLines.isNullOrEmpty()) JSONArray(textLines.map { it.toString() }).toString() else null
-        } catch (e: ClassCastException) {
-            Log.w("NotificationParsing", "Notification inbox lines were not CharSequence[]; trying String[]", e)
-            val stringLines = extras?.getStringArray(Notification.EXTRA_TEXT_LINES)
-            if (!stringLines.isNullOrEmpty()) JSONArray(stringLines.toList()).toString() else null
-        }
+    fun extractInboxLinesJson(extras: Bundle?): String? = try {
+        val textLines = extras?.getCharSequenceArray(Notification.EXTRA_TEXT_LINES)
+        if (!textLines.isNullOrEmpty()) JSONArray(textLines.map { it.toString() }).toString() else null
+    } catch (e: ClassCastException) {
+        Log.w("NotificationParsing", "Notification inbox lines were not CharSequence[]; trying String[]", e)
+        val stringLines = extras?.getStringArray(Notification.EXTRA_TEXT_LINES)
+        if (!stringLines.isNullOrEmpty()) JSONArray(stringLines.toList()).toString() else null
     }
 
-    fun resolveAppName(packageName: String): String {
-        return try {
-            val appInfo = packageManager.getApplicationInfo(packageName, PackageManager.MATCH_UNINSTALLED_PACKAGES)
-            packageManager.getApplicationLabel(appInfo).toString()
-        } catch (e: PackageManager.NameNotFoundException) {
-            Log.w("NotificationParsing", "Application package no longer exists: $packageName", e)
-            packageName
-        } catch (e: SecurityException) {
-            Log.w("NotificationParsing", "Application label access denied for $packageName", e)
-            packageName
-        }
+    fun resolveAppName(packageName: String): String = try {
+        val appInfo = packageManager.getApplicationInfo(packageName, PackageManager.MATCH_UNINSTALLED_PACKAGES)
+        packageManager.getApplicationLabel(appInfo).toString()
+    } catch (e: PackageManager.NameNotFoundException) {
+        Log.w("NotificationParsing", "Application package no longer exists: $packageName", e)
+        packageName
+    } catch (e: SecurityException) {
+        Log.w("NotificationParsing", "Application label access denied for $packageName", e)
+        packageName
     }
 
-    fun safeSmallIconRes(notification: Notification): Int {
-        return try {
-            notification.smallIcon?.resId ?: 0
-        } catch (e: IllegalStateException) {
-            Log.w("NotificationParsing", "Notification small icon is unavailable", e)
-            0
-        }
+    fun safeSmallIconRes(notification: Notification): Int = try {
+        notification.smallIcon?.resId ?: 0
+    } catch (e: IllegalStateException) {
+        Log.w("NotificationParsing", "Notification small icon is unavailable", e)
+        0
     }
 
     fun buildActionLabelsJson(actions: Array<android.app.Notification.Action>?): String? {
@@ -69,15 +70,13 @@ class NotificationParsingHelper(private val packageManager: PackageManager) {
         return JSONArray(labels).toString()
     }
 
-    fun safeLaunchIntentUri(packageName: String): String? {
-        return try {
-            packageManager.getLaunchIntentForPackage(packageName)?.toUri(Intent.URI_INTENT_SCHEME)
-        } catch (e: SecurityException) {
-            Log.w("NotificationParsing", "Launch intent unavailable for package=$packageName", e)
-            null
-        } catch (e: IllegalArgumentException) {
-            Log.w("NotificationParsing", "Invalid package name for launch intent: $packageName", e)
-            null
-        }
+    fun safeLaunchIntentUri(packageName: String): String? = try {
+        packageManager.getLaunchIntentForPackage(packageName)?.toUri(Intent.URI_INTENT_SCHEME)
+    } catch (e: SecurityException) {
+        Log.w("NotificationParsing", "Launch intent unavailable for package=$packageName", e)
+        null
+    } catch (e: IllegalArgumentException) {
+        Log.w("NotificationParsing", "Invalid package name for launch intent: $packageName", e)
+        null
     }
 }

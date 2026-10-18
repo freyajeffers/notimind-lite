@@ -1,15 +1,15 @@
 package com.jeffers.notimindlite.ui.screens
 
-import androidx.compose.runtime.Composable
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Close
+import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.ui.unit.sp
 import com.jeffers.notimindlite.data.local.NotificationEntity
 
@@ -48,9 +48,10 @@ fun logHistorySearchDropdown(
         expanded = expanded && (
             searchSuggestions.isNotEmpty() ||
                 (searchQuery.isBlank() && recentSearches.isNotEmpty())
-            ),
+        ),
         onDismissRequest = config.onDismiss,
-        properties = androidx.compose.ui.window.PopupProperties(focusable = false),
+        properties = androidx.compose.ui.window
+            .PopupProperties(focusable = false),
         modifier = Modifier.fillMaxWidth(MENU_WIDTH_FRACTION)
     ) {
         val matchingRecent = if (searchQuery.isBlank()) {
@@ -66,19 +67,28 @@ fun logHistorySearchDropdown(
                         Icon(Icons.Filled.Close, contentDescription = "Remove recent search")
                     }
                 },
-                onClick = { config.onSelectSuggestion(recent); config.onDismiss() }
+                onClick = {
+                    config.onSelectSuggestion(recent)
+                    config.onDismiss()
+                }
             )
         }
         if (matchingRecent.isNotEmpty()) {
             DropdownMenuItem(
                 text = { Text("Clear recent searches") },
-                onClick = { config.onClearRecent(); config.onDismiss() }
+                onClick = {
+                    config.onClearRecent()
+                    config.onDismiss()
+                }
             )
         }
         searchSuggestions.forEach { suggestion ->
             DropdownMenuItem(
                 text = { Text(suggestion, fontSize = 14.sp) },
-                onClick = { config.onSelectSuggestion(suggestion); config.onDismiss() }
+                onClick = {
+                    config.onSelectSuggestion(suggestion)
+                    config.onDismiss()
+                }
             )
         }
     }

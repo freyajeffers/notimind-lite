@@ -4,6 +4,7 @@ import android.content.Context
 import android.content.Intent
 import android.graphics.BitmapFactory
 import android.provider.Settings
+import android.util.Log
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.animateFloatAsState
@@ -19,9 +20,9 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -32,13 +33,14 @@ import androidx.compose.foundation.layout.isImeVisible
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.text.KeyboardActions
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.OpenInNew
 import androidx.compose.material.icons.filled.Bookmark
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Delete
@@ -49,10 +51,6 @@ import androidx.compose.material.icons.filled.FilterList
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material.icons.filled.PushPin
-import androidx.compose.material.icons.automirrored.filled.OpenInNew
-import com.jeffers.notimindlite.ui.components.NotificationGroupCard
-import com.jeffers.notimindlite.ui.components.groupNotifications
-import org.json.JSONArray
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.outlined.BookmarkBorder
 import androidx.compose.material3.Badge
@@ -70,10 +68,10 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SmallFloatingActionButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TooltipAnchorPosition
 import androidx.compose.material3.TooltipBox
 import androidx.compose.material3.TooltipDefaults
+import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.rememberTooltipState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
@@ -83,59 +81,58 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.setValue
 import androidx.compose.runtime.saveable.rememberSaveable
-import android.util.Log
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.scale
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.input.ImeAction
-
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.jeffers.notimindlite.R
 import com.jeffers.notimindlite.data.local.NotificationDao
 import com.jeffers.notimindlite.data.local.NotificationEntity
 import com.jeffers.notimindlite.data.local.PreferenceManager
 import com.jeffers.notimindlite.data.local.PreferencesRepository
+import com.jeffers.notimindlite.domain.search.HybridSearchEngine
 import com.jeffers.notimindlite.service.NotificationLoggerService
-import com.jeffers.notimindlite.ui.dialogs.appPackageSelectorDialog
 import com.jeffers.notimindlite.ui.components.ActiveFilterChip
-import com.jeffers.notimindlite.ui.components.activeFilterChipsRow
 import com.jeffers.notimindlite.ui.components.ActiveFirstRunEmptyState
 import com.jeffers.notimindlite.ui.components.ActivePermissionEmptyState
 import com.jeffers.notimindlite.ui.components.ActiveSearchEmptyState
+import com.jeffers.notimindlite.ui.components.NotificationGroupCard
 import com.jeffers.notimindlite.ui.components.actionableChips
-
-import com.jeffers.notimindlite.domain.search.HybridSearchEngine
+import com.jeffers.notimindlite.ui.components.activeFilterChipsRow
+import com.jeffers.notimindlite.ui.components.groupNotifications
+import com.jeffers.notimindlite.ui.dialogs.appPackageSelectorDialog
 import com.jeffers.notimindlite.util.NotificationLauncher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import org.json.JSONArray
 import java.time.Instant
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.util.*
-
 
 fun checkNotificationPermission(context: Context): Boolean {
     val flat = Settings.Secure.getString(
@@ -182,23 +179,19 @@ private val REASON_LABELS = listOf(
     R.string.reason_24
 ).mapIndexed { index, label -> index + REASON_CODE_OFFSET to label }.toMap()
 
-fun getReasonLabel(reason: Int?): Int {
-    return reason?.let { REASON_LABELS[it] } ?: if (reason == null) {
-        R.string.reason_system
-    } else {
-        R.string.reason_unknown
-    }
+fun getReasonLabel(reason: Int?): Int = reason?.let { REASON_LABELS[it] } ?: if (reason == null) {
+    R.string.reason_system
+} else {
+    R.string.reason_unknown
 }
 
-fun getPriorityLabel(priority: Int): String {
-    return when (priority) {
-        PRIORITY_MIN -> "Min"
-        PRIORITY_LOW -> "Low"
-        PRIORITY_DEFAULT -> "Default"
-        PRIORITY_HIGH -> "High"
-        PRIORITY_MAX -> "Max"
-        else -> "Unknown ($priority)"
-    }
+fun getPriorityLabel(priority: Int): String = when (priority) {
+    PRIORITY_MIN -> "Min"
+    PRIORITY_LOW -> "Low"
+    PRIORITY_DEFAULT -> "Default"
+    PRIORITY_HIGH -> "High"
+    PRIORITY_MAX -> "Max"
+    else -> "Unknown ($priority)"
 }
 
 private fun notificationSectionOrder(
@@ -227,17 +220,21 @@ private fun notificationSectionOrder(
 
 private val notificationSearchSuggestions:
     (String, List<NotificationEntity>) -> List<String> = { query, notifications ->
-    if (query.length < SEARCH_MIN_LENGTH) {
-        emptyList()
-    } else {
-        (notifications.map { it.appName } + notifications.map { it.title })
-            .filter { it.contains(query, ignoreCase = true) }
-            .distinct()
-            .take(MAX_SEARCH_SUGGESTIONS)
+        if (query.length < SEARCH_MIN_LENGTH) {
+            emptyList()
+        } else {
+            (notifications.map { it.appName } + notifications.map { it.title })
+                .filter { it.contains(query, ignoreCase = true) }
+                .distinct()
+                .take(MAX_SEARCH_SUGGESTIONS)
+        }
     }
-}
 
-enum class NotificationSection(val keyName: String, val title: String, val subtitle: String) {
+enum class NotificationSection(
+    val keyName: String,
+    val title: String,
+    val subtitle: String
+) {
     PINNED("PINNED", "Pinned Notifications", "Flagged & saved notifications for later reference"),
     ACTIVE("ACTIVE", "Active Notifications", "Currently active status bar notifications (sorted by time received)"),
     FILTERED("FILTERED", "Filtered Notifications", "System, clutter, spam, and auto-filtered notifications"),
@@ -250,7 +247,7 @@ enum class NotificationSection(val keyName: String, val title: String, val subti
 }
 
 @Composable
-fun appIconImage(appIconUri: String?, modifier: Modifier = Modifier.size(20.dp)) {
+fun appIconImage(appIconUri: String?, modifier: Modifier = Modifier) {
     val imageBitmap = remember(appIconUri) {
         if (!appIconUri.isNullOrEmpty()) {
             try {
@@ -271,7 +268,7 @@ fun appIconImage(appIconUri: String?, modifier: Modifier = Modifier.size(20.dp))
         Image(
             bitmap = imageBitmap,
             contentDescription = "App Icon",
-            modifier = modifier
+            modifier = modifier.size(20.dp)
         )
     }
 }
@@ -336,168 +333,168 @@ private val activeNotificationsLayout: @Composable (ActiveNotificationsScaffoldC
 private val renderActiveNotificationsScreen:
     @Composable (NotificationDao, PreferencesRepository) -> Unit =
     { dao, preferences ->
-    val context = LocalContext.current
-    val lifecycleOwner = LocalLifecycleOwner.current
-    val prefManager = remember { PreferenceManager(context) }
-    val compactMode by preferences.displayManager.compactMode.collectAsState()
-    val showAppIcons by preferences.displayManager.showAppIcons.collectAsState()
-    val groupByApp by preferences.displayManager.groupByApp.collectAsState()
-    val sortOrder by preferences.displayManager.sortOrder.collectAsState()
-    val previewLength by preferences.displayManager.previewLength.collectAsState()
+        val context = LocalContext.current
+        val lifecycleOwner = LocalLifecycleOwner.current
+        val prefManager = remember { PreferenceManager(context) }
+        val compactMode by preferences.displayManager.compactMode.collectAsState()
+        val showAppIcons by preferences.displayManager.showAppIcons.collectAsState()
+        val groupByApp by preferences.displayManager.groupByApp.collectAsState()
+        val sortOrder by preferences.displayManager.sortOrder.collectAsState()
+        val previewLength by preferences.displayManager.previewLength.collectAsState()
 
-
-    var expandedSection by rememberSaveable { mutableStateOf(prefManager.getExpandedSection()) }
-    var expandedCards by remember { mutableStateOf(setOf<String>()) }
-    var collapsedGroups by remember { mutableStateOf(setOf<String>()) }
-    var isGranted by remember { mutableStateOf(checkNotificationPermission(context)) }
-    var searchQuery by rememberSaveable { mutableStateOf(preferences.sharedSearchManager.query.value) }
-    var debouncedSearchQuery by remember { mutableStateOf("") }
-    var isSearchExplicitlyOpened by rememberSaveable { mutableStateOf(false) }
-    val recentSearches by preferences.sharedSearchManager.recentSearches.collectAsState()
-    val focusManager = LocalFocusManager.current
-    val keyboardController = LocalSoftwareKeyboardController.current
-    var selectedPackages by remember { mutableStateOf(preferences.sharedSearchManager.packages.value) }
-    var showPackagePicker by remember { mutableStateOf(false) }
-    activeNotificationLifecycle(
-        ActiveNotificationLifecycleConfig(
-            searchQuery = searchQuery,
-            selectedPackages = selectedPackages,
-            lifecycleOwner = lifecycleOwner,
-            context = context,
-            preferences = preferences,
-            setDebouncedSearchQuery = { debouncedSearchQuery = it },
-            setIsGranted = { isGranted = it }
+        var expandedSection by rememberSaveable { mutableStateOf(prefManager.getExpandedSection()) }
+        var expandedCards by remember { mutableStateOf(setOf<String>()) }
+        var collapsedGroups by remember { mutableStateOf(setOf<String>()) }
+        var isGranted by remember { mutableStateOf(checkNotificationPermission(context)) }
+        var searchQuery by rememberSaveable { mutableStateOf(preferences.sharedSearchManager.query.value) }
+        var debouncedSearchQuery by remember { mutableStateOf("") }
+        var isSearchExplicitlyOpened by rememberSaveable { mutableStateOf(false) }
+        val recentSearches by preferences.sharedSearchManager.recentSearches.collectAsState()
+        val focusManager = LocalFocusManager.current
+        val keyboardController = LocalSoftwareKeyboardController.current
+        var selectedPackages by remember { mutableStateOf(preferences.sharedSearchManager.packages.value) }
+        var showPackagePicker by remember { mutableStateOf(false) }
+        activeNotificationLifecycle(
+            ActiveNotificationLifecycleConfig(
+                searchQuery = searchQuery,
+                selectedPackages = selectedPackages,
+                lifecycleOwner = lifecycleOwner,
+                context = context,
+                preferences = preferences,
+                setDebouncedSearchQuery = { debouncedSearchQuery = it },
+                setIsGranted = { isGranted = it }
+            )
         )
-    )
 
-    val pinnedNotifs by dao.getPinnedNotificationsFlow().collectAsState(initial = emptyList())
-    val activeNotifs by dao.getActiveNotificationsFlow().collectAsState(initial = emptyList())
-    val filteredNotifs by dao.getFilteredNotificationsFlow().collectAsState(initial = emptyList())
-    val recentlyDismissed by dao.getRecentlyDismissedFlow().collectAsState(initial = emptyList())
-    val lostNotifs by dao.getLostNotificationsFlow().collectAsState(initial = emptyList())
-    val dateTimeFormatter = remember {
-        DateTimeFormatter.ofPattern("MMM dd, HH:mm:ss", Locale.getDefault()).withZone(ZoneId.systemDefault())
-    }
-
-    val allActiveList = remember(pinnedNotifs, activeNotifs, filteredNotifs, recentlyDismissed, lostNotifs) {
-        (pinnedNotifs + activeNotifs + filteredNotifs + recentlyDismissed + lostNotifs).distinctBy { it.packageName }
-    }
-
-    val availableApps = remember(allActiveList) {
-        allActiveList.map { it.packageName to it.appName }
-    }
-
-    val scope = rememberCoroutineScope()
-
-    val sectionOrder = remember(expandedSection, pinnedNotifs.size) {
-        notificationSectionOrder(expandedSection, pinnedNotifs.isNotEmpty())
-    }
-
-    val listState = rememberLazyListState()
-
-    fun toggleSection(sectionKey: String) {
-        val newExpanded = if (expandedSection == sectionKey) "NONE" else sectionKey
-        expandedSection = newExpanded
-        prefManager.setExpandedSection(newExpanded)
-    }
-
-    val searchFocusRequester = remember { FocusRequester() }
-    var isSearchFocused by remember { mutableStateOf(false) }
-    val imeVisible = WindowInsets.isImeVisible
-
-
-    LaunchedEffect(isSearchFocused, imeVisible, searchQuery) {
-        if (!imeVisible && !isSearchFocused && searchQuery.isBlank()) {
-            isSearchExplicitlyOpened = false
+        val pinnedNotifs by dao.getPinnedNotificationsFlow().collectAsState(initial = emptyList())
+        val activeNotifs by dao.getActiveNotificationsFlow().collectAsState(initial = emptyList())
+        val filteredNotifs by dao.getFilteredNotificationsFlow().collectAsState(initial = emptyList())
+        val recentlyDismissed by dao.getRecentlyDismissedFlow().collectAsState(initial = emptyList())
+        val lostNotifs by dao.getLostNotificationsFlow().collectAsState(initial = emptyList())
+        val dateTimeFormatter = remember {
+            DateTimeFormatter.ofPattern("MMM dd, HH:mm:ss", Locale.getDefault()).withZone(ZoneId.systemDefault())
         }
-    }
 
-    activeNotificationsScaffoldWrapper(
-        ActiveNotificationsScaffoldWrapperConfig(
-            selectedPackages = selectedPackages,
-            searchQuery = searchQuery,
-            isSearchExplicitlyOpened = isSearchExplicitlyOpened,
-            isSearchFocused = isSearchFocused,
-            focusManager = focusManager,
-            keyboardController = keyboardController,
-            searchFocusRequester = searchFocusRequester,
-            scope = scope,
-            listState = listState,
-            onSetSelectedPackages = { selectedPackages = it },
-            onSetSearchQuery = { searchQuery = it },
-            onSetSearchFocused = { isSearchFocused = it },
-            onSetSearchExplicitlyOpened = { isSearchExplicitlyOpened = it },
-            onOpenPackagePicker = { showPackagePicker = true },
-            content = { innerPadding ->
-                Box(modifier = Modifier.fillMaxSize()) {
-                    val searchSuggestions = remember(
-                        searchQuery,
-                        pinnedNotifs,
-                        activeNotifs,
-                        filteredNotifs,
-                        recentlyDismissed,
-                        lostNotifs
-                    ) {
-                        notificationSearchSuggestions(
+        val allActiveList = remember(pinnedNotifs, activeNotifs, filteredNotifs, recentlyDismissed, lostNotifs) {
+            (pinnedNotifs + activeNotifs + filteredNotifs + recentlyDismissed + lostNotifs)
+                .distinctBy { it.packageName }
+        }
+
+        val availableApps = remember(allActiveList) {
+            allActiveList.map { it.packageName to it.appName }
+        }
+
+        val scope = rememberCoroutineScope()
+
+        val sectionOrder = remember(expandedSection, pinnedNotifs.size) {
+            notificationSectionOrder(expandedSection, pinnedNotifs.isNotEmpty())
+        }
+
+        val listState = rememberLazyListState()
+
+        fun toggleSection(sectionKey: String) {
+            val newExpanded = if (expandedSection == sectionKey) "NONE" else sectionKey
+            expandedSection = newExpanded
+            prefManager.setExpandedSection(newExpanded)
+        }
+
+        val searchFocusRequester = remember { FocusRequester() }
+        var isSearchFocused by remember { mutableStateOf(false) }
+        val imeVisible = WindowInsets.isImeVisible
+
+        LaunchedEffect(isSearchFocused, imeVisible, searchQuery) {
+            if (!imeVisible && !isSearchFocused && searchQuery.isBlank()) {
+                isSearchExplicitlyOpened = false
+            }
+        }
+
+        activeNotificationsScaffoldWrapper(
+            ActiveNotificationsScaffoldWrapperConfig(
+                selectedPackages = selectedPackages,
+                searchQuery = searchQuery,
+                isSearchExplicitlyOpened = isSearchExplicitlyOpened,
+                isSearchFocused = isSearchFocused,
+                focusManager = focusManager,
+                keyboardController = keyboardController,
+                searchFocusRequester = searchFocusRequester,
+                scope = scope,
+                listState = listState,
+                onSetSelectedPackages = { selectedPackages = it },
+                onSetSearchQuery = { searchQuery = it },
+                onSetSearchFocused = { isSearchFocused = it },
+                onSetSearchExplicitlyOpened = { isSearchExplicitlyOpened = it },
+                onOpenPackagePicker = { showPackagePicker = true },
+                content = { innerPadding ->
+                    Box(modifier = Modifier.fillMaxSize()) {
+                        val searchSuggestions = remember(
                             searchQuery,
-                            pinnedNotifs + activeNotifs + filteredNotifs + recentlyDismissed + lostNotifs
+                            pinnedNotifs,
+                            activeNotifs,
+                            filteredNotifs,
+                            recentlyDismissed,
+                            lostNotifs
+                        ) {
+                            notificationSearchSuggestions(
+                                searchQuery,
+                                pinnedNotifs + activeNotifs + filteredNotifs + recentlyDismissed + lostNotifs
+                            )
+                        }
+                        renderActiveNotificationsList(
+                            ActiveNotificationsListConfig(
+                                listState = listState,
+                                innerPadding = innerPadding,
+                                searchQuery = searchQuery,
+                                searchSuggestions = searchSuggestions,
+                                recentSearches = recentSearches,
+                                isSearchVisible = isSearchExplicitlyOpened ||
+                                    searchQuery.isNotEmpty() ||
+                                    isSearchFocused,
+                                searchFocusRequester = searchFocusRequester,
+                                preferences = preferences,
+                                focusManager = focusManager,
+                                keyboardController = keyboardController,
+                                isGranted = isGranted,
+                                debouncedSearchQuery = debouncedSearchQuery,
+                                selectedPackages = selectedPackages,
+                                context = context,
+                                pinnedNotifs = pinnedNotifs,
+                                activeNotifs = activeNotifs,
+                                filteredNotifs = filteredNotifs,
+                                recentlyDismissed = recentlyDismissed,
+                                lostNotifs = lostNotifs,
+                                sectionOrder = sectionOrder,
+                                expandedSection = expandedSection,
+                                collapsedGroups = collapsedGroups,
+                                expandedCards = expandedCards,
+                                dateTimeFormatter = dateTimeFormatter,
+                                dao = dao,
+                                showAppIcons = showAppIcons,
+                                compactMode = compactMode,
+                                groupByApp = groupByApp,
+                                sortOrder = sortOrder,
+                                previewLength = previewLength,
+                                onSearchChanged = { searchQuery = it },
+                                onFocusChanged = { isSearchFocused = it },
+                                onClear = {
+                                    searchQuery = ""
+                                    selectedPackages = null
+                                },
+                                onSetPackages = { selectedPackages = it },
+                                onSetCollapsedGroups = { collapsedGroups = it },
+                                onSetExpandedCards = { expandedCards = it },
+                                toggleSection = ::toggleSection
+                            )
                         )
                     }
-                    renderActiveNotificationsList(
-                        ActiveNotificationsListConfig(
-                            listState = listState,
-                            innerPadding = innerPadding,
-                            searchQuery = searchQuery,
-                            searchSuggestions = searchSuggestions,
-                            recentSearches = recentSearches,
-                            isSearchVisible = isSearchExplicitlyOpened || searchQuery.isNotEmpty() || isSearchFocused,
-                            searchFocusRequester = searchFocusRequester,
-                            preferences = preferences,
-                            focusManager = focusManager,
-                            keyboardController = keyboardController,
-                            isGranted = isGranted,
-                            debouncedSearchQuery = debouncedSearchQuery,
-                            selectedPackages = selectedPackages,
-                            context = context,
-                            pinnedNotifs = pinnedNotifs,
-                            activeNotifs = activeNotifs,
-                            filteredNotifs = filteredNotifs,
-                            recentlyDismissed = recentlyDismissed,
-                            lostNotifs = lostNotifs,
-                            sectionOrder = sectionOrder,
-                            expandedSection = expandedSection,
-                            collapsedGroups = collapsedGroups,
-                            expandedCards = expandedCards,
-                            dateTimeFormatter = dateTimeFormatter,
-                            dao = dao,
-                            showAppIcons = showAppIcons,
-                            compactMode = compactMode,
-                            groupByApp = groupByApp,
-                            sortOrder = sortOrder,
-                            previewLength = previewLength,
-                            onSearchChanged = { searchQuery = it },
-                            onFocusChanged = { isSearchFocused = it },
-                            onClear = {
-                                searchQuery = ""
-                                selectedPackages = null
-                            },
-                            onSetPackages = { selectedPackages = it },
-                            onSetCollapsedGroups = { collapsedGroups = it },
-                            onSetExpandedCards = { expandedCards = it },
-                            toggleSection = ::toggleSection
-                        )
-                    )
                 }
-            }
+            )
         )
-    )
 
-    renderActivePackagePicker(showPackagePicker, selectedPackages, availableApps) { pkgs, visible ->
-        selectedPackages = pkgs
-        showPackagePicker = visible
+        renderActivePackagePicker(showPackagePicker, selectedPackages, availableApps) { pkgs, visible ->
+            selectedPackages = pkgs
+            showPackagePicker = visible
+        }
     }
-
-}
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class, ExperimentalLayoutApi::class)
 @Composable
@@ -525,37 +522,37 @@ private data class ActiveNotificationsScaffoldWrapperConfig(
 
 private val activeNotificationsScaffoldWrapper:
     @Composable (ActiveNotificationsScaffoldWrapperConfig) -> Unit = { config ->
-    activeNotificationsLayout(
-        ActiveNotificationsScaffoldConfig(
-            selectedPackages = config.selectedPackages,
-            searchQuery = config.searchQuery,
-            onClearFilters = {
-                config.onSetSelectedPackages(null)
-                config.onSetSearchQuery("")
-                config.onSetSearchFocused(false)
-                config.onSetSearchExplicitlyOpened(false)
-                config.focusManager.clearFocus(force = true)
-                config.keyboardController?.hide()
-            },
-            onOpenPackagePicker = config.onOpenPackagePicker,
-            onToggleSearch = {
-                if (config.isSearchExplicitlyOpened || config.searchQuery.isNotEmpty() || config.isSearchFocused) {
-                    config.onSetSearchExplicitlyOpened(false)
-                    config.onSetSearchFocused(false)
+        activeNotificationsLayout(
+            ActiveNotificationsScaffoldConfig(
+                selectedPackages = config.selectedPackages,
+                searchQuery = config.searchQuery,
+                onClearFilters = {
+                    config.onSetSelectedPackages(null)
                     config.onSetSearchQuery("")
-                } else {
-                    config.onSetSearchExplicitlyOpened(true)
-                    config.scope.launch {
-                        config.listState.animateScrollToItem(0)
-                        config.searchFocusRequester.requestFocus()
+                    config.onSetSearchFocused(false)
+                    config.onSetSearchExplicitlyOpened(false)
+                    config.focusManager.clearFocus(force = true)
+                    config.keyboardController?.hide()
+                },
+                onOpenPackagePicker = config.onOpenPackagePicker,
+                onToggleSearch = {
+                    if (config.isSearchExplicitlyOpened || config.searchQuery.isNotEmpty() || config.isSearchFocused) {
+                        config.onSetSearchExplicitlyOpened(false)
+                        config.onSetSearchFocused(false)
+                        config.onSetSearchQuery("")
+                    } else {
+                        config.onSetSearchExplicitlyOpened(true)
+                        config.scope.launch {
+                            config.listState.animateScrollToItem(0)
+                            config.searchFocusRequester.requestFocus()
+                        }
                     }
-                }
-            },
-            listState = config.listState,
-            content = config.content
+                },
+                listState = config.listState,
+                content = config.content
+            )
         )
-    )
-}
+    }
 
 private val renderActivePackagePicker:
     @Composable (Boolean, List<String>?, List<Pair<String, String>>, (List<String>?, Boolean) -> Unit) -> Unit =
@@ -669,32 +666,32 @@ private fun renderActiveNotificationsList(config: ActiveNotificationsListConfig)
 
 private val renderActiveNotificationSections:
     androidx.compose.foundation.lazy.LazyListScope.(ActiveNotificationsListConfig) -> Unit = { config ->
-    renderNotificationSections(
-        ActiveNotificationSectionsConfig(
-            sectionOrder = config.sectionOrder,
-            expandedSection = config.expandedSection,
-            pinnedNotifs = config.pinnedNotifs,
-            activeNotifs = config.activeNotifs,
-            filteredNotifs = config.filteredNotifs,
-            recentlyDismissed = config.recentlyDismissed,
-            lostNotifs = config.lostNotifs,
-            selectedPackages = config.selectedPackages,
-            debouncedSearchQuery = config.debouncedSearchQuery,
-            groupByApp = config.groupByApp,
-            sortOrder = config.sortOrder,
-            collapsedGroups = config.collapsedGroups,
-            setCollapsedGroups = config.onSetCollapsedGroups,
-            expandedCards = config.expandedCards,
-            setExpandedCards = config.onSetExpandedCards,
-            dateTimeFormatter = config.dateTimeFormatter,
-            dao = config.dao,
-            showAppIcons = config.showAppIcons,
-            compactMode = config.compactMode,
-            previewLength = config.previewLength,
-            toggleSection = config.toggleSection
+        renderNotificationSections(
+            ActiveNotificationSectionsConfig(
+                sectionOrder = config.sectionOrder,
+                expandedSection = config.expandedSection,
+                pinnedNotifs = config.pinnedNotifs,
+                activeNotifs = config.activeNotifs,
+                filteredNotifs = config.filteredNotifs,
+                recentlyDismissed = config.recentlyDismissed,
+                lostNotifs = config.lostNotifs,
+                selectedPackages = config.selectedPackages,
+                debouncedSearchQuery = config.debouncedSearchQuery,
+                groupByApp = config.groupByApp,
+                sortOrder = config.sortOrder,
+                collapsedGroups = config.collapsedGroups,
+                setCollapsedGroups = config.onSetCollapsedGroups,
+                expandedCards = config.expandedCards,
+                setExpandedCards = config.onSetExpandedCards,
+                dateTimeFormatter = config.dateTimeFormatter,
+                dao = config.dao,
+                showAppIcons = config.showAppIcons,
+                compactMode = config.compactMode,
+                previewLength = config.previewLength,
+                toggleSection = config.toggleSection
+            )
         )
-    )
-}
+    }
 
 private data class ActiveNotificationsEmptyStateConfig(
     val hasAnyData: Boolean,
@@ -748,7 +745,7 @@ fun logNotificationCard(config: LogNotificationCardConfig) {
     val showAppIcon = config.showAppIcon
     val compactMode = config.compactMode
     val previewLength = config.previewLength
-    
+
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
 

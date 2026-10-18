@@ -1,15 +1,18 @@
 package com.jeffers.notimindlite.data.local
 
 import android.content.Context
+import android.content.SharedPreferences
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 
-import android.content.SharedPreferences
-
-class CapturePreferencesManager(context: Context, private val profileManager: ProfilePreferencesManager) {
+class CapturePreferencesManager(
+    context: Context,
+    private val profileManager: ProfilePreferencesManager
+) {
     private val appContext = context.applicationContext
-    private val preferences get() = appContext.createDeviceProtectedStorageContext()
+    private val preferences get() = appContext
+        .createDeviceProtectedStorageContext()
         .getSharedPreferences(profileManager.activePreferencesName, Context.MODE_PRIVATE)
     private val _enabled = MutableStateFlow(preferences.getBoolean(KEY_ENABLED, true))
     private val _foregroundOnly = MutableStateFlow(preferences.getBoolean(KEY_FOREGROUND_ONLY, false))

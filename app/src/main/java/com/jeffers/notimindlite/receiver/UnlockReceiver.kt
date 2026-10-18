@@ -17,7 +17,6 @@ import kotlinx.coroutines.launch
  * Migrates all pre-PIN staging records from notimind_de.db to notimind_ce.db and rebuilds FTS.
  */
 class UnlockReceiver : BroadcastReceiver() {
-
     private val receiverScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
     override fun onReceive(context: Context?, intent: Intent?) {
@@ -25,7 +24,6 @@ class UnlockReceiver : BroadcastReceiver() {
         val action = intent?.action ?: return
 
         if (action == Intent.ACTION_USER_UNLOCKED) {
-            
             val pendingResult = goAsync()
 
             receiverScope.launch {

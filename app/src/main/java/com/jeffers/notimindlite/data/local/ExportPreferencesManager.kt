@@ -11,7 +11,8 @@ class ExportPreferencesManager(
 ) {
     private val appContext = context.applicationContext
     private val preferences
-        get() = appContext.createDeviceProtectedStorageContext()
+        get() = appContext
+            .createDeviceProtectedStorageContext()
             .getSharedPreferences(profileManager.activePreferencesName, Context.MODE_PRIVATE)
 
     private val _formats = MutableStateFlow(preferences.getString(KEY_FORMATS, DEFAULT_FORMATS) ?: DEFAULT_FORMATS)
@@ -29,8 +30,13 @@ class ExportPreferencesManager(
     }
 
     fun setFormats(value: String) {
-        val safe = value.split(',').map(String::trim).filter(String::isNotBlank).distinct()
-            .joinToString(",").ifBlank { DEFAULT_FORMATS }
+        val safe = value
+            .split(',')
+            .map(String::trim)
+            .filter(String::isNotBlank)
+            .distinct()
+            .joinToString(",")
+            .ifBlank { DEFAULT_FORMATS }
         preferences.edit().putString(KEY_FORMATS, safe).apply()
         _formats.value = safe
     }

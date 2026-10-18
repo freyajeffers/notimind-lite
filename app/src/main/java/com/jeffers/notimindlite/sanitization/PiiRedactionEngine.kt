@@ -6,22 +6,26 @@ object PiiRedactionEngine {
     private const val LUHN_BASE = 10
     private const val LUHN_DOUBLE = 2
     private const val LUHN_REDUCTION = 9
+
     // Deterministic, fast compiled patterns.
     private val otpRegex = Regex("\\b\\d{4,6}\\b")
     private val emailRegex = Regex(
         "[A-Za-z0-9._%+-]+@" +
             "[A-Za-z0-9.-]+\\.[A-Za-z]{2,}"
     )
+
     // More permissive phone matcher: international optional, digits with separators
     private val phoneRegex = Regex(
         "(?:\\+?\\d" +
             "[\\d\\s().-]{7,}" +
             "\\d)"
     )
+
     // Currency: $ with optional spaces, digits, optional thousands/grouping and cents
     private val currencyRegex = Regex(
         "\\$\\s?\\d{1,3}(?:[,\\.]\\d{3})*(?:\\.\\d{2})?"
     )
+
     // Credit-card candidate: sequences of digits with optional spaces/dashes (12-19 digits total)
     private val ccCandidateRegex = Regex(
         "(?:\\d[ -]?){12,19}"
@@ -81,9 +85,7 @@ object PiiRedactionEngine {
     }
 
     // Escape field for inclusion in a CSV cell: double quotes and remove newlines
-    private fun escapeForCsv(s: String): String {
-        return s.replace("\"", "\"\"").replace(Regex("[\r\n]+"), " ")
-    }
+    private fun escapeForCsv(s: String): String = s.replace("\"", "\"\"").replace(Regex("[\r\n]+"), " ")
 
     private fun isValidLuhn(digitsOnly: String): Boolean {
         val s = digitsOnly.filter { it.isDigit() }

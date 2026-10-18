@@ -26,19 +26,19 @@ object SecureFileShredder {
     }
 
     private fun shredRegularFile(file: File, path: java.nio.file.Path, chunkSize: Int): Boolean = try {
-            RandomAccessFile(file, "rw").use { randomAccessFile ->
-                val length = randomAccessFile.length()
-                val zeros = ByteArray(chunkSize)
-                var remaining = length
-                while (remaining > 0) {
-                    val count = minOf(remaining, zeros.size.toLong()).toInt()
-                    randomAccessFile.write(zeros, 0, count)
-                    remaining -= count
-                }
-                randomAccessFile.fd.sync()
+        RandomAccessFile(file, "rw").use { randomAccessFile ->
+            val length = randomAccessFile.length()
+            val zeros = ByteArray(chunkSize)
+            var remaining = length
+            while (remaining > 0) {
+                val count = minOf(remaining, zeros.size.toLong()).toInt()
+                randomAccessFile.write(zeros, 0, count)
+                remaining -= count
             }
-            Files.deleteIfExists(path)
-        } catch (_: Exception) {
-            false
+            randomAccessFile.fd.sync()
         }
+        Files.deleteIfExists(path)
+    } catch (_: Exception) {
+        false
+    }
 }

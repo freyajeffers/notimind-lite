@@ -20,8 +20,8 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import com.jeffers.notimindlite.R
 import androidx.compose.ui.unit.dp
+import com.jeffers.notimindlite.R
 import kotlinx.coroutines.delay
 
 private const val INITIAL_SPLASH_SCALE = 0.88f

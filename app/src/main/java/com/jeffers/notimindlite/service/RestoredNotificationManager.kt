@@ -27,17 +27,11 @@ object RestoredNotificationManager {
         Log.d(TAG, "Marked as restored: $notificationKey (pkg: $packageName, notifId: $notifId)")
     }
 
-    fun isRestored(notificationKey: String): Boolean {
-        return restoredNotificationKeys.contains(notificationKey)
-    }
+    fun isRestored(notificationKey: String): Boolean = restoredNotificationKeys.contains(notificationKey)
 
-    fun getRestoredNotificationIdsForApp(packageName: String): Set<Int> {
-        return restoredAppNotifIds[packageName] ?: emptySet()
-    }
+    fun getRestoredNotificationIdsForApp(packageName: String): Set<Int> = restoredAppNotifIds[packageName] ?: emptySet()
 
-    fun getRestoredNotifIdForPackage(packageName: String): Int? {
-        return restoredAppNotifIds[packageName]?.firstOrNull()
-    }
+    fun getRestoredNotifIdForPackage(packageName: String): Int? = restoredAppNotifIds[packageName]?.firstOrNull()
 
     private const val AUTO_DISMISS_LOG_MAX_LEN = 80
 

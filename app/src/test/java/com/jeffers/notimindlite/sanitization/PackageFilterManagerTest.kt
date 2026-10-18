@@ -1,11 +1,10 @@
 package com.jeffers.notimindlite.sanitization
 
-import org.junit.Test
-import org.junit.Assert.assertTrue
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
+import org.junit.Test
 
 class PackageFilterManagerTest {
-
     @Test
     fun `whitelist takes precedence`() {
         val mgr = PackageFilterManager(blacklist = setOf("a"), whitelist = setOf("b"))

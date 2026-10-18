@@ -19,7 +19,8 @@ class EncryptionMigrationConsentTest {
     @Before
     fun setup() {
         context = ApplicationProvider.getApplicationContext()
-        context.getSharedPreferences("notimind_encryption_migration_consent", 0)
+        context
+            .getSharedPreferences("notimind_encryption_migration_consent", 0)
             .edit()
             .clear()
             .commit()
@@ -27,7 +28,8 @@ class EncryptionMigrationConsentTest {
 
     @After
     fun teardown() {
-        context.getSharedPreferences("notimind_encryption_migration_consent", 0)
+        context
+            .getSharedPreferences("notimind_encryption_migration_consent", 0)
             .edit()
             .clear()
             .commit()

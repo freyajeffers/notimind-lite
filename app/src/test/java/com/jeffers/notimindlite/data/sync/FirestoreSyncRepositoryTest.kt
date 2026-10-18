@@ -33,7 +33,6 @@ import javax.crypto.SecretKey
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [33])
 class FirestoreSyncRepositoryTest {
-
     private lateinit var mockDb: AppDatabase
     private lateinit var mockDao: NotificationDao
     private lateinit var mockFirestore: FirebaseFirestore
@@ -118,6 +117,7 @@ class FirestoreSyncRepositoryTest {
     }
 
     @Test
+    @Suppress("LongMethod")
     fun `sync should resolve conflicts using Last Write Wins`() = runBlocking {
         val userId = "test_user"
         val key = "conflict_1"
@@ -176,11 +176,13 @@ class FirestoreSyncRepositoryTest {
 
         assertTrue(result.isSuccess)
         coVerify {
-            mockDao.insertNotifications(withArg {
-                assertEquals(1, it.size)
-                assertEquals("Remote Title", it[0].title)
-                assertEquals("Remote Content", it[0].content)
-            })
+            mockDao.insertNotifications(
+                withArg {
+                    assertEquals(1, it.size)
+                    assertEquals("Remote Title", it[0].title)
+                    assertEquals("Remote Content", it[0].content)
+                }
+            )
         }
     }
 

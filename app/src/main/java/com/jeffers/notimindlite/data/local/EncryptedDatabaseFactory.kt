@@ -2,8 +2,8 @@ package com.jeffers.notimindlite.data.local
 
 import android.content.Context
 import android.os.Build
-import com.jeffers.notimindlite.crypto.SqlCipherKeyManager
 import androidx.sqlite.db.SupportSQLiteOpenHelper
+import com.jeffers.notimindlite.crypto.SqlCipherKeyManager
 import net.zetetic.database.sqlcipher.SupportOpenHelperFactory
 
 /** Creates Room's SQLCipher open-helper factory for one database identity. */
@@ -15,8 +15,10 @@ object EncryptedDatabaseFactory {
         val preferences = PreferencesRepository(context.applicationContext)
         return when {
             Build.FINGERPRINT == "robolectric" || isRobolectricRuntime() || !isAndroidRuntime() -> null
+
             !preferences.securityManager.dbEncrypted.value ||
                 preferences.securityManager.dbEncryptionMode.value == DbEncryptionMode.NONE -> null
+
             else -> createFactory(context, databaseName, preferences)
         }
     }

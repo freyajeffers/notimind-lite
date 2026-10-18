@@ -7,7 +7,7 @@ import java.util.*
 
 /**
  * Prototype for an 'Intelligent Suggestion' engine.
- * Predicts which dismissed notifications the user may need based on 
+ * Predicts which dismissed notifications the user may need based on
  * temporal patterns (time-of-day) and historical search behavior.
  */
 object IntelligentSuggestionEngine {
@@ -20,7 +20,7 @@ object IntelligentSuggestionEngine {
         val matchedNotificationIds: List<Long>
     )
 
-    // Mocked history for prototype purposes. 
+    // Mocked history for prototype purposes.
     // In production, this would be persisted in a 'search_history' SQLite table.
     private val searchHistory = mutableListOf<SearchEvent>()
 
@@ -33,7 +33,7 @@ object IntelligentSuggestionEngine {
 
     /**
      * Predicts the most relevant dismissed notifications for the current context.
-     * 
+     *
      * @param dismissedNotifications The set of all dismissed notifications to consider.
      * @return A list of suggested notifications ranked by predicted relevance.
      */
@@ -44,15 +44,19 @@ object IntelligentSuggestionEngine {
 
         val currentHour = Calendar.getInstance().get(Calendar.HOUR_OF_DAY)
         val timeWindow = TIME_WINDOW_HOURS
-        
+
         // 1. Identify queries typically used around this time of day
-        val temporalQueries = searchHistory.filter { event ->
-            val eventHour = Calendar.getInstance().apply { timeInMillis = event.timestamp }.get(Calendar.HOUR_OF_DAY)
-            Math.abs(eventHour - currentHour) <= timeWindow
-        }.groupBy { it.query }
-         .mapValues { it.value.size }
-         .toList()
-         .sortedByDescending { it.second }
+        val temporalQueries = searchHistory
+            .filter { event ->
+                val eventHour = Calendar
+                    .getInstance()
+                    .apply { timeInMillis = event.timestamp }
+                    .get(Calendar.HOUR_OF_DAY)
+                Math.abs(eventHour - currentHour) <= timeWindow
+            }.groupBy { it.query }
+            .mapValues { it.value.size }
+            .toList()
+            .sortedByDescending { it.second }
 
         if (temporalQueries.isEmpty()) {
             // Fallback: Suggest based on overall most frequent search patterns regardless of time
@@ -61,10 +65,10 @@ object IntelligentSuggestionEngine {
 
         // 2. Score notifications based on temporal query matches
         val scores = mutableMapOf<Long, Double>()
-        
+
         temporalQueries.forEachIndexed { index, (query, frequency) ->
             val weight = (1.0 / (index + 1)) * frequency
-            
+
             // Find notifications that match this query (simplified keyword match for prototype)
             dismissedNotifications.forEach { entity ->
                 if (
@@ -84,7 +88,8 @@ object IntelligentSuggestionEngine {
     }
 
     private fun suggestByGlobalPatterns(notifications: List<NotificationEntity>): List<NotificationEntity> {
-        val globalQueries = searchHistory.groupBy { it.query }
+        val globalQueries = searchHistory
+            .groupBy { it.query }
             .mapValues { it.value.size }
             .toList()
             .sortedByDescending { it.second }
@@ -101,7 +106,7 @@ object IntelligentSuggestionEngine {
                 }
             }
         }
-        
+
         return notifications
             .filter { scores.containsKey(it.id) }
             .sortedByDescending { scores[it.id] }

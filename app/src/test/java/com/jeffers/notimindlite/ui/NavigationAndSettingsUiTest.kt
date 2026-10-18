@@ -24,7 +24,6 @@ import kotlin.system.measureNanoTime
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [33])
 class NavigationAndSettingsUiTest {
-
     private lateinit var db: AppDatabase
     private lateinit var dao: NotificationDao
     private lateinit var context: Context
@@ -32,7 +31,8 @@ class NavigationAndSettingsUiTest {
     @Before
     fun setup() {
         context = ApplicationProvider.getApplicationContext()
-        db = Room.inMemoryDatabaseBuilder(context, AppDatabase::class.java)
+        db = Room
+            .inMemoryDatabaseBuilder(context, AppDatabase::class.java)
             .allowMainThreadQueries()
             .build()
         dao = db.notificationDao()

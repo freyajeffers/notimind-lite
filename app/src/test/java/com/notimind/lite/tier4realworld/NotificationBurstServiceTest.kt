@@ -6,7 +6,6 @@ import android.service.notification.StatusBarNotification
 import com.jeffers.notimindlite.data.local.NotificationEntity
 import com.jeffers.notimindlite.service.NotificationLoggerService
 import com.notimind.lite.base.BaseRobolectricTest
-
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
@@ -18,7 +17,6 @@ import org.robolectric.RobolectricTestRunner
 
 @RunWith(RobolectricTestRunner::class)
 class NotificationBurstServiceTest : BaseRobolectricTest() {
-
     @Before
     override fun setup() {
         super.setup()

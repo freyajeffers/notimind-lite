@@ -1,12 +1,11 @@
 package com.jeffers.notimindlite.sanitization
 
-import org.junit.Test
-import org.junit.Assert.assertNull
 import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
+import org.junit.Test
 
 class SanitizationPipelineTest {
-
     @Test
     fun `drop when package blacklisted`() {
         val mgr = PackageFilterManager(blacklist = setOf("com.example.bad"))

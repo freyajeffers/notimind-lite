@@ -5,10 +5,14 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 
-class ExperimentalPreferencesManager(context: Context, private val profileManager: ProfilePreferencesManager) {
+class ExperimentalPreferencesManager(
+    context: Context,
+    private val profileManager: ProfilePreferencesManager
+) {
     private val appContext = context.applicationContext
     private val preferences
-        get() = appContext.createDeviceProtectedStorageContext()
+        get() = appContext
+            .createDeviceProtectedStorageContext()
             .getSharedPreferences(profileManager.activePreferencesName, Context.MODE_PRIVATE)
 
     private val _featureFlagsUrl = MutableStateFlow(preferences.getString(KEY_FEATURE_FLAGS_URL, "") ?: "")

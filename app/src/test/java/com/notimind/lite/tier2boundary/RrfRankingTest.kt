@@ -7,19 +7,16 @@ import org.junit.Assert.assertEquals
 import org.junit.Test
 
 class RrfRankingTest {
-
-    private fun createEntity(id: Long, text: String = "Test"): NotificationEntity {
-        return NotificationEntity(
-            id = id,
-            key = "key_$id",
-            packageName = "com.test.app",
-            appName = "TestApp",
-            title = "Title $id",
-            content = text,
-            postTime = System.currentTimeMillis(),
-            category = "General"
-        )
-    }
+    private fun createEntity(id: Long, text: String = "Test"): NotificationEntity = NotificationEntity(
+        id = id,
+        key = "key_$id",
+        packageName = "com.test.app",
+        appName = "TestApp",
+        title = "Title $id",
+        content = text,
+        postTime = System.currentTimeMillis(),
+        category = "General"
+    )
 
     @Test
     fun `merge - empty lists return empty result`() {
@@ -31,10 +28,10 @@ class RrfRankingTest {
     fun `merge - single source only results in identity ranking`() {
         val e1 = createEntity(1)
         val e2 = createEntity(2)
-        
+
         val ftsResults = listOf(e1, e2)
         val results = ReciprocalRankFusion.merge(ftsResults, emptyList())
-        
+
         assertEquals(2, results.size)
         assertEquals(1L, results[0].notification.id)
         assertEquals(2L, results[1].notification.id)

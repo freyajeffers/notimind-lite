@@ -18,7 +18,6 @@ import org.robolectric.shadows.ShadowNotificationManager
 import kotlin.system.measureTimeMillis
 
 class HighLoadBurstLifecycleTest : BaseRobolectricTest() {
-
     @Test
     fun tc_T4_002_stressTenThousandEventsStabilityAndDatabaseSla() = runTest {
         val count = 10_000
@@ -40,7 +39,6 @@ class HighLoadBurstLifecycleTest : BaseRobolectricTest() {
         )
 
         // Performance logging check
-        
     }
 
     @Test
@@ -51,13 +49,15 @@ class HighLoadBurstLifecycleTest : BaseRobolectricTest() {
         // Insert 50 active notifications
         for (i in 1..50) {
             dao.insertNotification(
-                createDummyEntity(DummyEntityParams(
-                    key = "burst_reboot_k_$i",
-                    appName = "App $i",
-                    title = "Burst Title $i",
-                    content = "Burst Content $i",
-                    isDismissed = i > 25 // 25 active, 25 dismissed
-                 ))
+                createDummyEntity(
+                    DummyEntityParams(
+                        key = "burst_reboot_k_$i",
+                        appName = "App $i",
+                        title = "Burst Title $i",
+                        content = "Burst Content $i",
+                        isDismissed = i > 25 // 25 active, 25 dismissed
+                    )
+                )
             )
         }
 
@@ -73,6 +73,7 @@ class HighLoadBurstLifecycleTest : BaseRobolectricTest() {
         val posted = shadowNm.allNotifications
         assertTrue("BootReceiver must restore active notifications upon sudden reboot", posted.isNotEmpty())
     }
+
     private fun populateHighLoadDatabase(count: Int) {
         measureTimeMillis {
             database.runInTransaction {
@@ -124,5 +125,4 @@ class HighLoadBurstLifecycleTest : BaseRobolectricTest() {
             }
         }
     }
-
 }

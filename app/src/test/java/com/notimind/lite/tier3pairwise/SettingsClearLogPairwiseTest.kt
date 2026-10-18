@@ -9,7 +9,6 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class SettingsClearLogPairwiseTest : BaseRobolectricTest() {
-
     @Test
     fun tc_T3_004_settingsClearLogRoomDbStateSynchronization() = runTest {
         // Populate DB with 5 entities

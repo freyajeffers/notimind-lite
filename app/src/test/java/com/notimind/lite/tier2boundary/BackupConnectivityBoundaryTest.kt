@@ -18,7 +18,6 @@ import javax.crypto.spec.SecretKeySpec
 @RunWith(RobolectricTestRunner::class)
 @OptIn(ExperimentalCoroutinesApi::class)
 class BackupConnectivityBoundaryTest : BaseRobolectricTest() {
-
     private val testKey = SecretKeySpec("1234567890123456".toByteArray(), "AES")
 
     @After

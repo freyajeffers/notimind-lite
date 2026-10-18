@@ -14,7 +14,8 @@ object IntelligentSuggestionEngine {
     )
 
     fun recordSearch(query: String, ids: List<Long>) =
-        com.jeffers.notimindlite.domain.suggestion.IntelligentSuggestionEngine.recordSearch(query, ids)
+        com.jeffers.notimindlite.domain.suggestion.IntelligentSuggestionEngine
+            .recordSearch(query, ids)
 
     suspend fun predictSuggestions(
         dismissedNotifications: List<NotificationEntity>

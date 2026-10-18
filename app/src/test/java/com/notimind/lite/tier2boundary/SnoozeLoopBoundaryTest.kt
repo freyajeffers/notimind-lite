@@ -8,12 +8,11 @@ import org.junit.Assert.assertNotNull
 import org.junit.Test
 
 class SnoozeLoopBoundaryTest : BaseRobolectricTest() {
-
     @Test
     fun `scheduleSnooze - minimal delay handles correctly`() {
         val notifId = "test_1"
         val delay = 1L // 1ms
-        
+
         SnoozeReminderScheduler.scheduleSnooze(context, notifId, "Title", "Content", delay)
     }
 
@@ -21,7 +20,7 @@ class SnoozeLoopBoundaryTest : BaseRobolectricTest() {
     fun `scheduleSnooze - extreme delay handles correctly`() {
         val notifId = "test_long"
         val delay = 31536000000L // 1 year in ms
-        
+
         SnoozeReminderScheduler.scheduleSnooze(context, notifId, "Title", "Content", delay)
     }
 

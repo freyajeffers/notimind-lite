@@ -30,18 +30,18 @@ import androidx.core.content.ContextCompat
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
-import com.jeffers.notimindlite.BuildConfig
 import androidx.lifecycle.lifecycleScope
+import com.jeffers.notimindlite.BuildConfig
 import com.jeffers.notimindlite.R
 import com.jeffers.notimindlite.data.local.AppDatabase
-import com.jeffers.notimindlite.data.local.PreferencesRepository
 import com.jeffers.notimindlite.data.local.DbEncryptionMode
+import com.jeffers.notimindlite.data.local.PreferencesRepository
 import com.jeffers.notimindlite.data.sync.FirebaseSettingsSyncRepository
+import com.jeffers.notimindlite.domain.clustering.DynamicClusterManager
 import com.jeffers.notimindlite.migration.EncryptionMigrationConsent
 import com.jeffers.notimindlite.migration.MigrationRunner
 import com.jeffers.notimindlite.service.NotificationLoggerService
 import com.jeffers.notimindlite.ui.screens.checkNotificationPermission
-import com.jeffers.notimindlite.domain.clustering.DynamicClusterManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -49,9 +49,9 @@ import kotlinx.coroutines.withContext
 private const val EXPORT_CACHE_MAX_AGE_MILLIS = 3600_000L
 
 class MainActivity : ComponentActivity() {
-
     private lateinit var authManager: com.jeffers.notimindlite.data.auth.AuthManager
 
+    @android.annotation.SuppressLint("InvalidFragmentVersionForActivityResult")
     private val requestPermissionLauncher =
         registerForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted ->
             if (isGranted) {
@@ -95,7 +95,8 @@ class MainActivity : ComponentActivity() {
 
         val database = AppDatabase.getDatabase(applicationContext)
         val dao = database.notificationDao()
-        authManager = com.jeffers.notimindlite.data.auth.AuthManager(applicationContext)
+        authManager = com.jeffers.notimindlite.data.auth
+            .AuthManager(applicationContext)
         lifecycleScope.launch {
             authManager.handleIntent(intent)
             restoreSettingsAfterLogin(preferencesRepository)
@@ -218,15 +219,18 @@ class MainActivity : ComponentActivity() {
         val session = authManager.session.value
         if (!session.isAuthenticated || session.uid == null) return
         val result = if (preferences.syncManager.useSupabaseSync.value) {
-            com.jeffers.notimindlite.data.sync.SupabaseSettingsSyncRepository(
-                com.jeffers.notimindlite.data.auth.SupabaseAuthManager(applicationContext)
-            ).restoreOrUpload(preferences, session.uid)
+            com.jeffers.notimindlite.data.sync
+                .SupabaseSettingsSyncRepository(
+                    com.jeffers.notimindlite.data.auth
+                        .SupabaseAuthManager(applicationContext)
+                ).restoreOrUpload(preferences, session.uid)
         } else {
             FirebaseSettingsSyncRepository()
                 .restoreOrUpload(preferences, session.uid)
         }
         result.exceptionOrNull()?.let { android.util.Log.w("MainActivity", "Settings restore deferred", it) }
     }
+
     private fun checkPostNotificationsPermission() {
         if (BuildConfig.REQUIRES_RUNTIME_POST_NOTIFICATIONS) {
             if (ContextCompat.checkSelfPermission(

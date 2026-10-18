@@ -3,17 +3,16 @@ package com.notimind.lite.base
 import android.content.Context
 import androidx.test.core.app.ApplicationProvider
 import com.google.firebase.FirebaseApp
+import com.jeffers.notimindlite.util.AppInitializer
 import org.junit.Assert.assertEquals
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
-import com.jeffers.notimindlite.util.AppInitializer
 
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [33])
 class AppInitializerTest {
-
     @Test
     fun `initialize should be idempotent`() {
         val context = ApplicationProvider.getApplicationContext<Context>()

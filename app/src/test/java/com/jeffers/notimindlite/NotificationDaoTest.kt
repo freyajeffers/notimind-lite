@@ -21,14 +21,14 @@ import org.robolectric.annotation.Config
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [33])
 class NotificationDaoTest {
-
     private lateinit var database: AppDatabase
     private lateinit var dao: NotificationDao
 
     @Before
     fun setup() {
         val context = ApplicationProvider.getApplicationContext<Context>()
-        database = Room.inMemoryDatabaseBuilder(context, AppDatabase::class.java)
+        database = Room
+            .inMemoryDatabaseBuilder(context, AppDatabase::class.java)
             .allowMainThreadQueries()
             .build()
         database.openHelper.writableDatabase.execSQL("PRAGMA foreign_keys = OFF;")
@@ -279,4 +279,3 @@ class NotificationDaoTest {
         }
     }
 }
-

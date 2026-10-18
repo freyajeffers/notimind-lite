@@ -37,7 +37,8 @@ class NotificationSanitizer(
         val postTime = sbn.postTime
         val now = System.currentTimeMillis()
 
-        val san = com.jeffers.notimindlite.sanitization.SanitizationPipeline(context)
+        val san = com.jeffers.notimindlite.sanitization
+            .SanitizationPipeline(context)
             .sanitize(sbn.packageName, title, content, subText, bigText)
 
         val finalTitle = san?.let {

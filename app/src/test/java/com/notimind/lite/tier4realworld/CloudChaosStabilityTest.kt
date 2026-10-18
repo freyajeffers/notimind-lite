@@ -33,7 +33,6 @@ import javax.crypto.spec.SecretKeySpec
 @RunWith(RobolectricTestRunner::class)
 @OptIn(ExperimentalCoroutinesApi::class)
 class CloudChaosStabilityTest : BaseRobolectricTest() {
-
     private lateinit var mockDb: AppDatabase
     private lateinit var mockDao: NotificationDao
     private lateinit var mockFirestore: FirebaseFirestore

@@ -21,13 +21,13 @@ object DatabaseMigrator {
     suspend fun vectorizeExistingNotifications(context: Context) = withContext(Dispatchers.IO) {
         val db = AppDatabase.getDatabase(context)
         val dao = db.notificationDao()
-        
+
         try {
             val needingVectorization = dao.getNotificationsNeedingVectorization()
             if (needingVectorization.isEmpty()) return@withContext
 
             Log.i(TAG, "Vectorizing ${needingVectorization.size} notifications...")
-            
+
             val preferences = PreferencesRepository(context)
             val rateMs = preferences.getEmbeddingRateMs()
             val embeddingPairs = needingVectorization.map { entity ->
@@ -45,7 +45,9 @@ object DatabaseMigrator {
                 // Room can't bind a FloatArray directly as a query parameter;
                 // convert via the same TypeConverter the entity column uses
                 // so writes and reads round-trip through the same byte order.
-                val bytes = com.jeffers.notimindlite.data.local.Converters().fromFloatArray(embedding)
+                val bytes = com.jeffers.notimindlite.data.local
+                    .Converters()
+                    .fromFloatArray(embedding)
                     ?: error("FloatArray->ByteArray conversion returned null for non-null input")
                 Pair(entity.id, bytes)
             }
@@ -148,4 +150,3 @@ object DatabaseMigrator {
         }
     }
 }
-

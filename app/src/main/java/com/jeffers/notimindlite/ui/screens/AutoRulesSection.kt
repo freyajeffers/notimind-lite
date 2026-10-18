@@ -5,19 +5,19 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Button
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.unit.dp
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.ui.text.input.KeyboardType
-import com.jeffers.notimindlite.data.local.AutoExecuteRule
-import com.jeffers.notimindlite.data.local.PreferencesRepository
+import androidx.compose.ui.unit.dp
 import com.jeffers.notimindlite.BuildConfig
 import com.jeffers.notimindlite.R
+import com.jeffers.notimindlite.data.local.AutoExecuteRule
+import com.jeffers.notimindlite.data.local.PreferencesRepository
 
 @Composable
 fun autoRulesSection(preferencesRepository: PreferencesRepository, config: AutoRulesConfig) {
@@ -44,7 +44,9 @@ fun autoRulesSection(preferencesRepository: PreferencesRepository, config: AutoR
                     actionIndex = config.ruleAction.toIntOrNull()?.coerceAtLeast(0) ?: 0
                 )
             )
-            config.onRulePackageChange(""); config.onRuleTitleChange(""); config.onRuleActionChange("0")
+            config.onRulePackageChange("")
+            config.onRuleTitleChange("")
+            config.onRuleActionChange("0")
         }, enabled = !BuildConfig.DEBUG) { Text(stringResource(R.string.pref_auto_rule_add)) }
 
         config.autoExecuteRules.forEach { rule ->

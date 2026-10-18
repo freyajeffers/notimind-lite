@@ -17,8 +17,16 @@ class PreferencesRepositoryProfilesTest {
     private val context = ApplicationProvider.getApplicationContext<android.content.Context>()
 
     @Before fun clear() {
-        context.getSharedPreferences("notimind_profiles", 0).edit().clear().commit()
-        context.getSharedPreferences("notimind_lite_prefs_default", 0).edit().clear().commit()
+        context
+            .getSharedPreferences("notimind_profiles", 0)
+            .edit()
+            .clear()
+            .commit()
+        context
+            .getSharedPreferences("notimind_lite_prefs_default", 0)
+            .edit()
+            .clear()
+            .commit()
     }
 
     @Test fun profileSettingsAndExportAreIsolated() {

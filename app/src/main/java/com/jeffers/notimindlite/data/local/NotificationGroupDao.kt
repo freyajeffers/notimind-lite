@@ -35,5 +35,4 @@ abstract class NotificationGroupDao {
 
     @Query("SELECT * FROM notification_groups WHERE isDismissed = 1 ORDER BY isPinned DESC, latestPostTime DESC")
     abstract fun getDismissedGroupsFlow(): Flow<List<NotificationGroupEntity>>
-
 }

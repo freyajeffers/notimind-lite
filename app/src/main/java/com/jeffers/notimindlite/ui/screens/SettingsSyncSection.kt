@@ -25,17 +25,17 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.dp
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
-import com.jeffers.notimindlite.data.local.PreferencesRepository
-import com.jeffers.notimindlite.data.sync.SyncWorker
-import com.jeffers.notimindlite.BuildConfig
-import com.jeffers.notimindlite.R
+import androidx.compose.ui.unit.dp
 import androidx.work.WorkInfo
 import androidx.work.WorkManager
+import com.jeffers.notimindlite.BuildConfig
+import com.jeffers.notimindlite.R
+import com.jeffers.notimindlite.data.local.PreferencesRepository
+import com.jeffers.notimindlite.data.sync.SyncWorker
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
@@ -156,7 +156,9 @@ private fun syncNowRow(lastSyncTs: Long, syncRunning: Boolean, onClick: () -> Un
         val lastSyncText = if (lastSyncTs == 0L) {
             stringResource(R.string.pref_sync_never)
         } else {
-            java.text.DateFormat.getDateTimeInstance().format(java.util.Date(lastSyncTs))
+            java.text.DateFormat
+                .getDateTimeInstance()
+                .format(java.util.Date(lastSyncTs))
         }
         Text(
             text = stringResource(R.string.pref_sync_last, lastSyncText),
@@ -171,4 +173,3 @@ private fun syncNowRow(lastSyncTs: Long, syncRunning: Boolean, onClick: () -> Un
         }
     }
 }
-

@@ -17,16 +17,14 @@ class RetentionCleanupWorker(
         const val MILLIS_PER_SECOND = 1_000L
     }
 
-    override suspend fun doWork(): Result {
-        return runCatching {
-            val preferences = PreferencesRepository(applicationContext)
-            val days = preferences.retentionDays.value
-            if (days > 0 && days < PreferencesRepository.RETAIN_ALL_DAYS) {
-                val cutoff = System.currentTimeMillis() - days.toLong() * HOURS_PER_DAY *
-                    MINUTES_PER_HOUR * SECONDS_PER_MINUTE * MILLIS_PER_SECOND
-                AppDatabase.getDatabase(applicationContext).notificationDao().pruneOldLogs(cutoff)
-            }
-            Result.success()
-        }.getOrElse { Result.retry() }
-    }
+    override suspend fun doWork(): Result = runCatching {
+        val preferences = PreferencesRepository(applicationContext)
+        val days = preferences.retentionDays.value
+        if (days > 0 && days < PreferencesRepository.RETAIN_ALL_DAYS) {
+            val cutoff = System.currentTimeMillis() - days.toLong() * HOURS_PER_DAY *
+                MINUTES_PER_HOUR * SECONDS_PER_MINUTE * MILLIS_PER_SECOND
+            AppDatabase.getDatabase(applicationContext).notificationDao().pruneOldLogs(cutoff)
+        }
+        Result.success()
+    }.getOrElse { Result.retry() }
 }

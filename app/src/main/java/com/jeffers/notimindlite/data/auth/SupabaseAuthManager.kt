@@ -16,13 +16,16 @@ import java.security.MessageDigest
 import java.security.SecureRandom
 
 /** Temporary PKCE Google authentication through Supabase Auth. */
-class SupabaseAuthManager(private val context: Context) {
+class SupabaseAuthManager(
+    private val context: Context
+) {
     private companion object {
         const val PKCE_VERIFIER_BYTES = 32
         const val HTTP_SUCCESS_MIN = 200
         const val HTTP_SUCCESS_MAX = 299
         const val JWT_PAYLOAD_INDEX = 1
     }
+
     private val prefs = context.getSharedPreferences("supabase_auth", Context.MODE_PRIVATE)
     private val sessionStore = SupabaseSessionStore(context)
     private var verifier: String?
@@ -31,7 +34,8 @@ class SupabaseAuthManager(private val context: Context) {
 
     fun accessToken(): String? = sessionStore.readAccessToken()
 
-    fun currentSession(): UserSession = sessionStore.readAccessToken()
+    fun currentSession(): UserSession = sessionStore
+        .readAccessToken()
         ?.let { decodeUser(it) }
         ?.copy(isAuthenticated = true)
         ?: UserSession()
@@ -95,7 +99,9 @@ class SupabaseAuthManager(private val context: Context) {
     suspend fun refreshSession(): Result<String> =
         sessionStore.refreshSessionIfNeeded(BuildConfig.SUPABASE_URL, BuildConfig.SUPABASE_ANON_KEY)
 
-    fun signOut() { prefs.edit().clear().apply() }
+    fun signOut() {
+        prefs.edit().clear().apply()
+    }
 
     private fun decodeUser(token: String): UserSession {
         val parts = token.split('.')
@@ -108,7 +114,9 @@ class SupabaseAuthManager(private val context: Context) {
         return UserSession(
             uid = claims.optString("sub").takeIf { it.isNotBlank() },
             email = claims.optString("email").takeIf { it.isNotBlank() },
-            displayName = claims.optJSONObject("user_metadata")?.optString("full_name")
+            displayName = claims
+                .optJSONObject("user_metadata")
+                ?.optString("full_name")
                 ?.takeIf { it.isNotBlank() }
         )
     }

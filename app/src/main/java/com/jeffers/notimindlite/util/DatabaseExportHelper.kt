@@ -15,7 +15,6 @@ import java.util.Date
 import java.util.Locale
 
 object DatabaseExportHelper {
-
     fun exportToJsonString(notifications: List<NotificationEntity>, context: Context? = null): String {
         val jsonArray = JSONArray()
         for (notif in notifications.map { applyPrivacy(it, context) }) {
@@ -163,6 +162,7 @@ object DatabaseExportHelper {
 
     fun applyPrivacy(notification: NotificationEntity, context: Context?): NotificationEntity {
         val preferences = context?.let { PreferencesRepository(it.applicationContext) } ?: return notification
+
         fun redact(value: String): String = PiiRedactionEngine.redact(value) ?: "[REDACTED]"
         val title = if (preferences.exportManager.anonymize.value || preferences.anonymizeTitles.value) {
             "[REDACTED-TITLE]"
@@ -181,20 +181,19 @@ object DatabaseExportHelper {
         )
     }
 
-    fun getExportFileUri(context: Context, file: File): Uri {
-        return FileProvider.getUriForFile(
-            context,
-            "${context.packageName}.fileprovider",
-            file
-        )
-    }
+    fun getExportFileUri(context: Context, file: File): Uri = FileProvider.getUriForFile(
+        context,
+        "${context.packageName}.fileprovider",
+        file
+    )
 
     fun cleanupExportFiles(context: Context, maxAgeMillis: Long = 3600_000L) {
         try {
             val cacheDir = File(context.cacheDir, "exports")
             if (!cacheDir.exists()) return
             val now = System.currentTimeMillis()
-            cacheDir.listFiles()
+            cacheDir
+                .listFiles()
                 ?.filter { now - it.lastModified() > maxAgeMillis }
                 ?.forEach(File::delete)
         } catch (e: SecurityException) {

@@ -1,8 +1,8 @@
 package com.jeffers.notimindlite.util
 
-import java.util.Base64
 import java.nio.ByteBuffer
 import java.security.SecureRandom
+import java.util.Base64
 import javax.crypto.Cipher
 import javax.crypto.SecretKey
 import javax.crypto.spec.GCMParameterSpec
@@ -24,16 +24,17 @@ object SyncEncryptionHelper {
         val cipher = Cipher.getInstance(ALGORITHM)
         val iv = ByteArray(IV_LENGTH).apply { SecureRandom().nextBytes(this) }
         val spec = GCMParameterSpec(TAG_LENGTH, iv)
-        
+
         cipher.init(Cipher.ENCRYPT_MODE, secretKey, spec)
         val ciphertext = cipher.doFinal(plaintext.toByteArray(Charsets.UTF_8))
-        
+
         // Combine IV and ciphertext into one byte array
-        val combined = ByteBuffer.allocate(iv.size + ciphertext.size)
+        val combined = ByteBuffer
+            .allocate(iv.size + ciphertext.size)
             .put(iv)
             .put(ciphertext)
             .array()
-            
+
         return Base64.getEncoder().encodeToString(combined)
     }
 
@@ -43,16 +44,16 @@ object SyncEncryptionHelper {
     fun decrypt(encryptedBase64: String, secretKey: SecretKey): String {
         val combined = Base64.getDecoder().decode(encryptedBase64)
         require(combined.size >= IV_LENGTH) { "Invalid encrypted data: too short" }
-        
+
         val iv = combined.sliceArray(0 until IV_LENGTH)
         val ciphertext = combined.sliceArray(IV_LENGTH until combined.size)
-        
+
         val cipher = Cipher.getInstance(ALGORITHM)
         val spec = GCMParameterSpec(TAG_LENGTH, iv)
-        
+
         cipher.init(Cipher.DECRYPT_MODE, secretKey, spec)
         val plaintext = cipher.doFinal(ciphertext)
-        
+
         return String(plaintext, Charsets.UTF_8)
     }
 }

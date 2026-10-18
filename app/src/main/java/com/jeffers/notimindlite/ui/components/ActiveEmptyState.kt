@@ -27,7 +27,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 
-/**
+/*
  * Friendly empty-state Composables for the Active Notifications screen.
  *
  * Three states are represented:

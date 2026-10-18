@@ -33,7 +33,6 @@ import javax.crypto.spec.SecretKeySpec
 @RunWith(RobolectricTestRunner::class)
 @OptIn(ExperimentalCoroutinesApi::class)
 class SyncIntegrationPairwiseTest : BaseRobolectricTest() {
-
     private lateinit var mockDb: AppDatabase
     private lateinit var mockDao: NotificationDao
     private lateinit var mockFirestore: FirebaseFirestore
@@ -98,6 +97,7 @@ class SyncIntegrationPairwiseTest : BaseRobolectricTest() {
     }
 
     @Test
+    @Suppress("LongMethod")
     fun sync_should_update_local_record_when_remote_version_is_newer() = runTest {
         val key = "conflict_remote_newer"
         val localNotif = NotificationEntity(
@@ -154,11 +154,13 @@ class SyncIntegrationPairwiseTest : BaseRobolectricTest() {
 
         assertTrue("Sync should succeed. Result: $result", result.isSuccess)
         coVerify {
-            mockDao.insertNotifications(withArg {
-                assertEquals(1, it.size)
-                assertEquals("Remote Title", it[0].title)
-                assertEquals("Remote Content", it[0].content)
-            })
+            mockDao.insertNotifications(
+                withArg {
+                    assertEquals(1, it.size)
+                    assertEquals("Remote Title", it[0].title)
+                    assertEquals("Remote Content", it[0].content)
+                }
+            )
         }
     }
 

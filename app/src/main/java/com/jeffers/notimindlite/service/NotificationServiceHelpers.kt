@@ -12,7 +12,8 @@ internal fun NotificationLoggerService.isCaptureEnabled(): Boolean =
     PreferencesRepository(applicationContext).captureManager.enabled.value
 
 internal fun parseNotificationPackageList(raw: String): Set<String> =
-    raw.split(',', '\n', ' ', '\t')
+    raw
+        .split(',', '\n', ' ', '\t')
         .map { it.trim() }
         .filter { it.isNotEmpty() }
         .toSet()

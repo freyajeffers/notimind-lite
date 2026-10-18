@@ -19,7 +19,6 @@ interface NotificationReadStateQueries : NotificationReadBatchQueries {
         if (autoDeleteOnRead) deleteByKey(key) else markAsReadInternal(key)
     }
 
-
     @Query("UPDATE notifications SET isRead = 1 WHERE isRead = 0")
     suspend fun markAllAsReadInternal()
 

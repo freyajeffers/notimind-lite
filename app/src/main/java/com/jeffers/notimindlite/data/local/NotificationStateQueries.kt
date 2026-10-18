@@ -28,13 +28,15 @@ interface NotificationStateQueries {
     @Query(LOST_NOTIFICATIONS_QUERY)
     fun getLostNotificationsFlow(): Flow<List<NotificationEntity>>
 
-    @Query("""
+    @Query(
+        """
         SELECT * FROM notifications
         WHERE (packageName IN ('android', 'com.android.systemui', 'com.google.android.googlequicksearchbox')
            OR category IN ('sys', 'service', 'status', 'progress')
            OR priority < 0)
         ORDER BY postTime DESC
-    """)
+    """
+    )
     fun getFilteredNotificationsFlow(): Flow<List<NotificationEntity>>
 
     @Query("SELECT * FROM notifications WHERE isPinned = 1 ORDER BY postTime DESC")

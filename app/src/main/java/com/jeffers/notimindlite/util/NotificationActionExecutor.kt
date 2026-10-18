@@ -24,11 +24,15 @@ class NotificationActionExecutor(
         key: String,
         packageName: String
     ): Boolean = when (preferences.automationManager.longPressAction.value) {
-        "reply" -> NotificationLauncher.triggerAction(key, 0)
+        "reply" -> {
+            NotificationLauncher.triggerAction(key, 0)
+        }
+
         "dismiss" -> {
             NotificationLoggerService.dismissNotification(key)
             true
         }
+
         else -> {
             preferences // Keep the action decision tied to the same profile as the UI.
             NotificationLauncher.launchNotification(context, packageName, key)

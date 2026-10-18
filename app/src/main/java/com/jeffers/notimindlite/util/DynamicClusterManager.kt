@@ -10,17 +10,22 @@ typealias ClusterNode = com.jeffers.notimindlite.domain.clustering.ClusterNode
 
 object DynamicClusterManager {
     fun initialize(context: Context) =
-        com.jeffers.notimindlite.domain.clustering.DynamicClusterManager.initialize(context)
+        com.jeffers.notimindlite.domain.clustering.DynamicClusterManager
+            .initialize(context)
 
     fun getDynamicClusters(): Map<String, Set<String>> =
-        com.jeffers.notimindlite.domain.clustering.DynamicClusterManager.getDynamicClusters()
+        com.jeffers.notimindlite.domain.clustering.DynamicClusterManager
+            .getDynamicClusters()
 
     fun getHierarchicalClusters(): Map<String, ClusterNode> =
-        com.jeffers.notimindlite.domain.clustering.DynamicClusterManager.getHierarchicalClusters()
+        com.jeffers.notimindlite.domain.clustering.DynamicClusterManager
+            .getHierarchicalClusters()
 
     fun getSubClusters(domain: String): Map<String, ClusterNode>? =
-        com.jeffers.notimindlite.domain.clustering.DynamicClusterManager.getSubClusters(domain)
+        com.jeffers.notimindlite.domain.clustering.DynamicClusterManager
+            .getSubClusters(domain)
 
     fun findMatchingClusters(queryTokens: List<String>): Map<String, Set<ClusterNode>> =
-        com.jeffers.notimindlite.domain.clustering.DynamicClusterManager.findMatchingClusters(queryTokens)
+        com.jeffers.notimindlite.domain.clustering.DynamicClusterManager
+            .findMatchingClusters(queryTokens)
 }

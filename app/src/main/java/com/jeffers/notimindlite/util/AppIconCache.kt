@@ -6,9 +6,9 @@ import android.graphics.BitmapFactory
 import android.net.Uri
 import android.util.Log
 import android.util.LruCache
-import java.io.InputStream
 import java.io.FileNotFoundException
 import java.io.IOException
+import java.io.InputStream
 
 /**
  * AppIconCache provides memory-efficient caching of decoded app icons.
@@ -20,14 +20,12 @@ object AppIconCache {
     private const val KIBIBYTE = 1024
     private const val CACHE_MEMORY_FRACTION = 8
     private const val DEFAULT_TARGET_SIZE = 64
-    
+
     private val cacheSize = (Runtime.getRuntime().maxMemory() / KIBIBYTE).toInt() /
         CACHE_MEMORY_FRACTION
-    
+
     private val iconCache = object : LruCache<String, Bitmap>(cacheSize) {
-        override fun sizeOf(key: String, value: Bitmap): Int {
-            return value.byteCount / KIBIBYTE
-        }
+        override fun sizeOf(key: String, value: Bitmap): Int = value.byteCount / KIBIBYTE
     }
 
     fun getIcon(context: Context, uri: String?, targetSize: Int = DEFAULT_TARGET_SIZE): Bitmap? {
@@ -54,38 +52,36 @@ object AppIconCache {
         }
     }
 
-    private fun decodeSampledBitmapFromUri(context: Context, uriString: String, targetSize: Int): Bitmap? {
-        return try {
-            val uri = Uri.parse(uriString)
-            val options = BitmapFactory.Options().apply {
-                inJustDecodeBounds = true
-            }
-            
-            // First pass: get dimensions
-            context.contentResolver.openInputStream(uri)?.use { inputStream ->
-                BitmapFactory.decodeStream(inputStream, null, options)
-            }
-            
-            // Calculate sample size and decode actual bitmap
-            options.inSampleSize = calculateInSampleSize(options, targetSize, targetSize)
-            options.inJustDecodeBounds = false
-            
-            context.contentResolver.openInputStream(uri)?.use { inputStream ->
-                BitmapFactory.decodeStream(inputStream, null, options)
-            }
-        } catch (e: FileNotFoundException) {
-            Log.w(TAG, "Icon file not found: $uriString", e)
-            null
-        } catch (e: SecurityException) {
-            Log.e(TAG, "Security exception opening icon stream: $uriString", e)
-            null
-        } catch (e: IllegalArgumentException) {
-            Log.w(TAG, "Malformed uri for icon: $uriString", e)
-            null
-        } catch (e: IOException) {
-            Log.e(TAG, "I/O error decoding icon: $uriString", e)
-            null
+    private fun decodeSampledBitmapFromUri(context: Context, uriString: String, targetSize: Int): Bitmap? = try {
+        val uri = Uri.parse(uriString)
+        val options = BitmapFactory.Options().apply {
+            inJustDecodeBounds = true
         }
+
+        // First pass: get dimensions
+        context.contentResolver.openInputStream(uri)?.use { inputStream ->
+            BitmapFactory.decodeStream(inputStream, null, options)
+        }
+
+        // Calculate sample size and decode actual bitmap
+        options.inSampleSize = calculateInSampleSize(options, targetSize, targetSize)
+        options.inJustDecodeBounds = false
+
+        context.contentResolver.openInputStream(uri)?.use { inputStream ->
+            BitmapFactory.decodeStream(inputStream, null, options)
+        }
+    } catch (e: FileNotFoundException) {
+        Log.w(TAG, "Icon file not found: $uriString", e)
+        null
+    } catch (e: SecurityException) {
+        Log.e(TAG, "Security exception opening icon stream: $uriString", e)
+        null
+    } catch (e: IllegalArgumentException) {
+        Log.w(TAG, "Malformed uri for icon: $uriString", e)
+        null
+    } catch (e: IOException) {
+        Log.e(TAG, "I/O error decoding icon: $uriString", e)
+        null
     }
 
     private fun calculateInSampleSize(options: BitmapFactory.Options, reqWidth: Int, reqHeight: Int): Int {

@@ -25,7 +25,9 @@ class SupabaseSyncRepository(
                 onSuccess = { syncOnce() },
                 onFailure = { Result.failure(it) }
             )
-        } else first
+        } else {
+            first
+        }
     }
 
     private suspend fun syncOnce(): Result<Int> {
@@ -45,8 +47,8 @@ class SupabaseSyncRepository(
                 uploadRecords(token, toUpload)
             }
 
-        val imported = importRemoteIfNewer(remote)
-        Result.success(local.size + imported)
+            val imported = importRemoteIfNewer(remote)
+            Result.success(local.size + imported)
         } catch (e: java.io.IOException) {
             android.util.Log.e("SupabaseSync", "Notification sync failed (IO)", e)
             Result.failure(e)
@@ -55,6 +57,7 @@ class SupabaseSyncRepository(
             Result.failure(e)
         }
     }
+
     private fun fetchRemoteRecords(token: String): JSONArray {
         val path = "/rest/v1/notification_records?profile_id=eq.${encode(profileId)}" +
             "&select=notification_key,updated_at,payload"
@@ -65,6 +68,7 @@ class SupabaseSyncRepository(
         )
         return JSONArray(remoteBody)
     }
+
     private fun remoteUpdatedByKey(remote: JSONArray): Map<String, Long> {
         val updated = mutableMapOf<String, Long>()
         for (i in 0 until remote.length()) {
@@ -80,10 +84,11 @@ class SupabaseSyncRepository(
         remoteUpdated: Map<String, Long>
     ): JSONArray {
         val records = JSONArray()
-        local.filter { entity ->
-            entity.syncStatus.name != "PENDING_DELETE" &&
-                entity.lastUpdatedTime > (remoteUpdated[entity.key] ?: Long.MIN_VALUE)
-        }.forEach { entity -> records.put(record(userId, profileId, entity)) }
+        local
+            .filter { entity ->
+                entity.syncStatus.name != "PENDING_DELETE" &&
+                    entity.lastUpdatedTime > (remoteUpdated[entity.key] ?: Long.MIN_VALUE)
+            }.forEach { entity -> records.put(record(userId, profileId, entity)) }
         return records
     }
 
@@ -98,16 +103,17 @@ class SupabaseSyncRepository(
     }
 
     private suspend fun importRemoteIfNewer(remote: JSONArray): Int {
-        return (0 until remote.length()).mapNotNull { index ->
-            val payload = remote.getJSONObject(index).optJSONObject("payload") ?: return@mapNotNull null
-            val imported = entity(payload) ?: return@mapNotNull null
-            val existing = db.notificationDao().getNotificationByKey(imported.key)
-            if (existing == null || imported.lastUpdatedTime > existing.lastUpdatedTime) {
-                db.notificationDao().insert(imported)
-                imported
-            } else {
-                null
-            }
-        }.size
+        return (0 until remote.length())
+            .mapNotNull { index ->
+                val payload = remote.getJSONObject(index).optJSONObject("payload") ?: return@mapNotNull null
+                val imported = entity(payload) ?: return@mapNotNull null
+                val existing = db.notificationDao().getNotificationByKey(imported.key)
+                if (existing == null || imported.lastUpdatedTime > existing.lastUpdatedTime) {
+                    db.notificationDao().insert(imported)
+                    imported
+                } else {
+                    null
+                }
+            }.size
     }
 }

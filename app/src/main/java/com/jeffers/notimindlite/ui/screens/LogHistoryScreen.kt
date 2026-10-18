@@ -5,6 +5,7 @@ import androidx.compose.animation.core.spring
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -21,25 +22,21 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.OpenInNew
 import androidx.compose.material.icons.automirrored.filled.Sort
 import androidx.compose.material.icons.filled.Bookmark
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Download
-import androidx.compose.material.icons.automirrored.filled.OpenInNew
 import androidx.compose.material.icons.filled.FilterAltOff
 import androidx.compose.material.icons.filled.FilterList
 import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material.icons.filled.Search
-import com.jeffers.notimindlite.ui.components.NotificationGroupCard
-import com.jeffers.notimindlite.ui.components.UiNotificationGroup
-import com.jeffers.notimindlite.ui.components.groupNotifications
-import org.json.JSONArray
 import androidx.compose.material.icons.outlined.BookmarkBorder
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -70,8 +67,8 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.setValue
 import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -83,21 +80,22 @@ import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
-
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.text.style.TextOverflow
 import com.jeffers.notimindlite.R
-import androidx.compose.foundation.background
-import com.jeffers.notimindlite.data.local.NotificationDao
-import com.jeffers.notimindlite.data.local.NotificationEntity
-import com.jeffers.notimindlite.ui.dialogs.appPackageSelectorDialog
-import com.jeffers.notimindlite.ui.components.notificationDetailPanel
-import com.jeffers.notimindlite.domain.search.HybridSearchEngine
-import com.jeffers.notimindlite.util.NotificationLauncher
 import com.jeffers.notimindlite.data.auth.AuthManager
 import com.jeffers.notimindlite.data.local.AppDatabase
+import com.jeffers.notimindlite.data.local.NotificationDao
+import com.jeffers.notimindlite.data.local.NotificationEntity
+import com.jeffers.notimindlite.domain.search.HybridSearchEngine
+import com.jeffers.notimindlite.ui.components.NotificationGroupCard
+import com.jeffers.notimindlite.ui.components.UiNotificationGroup
+import com.jeffers.notimindlite.ui.components.groupNotifications
+import com.jeffers.notimindlite.ui.components.notificationDetailPanel
+import com.jeffers.notimindlite.ui.dialogs.appPackageSelectorDialog
 import com.jeffers.notimindlite.util.AppIconCache
+import com.jeffers.notimindlite.util.NotificationLauncher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
@@ -105,6 +103,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import org.json.JSONArray
 import java.time.Instant
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
@@ -119,8 +118,9 @@ private const val SEARCH_DEBOUNCE_MILLIS = 100L
 private const val MAX_RECENT_SEARCHES = 9
 private const val SEARCH_FIELD_CORNER_RADIUS = 12
 
-
-enum class SortMode(val label: String) {
+enum class SortMode(
+    val label: String
+) {
     DISMISSED("Time Dismissed"),
     RECEIVED("Time Received"),
     ALL("All Notifications"),
@@ -254,282 +254,290 @@ private fun notificationIconPrefetch(
 private val renderLogHistoryScreen:
     @Composable (NotificationDao, com.jeffers.notimindlite.data.local.PreferencesRepository) -> Unit =
     { dao, preferences ->
-    val context = LocalContext.current
-    val scope = rememberCoroutineScope()
-    val listState = rememberLazyListState()
+        val context = LocalContext.current
+        val scope = rememberCoroutineScope()
+        val listState = rememberLazyListState()
 
-    // F-K fix: persist user-meaningful state across process death / rotation.
-    // Transient UI state (showSortMenu etc.) stays on `remember` — only durable
-    // user input (sort/filter/search) survives.
-    // Initialize sortMode from persisted preference when available; keep UI-local default for direct interactions.
-    val prefSort by preferences.displayManager.sortOrder.collectAsState()
-    var sortMode by remember(prefSort) { mutableStateOf(sortModeFromPreference(prefSort)) }
-    LaunchedEffect(sortMode) {
-        preferences.displayManager.setSortOrder(sortModePreference(sortMode))
-    }
-    var selectedReasonFilter by rememberSaveable { mutableStateOf(preferences.sharedSearchManager.reason.value) }
-    var selectedPackages by remember { mutableStateOf(preferences.sharedSearchManager.packages.value) }
-
-    var showSortMenu by remember { mutableStateOf(false) }
-    var showFilterMenu by remember { mutableStateOf(false) }
-    var showPackagePicker by remember { mutableStateOf(false) }
-    var expandedCards by remember { mutableStateOf(setOf<String>()) }
-    var collapsedGroups by remember { mutableStateOf(setOf<String>()) }
-
-    val allNotifsDismissed by dao.getDismissedNotificationsSortedByDismissed().collectAsState(initial = emptyList())
-    val allNotifsReceived by dao.getDismissedNotificationsSortedByReceived().collectAsState(initial = emptyList())
-    val allNotifsEver by dao.getAllNotificationsSortedByDismissed().collectAsState(initial = emptyList())
-
-    val activeList = when (sortMode) {
-        SortMode.DISMISSED -> allNotifsDismissed
-        SortMode.RECEIVED -> allNotifsReceived
-        SortMode.ALL, SortMode.NEWEST, SortMode.OLDEST, SortMode.APP_NAME, SortMode.TITLE -> allNotifsEver
-    }
-    // F-K fix: persist search text across process death.
-    var searchQuery by rememberSaveable { mutableStateOf(preferences.sharedSearchManager.query.value) }
-    // debouncedSearchQuery is a derived value, not user input; do not save.
-    var debouncedSearchQuery by remember { mutableStateOf("") }
-    var isSearchVisible by rememberSaveable { mutableStateOf(false) }
-    var isSearchFocused by remember { mutableStateOf(false) }
-    var recentSearches by rememberSaveable { mutableStateOf(preferences.sharedSearchManager.recentSearches.value) }
-    val focusManager = LocalFocusManager.current
-    val keyboardController = LocalSoftwareKeyboardController.current
-
-    logHistorySearchLifecycle(
-        LogHistorySearchLifecycleConfig(
-            searchQuery = searchQuery,
-            selectedPackages = selectedPackages,
-            selectedReasonFilter = selectedReasonFilter,
-            isSearchFocused = isSearchFocused,
-            preferences = preferences,
-            setDebouncedSearchQuery = { debouncedSearchQuery = it },
-            setIsSearchVisible = { isSearchVisible = it }
-        )
-    )
-
-    val dateTimeFormatter = remember {
-        DateTimeFormatter.ofLocalizedDateTime(FormatStyle.MEDIUM).withZone(ZoneId.systemDefault())
-    }
-
-    val availableReasons = remember(activeList) {
-        activeList.mapNotNull { it.dismissReason }.distinct().sorted()
-    }
-
-    val availableApps = remember(activeList) {
-        activeList.map { it.packageName to it.appName }.distinctBy { it.first }
-    }
-
-    val filteredNotifs by remember(activeList, selectedReasonFilter, selectedPackages, debouncedSearchQuery, sortMode) {
-        derivedStateOf {
-            filterAndSortNotifications(
-                activeList,
-                selectedReasonFilter,
-                selectedPackages,
-                debouncedSearchQuery,
-                sortMode
-            )
+        // F-K fix: persist user-meaningful state across process death / rotation.
+        // Transient UI state (showSortMenu etc.) stays on `remember` — only durable
+        // user input (sort/filter/search) survives.
+        // Initialize sortMode from persisted preference when available; keep UI-local default for direct interactions.
+        val prefSort by preferences.displayManager.sortOrder.collectAsState()
+        var sortMode by remember(prefSort) { mutableStateOf(sortModeFromPreference(prefSort)) }
+        LaunchedEffect(sortMode) {
+            preferences.displayManager.setSortOrder(sortModePreference(sortMode))
         }
-    }
+        var selectedReasonFilter by rememberSaveable { mutableStateOf(preferences.sharedSearchManager.reason.value) }
+        var selectedPackages by remember { mutableStateOf(preferences.sharedSearchManager.packages.value) }
 
-    val notificationGroups = remember(filteredNotifs) {
-        groupNotifications(filteredNotifs)
-    }
+        var showSortMenu by remember { mutableStateOf(false) }
+        var showFilterMenu by remember { mutableStateOf(false) }
+        var showPackagePicker by remember { mutableStateOf(false) }
+        var expandedCards by remember { mutableStateOf(setOf<String>()) }
+        var collapsedGroups by remember { mutableStateOf(setOf<String>()) }
 
-    notificationIconPrefetch(context, listState, notificationGroups)
+        val allNotifsDismissed by dao.getDismissedNotificationsSortedByDismissed().collectAsState(initial = emptyList())
+        val allNotifsReceived by dao.getDismissedNotificationsSortedByReceived().collectAsState(initial = emptyList())
+        val allNotifsEver by dao.getAllNotificationsSortedByDismissed().collectAsState(initial = emptyList())
 
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = {},
-                actions = {
+        val activeList = when (sortMode) {
+            SortMode.DISMISSED -> allNotifsDismissed
+            SortMode.RECEIVED -> allNotifsReceived
+            SortMode.ALL, SortMode.NEWEST, SortMode.OLDEST, SortMode.APP_NAME, SortMode.TITLE -> allNotifsEver
+        }
+        // F-K fix: persist search text across process death.
+        var searchQuery by rememberSaveable { mutableStateOf(preferences.sharedSearchManager.query.value) }
+        // debouncedSearchQuery is a derived value, not user input; do not save.
+        var debouncedSearchQuery by remember { mutableStateOf("") }
+        var isSearchVisible by rememberSaveable { mutableStateOf(false) }
+        var isSearchFocused by remember { mutableStateOf(false) }
+        var recentSearches by rememberSaveable { mutableStateOf(preferences.sharedSearchManager.recentSearches.value) }
+        val focusManager = LocalFocusManager.current
+        val keyboardController = LocalSoftwareKeyboardController.current
+
+        logHistorySearchLifecycle(
+            LogHistorySearchLifecycleConfig(
+                searchQuery = searchQuery,
+                selectedPackages = selectedPackages,
+                selectedReasonFilter = selectedReasonFilter,
+                isSearchFocused = isSearchFocused,
+                preferences = preferences,
+                setDebouncedSearchQuery = { debouncedSearchQuery = it },
+                setIsSearchVisible = { isSearchVisible = it }
+            )
+        )
+
+        val dateTimeFormatter = remember {
+            DateTimeFormatter.ofLocalizedDateTime(FormatStyle.MEDIUM).withZone(ZoneId.systemDefault())
+        }
+
+        val availableReasons = remember(activeList) {
+            activeList.mapNotNull { it.dismissReason }.distinct().sorted()
+        }
+
+        val availableApps = remember(activeList) {
+            activeList.map { it.packageName to it.appName }.distinctBy { it.first }
+        }
+
+        val filteredNotifs by remember(
+            activeList,
+            selectedReasonFilter,
+            selectedPackages,
+            debouncedSearchQuery,
+            sortMode
+        ) {
+            derivedStateOf {
+                filterAndSortNotifications(
+                    activeList,
+                    selectedReasonFilter,
+                    selectedPackages,
+                    debouncedSearchQuery,
+                    sortMode
+                )
+            }
+        }
+
+        val notificationGroups = remember(filteredNotifs) {
+            groupNotifications(filteredNotifs)
+        }
+
+        notificationIconPrefetch(context, listState, notificationGroups)
+
+        Scaffold(
+            topBar = {
+                TopAppBar(
+                    title = {},
+                    actions = {
                         logHistoryTopActions(
-                        LogHistoryTopActions(
-                            selectedPackages = selectedPackages,
-                            selectedReasonFilter = selectedReasonFilter,
-                            searchQuery = searchQuery,
-                            isSearchFocused = isSearchFocused,
-                            isSearchVisible = isSearchVisible,
-                            focusManager = focusManager,
-                            keyboardController = keyboardController,
-                            availableReasons = availableReasons,
-                            availableApps = availableApps,
-                            showFilterMenu = showFilterMenu,
-                            setShowFilterMenu = { showFilterMenu = it },
-                            showPackagePicker = showPackagePicker,
-                            setShowPackagePicker = { showPackagePicker = it },
-                            setSelectedPackages = { selectedPackages = it },
-                            setSelectedReasonFilter = { selectedReasonFilter = it },
-                            preferences = preferences
+                            LogHistoryTopActions(
+                                selectedPackages = selectedPackages,
+                                selectedReasonFilter = selectedReasonFilter,
+                                searchQuery = searchQuery,
+                                isSearchFocused = isSearchFocused,
+                                isSearchVisible = isSearchVisible,
+                                focusManager = focusManager,
+                                keyboardController = keyboardController,
+                                availableReasons = availableReasons,
+                                availableApps = availableApps,
+                                showFilterMenu = showFilterMenu,
+                                setShowFilterMenu = { showFilterMenu = it },
+                                showPackagePicker = showPackagePicker,
+                                setShowPackagePicker = { showPackagePicker = it },
+                                setSelectedPackages = { selectedPackages = it },
+                                setSelectedReasonFilter = { selectedReasonFilter = it },
+                                preferences = preferences
+                            )
                         )
-                    )
 
-                    Box {
-                        TooltipBox(
-                            positionProvider = TooltipDefaults.rememberTooltipPositionProvider(
-                                TooltipAnchorPosition.Above
-                            ),
-                            tooltip = { PlainTooltip { Text("Sort Logs") } },
-                            state = rememberTooltipState()
-                        ) {
-                            IconButton(onClick = { showSortMenu = true }) {
-                                Icon(Icons.AutoMirrored.Filled.Sort, contentDescription = "Sort Log History")
+                        Box {
+                            TooltipBox(
+                                positionProvider = TooltipDefaults.rememberTooltipPositionProvider(
+                                    TooltipAnchorPosition.Above
+                                ),
+                                tooltip = { PlainTooltip { Text("Sort Logs") } },
+                                state = rememberTooltipState()
+                            ) {
+                                IconButton(onClick = { showSortMenu = true }) {
+                                    Icon(Icons.AutoMirrored.Filled.Sort, contentDescription = "Sort Log History")
+                                }
                             }
-                        }
-                        DropdownMenu(
-                            expanded = showSortMenu,
-                            onDismissRequest = { showSortMenu = false }
-                        ) {
-                            DropdownMenuItem(
-                                text = {
-                                    Text(
-                                        stringResource(
-                                            R.string.log_history_sort_dismissed,
-                                            if (sortMode == SortMode.DISMISSED) "✓" else ""
-                                        )
-                                    )
-                                },
-                                onClick = {
-                                    sortMode = SortMode.DISMISSED
-                                    preferences.displayManager.setSortOrder(sortModePreference(sortMode))
-                                    showSortMenu = false
-                                }
-                            )
-                            DropdownMenuItem(
-                                text = {
-                                    Text(
-                                        stringResource(
-                                            R.string.log_history_sort_received,
-                                            if (sortMode == SortMode.RECEIVED) "✓" else ""
-                                        )
-                                    )
-                                },
-                                onClick = {
-                                    sortMode = SortMode.RECEIVED
-                                    preferences.displayManager.setSortOrder(sortModePreference(sortMode))
-                                    showSortMenu = false
-                                }
-                            )
-                            DropdownMenuItem(
-                                text = {
-                                    Text(
-                                        stringResource(
-                                            R.string.log_history_sort_all,
-                                            if (sortMode == SortMode.ALL) "✓" else ""
-                                        )
-                                    )
-                                },
-                                onClick = {
-                                    sortMode = SortMode.ALL
-                                    preferences.displayManager.setSortOrder(sortModePreference(sortMode))
-                                    showSortMenu = false
-                                }
-                            )
-                            SortMode.entries.drop(BASE_SORT_MODE_COUNT).forEach { option ->
+                            DropdownMenu(
+                                expanded = showSortMenu,
+                                onDismissRequest = { showSortMenu = false }
+                            ) {
                                 DropdownMenuItem(
-                                    text = { Text("${option.label} ${if (sortMode == option) "✓" else ""}") },
+                                    text = {
+                                        Text(
+                                            stringResource(
+                                                R.string.log_history_sort_dismissed,
+                                                if (sortMode == SortMode.DISMISSED) "✓" else ""
+                                            )
+                                        )
+                                    },
                                     onClick = {
-                                        sortMode = option
+                                        sortMode = SortMode.DISMISSED
                                         preferences.displayManager.setSortOrder(sortModePreference(sortMode))
                                         showSortMenu = false
                                     }
                                 )
+                                DropdownMenuItem(
+                                    text = {
+                                        Text(
+                                            stringResource(
+                                                R.string.log_history_sort_received,
+                                                if (sortMode == SortMode.RECEIVED) "✓" else ""
+                                            )
+                                        )
+                                    },
+                                    onClick = {
+                                        sortMode = SortMode.RECEIVED
+                                        preferences.displayManager.setSortOrder(sortModePreference(sortMode))
+                                        showSortMenu = false
+                                    }
+                                )
+                                DropdownMenuItem(
+                                    text = {
+                                        Text(
+                                            stringResource(
+                                                R.string.log_history_sort_all,
+                                                if (sortMode == SortMode.ALL) "✓" else ""
+                                            )
+                                        )
+                                    },
+                                    onClick = {
+                                        sortMode = SortMode.ALL
+                                        preferences.displayManager.setSortOrder(sortModePreference(sortMode))
+                                        showSortMenu = false
+                                    }
+                                )
+                                SortMode.entries.drop(BASE_SORT_MODE_COUNT).forEach { option ->
+                                    DropdownMenuItem(
+                                        text = { Text("${option.label} ${if (sortMode == option) "✓" else ""}") },
+                                        onClick = {
+                                            sortMode = option
+                                            preferences.displayManager.setSortOrder(sortModePreference(sortMode))
+                                            showSortMenu = false
+                                        }
+                                    )
+                                }
                             }
                         }
+                        IconButton(onClick = { isSearchVisible = true }) {
+                            Icon(Icons.Default.Search, contentDescription = "Search")
+                        }
                     }
-                    IconButton(onClick = { isSearchVisible = true }) {
-                        Icon(Icons.Default.Search, contentDescription = "Search")
+                )
+            },
+            floatingActionButton = {
+                logHistoryScrollActions(filteredNotifs.size, listState, scope)
+            }
+        ) { innerPadding ->
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(innerPadding)
+            ) {
+                val searchSuggestions = remember(searchQuery, activeList) {
+                    logHistorySearchSuggestions(searchQuery, activeList)
+                }
+                var expandedDropdown by remember { mutableStateOf(false) }
+
+                LaunchedEffect(searchSuggestions, recentSearches) {
+                    expandedDropdown = searchSuggestions.isNotEmpty() || recentSearches.isNotEmpty()
+                }
+
+                if (isSearchVisible || searchQuery.isNotBlank()) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp, vertical = 8.dp)
+                    ) {
+                        logHistorySearchField(
+                            LogHistorySearchState(
+                                searchQuery = searchQuery,
+                                onSearchChange = { searchQuery = it },
+                                onDone = { rawQuery ->
+                                    val query = rawQuery.trim()
+                                    if (query.isNotEmpty()) {
+                                        recentSearches = listOf(query) + recentSearches
+                                            .filterNot { it == query }
+                                            .take(MAX_RECENT_SEARCHES)
+                                        preferences.sharedSearchManager.addRecentSearch(query)
+                                    }
+                                    focusManager.clearFocus(force = true)
+                                },
+                                onClear = { searchQuery = "" },
+                                onFocusChanged = { isSearchFocused = it },
+                                keyboardController = keyboardController,
+                                modifier = Modifier.fillMaxWidth()
+                            )
+                        )
+
+                        logHistorySearchDropdown(
+                            LogHistorySearchDropdownConfig(
+                                expanded = expandedDropdown,
+                                searchSuggestions = searchSuggestions,
+                                recentSearches = recentSearches,
+                                searchQuery = searchQuery,
+                                onRemoveRecent = { preferences.sharedSearchManager.removeRecentSearch(it) },
+                                onClearRecent = { preferences.sharedSearchManager.resetRecentSearches() },
+                                onSelectSuggestion = { v -> searchQuery = v },
+                                onDismiss = { expandedDropdown = false }
+                            )
+                        )
                     }
                 }
-            )
-        },
-        floatingActionButton = {
-            logHistoryScrollActions(filteredNotifs.size, listState, scope)
-        }
-    ) { innerPadding ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(innerPadding)
-        ) {
-            val searchSuggestions = remember(searchQuery, activeList) {
-                logHistorySearchSuggestions(searchQuery, activeList)
-            }
-            var expandedDropdown by remember { mutableStateOf(false) }
 
-            LaunchedEffect(searchSuggestions, recentSearches) {
-                expandedDropdown = searchSuggestions.isNotEmpty() || recentSearches.isNotEmpty()
-            }
-
-            if (isSearchVisible || searchQuery.isNotBlank()) Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 8.dp)
-            ) {
-                logHistorySearchField(
-                    LogHistorySearchState(
+                renderLogHistoryResults(
+                    LogHistoryResultsConfig(
+                        filteredNotifs = filteredNotifs,
                         searchQuery = searchQuery,
-                        onSearchChange = { searchQuery = it },
-                        onDone = { rawQuery ->
-                        val query = rawQuery.trim()
-                        if (query.isNotEmpty()) {
-                            recentSearches = listOf(query) + recentSearches
-                                .filterNot { it == query }
-                                .take(MAX_RECENT_SEARCHES)
-                            preferences.sharedSearchManager.addRecentSearch(query)
-                        }
-                        focusManager.clearFocus(force = true)
-                    },
-                    onClear = { searchQuery = "" },
-                    onFocusChanged = { isSearchFocused = it },
-                    keyboardController = keyboardController,
-                    modifier = Modifier.fillMaxWidth()
+                        selectedReasonFilter = selectedReasonFilter,
+                        selectedPackages = selectedPackages,
+                        setSearchQuery = { searchQuery = it },
+                        setSelectedReasonFilter = { selectedReasonFilter = it },
+                        setSelectedPackages = { selectedPackages = it },
+                        listState = listState,
+                        notificationGroups = notificationGroups,
+                        collapsedGroups = collapsedGroups,
+                        setCollapsedGroups = { collapsedGroups = it },
+                        expandedCards = expandedCards,
+                        setExpandedCards = { expandedCards = it },
+                        debouncedSearchQuery = debouncedSearchQuery,
+                        dateTimeFormatter = dateTimeFormatter,
+                        dao = dao
                     )
                 )
-
-                logHistorySearchDropdown(
-                    LogHistorySearchDropdownConfig(
-                        expanded = expandedDropdown,
-                        searchSuggestions = searchSuggestions,
-                        recentSearches = recentSearches,
-                        searchQuery = searchQuery,
-                        onRemoveRecent = { preferences.sharedSearchManager.removeRecentSearch(it) },
-                        onClearRecent = { preferences.sharedSearchManager.resetRecentSearches() },
-                        onSelectSuggestion = { v -> searchQuery = v },
-                        onDismiss = { expandedDropdown = false }
-                    )
+                renderLogHistoryPackagePicker(
+                    showPackagePicker,
+                    selectedPackages,
+                    availableApps,
+                    { showPackagePicker = it },
+                    { selectedPackages = it }
                 )
             }
-
-            renderLogHistoryResults(
-                LogHistoryResultsConfig(
-                    filteredNotifs = filteredNotifs,
-                    searchQuery = searchQuery,
-                    selectedReasonFilter = selectedReasonFilter,
-                    selectedPackages = selectedPackages,
-                    setSearchQuery = { searchQuery = it },
-                    setSelectedReasonFilter = { selectedReasonFilter = it },
-                    setSelectedPackages = { selectedPackages = it },
-                    listState = listState,
-                    notificationGroups = notificationGroups,
-                    collapsedGroups = collapsedGroups,
-                    setCollapsedGroups = { collapsedGroups = it },
-                    expandedCards = expandedCards,
-                    setExpandedCards = { expandedCards = it },
-                    debouncedSearchQuery = debouncedSearchQuery,
-                    dateTimeFormatter = dateTimeFormatter,
-                    dao = dao
-                )
-            )
-            renderLogHistoryPackagePicker(
-                showPackagePicker,
-                selectedPackages,
-                availableApps,
-                { showPackagePicker = it },
-                { selectedPackages = it }
-            )
         }
     }
-}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -580,36 +588,39 @@ private data class LogHistoryResultsConfig(
 
 private val renderLogHistoryResults:
     @Composable (LogHistoryResultsConfig) -> Unit = { config ->
-    if (config.filteredNotifs.isEmpty()) {
-        com.jeffers.notimindlite.ui.components.ActiveSearchEmptyState(
-            title = if (config.searchQuery.isBlank() &&
-                config.selectedReasonFilter == null && config.selectedPackages == null
-            ) stringResource(R.string.log_history_empty_initial)
-            else stringResource(R.string.log_history_empty_search),
-            description = "No notifications match your current filters.",
-            clearButtonText = "Clear All Filters",
-            onClearClick = {
-                config.setSearchQuery("")
-                config.setSelectedReasonFilter(null)
-                config.setSelectedPackages(null)
-            }
-        )
-    } else {
-        renderLogHistoryList(
-            LogHistoryListConfig(
-                listState = config.listState,
-                groups = config.notificationGroups,
-                collapsedGroups = config.collapsedGroups,
-                setCollapsedGroups = config.setCollapsedGroups,
-                expandedCards = config.expandedCards,
-                setExpandedCards = config.setExpandedCards,
-                debouncedSearchQuery = config.debouncedSearchQuery,
-                dateTimeFormatter = config.dateTimeFormatter,
-                dao = config.dao
+        if (config.filteredNotifs.isEmpty()) {
+            com.jeffers.notimindlite.ui.components.ActiveSearchEmptyState(
+                title = if (config.searchQuery.isBlank() &&
+                    config.selectedReasonFilter == null && config.selectedPackages == null
+                ) {
+                    stringResource(R.string.log_history_empty_initial)
+                } else {
+                    stringResource(R.string.log_history_empty_search)
+                },
+                description = "No notifications match your current filters.",
+                clearButtonText = "Clear All Filters",
+                onClearClick = {
+                    config.setSearchQuery("")
+                    config.setSelectedReasonFilter(null)
+                    config.setSelectedPackages(null)
+                }
             )
-        )
+        } else {
+            renderLogHistoryList(
+                LogHistoryListConfig(
+                    listState = config.listState,
+                    groups = config.notificationGroups,
+                    collapsedGroups = config.collapsedGroups,
+                    setCollapsedGroups = config.setCollapsedGroups,
+                    expandedCards = config.expandedCards,
+                    setExpandedCards = config.setExpandedCards,
+                    debouncedSearchQuery = config.debouncedSearchQuery,
+                    dateTimeFormatter = config.dateTimeFormatter,
+                    dao = config.dao
+                )
+            )
+        }
     }
-}
 
 private data class LogHistorySearchLifecycleConfig(
     val searchQuery: String,
@@ -623,23 +634,23 @@ private data class LogHistorySearchLifecycleConfig(
 
 private val logHistorySearchLifecycle:
     @Composable (LogHistorySearchLifecycleConfig) -> Unit = { config ->
-    LaunchedEffect(config.searchQuery) {
-        config.preferences.sharedSearchManager.setQuery(config.searchQuery)
-        delay(SEARCH_DEBOUNCE_MILLIS)
-        config.setDebouncedSearchQuery(config.searchQuery)
-    }
-    LaunchedEffect(config.selectedPackages) {
-        config.preferences.sharedSearchManager.setPackages(config.selectedPackages)
-    }
-    LaunchedEffect(config.selectedReasonFilter) {
-        config.preferences.sharedSearchManager.setReason(config.selectedReasonFilter)
-    }
-    LaunchedEffect(config.isSearchFocused, config.searchQuery) {
-        if (!config.isSearchFocused && config.searchQuery.isBlank()) {
-            config.setIsSearchVisible(false)
+        LaunchedEffect(config.searchQuery) {
+            config.preferences.sharedSearchManager.setQuery(config.searchQuery)
+            delay(SEARCH_DEBOUNCE_MILLIS)
+            config.setDebouncedSearchQuery(config.searchQuery)
+        }
+        LaunchedEffect(config.selectedPackages) {
+            config.preferences.sharedSearchManager.setPackages(config.selectedPackages)
+        }
+        LaunchedEffect(config.selectedReasonFilter) {
+            config.preferences.sharedSearchManager.setReason(config.selectedReasonFilter)
+        }
+        LaunchedEffect(config.isSearchFocused, config.searchQuery) {
+            if (!config.isSearchFocused && config.searchQuery.isBlank()) {
+                config.setIsSearchVisible(false)
+            }
         }
     }
-}
 
 private data class LogHistoryListConfig(
     val listState: androidx.compose.foundation.lazy.LazyListState,

@@ -3,16 +3,16 @@ package com.jeffers.notimindlite.data.local
 import android.content.Context
 import android.os.UserManager
 import android.util.Log
-import com.jeffers.notimindlite.util.DatabaseLockManager
-import com.jeffers.notimindlite.migration.EncryptionMigrationConsent
-import com.jeffers.notimindlite.migration.MigrationRunner
-import com.jeffers.notimindlite.migration.MigrationState
 import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
 import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
+import com.jeffers.notimindlite.migration.EncryptionMigrationConsent
+import com.jeffers.notimindlite.migration.MigrationRunner
+import com.jeffers.notimindlite.migration.MigrationState
+import com.jeffers.notimindlite.util.DatabaseLockManager
 
 @Database(
     entities = [
@@ -32,8 +32,11 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun notificationGroupDao(): NotificationGroupDao
 
     abstract fun notificationGroupDetailDao(): NotificationGroupDetailDao
+
     abstract fun notificationQueryDao(): NotificationQueryDao
+
     abstract fun appDao(): AppDao
+
     abstract fun backupDao(): BackupDao
 
     companion object {
@@ -145,22 +148,30 @@ abstract class AppDatabase : RoomDatabase() {
                 db.execSQL("ALTER TABLE `notifications` ADD COLUMN `smallIconRes` INTEGER NOT NULL DEFAULT 0")
 
                 // Add performance composite indices
-                db.execSQL("""
+                db.execSQL(
+                    """
                     CREATE INDEX IF NOT EXISTS `index_notifications_isDismissed_postTime`
                     ON `notifications` (`isDismissed`, `postTime`)
-                """.trimIndent())
-                db.execSQL("""
+                    """.trimIndent()
+                )
+                db.execSQL(
+                    """
                     CREATE INDEX IF NOT EXISTS `index_notifications_isDismissed_dismissTime`
                     ON `notifications` (`isDismissed`, `dismissTime`)
-                """.trimIndent())
-                db.execSQL("""
+                    """.trimIndent()
+                )
+                db.execSQL(
+                    """
                     CREATE INDEX IF NOT EXISTS `index_notifications_packageName_isDismissed`
                     ON `notifications` (`packageName`, `isDismissed`)
-                """.trimIndent())
-                db.execSQL("""
+                    """.trimIndent()
+                )
+                db.execSQL(
+                    """
                     CREATE INDEX IF NOT EXISTS `index_notifications_isPinned_postTime`
                     ON `notifications` (`isPinned`, `postTime`)
-                """.trimIndent())
+                    """.trimIndent()
+                )
                 db.execSQL("CREATE INDEX IF NOT EXISTS `index_notifications_isRead` ON `notifications` (`isRead`)")
             }
         }
@@ -168,7 +179,8 @@ abstract class AppDatabase : RoomDatabase() {
         val MIGRATION_9_10 = object : Migration(DB_VERSION_9, DB_VERSION_10) {
             override fun migrate(db: SupportSQLiteDatabase) {
                 // 1. Create normalized apps table
-                db.execSQL("""
+                db.execSQL(
+                    """
                     CREATE TABLE IF NOT EXISTS `apps` (
                         `packageName` TEXT NOT NULL,
                         `appName` TEXT NOT NULL,
@@ -176,25 +188,30 @@ abstract class AppDatabase : RoomDatabase() {
                         `lastSeenTime` INTEGER NOT NULL DEFAULT 0,
                         PRIMARY KEY(`packageName`)
                     )
-                """.trimIndent())
+                    """.trimIndent()
+                )
 
                 // 2. Populate apps table from existing notification records to preserve historical app names
-                db.execSQL("""
+                db.execSQL(
+                    """
                     INSERT OR IGNORE INTO `apps` (`packageName`, `appName`, `firstSeenTime`, `lastSeenTime`)
                     SELECT `packageName`, `appName`, MIN(`postTime`), MAX(`postTime`)
                     FROM `notifications`
                     WHERE `packageName` != ''
                     GROUP BY `packageName`
-                """.trimIndent())
+                    """.trimIndent()
+                )
             }
         }
 
         val MIGRATION_10_11 = object : Migration(DB_VERSION_10, DB_VERSION_11) {
             override fun migrate(db: SupportSQLiteDatabase) {
-                db.execSQL("""
+                db.execSQL(
+                    """
                     CREATE INDEX IF NOT EXISTS `index_notifications_packageName`
                     ON `notifications` (`packageName`)
-                """.trimIndent())
+                    """.trimIndent()
+                )
             }
         }
 
@@ -221,7 +238,8 @@ abstract class AppDatabase : RoomDatabase() {
             // and Room's generated triggers have the standard `room_fts_content_sync_*` names.
             // Do NOT change this migration's DDL without reviewing the FTS trigger interaction.
             override fun migrate(db: SupportSQLiteDatabase) {
-                db.execSQL("""
+                db.execSQL(
+                    """
                     CREATE VIRTUAL TABLE IF NOT EXISTS `notifications_fts` USING fts4(
                         `title` TEXT NOT NULL,
                         `content` TEXT NOT NULL,
@@ -229,11 +247,14 @@ abstract class AppDatabase : RoomDatabase() {
                         `packageName` TEXT NOT NULL,
                         content=`notifications`
                     )
-                """.trimIndent())
-                db.execSQL("""
+                    """.trimIndent()
+                )
+                db.execSQL(
+                    """
                     INSERT INTO `notifications_fts` (`docid`, `title`, `content`, `appName`, `packageName`)
                     SELECT `id`, `title`, `content`, `appName`, `packageName` FROM `notifications`
-                """.trimIndent())
+                    """.trimIndent()
+                )
             }
         }
 
@@ -245,14 +266,16 @@ abstract class AppDatabase : RoomDatabase() {
                 db.execSQL("ALTER TABLE `apps` ADD COLUMN `lastSyncedAt` INTEGER NOT NULL DEFAULT 0")
 
                 // Deduplicate any duplicate keys prior to creating unique index
-                db.execSQL("""
+                db.execSQL(
+                    """
                     DELETE FROM `notifications`
                     WHERE `id` NOT IN (
                         SELECT MIN(`id`)
                         FROM `notifications`
                         GROUP BY `key`
                     )
-                """.trimIndent())
+                    """.trimIndent()
+                )
 
                 // Ensure required unique index on key exists
                 db.execSQL("CREATE UNIQUE INDEX IF NOT EXISTS `index_notifications_key` ON `notifications` (`key`)")
@@ -279,8 +302,8 @@ abstract class AppDatabase : RoomDatabase() {
             }
         }
 
-        @Suppress("MaxLineLength", "MagicNumber") // CREATE INDEX DDL strings; cannot be safely
         // split. Migration version numbers are part of the Room schema contract.
+        @Suppress("MaxLineLength", "MagicNumber") // CREATE INDEX DDL strings; cannot be safely
         val MIGRATION_17_18 = object : Migration(DB_VERSION_17, DB_VERSION_18) {
             override fun migrate(db: SupportSQLiteDatabase) {
                 db.execSQL("DROP INDEX IF EXISTS `index_notifications_packageName_isDismissed`")
@@ -316,7 +339,8 @@ abstract class AppDatabase : RoomDatabase() {
                 db.execSQL("CREATE INDEX IF NOT EXISTS `index_notifications_groupKey_postTime` ON `notifications` (`groupKey`, `postTime`)")
 
                 // 2. Create notification_groups table
-                db.execSQL("""
+                db.execSQL(
+                    """
                     CREATE TABLE IF NOT EXISTS `notification_groups` (
                         `groupKey` TEXT NOT NULL,
                         `packageName` TEXT NOT NULL,
@@ -332,7 +356,8 @@ abstract class AppDatabase : RoomDatabase() {
                         `lastUpdatedTime` INTEGER NOT NULL DEFAULT 0,
                         PRIMARY KEY(`groupKey`)
                     )
-                """.trimIndent())
+                    """.trimIndent()
+                )
 
                 // 3. Create indices on notification_groups
                 db.execSQL("CREATE INDEX IF NOT EXISTS `index_notification_groups_latestPostTime` ON `notification_groups` (`latestPostTime`)")
@@ -341,7 +366,8 @@ abstract class AppDatabase : RoomDatabase() {
                 db.execSQL("CREATE INDEX IF NOT EXISTS `index_notification_groups_isPinned_latestPostTime` ON `notification_groups` (`isPinned`, `latestPostTime`)")
 
                 // 4. Initial backfill of notification_groups from notifications table
-                db.execSQL("""
+                db.execSQL(
+                    """
                     INSERT OR REPLACE INTO `notification_groups` (
                         `groupKey`, `packageName`, `appName`, `appIconUri`, `latestPostTime`, `notificationCount`, `activeCount`, `isPinned`, `isDismissed`, `summaryTitle`, `summaryText`, `lastUpdatedTime`
                     )
@@ -361,10 +387,12 @@ abstract class AppDatabase : RoomDatabase() {
                     FROM `notifications`
                     WHERE `packageName` != ''
                     GROUP BY COALESCE(`groupKey`, `packageName`)
-                """.trimIndent())
+                    """.trimIndent()
+                )
 
                 // 5. Triggers for auto-updating notification_groups on changes to notifications table
-                db.execSQL("""
+                db.execSQL(
+                    """
                     CREATE TRIGGER IF NOT EXISTS `trg_notifications_after_insert`
                     AFTER INSERT ON `notifications`
                     BEGIN
@@ -397,9 +425,11 @@ abstract class AppDatabase : RoomDatabase() {
                             `summaryText` = CASE WHEN NEW.`postTime` >= `notification_groups`.`latestPostTime` THEN NEW.`content` ELSE `notification_groups`.`summaryText` END,
                             `lastUpdatedTime` = MAX(`notification_groups`.`lastUpdatedTime`, NEW.`lastUpdatedTime`);
                     END
-                """.trimIndent())
+                    """.trimIndent()
+                )
 
-                db.execSQL("""
+                db.execSQL(
+                    """
                     CREATE TRIGGER IF NOT EXISTS `trg_notifications_after_update`
                     AFTER UPDATE ON `notifications`
                     BEGIN
@@ -413,9 +443,11 @@ abstract class AppDatabase : RoomDatabase() {
                             `lastUpdatedTime` = (SELECT COALESCE(MAX(`lastUpdatedTime`), 0) FROM `notifications` WHERE COALESCE(`groupKey`, `packageName`) = COALESCE(NEW.`groupKey`, NEW.`packageName`))
                         WHERE `groupKey` = COALESCE(NEW.`groupKey`, NEW.`packageName`);
                     END
-                """.trimIndent())
+                    """.trimIndent()
+                )
 
-                db.execSQL("""
+                db.execSQL(
+                    """
                     CREATE TRIGGER IF NOT EXISTS `trg_notifications_after_delete`
                     AFTER DELETE ON `notifications`
                     BEGIN
@@ -430,7 +462,8 @@ abstract class AppDatabase : RoomDatabase() {
 
                         DELETE FROM `notification_groups` WHERE `notificationCount` = 0;
                     END
-                """.trimIndent())
+                    """.trimIndent()
+                )
             }
         }
 
@@ -470,26 +503,26 @@ abstract class AppDatabase : RoomDatabase() {
             }
         }
 
-        fun getDeInstance(context: Context): AppDatabase {
-            return deInstance ?: synchronized(this) {
-                deInstance ?: run {
-                    val appContext = context.applicationContext
-                    val deContext = if (appContext.isDeviceProtectedStorage) {
-                        appContext
-                    } else {
-                        appContext.createDeviceProtectedStorageContext()
-                    }
-                    Room.databaseBuilder(deContext, AppDatabase::class.java, DE_DATABASE_NAME)
-                        .apply {
-                            EncryptedDatabaseFactory.openHelperFactory(
+        fun getDeInstance(context: Context): AppDatabase = deInstance ?: synchronized(this) {
+            deInstance ?: run {
+                val appContext = context.applicationContext
+                val deContext = if (appContext.isDeviceProtectedStorage) {
+                    appContext
+                } else {
+                    appContext.createDeviceProtectedStorageContext()
+                }
+                Room
+                    .databaseBuilder(deContext, AppDatabase::class.java, DE_DATABASE_NAME)
+                    .apply {
+                        EncryptedDatabaseFactory
+                            .openHelperFactory(
                                 deContext,
                                 DE_DATABASE_NAME
                             )?.let(::openHelperFactory)
-                        }
-                        .addCallback(DB_CALLBACK)
-                        .setJournalMode(JournalMode.WRITE_AHEAD_LOGGING)
-                        .build().also { deInstance = it }
-                }
+                    }.addCallback(DB_CALLBACK)
+                    .setJournalMode(JournalMode.WRITE_AHEAD_LOGGING)
+                    .build()
+                    .also { deInstance = it }
             }
         }
 
@@ -507,89 +540,90 @@ abstract class AppDatabase : RoomDatabase() {
                     INSTANCE = null
                     getCeInstance(appContext)
                 }
-            } else ceInstance ?: synchronized(this) {
-                ceInstance ?: run {
-                    val databaseName = databaseName(CE_DATABASE_NAME, profileId)
-                    val preferences = PreferencesRepository(appContext)
-                    val encryptionRequested =
-                        preferences.securityManager.dbEncrypted.value &&
-                            preferences.securityManager.dbEncryptionMode.value != DbEncryptionMode.NONE
-                    val legacyPlaintextPending = MigrationRunner(appContext).preflight(databaseName).plaintextExists
-                    val consent = EncryptionMigrationConsent.get(appContext)
-                    val migrationState = if (
-                        encryptionRequested &&
-                        legacyPlaintextPending &&
-                        consent == EncryptionMigrationConsent.Decision.ACCEPTED
-                    ) {
-                        MigrationRunner(appContext).migrateLegacyDatabase(databaseName)
-                    } else {
-                        MigrationState.NOT_REQUIRED
+            } else {
+                ceInstance ?: synchronized(this) {
+                    ceInstance ?: run {
+                        val databaseName = databaseName(CE_DATABASE_NAME, profileId)
+                        val preferences = PreferencesRepository(appContext)
+                        val encryptionRequested =
+                            preferences.securityManager.dbEncrypted.value &&
+                                preferences.securityManager.dbEncryptionMode.value != DbEncryptionMode.NONE
+                        val legacyPlaintextPending = MigrationRunner(appContext).preflight(databaseName).plaintextExists
+                        val consent = EncryptionMigrationConsent.get(appContext)
+                        val migrationState = if (
+                            encryptionRequested &&
+                            legacyPlaintextPending &&
+                            consent == EncryptionMigrationConsent.Decision.ACCEPTED
+                        ) {
+                            MigrationRunner(appContext).migrateLegacyDatabase(databaseName)
+                        } else {
+                            MigrationState.NOT_REQUIRED
+                        }
+                        when (migrationState) {
+                            MigrationState.NOT_REQUIRED, MigrationState.COMPLETE -> Unit
+                            else -> error("Legacy database migration did not complete safely")
+                        }
+                        val useEncryption = encryptionRequested &&
+                            (!legacyPlaintextPending || consent == EncryptionMigrationConsent.Decision.ACCEPTED)
+                        val instance = buildCeInstance(appContext, profileId)
+                        ceInstance = instance
+                        ceProfileId = profileId
+                        INSTANCE = instance
+                        instance
                     }
-                    when (migrationState) {
-                        MigrationState.NOT_REQUIRED, MigrationState.COMPLETE -> Unit
-                        else -> error("Legacy database migration did not complete safely")
-                    }
-                    val useEncryption = encryptionRequested &&
-                        (!legacyPlaintextPending || consent == EncryptionMigrationConsent.Decision.ACCEPTED)
-                    val instance = buildCeInstance(appContext, profileId)
-                    ceInstance = instance
-                    ceProfileId = profileId
-                    INSTANCE = instance
-                    instance
                 }
             }
         }
 
-    /**
-     * Extracted CE instance builder to satisfy detekt LongMethod rule on getCeInstance.
-     */
-    private fun buildCeInstance(appContext: Context, profileId: String): AppDatabase {
-        val databaseName = databaseName(CE_DATABASE_NAME, profileId)
-        val preferences = PreferencesRepository(appContext)
-        val encryptionRequested =
-            preferences.securityManager.dbEncrypted.value &&
-                preferences.securityManager.dbEncryptionMode.value != DbEncryptionMode.NONE
-        val legacyPlaintextPending = MigrationRunner(appContext).preflight(databaseName).plaintextExists
-        val consent = EncryptionMigrationConsent.get(appContext)
-        val migrationState = if (
-            encryptionRequested &&
-            legacyPlaintextPending &&
-            consent == EncryptionMigrationConsent.Decision.ACCEPTED
-        ) {
-            MigrationRunner(appContext).migrateLegacyDatabase(databaseName)
-        } else {
-            MigrationState.NOT_REQUIRED
-        }
-        when (migrationState) {
-            MigrationState.NOT_REQUIRED, MigrationState.COMPLETE -> Unit
-            else -> error("Legacy database migration did not complete safely")
-        }
-        val useEncryption = encryptionRequested &&
-            (!legacyPlaintextPending || consent == EncryptionMigrationConsent.Decision.ACCEPTED)
-
-        return Room.databaseBuilder(
-            appContext,
-            AppDatabase::class.java,
-            databaseName
-        )
-            .apply {
-                if (useEncryption) {
-                    EncryptedDatabaseFactory.openHelperFactory(
-                        appContext,
-                        databaseName
-                    )?.let(::openHelperFactory)
-                }
+        /**
+         * Extracted CE instance builder to satisfy detekt LongMethod rule on getCeInstance.
+         */
+        private fun buildCeInstance(appContext: Context, profileId: String): AppDatabase {
+            val databaseName = databaseName(CE_DATABASE_NAME, profileId)
+            val preferences = PreferencesRepository(appContext)
+            val encryptionRequested =
+                preferences.securityManager.dbEncrypted.value &&
+                    preferences.securityManager.dbEncryptionMode.value != DbEncryptionMode.NONE
+            val legacyPlaintextPending = MigrationRunner(appContext).preflight(databaseName).plaintextExists
+            val consent = EncryptionMigrationConsent.get(appContext)
+            val migrationState = if (
+                encryptionRequested &&
+                legacyPlaintextPending &&
+                consent == EncryptionMigrationConsent.Decision.ACCEPTED
+            ) {
+                MigrationRunner(appContext).migrateLegacyDatabase(databaseName)
+            } else {
+                MigrationState.NOT_REQUIRED
             }
-            .addMigrations(
-                MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7,
-                MIGRATION_7_8, MIGRATION_8_9, MIGRATION_9_10,
-                MIGRATION_10_11, MIGRATION_11_12, MIGRATION_12_13, MIGRATION_13_14, MIGRATION_14_15,
-                MIGRATION_15_16, MIGRATION_16_17, MIGRATION_17_18, MIGRATION_18_19
-            )
-            .addCallback(DB_CALLBACK)
-            .setJournalMode(JournalMode.WRITE_AHEAD_LOGGING)
-            .build()
-    }
+            when (migrationState) {
+                MigrationState.NOT_REQUIRED, MigrationState.COMPLETE -> Unit
+                else -> error("Legacy database migration did not complete safely")
+            }
+            val useEncryption = encryptionRequested &&
+                (!legacyPlaintextPending || consent == EncryptionMigrationConsent.Decision.ACCEPTED)
+
+            return Room
+                .databaseBuilder(
+                    appContext,
+                    AppDatabase::class.java,
+                    databaseName
+                ).apply {
+                    if (useEncryption) {
+                        EncryptedDatabaseFactory
+                            .openHelperFactory(
+                                appContext,
+                                databaseName
+                            )?.let(::openHelperFactory)
+                    }
+                }.addMigrations(
+                    MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7,
+                    MIGRATION_7_8, MIGRATION_8_9, MIGRATION_9_10,
+                    MIGRATION_10_11, MIGRATION_11_12, MIGRATION_12_13, MIGRATION_13_14, MIGRATION_14_15,
+                    MIGRATION_15_16, MIGRATION_16_17, MIGRATION_17_18, MIGRATION_18_19
+                ).addCallback(DB_CALLBACK)
+                .setJournalMode(JournalMode.WRITE_AHEAD_LOGGING)
+                .build()
+        }
 
         private fun databaseName(base: String, profileId: String): String =
             if (profileId == PreferencesRepository.DEFAULT_PROFILE_ID) base else "${base}_$profileId"

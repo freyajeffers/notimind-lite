@@ -15,9 +15,9 @@ data class DetectedPlace(
  * Categorization of detected locations to determine the appropriate action chip.
  */
 enum class PlaceType {
-    GENERAL,        // Generic address or city
-    COMMERCIAL,     // Stores, restaurants, offices
-    RESIDENTIAL,    // Home, apartment
-    TRANSPORT,      // Airports, stations, stops
-    LANDMARK       // Famous monuments, parks, museums
+    GENERAL, // Generic address or city
+    COMMERCIAL, // Stores, restaurants, offices
+    RESIDENTIAL, // Home, apartment
+    TRANSPORT, // Airports, stations, stops
+    LANDMARK // Famous monuments, parks, museums
 }

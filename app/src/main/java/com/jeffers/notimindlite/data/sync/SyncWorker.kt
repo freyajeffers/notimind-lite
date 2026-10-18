@@ -18,7 +18,6 @@ class SyncWorker(
     context: Context,
     params: WorkerParameters
 ) : CoroutineWorker(context, params) {
-
     override suspend fun doWork(): Result {
         val db = AppDatabase.getDatabase(applicationContext)
         val preferences = PreferencesRepository(applicationContext)
@@ -40,7 +39,9 @@ class SyncWorker(
 
     private suspend fun syncFirebase(db: AppDatabase, preferences: PreferencesRepository): Result {
         val profileId = preferences.profileManager.activeProfileId.value
-        val user = com.google.firebase.auth.FirebaseAuth.getInstance().currentUser
+        val user = com.google.firebase.auth.FirebaseAuth
+            .getInstance()
+            .currentUser
             ?: return Result.success()
         FirebaseSettingsSyncRepository().restoreOrUpload(preferences, user.uid)
         val secretKey = generateBackupKey(applicationContext)
@@ -48,21 +49,24 @@ class SyncWorker(
         return finishSync(preferences, result)
     }
 
-    private suspend fun finishSync(preferences: PreferencesRepository, result: kotlin.Result<Int>): Result {
-        return if (result.isSuccess) {
-            preferences.syncManager.setLastSyncTs(System.currentTimeMillis())
-            Result.success()
-        } else {
-            Result.retry()
-        }
+    private suspend fun finishSync(
+        preferences: PreferencesRepository,
+        result: kotlin.Result<Int>
+    ): Result = if (result.isSuccess) {
+        preferences.syncManager.setLastSyncTs(System.currentTimeMillis())
+        Result.success()
+    } else {
+        Result.retry()
     }
 
     companion object {
         private const val SYNC_WORK_NAME = "notimind_firestore_sync"
         private const val PERIODIC_SYNC_INTERVAL_HOURS = 6L
 
+        @android.annotation.SuppressLint("IdleBatteryChargingConstraints")
         fun schedulePeriodicSync(context: Context) {
-            val constraints = Constraints.Builder()
+            val constraints = Constraints
+                .Builder()
                 .setRequiredNetworkType(NetworkType.UNMETERED)
                 .setRequiresCharging(true)
                 .setRequiresDeviceIdle(true)
@@ -71,8 +75,7 @@ class SyncWorker(
             val request = PeriodicWorkRequestBuilder<SyncWorker>(
                 PERIODIC_SYNC_INTERVAL_HOURS,
                 TimeUnit.HOURS
-            )
-                .setConstraints(constraints)
+            ).setConstraints(constraints)
                 .build()
 
             WorkManager.getInstance(context).enqueueUniquePeriodicWork(

@@ -3,6 +3,7 @@ package com.jeffers.notimindlite.ui.screens
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowUp
@@ -15,7 +16,6 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.launch
-import androidx.compose.foundation.lazy.LazyListState
 
 @Composable
 internal fun activeNotificationsFab(listState: LazyListState) {
@@ -24,8 +24,11 @@ internal fun activeNotificationsFab(listState: LazyListState) {
         SmallFloatingActionButton(
             modifier = Modifier.semantics { contentDescription = "PageUpButton" },
             onClick = {
-                val first = listState.layoutInfo.visibleItemsInfo.firstOrNull()?.index ?: 0
-                val page = listState.layoutInfo.visibleItemsInfo.size.coerceAtLeast(1)
+                val first = listState.layoutInfo.visibleItemsInfo
+                    .firstOrNull()
+                    ?.index ?: 0
+                val page = listState.layoutInfo.visibleItemsInfo.size
+                    .coerceAtLeast(1)
                 scope.launch { listState.animateScrollToItem((first - page).coerceAtLeast(0)) }
             },
         ) {
@@ -34,8 +37,11 @@ internal fun activeNotificationsFab(listState: LazyListState) {
         SmallFloatingActionButton(
             modifier = Modifier.semantics { contentDescription = "PageDownButton" },
             onClick = {
-                val first = listState.layoutInfo.visibleItemsInfo.firstOrNull()?.index ?: 0
-                val page = listState.layoutInfo.visibleItemsInfo.size.coerceAtLeast(1)
+                val first = listState.layoutInfo.visibleItemsInfo
+                    .firstOrNull()
+                    ?.index ?: 0
+                val page = listState.layoutInfo.visibleItemsInfo.size
+                    .coerceAtLeast(1)
                 scope.launch { listState.animateScrollToItem(first + page) }
             },
         ) {

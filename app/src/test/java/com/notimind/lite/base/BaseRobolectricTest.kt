@@ -20,7 +20,6 @@ import org.robolectric.annotation.Config
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [33])
 abstract class BaseRobolectricTest {
-
     protected lateinit var context: Context
     protected lateinit var database: AppDatabase
     protected lateinit var dao: NotificationDao
@@ -28,7 +27,8 @@ abstract class BaseRobolectricTest {
     @Before
     open fun setup() {
         context = ApplicationProvider.getApplicationContext()
-        database = Room.inMemoryDatabaseBuilder(context, AppDatabase::class.java)
+        database = Room
+            .inMemoryDatabaseBuilder(context, AppDatabase::class.java)
             .allowMainThreadQueries()
             .build()
         database.openHelper.writableDatabase.execSQL("PRAGMA foreign_keys = OFF;")
@@ -55,8 +55,8 @@ abstract class BaseRobolectricTest {
         val isPersistent: Boolean = false
     )
 
-    protected fun createDummyEntity(params: DummyEntityParams = DummyEntityParams()): NotificationEntity {
-        return NotificationEntity(
+    protected fun createDummyEntity(params: DummyEntityParams = DummyEntityParams()): NotificationEntity =
+        NotificationEntity(
             key = params.key,
             packageName = params.packageName,
             appName = params.appName,
@@ -66,7 +66,6 @@ abstract class BaseRobolectricTest {
             isDismissed = params.isDismissed,
             isPersistent = params.isPersistent
         )
-    }
 
     protected data class MockStatusBarParams(
         val key: String = "com.example.app|101|null|10001",

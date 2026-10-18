@@ -17,11 +17,14 @@ import com.jeffers.notimindlite.data.local.PreferencesRepository
 @Composable
 fun automationSettingsSection(preferencesRepository: PreferencesRepository) {
     val autoActOnNotification by preferencesRepository.automationManager
-        .autoActOnNotification.collectAsState(initial = false)
+        .autoActOnNotification
+        .collectAsState(initial = false)
     val defaultReplyMethod by preferencesRepository.automationManager
-        .defaultReplyMethod.collectAsState(initial = "inline")
+        .defaultReplyMethod
+        .collectAsState(initial = "inline")
     val longPressAction by preferencesRepository.automationManager
-        .longPressAction.collectAsState(initial = "open")
+        .longPressAction
+        .collectAsState(initial = "open")
     val autoExecuteRules by preferencesRepository.automationManager.rules.collectAsState(initial = emptyList())
     var rulePackage by remember { mutableStateOf("") }
     var ruleTitle by remember { mutableStateOf("") }

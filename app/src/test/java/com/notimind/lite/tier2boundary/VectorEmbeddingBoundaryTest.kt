@@ -11,7 +11,6 @@ import org.robolectric.annotation.Config
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [33])
 class VectorEmbeddingBoundaryTest {
-
     @Test
     fun `computeEmbedding - empty string returns zero vector`() {
         val result = VectorEmbeddingHelper.computeEmbedding("")
@@ -31,7 +30,7 @@ class VectorEmbeddingBoundaryTest {
         val longText = "word ".repeat(10000)
         val result = VectorEmbeddingHelper.computeEmbedding(longText)
         assertEquals(VectorEmbeddingHelper.EMBEDDING_DIM, result.size)
-        
+
         // Verify L2 normalization
         var sumSquares = 0f
         result.forEach { sumSquares += it * it }
@@ -69,7 +68,7 @@ class VectorEmbeddingBoundaryTest {
         var mag = 0f
         vec.forEach { mag += it * it }
         val normVec = vec.map { it / kotlin.math.sqrt(mag) }.toFloatArray()
-        
+
         val sim = VectorEmbeddingHelper.cosineSimilarity(normVec, normVec)
         assertEquals(1.0f, sim, 0.001f)
     }
@@ -80,7 +79,7 @@ class VectorEmbeddingBoundaryTest {
         vecA[0] = 1f
         val vecB = FloatArray(128) { 0f }
         vecB[1] = 1f
-        
+
         val sim = VectorEmbeddingHelper.cosineSimilarity(vecA, vecB)
         assertEquals(0f, sim, 0.001f)
     }
@@ -89,7 +88,7 @@ class VectorEmbeddingBoundaryTest {
     fun `cosineSimilarity - different size vectors return 0`() {
         val vecA = FloatArray(128) { 0.1f }
         val vecB = FloatArray(64) { 0.1f }
-        
+
         val sim = VectorEmbeddingHelper.cosineSimilarity(vecA, vecB)
         assertEquals(0f, sim, 0f)
     }
@@ -98,7 +97,7 @@ class VectorEmbeddingBoundaryTest {
     fun `cosineSimilarity - empty vectors return 0`() {
         val vecA = FloatArray(0)
         val vecB = FloatArray(0)
-        
+
         val sim = VectorEmbeddingHelper.cosineSimilarity(vecA, vecB)
         assertEquals(0f, sim, 0f)
     }
@@ -107,7 +106,7 @@ class VectorEmbeddingBoundaryTest {
     fun `cosineSimilarity - zero vectors return 0`() {
         val vecA = FloatArray(128) { 0f }
         val vecB = FloatArray(128) { 0f }
-        
+
         val sim = VectorEmbeddingHelper.cosineSimilarity(vecA, vecB)
         assertEquals(0f, sim, 0f)
     }
@@ -116,7 +115,7 @@ class VectorEmbeddingBoundaryTest {
     fun `cosineSimilarity - extremely large values handle without overflow`() {
         val vecA = FloatArray(128) { 1e30f }
         val vecB = FloatArray(128) { 1e30f }
-        
+
         val sim = VectorEmbeddingHelper.cosineSimilarity(vecA, vecB)
         // Should still be close to 1.0 if normalized internally or handled correctly
         assertTrue(sim >= 0f && sim <= 1.0f)
@@ -127,7 +126,7 @@ class VectorEmbeddingBoundaryTest {
         val vecA = FloatArray(128) { 0.1f }
         val vecB = FloatArray(128) { 0.1f }
         vecB[0] = Float.NaN
-        
+
         val sim = VectorEmbeddingHelper.cosineSimilarity(vecA, vecB)
         assertTrue("Similarity should be in [0, 1] even with NaNs", sim >= 0f && sim <= 1.0f)
     }
@@ -137,7 +136,7 @@ class VectorEmbeddingBoundaryTest {
         val text = "a".repeat(100000)
         val result = VectorEmbeddingHelper.computeEmbedding(text)
         assertEquals(VectorEmbeddingHelper.EMBEDDING_DIM, result.size)
-        
+
         var sumSquares = 0f
         result.forEach { sumSquares += it * it }
         assertEquals(1.0f, sumSquares, 0.01f)

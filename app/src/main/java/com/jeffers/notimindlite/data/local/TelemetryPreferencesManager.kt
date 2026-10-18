@@ -11,7 +11,8 @@ class TelemetryPreferencesManager(
 ) {
     private val appContext = context.applicationContext
     private val preferences
-        get() = appContext.createDeviceProtectedStorageContext()
+        get() = appContext
+            .createDeviceProtectedStorageContext()
             .getSharedPreferences(profileManager.activePreferencesName, Context.MODE_PRIVATE)
 
     private val _enabled = MutableStateFlow(preferences.getBoolean(KEY_ENABLED, true))

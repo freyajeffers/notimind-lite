@@ -2,13 +2,14 @@ package com.jeffers.notimindlite.data.local
 
 import android.content.Context
 
-
 /**
  * ExhaustivePreferencesRepository: additive repository implementing the full catalog of
  * user-facing options. Kept as a separate class to avoid overwriting the existing
  * PreferencesRepository until reviewed.
  */
-class ExhaustivePreferencesRepository(context: Context) {
+class ExhaustivePreferencesRepository(
+    context: Context
+) {
     private val appContext = context.applicationContext
 
     /** Initialize the active profile's store, not the legacy unscoped store. */

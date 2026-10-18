@@ -8,6 +8,7 @@ import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.drawable.BitmapDrawable
+import android.os.Bundle
 import android.service.notification.NotificationListenerService
 import android.service.notification.StatusBarNotification
 import android.util.Log
@@ -17,18 +18,17 @@ import com.jeffers.notimindlite.data.local.Converters
 import com.jeffers.notimindlite.data.local.NotificationDao
 import com.jeffers.notimindlite.data.local.NotificationEntity
 import com.jeffers.notimindlite.data.local.PreferencesRepository
-import com.jeffers.notimindlite.util.NotificationLauncher
 import com.jeffers.notimindlite.util.NotificationActionExecutor
+import com.jeffers.notimindlite.util.NotificationLauncher
 import com.jeffers.notimindlite.util.VectorEmbeddingHelper
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 import org.json.JSONArray
-import android.os.Bundle
 import java.io.File
-import java.io.FileOutputStream
 import java.io.FileNotFoundException
+import java.io.FileOutputStream
 import java.io.IOException
 import java.util.Collections
 import java.util.LinkedHashMap
@@ -39,11 +39,13 @@ import java.util.LinkedHashMap
  * clean notifications in the Room database.
  */
 class NotificationLoggerService : NotificationListenerService() {
-
     private val serviceJob = SupervisorJob()
     private val scope = CoroutineScope(Dispatchers.IO + serviceJob)
     private val actionExecutor by lazy { NotificationActionExecutor(PreferencesRepository(applicationContext)) }
-    private val embeddingIndexer by lazy { com.jeffers.notimindlite.util.NotificationEmbeddingIndexer() }
+    private val embeddingIndexer by lazy {
+        com.jeffers.notimindlite.util
+            .NotificationEmbeddingIndexer()
+    }
 
     companion object {
         private const val TAG = "NotificationLoggerSrv"
@@ -52,20 +54,19 @@ class NotificationLoggerService : NotificationListenerService() {
         private const val CACHE_LOAD_FACTOR = 0.75f
         private const val ICON_COMPRESSION_QUALITY = 100
 
-
         private val recentLogs: MutableMap<String, Long> = Collections.synchronizedMap(
             object : LinkedHashMap<String, Long>(CACHE_INITIAL_CAPACITY, CACHE_LOAD_FACTOR, true) {
-                override fun removeEldestEntry(eldest: MutableMap.MutableEntry<String, Long>?): Boolean {
-                    return size > MAX_CACHE_CAPACITY
-                }
+                override fun removeEldestEntry(
+                    eldest: MutableMap.MutableEntry<String, Long>?
+                ): Boolean = size > MAX_CACHE_CAPACITY
             }
         )
 
         private val recentContents: MutableMap<String, String> = Collections.synchronizedMap(
             object : LinkedHashMap<String, String>(CACHE_INITIAL_CAPACITY, CACHE_LOAD_FACTOR, true) {
-                override fun removeEldestEntry(eldest: MutableMap.MutableEntry<String, String>?): Boolean {
-                    return size > MAX_CACHE_CAPACITY
-                }
+                override fun removeEldestEntry(
+                    eldest: MutableMap.MutableEntry<String, String>?
+                ): Boolean = size > MAX_CACHE_CAPACITY
             }
         )
 
@@ -94,19 +95,25 @@ class NotificationLoggerService : NotificationListenerService() {
 
         suspend fun markNotificationAsRead(context: Context, key: String) {
             val preferences = PreferencesRepository(context)
-            AppDatabase.getDatabase(context).notificationDao()
+            AppDatabase
+                .getDatabase(context)
+                .notificationDao()
                 .markAsRead(key, preferences.autoDeleteOnRead.value)
         }
 
         suspend fun markNotificationsAsRead(context: Context, keys: List<String>) {
             val preferences = PreferencesRepository(context)
-            AppDatabase.getDatabase(context).notificationDao()
+            AppDatabase
+                .getDatabase(context)
+                .notificationDao()
                 .markAsReadBatch(keys, preferences.autoDeleteOnRead.value)
         }
 
         suspend fun markAllNotificationsAsRead(context: Context) {
             val preferences = PreferencesRepository(context)
-            AppDatabase.getDatabase(context).notificationDao()
+            AppDatabase
+                .getDatabase(context)
+                .notificationDao()
                 .markAllAsRead(preferences.autoDeleteOnRead.value)
         }
     }
@@ -122,7 +129,10 @@ class NotificationLoggerService : NotificationListenerService() {
             val appInfo = packageManager.getApplicationInfo(packageName, 0)
             val drawable = packageManager.getApplicationIcon(appInfo)
             val bitmap = when (drawable) {
-                is BitmapDrawable -> drawable.bitmap
+                is BitmapDrawable -> {
+                    drawable.bitmap
+                }
+
                 else -> {
                     val bmp = Bitmap.createBitmap(
                         drawable.intrinsicWidth.coerceAtLeast(1),
@@ -205,7 +215,7 @@ class NotificationLoggerService : NotificationListenerService() {
         super.onNotificationPosted(sbn)
         Log.d(TAG, "onNotificationPosted: ${sbn.packageName} - ${sbn.id}")
         RestoredNotificationManager.onOriginalAppNotificationPosted(applicationContext, sbn.packageName)
-        
+
         // Use the new extraction helper and individual insert for single posted notifications
         // (Single inserts are already optimized via Room, but we maintain compatibility)
         val entity = extractNotificationEntity(sbn)
@@ -216,17 +226,17 @@ class NotificationLoggerService : NotificationListenerService() {
                 try {
                     val dao = database().notificationDao()
                     val existing = dao.getNotificationByKey(entity.key)
-                    
+
                     // Logic: Only treat as a "new notification" (new row) if the content has changed significantly.
                     // Significant change = title or content is different.
                     // Otherwise, update the existing row (increment update count).
-                    val hasSignificantChange = existing == null || 
-                        existing.title != entity.title || 
+                    val hasSignificantChange = existing == null ||
+                        existing.title != entity.title ||
                         existing.content != entity.content
-                    
+
                     val updateCount = if (hasSignificantChange) 1 else existing.updateCount + 1
                     val originalPostTime = if (hasSignificantChange) entity.postTime else existing.postTime
-                    
+
                     val finalEntity = entity.copy(
                         id = if (hasSignificantChange) 0L else existing.id,
                         updateCount = updateCount,
@@ -247,7 +257,6 @@ class NotificationLoggerService : NotificationListenerService() {
             }
         }
     }
-
 
     private fun isNotificationListenerActive(): Boolean {
         val componentName = ComponentName(applicationContext, NotificationLoggerService::class.java)
@@ -273,7 +282,8 @@ class NotificationLoggerService : NotificationListenerService() {
     // well-covered by NotificationLoggerServiceTest.
     private fun shouldCaptureNotification(sbn: StatusBarNotification): Boolean {
         if (sbn.packageName == applicationContext.packageName) return false
-        val preferences = com.jeffers.notimindlite.data.local.PreferencesRepository(applicationContext)
+        val preferences = com.jeffers.notimindlite.data.local
+            .PreferencesRepository(applicationContext)
         if (!preferences.captureManager.ongoing.value && sbn.isOngoing) return false
         val notification = sbn.notification ?: return false
         if (preferences.captureManager.actionsOnly.value && notification.actions.isNullOrEmpty()) return false
@@ -289,7 +299,6 @@ class NotificationLoggerService : NotificationListenerService() {
         return importance >= preferences.captureManager.minImportance.value
     }
 
-
     private fun extractNotificationEntity(sbn: StatusBarNotification): NotificationEntity? {
         val shouldSkip = !shouldCaptureNotification(sbn) || sbn.packageName == applicationContext.packageName
         val notification = sbn.notification
@@ -297,10 +306,11 @@ class NotificationLoggerService : NotificationListenerService() {
             null
         } else {
             try {
-                com.jeffers.notimindlite.util.NotificationSanitizer(
-                    applicationContext,
-                    ::getOrSaveAppIconUri
-                ).sanitizeAndBuild(sbn, notification)
+                com.jeffers.notimindlite.util
+                    .NotificationSanitizer(
+                        applicationContext,
+                        ::getOrSaveAppIconUri
+                    ).sanitizeAndBuild(sbn, notification)
             } catch (e: SecurityException) {
                 Log.e(TAG, "Failed to extract notification entity - security", e)
                 null
@@ -313,7 +323,6 @@ class NotificationLoggerService : NotificationListenerService() {
             }
         }
     }
-
 
     override fun onNotificationRemoved(sbn: StatusBarNotification) {
         if (!isNotificationListenerActive()) {
@@ -365,5 +374,4 @@ class NotificationLoggerService : NotificationListenerService() {
             }
         }
     }
-
 }

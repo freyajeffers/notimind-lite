@@ -2,8 +2,8 @@ package com.jeffers.notimindlite.domain.search
 
 import android.content.Context
 import android.util.Log
-import com.jeffers.notimindlite.data.local.NotificationEntity
 import com.jeffers.notimindlite.data.local.AppDatabase
+import com.jeffers.notimindlite.data.local.NotificationEntity
 import com.jeffers.notimindlite.util.ReciprocalRankFusion
 import com.jeffers.notimindlite.util.SemanticSearchResult
 import com.jeffers.notimindlite.util.VectorEmbeddingHelper
@@ -13,12 +13,13 @@ import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.withContext
 
 object HybridSearchEngine {
-
     private const val RRF_K = 60.0
     private const val RECENT_CANDIDATE_LIMIT = 1_000
 
     /** Splits user input into normalized tokens for AND matching. */
-    fun tokenizeQuery(query: String): List<String> = query.trim().split(Regex("\\s+"))
+    fun tokenizeQuery(query: String): List<String> = query
+        .trim()
+        .split(Regex("\\s+"))
         .map { it.trim().trim { ch -> !ch.isLetterOrDigit() } }
         .filter { it.isNotEmpty() }
         .distinctBy { it.lowercase() }
@@ -65,11 +66,12 @@ object HybridSearchEngine {
 
         // 2. Vector Pass (Semantic Search)
         val queryVector = VectorEmbeddingHelper.computeEmbedding(trimmedQuery)
-        val semanticResults = notifications.mapNotNull { entity ->
-            val entityVector = entity.embedding ?: return@mapNotNull null
-            val similarity = VectorEmbeddingHelper.cosineSimilarity(queryVector, entityVector)
-            SemanticSearchResult(entity, similarity)
-        }.sortedByDescending { it.similarityScore }
+        val semanticResults = notifications
+            .mapNotNull { entity ->
+                val entityVector = entity.embedding ?: return@mapNotNull null
+                val similarity = VectorEmbeddingHelper.cosineSimilarity(queryVector, entityVector)
+                SemanticSearchResult(entity, similarity)
+            }.sortedByDescending { it.similarityScore }
 
         // 3. Fusion (RRF) — reuse the canonical merger
         val fusedResults = ReciprocalRankFusion.merge(
@@ -100,11 +102,12 @@ object HybridSearchEngine {
 
         // 2. Vector Pass (Semantic Search)
         val queryVector = VectorEmbeddingHelper.computeEmbedding(trimmedQuery)
-        val semanticResults = notifications.mapNotNull { entity ->
-            val entityVector = entity.embedding ?: return@mapNotNull null
-            val similarity = VectorEmbeddingHelper.cosineSimilarity(queryVector, entityVector)
-            SemanticSearchResult(entity, similarity)
-        }.sortedByDescending { it.similarityScore }
+        val semanticResults = notifications
+            .mapNotNull { entity ->
+                val entityVector = entity.embedding ?: return@mapNotNull null
+                val similarity = VectorEmbeddingHelper.cosineSimilarity(queryVector, entityVector)
+                SemanticSearchResult(entity, similarity)
+            }.sortedByDescending { it.similarityScore }
 
         // 3. Fusion (RRF)
         val fusedResults = ReciprocalRankFusion.merge(
@@ -134,17 +137,18 @@ object HybridSearchEngine {
 
         // 2. Vector Pass (Semantic Search)
         val queryVector = VectorEmbeddingHelper.computeEmbedding(trimmedQuery)
-        
+
         // OPTIMIZATION: Limit vector scoring to prevent OOM and latency.
         // We score the union of FTS results and the most recent notifications.
         val recentNotifications = dao.getRecentNotificationsList(RECENT_CANDIDATE_LIMIT)
         val candidateSet = (ftsResults + recentNotifications).distinctBy { it.id }
-        
-        val semanticResults = candidateSet.mapNotNull { entity ->
-            val entityVector = entity.embedding ?: return@mapNotNull null
-            val similarity = VectorEmbeddingHelper.cosineSimilarity(queryVector, entityVector)
-            SemanticSearchResult(entity, similarity)
-        }.sortedByDescending { it.similarityScore }
+
+        val semanticResults = candidateSet
+            .mapNotNull { entity ->
+                val entityVector = entity.embedding ?: return@mapNotNull null
+                val similarity = VectorEmbeddingHelper.cosineSimilarity(queryVector, entityVector)
+                SemanticSearchResult(entity, similarity)
+            }.sortedByDescending { it.similarityScore }
 
         // 3. Fusion (RRF)
         val fusedResults = ReciprocalRankFusion.merge(

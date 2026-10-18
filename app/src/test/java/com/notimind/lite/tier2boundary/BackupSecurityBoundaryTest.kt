@@ -23,10 +23,7 @@ import javax.crypto.spec.GCMParameterSpec
 @RunWith(RobolectricTestRunner::class)
 @OptIn(ExperimentalCoroutinesApi::class)
 class BackupSecurityBoundaryTest : BaseRobolectricTest() {
-
-    private fun generateKey(): SecretKey {
-        return KeyGenerator.getInstance("AES").apply { init(256) }.generateKey()
-    }
+    private fun generateKey(): SecretKey = KeyGenerator.getInstance("AES").apply { init(256) }.generateKey()
 
     private fun createEncryptedBackupFile(sourceText: String, secretKey: SecretKey): File {
         val sourceDb = File.createTempFile("source", ".db").apply { writeText(sourceText) }

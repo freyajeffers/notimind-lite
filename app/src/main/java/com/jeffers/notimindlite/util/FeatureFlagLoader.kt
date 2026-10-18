@@ -15,16 +15,20 @@ private fun fetchFeatureFlagsUrl(url: String): String? {
         requestMethod = "GET"
     }
     return try {
-        if (connection.responseCode !in HTTP_SUCCESS_MIN..HTTP_SUCCESS_MAX
-        ) null
-        else connection.inputStream.bufferedReader().use { it.readText() }
+        if (connection.responseCode !in HTTP_SUCCESS_MIN..HTTP_SUCCESS_MAX) {
+            null
+        } else {
+            connection.inputStream.bufferedReader().use { it.readText() }
+        }
     } finally {
         connection.disconnect()
     }
 }
 
 /** Names used by the remote feature-flags document and the test-mode override. */
-enum class FeatureFlag(val key: String) {
+enum class FeatureFlag(
+    val key: String
+) {
     MOCK_DATA("mock_data_enabled"),
     OFFLOAD_EMBEDDINGS("offload_embeddings"),
     FTS5("use_fts5"),
@@ -42,8 +46,11 @@ enum class FeatureFlag(val key: String) {
  * Accepted documents are either `{ "flags": { "use_fts5": true } }` or a flat object. Test
  * mode flags are a comma-separated list (or the same JSON object) and override remote values.
  */
-class FeatureFlagLoader(private val fetch: (String) -> String? = ::fetchFeatureFlagsUrl) {
+class FeatureFlagLoader(
+    private val fetch: (String) -> String? = ::fetchFeatureFlagsUrl
+) {
     @Volatile private var remoteFlags: Set<String> = emptySet()
+
     @Volatile private var testFlags: Set<String> = emptySet()
 
     fun load(json: String): Set<String> {
@@ -52,12 +59,17 @@ class FeatureFlagLoader(private val fetch: (String) -> String? = ::fetchFeatureF
         return parsed
     }
 
-    fun loadFromUrl(url: String): Boolean {
-        return if (url.isBlank()) {
+    fun loadFromUrl(url: String): Boolean = if (url.isBlank()) {
+        false
+    } else {
+        val body = runCatching { fetch(url) }.getOrNull()
+        if (body == null) {
             false
         } else {
-            val body = runCatching { fetch(url) }.getOrNull()
-            if (body == null) false else runCatching { load(body); true }.getOrDefault(false)
+            runCatching {
+                load(body)
+                true
+            }.getOrDefault(false)
         }
     }
 
@@ -77,10 +89,18 @@ class FeatureFlagLoader(private val fetch: (String) -> String? = ::fetchFeatureF
     private fun parseFlags(serialized: String, allowList: Boolean = false): Set<String> {
         val trimmed = serialized.trim()
         return when {
-            trimmed.isEmpty() -> emptySet()
-            allowList && !trimmed.startsWith("{") -> {
-                trimmed.split(',', '\n', ';').map(::normalize).filter(String::isNotBlank).toSet()
+            trimmed.isEmpty() -> {
+                emptySet()
             }
+
+            allowList && !trimmed.startsWith("{") -> {
+                trimmed
+                    .split(',', '\n', ';')
+                    .map(::normalize)
+                    .filter(String::isNotBlank)
+                    .toSet()
+            }
+
             else -> {
                 // Keep parsing independent of Android's org.json stubs so JVM unit tests and
                 // release builds have identical fail-closed behavior.
@@ -93,5 +113,4 @@ class FeatureFlagLoader(private val fetch: (String) -> String? = ::fetchFeatureF
     }
 
     private fun normalize(value: String): String = value.trim().lowercase().replace('-', '_')
-
 }

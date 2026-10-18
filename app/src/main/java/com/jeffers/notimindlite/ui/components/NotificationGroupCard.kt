@@ -32,13 +32,13 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.PlainTooltip
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TooltipBox
 import androidx.compose.material3.TooltipAnchorPosition
+import androidx.compose.material3.TooltipBox
 import androidx.compose.material3.TooltipDefaults
 import androidx.compose.material3.rememberTooltipState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.key
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -79,7 +79,7 @@ fun groupNotifications(
 ): List<UiNotificationGroup> {
     if (items.isEmpty()) return emptyList()
     return items
-        .groupBy { if (groupByApp) (it.groupKey ?: it.packageName) else (it.key ?: it.postTime.toString()) }
+        .groupBy { if (groupByApp) (it.groupKey ?: it.packageName) else it.key }
         .map { (groupKey, groupItems) ->
             val sortedItems = groupItems.sortedByDescending { it.postTime }
             val first = sortedItems.first()
@@ -92,14 +92,15 @@ fun groupNotifications(
                 isPinned = sortedItems.any { it.isPinned },
                 items = sortedItems
             )
-        }
-        .sortedWith(compareByDescending<UiNotificationGroup> { it.isPinned }.let { comparator ->
-            when (sortOrder) {
-                "oldest" -> comparator.thenBy { it.latestPostTime }
-                "app" -> comparator.thenBy { it.appName.lowercase() }
-                else -> comparator.thenByDescending { it.latestPostTime }
+        }.sortedWith(
+            compareByDescending<UiNotificationGroup> { it.isPinned }.let { comparator ->
+                when (sortOrder) {
+                    "oldest" -> comparator.thenBy { it.latestPostTime }
+                    "app" -> comparator.thenBy { it.appName.lowercase() }
+                    else -> comparator.thenByDescending { it.latestPostTime }
+                }
             }
-        })
+        )
 }
 
 /**
@@ -115,9 +116,9 @@ fun NotificationGroupCard(
     isGroupExpanded: Boolean,
     onToggleGroupExpand: () -> Unit,
     renderChildCard: @Composable (NotificationEntity) -> Unit,
+    modifier: Modifier = Modifier,
     showAppIcons: Boolean = true,
-    compactMode: Boolean = false,
-    modifier: Modifier = Modifier
+    compactMode: Boolean = false
 ) {
     val scope = rememberCoroutineScope()
     val latestItem = remember(group.items) { group.items.firstOrNull() }

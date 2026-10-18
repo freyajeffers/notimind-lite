@@ -17,7 +17,6 @@ import org.robolectric.shadows.ShadowUserManager
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [33])
 class DirectBootVerificationTest {
-
     private lateinit var context: Context
     private lateinit var userManager: UserManager
     private lateinit var shadowUserManager: ShadowUserManager
@@ -35,11 +34,11 @@ class DirectBootVerificationTest {
     fun `BootReceiver should skip restoration when device is LOCKED`() {
         // Simulate LOCKED state
         shadowUserManager.setUserUnlocked(false)
-        
+
         val bootIntent = Intent(Intent.ACTION_LOCKED_BOOT_COMPLETED)
-        
+
         bootReceiver.onReceive(context, bootIntent)
-        
+
         assertTrue(true) // Reached here without crashing
     }
 
@@ -47,11 +46,11 @@ class DirectBootVerificationTest {
     fun `BootReceiver should perform restoration when device is UNLOCKED`() {
         // Simulate UNLOCKED state
         shadowUserManager.setUserUnlocked(true)
-        
+
         val bootIntent = Intent(Intent.ACTION_BOOT_COMPLETED)
-        
+
         bootReceiver.onReceive(context, bootIntent)
-        
+
         assertTrue(true) // Reached here without crashing
     }
 }

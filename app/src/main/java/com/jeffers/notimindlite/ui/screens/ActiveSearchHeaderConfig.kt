@@ -109,7 +109,8 @@ private fun activeSearchHeaderContent(config: ActiveSearchHeaderConfig) {
                 singleLine = true,
                 keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
                 keyboardActions = KeyboardActions(onDone = { config.onDone() }),
-                shape = androidx.compose.foundation.shape.RoundedCornerShape(12.dp)
+                shape = androidx.compose.foundation.shape
+                    .RoundedCornerShape(12.dp)
             )
             activeSearchDropdown(
                 ActiveSearchDropdownConfig(
@@ -134,14 +135,17 @@ private fun activeSearchDropdown(
         expanded = config.expanded && (
             config.suggestions.isNotEmpty() ||
                 (config.query.isBlank() && config.recentSearches.isNotEmpty())
-            ),
+        ),
         onDismissRequest = { config.onExpandedChange(false) },
         properties = PopupProperties(focusable = false),
         modifier = Modifier.fillMaxWidth(SEARCH_MENU_WIDTH_FRACTION)
     ) {
         val matchingRecent = remember(config.query, config.recentSearches) {
-            if (config.query.isBlank()) config.recentSearches
-            else config.recentSearches.filter { it.contains(config.query, ignoreCase = true) }
+            if (config.query.isBlank()) {
+                config.recentSearches
+            } else {
+                config.recentSearches.filter { it.contains(config.query, ignoreCase = true) }
+            }
         }
         matchingRecent.forEach { recent ->
             DropdownMenuItem(

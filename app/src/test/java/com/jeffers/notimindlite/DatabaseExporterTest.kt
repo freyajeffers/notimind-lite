@@ -20,7 +20,6 @@ import java.io.File
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [33])
 class DatabaseExporterTest {
-
     private lateinit var context: Context
 
     @Before
@@ -85,7 +84,7 @@ class DatabaseExporterTest {
         val csvString = DatabaseExporter.exportToCsvString(
             listOf(entityEqual, entityPlus, entityMinus, entityAt, entityTab, entityLeadingSpaceFormula)
         )
-        
+
         assertNotNull(csvString)
 
         assertTrue(csvString.contains("\"'=1+1\""))
@@ -99,7 +98,8 @@ class DatabaseExporterTest {
 
     @Test
     fun testExportAppliesPrivacyPreferences() {
-        val preferences = com.jeffers.notimindlite.data.local.PreferencesRepository(context)
+        val preferences = com.jeffers.notimindlite.data.local
+            .PreferencesRepository(context)
         preferences.exportManager.setAnonymizeTitles(true)
         preferences.securityManager.setRedactPii(true)
         val entity = NotificationEntity(

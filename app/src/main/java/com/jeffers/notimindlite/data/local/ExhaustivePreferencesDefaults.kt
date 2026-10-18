@@ -44,8 +44,11 @@ internal object ExhaustivePreferencesDefaults {
             backing,
             edit,
             ExhaustivePreferencesRepository.KEY_RETENTION_DAYS,
-            if (BuildConfig.DEBUG) ExhaustivePreferencesRepository.RETAIN_ALL_DAYS
-            else ExhaustivePreferencesRepository.DEFAULT_RETENTION_DAYS
+            if (BuildConfig.DEBUG) {
+                ExhaustivePreferencesRepository.RETAIN_ALL_DAYS
+            } else {
+                ExhaustivePreferencesRepository.DEFAULT_RETENTION_DAYS
+            }
         )
         putIfAbsentBoolean(backing, edit, ExhaustivePreferencesRepository.KEY_RETAIN_DISMISSED, true)
         putIfAbsentInt(backing, edit, ExhaustivePreferencesRepository.KEY_MAX_DB_MB, MAX_DATABASE_SIZE_MB)
@@ -108,7 +111,6 @@ internal object ExhaustivePreferencesDefaults {
         putIfAbsentInt(backing, edit, ExhaustivePreferencesRepository.KEY_MIN_IMPORTANCE, 0)
         putIfAbsentBoolean(backing, edit, ExhaustivePreferencesRepository.KEY_CAPTURE_ACTIONS_ONLY, false)
     }
-
 
     fun applyDisplayDefaults(backing: SharedPreferences, edit: SharedPreferences.Editor) {
         putIfAbsentBoolean(backing, edit, ExhaustivePreferencesRepository.KEY_SHOW_APP_ICONS, true)

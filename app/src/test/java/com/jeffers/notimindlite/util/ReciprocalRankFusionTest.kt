@@ -8,7 +8,6 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class ReciprocalRankFusionTest {
-
     private fun createEntity(id: Long, title: String) = NotificationEntity(
         key = "key_$id",
         packageName = "com.test",
@@ -45,7 +44,7 @@ class ReciprocalRankFusionTest {
     fun `merge should correctly rank entities present in both lists`() {
         val entity1 = createEntity(1, "T1")
         val entity2 = createEntity(2, "T2")
-        
+
         val ftsResults = listOf(entity1, entity2)
         val semanticResults = listOf(
             SemanticSearchResult(entity2, 0.9f),
@@ -56,7 +55,7 @@ class ReciprocalRankFusionTest {
 
         // Entity 2 is rank 2 in FTS and rank 1 in Semantic
         // Entity 1 is rank 1 in FTS and rank 2 in Semantic
-        // In RRF, they might be close, but since they are symmetric here, 
+        // In RRF, they might be close, but since they are symmetric here,
         // let's check if both are present and sorted.
         assertEquals(2, fused.size)
         assertTrue(fused[0].notification.id == 2L || fused[0].notification.id == 1L)
@@ -92,9 +91,9 @@ class ReciprocalRankFusionTest {
 
         // Heavily weight Semantic
         val fused = ReciprocalRankFusion.merge(
-            ftsResults, 
-            semanticResults, 
-            ftsWeight = 0.1, 
+            ftsResults,
+            semanticResults,
+            ftsWeight = 0.1,
             semanticWeight = 10.0
         )
 

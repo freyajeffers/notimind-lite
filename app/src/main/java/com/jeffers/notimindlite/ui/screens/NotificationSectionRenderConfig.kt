@@ -77,8 +77,11 @@ private fun notificationSectionCard(
             highlightQuery = config.highlightQuery,
             onToggleExpand = {
                 config.expandedCardsUpdater(
-                    if (cardExpanded) config.expandedCards - item.key
-                    else config.expandedCards + item.key
+                    if (cardExpanded) {
+                        config.expandedCards - item.key
+                    } else {
+                        config.expandedCards + item.key
+                    }
                 )
             },
             showAppIcon = config.showAppIcon,

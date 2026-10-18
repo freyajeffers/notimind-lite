@@ -19,19 +19,37 @@ fun record(userId: String, profileId: String, entity: NotificationEntity) = JSON
     .put("payload", payload(entity))
 
 fun payload(e: NotificationEntity) = JSONObject()
-    .put("key", e.key).put("packageName", e.packageName).put("appName", e.appName)
-    .put("appIconUri", e.appIconUri ?: JSONObject.NULL).put("title", e.title).put("content", e.content)
-    .put("postTime", e.postTime).put("lastUpdatedTime", e.lastUpdatedTime).put("updateCount", e.updateCount)
-    .put("isDismissed", e.isDismissed).put("isPersistent", e.isPersistent).put("isRead", e.isRead)
-    .put("isGroupSummary", e.isGroupSummary).put("category", e.category ?: JSONObject.NULL)
-    .put("channelId", e.channelId ?: JSONObject.NULL).put("subText", e.subText ?: JSONObject.NULL)
-    .put("bigText", e.bigText ?: JSONObject.NULL).put("inboxLinesJson", e.inboxLinesJson ?: JSONObject.NULL)
-    .put("priority", e.priority).put("groupKey", e.groupKey ?: JSONObject.NULL).put("isOngoing", e.isOngoing)
-    .put("isClearable", e.isClearable).put("actionsCount", e.actionsCount)
-    .put("dismissReason", e.dismissReason ?: JSONObject.NULL).put("dismissTime", e.dismissTime ?: JSONObject.NULL)
-    .put("intentUri", e.intentUri ?: JSONObject.NULL).put("isPinned", e.isPinned)
-    .put("actionLabels", e.actionLabels ?: JSONObject.NULL).put("smallIconRes", e.smallIconRes)
-    .put("syncStatus", e.syncStatus.name).put("lastSyncedAt", e.lastSyncedAt)
+    .put("key", e.key)
+    .put("packageName", e.packageName)
+    .put("appName", e.appName)
+    .put("appIconUri", e.appIconUri ?: JSONObject.NULL)
+    .put("title", e.title)
+    .put("content", e.content)
+    .put("postTime", e.postTime)
+    .put("lastUpdatedTime", e.lastUpdatedTime)
+    .put("updateCount", e.updateCount)
+    .put("isDismissed", e.isDismissed)
+    .put("isPersistent", e.isPersistent)
+    .put("isRead", e.isRead)
+    .put("isGroupSummary", e.isGroupSummary)
+    .put("category", e.category ?: JSONObject.NULL)
+    .put("channelId", e.channelId ?: JSONObject.NULL)
+    .put("subText", e.subText ?: JSONObject.NULL)
+    .put("bigText", e.bigText ?: JSONObject.NULL)
+    .put("inboxLinesJson", e.inboxLinesJson ?: JSONObject.NULL)
+    .put("priority", e.priority)
+    .put("groupKey", e.groupKey ?: JSONObject.NULL)
+    .put("isOngoing", e.isOngoing)
+    .put("isClearable", e.isClearable)
+    .put("actionsCount", e.actionsCount)
+    .put("dismissReason", e.dismissReason ?: JSONObject.NULL)
+    .put("dismissTime", e.dismissTime ?: JSONObject.NULL)
+    .put("intentUri", e.intentUri ?: JSONObject.NULL)
+    .put("isPinned", e.isPinned)
+    .put("actionLabels", e.actionLabels ?: JSONObject.NULL)
+    .put("smallIconRes", e.smallIconRes)
+    .put("syncStatus", e.syncStatus.name)
+    .put("lastSyncedAt", e.lastSyncedAt)
 
 fun entity(p: JSONObject): NotificationEntity? = p.optString("key").takeIf { it.isNotBlank() }?.let {
     NotificationEntity(
@@ -102,5 +120,7 @@ fun encode(value: String) = java.net.URLEncoder.encode(value, Charsets.UTF_8.nam
 
 // JSONObject helpers
 fun JSONObject.optNullableString(name: String) = if (isNull(name)) null else optString(name).takeIf { it.isNotBlank() }
+
 fun JSONObject.optNullableInt(name: String) = if (isNull(name)) null else optInt(name)
+
 fun JSONObject.optNullableLong(name: String) = if (isNull(name)) null else optLong(name)

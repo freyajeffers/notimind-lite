@@ -5,10 +5,14 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 
-class SyncPreferencesManager(context: Context, private val profileManager: ProfilePreferencesManager) {
+class SyncPreferencesManager(
+    context: Context,
+    private val profileManager: ProfilePreferencesManager
+) {
     private val appContext = context.applicationContext
     private val preferences
-        get() = appContext.createDeviceProtectedStorageContext()
+        get() = appContext
+            .createDeviceProtectedStorageContext()
             .getSharedPreferences(profileManager.activePreferencesName, Context.MODE_PRIVATE)
 
     private val _syncInterval = MutableStateFlow(preferences.getInt(KEY_SYNC_INTERVAL, DEFAULT_SYNC_INTERVAL))

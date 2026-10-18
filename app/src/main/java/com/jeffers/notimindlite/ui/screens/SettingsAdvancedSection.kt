@@ -17,30 +17,30 @@ import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.setValue
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.unit.dp
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
-import com.jeffers.notimindlite.data.local.PreferencesRepository
+import androidx.compose.ui.unit.dp
+import com.jeffers.notimindlite.BuildConfig
+import com.jeffers.notimindlite.R
 import com.jeffers.notimindlite.data.local.AppDatabase
 import com.jeffers.notimindlite.data.local.DbEncryptionMode
+import com.jeffers.notimindlite.data.local.PreferencesRepository
 import com.jeffers.notimindlite.migration.EncryptionMigrationConsent
 import com.jeffers.notimindlite.migration.MigrationRunner
 import com.jeffers.notimindlite.migration.MigrationState
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import com.jeffers.notimindlite.BuildConfig
-import com.jeffers.notimindlite.R
 
 @Composable
 private fun advancedSwitchRow(
@@ -124,10 +124,16 @@ fun settingsAdvancedSection(
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
-    val encryptionEnabled = preferencesRepository.securityManager.dbEncrypted.collectAsState(initial = false).value &&
-        preferencesRepository.securityManager.dbEncryptionMode.collectAsState(initial = DbEncryptionMode.NONE).value !=
-            DbEncryptionMode.NONE
-    val profileId = preferencesRepository.profileManager.activeProfileId.collectAsState().value
+    val encryptionEnabled = preferencesRepository.securityManager.dbEncrypted
+        .collectAsState(initial = false)
+        .value &&
+        preferencesRepository.securityManager.dbEncryptionMode
+            .collectAsState(initial = DbEncryptionMode.NONE)
+            .value !=
+        DbEncryptionMode.NONE
+    val profileId = preferencesRepository.profileManager.activeProfileId
+        .collectAsState()
+        .value
     val databaseName = if (profileId == PreferencesRepository.DEFAULT_PROFILE_ID) {
         AppDatabase.CE_DATABASE_NAME
     } else {
@@ -142,27 +148,31 @@ fun settingsAdvancedSection(
     val lowMemoryMode by preferencesRepository.lowMemoryMode.collectAsState(initial = false)
     val vectorCacheMax by preferencesRepository.vectorCacheMax.collectAsState(initial = 1000)
 
-    advancedSettingsCard(AdvancedSettingsConfig(
-        preferencesRepository,
-        enableTelemetry,
-        lowMemoryMode,
-        maxDbMb,
-        encryptionEnabled && preflight.plaintextExists,
-        migrationMessage,
-        { showMigrationConfirmation = true },
-        vectorCacheMax
-    ))
+    advancedSettingsCard(
+        AdvancedSettingsConfig(
+            preferencesRepository,
+            enableTelemetry,
+            lowMemoryMode,
+            maxDbMb,
+            encryptionEnabled && preflight.plaintextExists,
+            migrationMessage,
+            { showMigrationConfirmation = true },
+            vectorCacheMax
+        )
+    )
 
-    migrationConfirmationDialog(MigrationDialogConfig(
-        visible = showMigrationConfirmation,
-        context = context,
-        scope = scope,
-        databaseName = databaseName,
-        failureMessage = migrationFailureMessage,
-        onDismiss = { showMigrationConfirmation = false },
-        onMessage = { migrationMessage = it },
-        onMigrationCompleted = onMigrationCompleted
-    ))
+    migrationConfirmationDialog(
+        MigrationDialogConfig(
+            visible = showMigrationConfirmation,
+            context = context,
+            scope = scope,
+            databaseName = databaseName,
+            failureMessage = migrationFailureMessage,
+            onDismiss = { showMigrationConfirmation = false },
+            onMessage = { migrationMessage = it },
+            onMigrationCompleted = onMigrationCompleted
+        )
+    )
 }
 
 @Composable

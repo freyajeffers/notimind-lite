@@ -7,13 +7,13 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.jeffers.notimindlite.crypto.SqlCipherKeyManager
 import com.jeffers.notimindlite.data.local.AppDatabase
 import com.jeffers.notimindlite.data.local.NotificationEntity
-import java.io.File
 import kotlinx.coroutines.runBlocking
 import net.zetetic.database.sqlcipher.SupportOpenHelperFactory
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
+import java.io.File
 
 /** Physical-device acceptance test for plaintext copy, cutover, and encrypted reopen. */
 @RunWith(AndroidJUnit4::class)
@@ -38,7 +38,8 @@ class EncryptedMigrationDeviceTest {
 
         try {
             source = Room.databaseBuilder(context, AppDatabase::class.java, sourceName).build()
-            target = Room.databaseBuilder(context, AppDatabase::class.java, encryptedName)
+            target = Room
+                .databaseBuilder(context, AppDatabase::class.java, encryptedName)
                 .openHelperFactory(factory)
                 .build()
             source.notificationDao().insertNotification(
@@ -74,11 +75,13 @@ class EncryptedMigrationDeviceTest {
             assertTrue(sourceFile.isFile)
             assertTrue(!quarantineFile.exists())
 
-            val reopened = Room.databaseBuilder(context, AppDatabase::class.java, sourceName)
-                .openHelperFactory(SupportOpenHelperFactory(
-                    SqlCipherKeyManager.getOrCreatePassphrase(context, identityName)
-                ))
-                .build()
+            val reopened = Room
+                .databaseBuilder(context, AppDatabase::class.java, sourceName)
+                .openHelperFactory(
+                    SupportOpenHelperFactory(
+                        SqlCipherKeyManager.getOrCreatePassphrase(context, identityName)
+                    )
+                ).build()
             try {
                 assertEquals(1, reopened.notificationDao().getAllNotificationsList().size)
             } finally {

@@ -11,8 +11,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Restore
-import com.jeffers.notimindlite.ui.components.BackupKeyDialog
-import com.jeffers.notimindlite.ui.components.RestoreBackupDialog
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -28,8 +26,10 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.jeffers.notimindlite.BuildConfig
 import com.jeffers.notimindlite.R
-import com.jeffers.notimindlite.util.DatabaseExporter
 import com.jeffers.notimindlite.data.local.PreferenceManager
+import com.jeffers.notimindlite.ui.components.BackupKeyDialog
+import com.jeffers.notimindlite.ui.components.RestoreBackupDialog
+import com.jeffers.notimindlite.util.DatabaseExporter
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -53,7 +53,8 @@ internal fun restoreCard(
     ) {
         Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
             Text(
-                text = androidx.compose.ui.res.stringResource(id = R.string.settings_section_restore),
+                text = androidx.compose.ui.res
+                    .stringResource(id = R.string.settings_section_restore),
                 style = androidx.compose.material3.MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.SemiBold
             )
@@ -62,11 +63,13 @@ internal fun restoreCard(
                 Spacer(Modifier.width(8.dp))
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
-                        text = androidx.compose.ui.res.stringResource(id = R.string.settings_restore_on_boot_title),
+                        text = androidx.compose.ui.res
+                            .stringResource(id = R.string.settings_restore_on_boot_title),
                         style = androidx.compose.material3.MaterialTheme.typography.bodyLarge
                     )
                     Text(
-                        text = androidx.compose.ui.res.stringResource(id = R.string.settings_restore_on_boot_desc),
+                        text = androidx.compose.ui.res
+                            .stringResource(id = R.string.settings_restore_on_boot_desc),
                         style = androidx.compose.material3.MaterialTheme.typography.bodySmall,
                         color = androidx.compose.material3.MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -122,7 +125,8 @@ fun restoreDialogs(config: RestoreDialogConfig) {
     val currentUri = config.selectedBackupUri
     if (config.showRestoreDialog && currentUri != null) {
         val pickedDisplayName = currentUri.lastPathSegment
-            ?: androidx.compose.ui.res.stringResource(id = R.string.settings_restore_picked_default_name)
+            ?: androidx.compose.ui.res
+                .stringResource(id = R.string.settings_restore_picked_default_name)
         RestoreBackupDialog(
             fileName = pickedDisplayName,
             onDismiss = config.onRestoreDismiss,
@@ -149,8 +153,11 @@ fun restoreDialogs(config: RestoreDialogConfig) {
                         passphrase
                     )
                     config.onSyncMessage(
-                        if (result.isSuccess) "Backup created successfully"
-                        else "Backup failed: ${result.exceptionOrNull()?.localizedMessage}"
+                        if (result.isSuccess) {
+                            "Backup created successfully"
+                        } else {
+                            "Backup failed: ${result.exceptionOrNull()?.localizedMessage}"
+                        }
                     )
                 }
             }
@@ -168,7 +175,8 @@ suspend fun runRestore(
         context.contentResolver.openInputStream(uri)?.use { input ->
             FileOutputStream(cacheFile).use { output -> input.copyTo(output) }
         } ?: return@withContext Result.failure(IllegalStateException("Could not open backup URI"))
-        val key = com.jeffers.notimindlite.domain.backup.generateBackupKey(context)
+        val key = com.jeffers.notimindlite.domain.backup
+            .generateBackupKey(context)
         DatabaseExporter.performRestore(context, cacheFile, key, passphrase)
     } finally {
         passphrase?.fill('\u0000')

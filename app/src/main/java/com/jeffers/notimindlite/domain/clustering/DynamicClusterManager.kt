@@ -396,20 +396,15 @@ object DynamicClusterManager {
         return flatMap
     }
 
-    fun getHierarchicalClusters(): Map<String, ClusterNode> {
-        return rootClusters
-    }
+    fun getHierarchicalClusters(): Map<String, ClusterNode> = rootClusters
 
-    fun getSubClusters(domain: String): Map<String, ClusterNode>? {
-        return rootClusters[domain]?.subClusters
-    }
+    fun getSubClusters(domain: String): Map<String, ClusterNode>? = rootClusters[domain]?.subClusters
 
-    fun findMatchingClusters(queryTokens: List<String>): Map<String, Set<ClusterNode>> {
-        return queryTokens.asSequence()
-            .flatMap { token -> matchesForToken(token) }
-            .groupBy({ it.first }, { it.second })
-            .mapValues { (_, nodes) -> nodes.toSet() }
-    }
+    fun findMatchingClusters(queryTokens: List<String>): Map<String, Set<ClusterNode>> = queryTokens
+        .asSequence()
+        .flatMap { token -> matchesForToken(token) }
+        .groupBy({ it.first }, { it.second })
+        .mapValues { (_, nodes) -> nodes.toSet() }
 
     private fun matchesForToken(token: String): Sequence<Pair<String, ClusterNode>> {
         val lowerToken = token.lowercase()
@@ -419,11 +414,11 @@ object DynamicClusterManager {
             } else {
                 emptySequence()
             }
-            val subMatches = domainNode.subClusters.asSequence()
+            val subMatches = domainNode.subClusters
+                .asSequence()
                 .filter { (subName, subNode) ->
                     lowerToken == subName || subNode.keywords.contains(lowerToken)
-                }
-                .map { (_, subNode) -> domainName to subNode }
+                }.map { (_, subNode) -> domainName to subNode }
             domainMatch + subMatches
         }
     }
