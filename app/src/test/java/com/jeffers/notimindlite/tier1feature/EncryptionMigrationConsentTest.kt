@@ -1,4 +1,4 @@
-package com.notimind.lite.tier1feature
+package com.jeffers.notimindlite.tier1feature
 
 import android.content.Context
 import androidx.test.core.app.ApplicationProvider

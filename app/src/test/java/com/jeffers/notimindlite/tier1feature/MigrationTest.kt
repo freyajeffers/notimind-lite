@@ -1,4 +1,4 @@
-package com.notimind.lite.tier1feature
+package com.jeffers.notimindlite.tier1feature
 
 import androidx.room.Room
 import androidx.room.testing.MigrationTestHelper

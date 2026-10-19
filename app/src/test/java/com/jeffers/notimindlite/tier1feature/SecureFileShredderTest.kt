@@ -1,4 +1,4 @@
-package com.notimind.lite.tier1feature
+package com.jeffers.notimindlite.tier1feature
 
 import com.jeffers.notimindlite.migration.SecureFileShredder
 import org.junit.Assert.assertFalse

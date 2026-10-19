@@ -1,7 +1,7 @@
-package com.notimind.lite.tier2boundary
+package com.jeffers.notimindlite.tier2boundary
 
+import com.jeffers.notimindlite.base.BaseRobolectricTest
 import com.jeffers.notimindlite.util.DatabaseExporter
-import com.notimind.lite.base.BaseRobolectricTest
 import org.json.JSONArray
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull

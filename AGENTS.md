@@ -29,7 +29,7 @@ and bidirectional Firestore sync.
 ## 🧱 Package Map (Production Source)
 
 Production code lives **exclusively** under `com.jeffers.notimindlite.*`. Tests live
-under `com.notimind.lite.*` — see Test Stack below.
+under `com.jeffers.notimindlite.*` — see Test Stack below.
 
 ```
 com.jeffers.notimindlite
@@ -159,18 +159,18 @@ ASK the user which wins before applying.
 
 ### Test Package Tiers (Tiered Bottom-Up)
 
-Tests live under `app/src/test/java/com/notimind/lite/...` — a deliberately different
+Tests live under `app/src/test/java/com/jeffers/notimindlite/...` — a deliberately different
 root from production to keep test infrastructure namespaced.
 
 | Tier         | Package                             | Purpose                                                                                                                                           |
 | ------------ | ----------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
 | 0 (legacy)   | `com.jeffers.notimindlite.*`        | Older scattered tests co-located with prod package; new tests go to tiers 1–4                                                                     |
-| 1 Feature    | `com.notimind.lite.tier1_feature`   | Unit tests for one component in isolation (DAO, screen, Worker, ViewModel)                                                                        |
-| 2 Boundary   | `com.notimind.lite.tier2_boundary`  | Two-component boundaries (security, sync, RRF, vector, snooze loop, debounce, GCM integrity, export sanitization, persistence, backup)            |
-| 3 Pairwise   | `com.notimind.lite.tier3_pairwise`  | Cross-feature integration (BootReceiver ↔ DB, NotificationLoggerService ↔ DB, Settings ↔ Clear Log, Sync ↔ Repository, ViewModel ↔ UI State) |
-| 4 Real-World | `com.notimind.lite.tier4_realworld` | Chaos / load / lifecycle (CloudChaos, NotificationBurst, PermissionRevocationLifecycle, EndToEndAppLifecycle, HighLoadBurst)                      |
+| 1 Feature    | `com.jeffers.notimindlite.tier1_feature`   | Unit tests for one component in isolation (DAO, screen, Worker, ViewModel)                                                                        |
+| 2 Boundary   | `com.jeffers.notimindlite.tier2_boundary`  | Two-component boundaries (security, sync, RRF, vector, snooze loop, debounce, GCM integrity, export sanitization, persistence, backup)            |
+| 3 Pairwise   | `com.jeffers.notimindlite.tier3_pairwise`  | Cross-feature integration (BootReceiver ↔ DB, NotificationLoggerService ↔ DB, Settings ↔ Clear Log, Sync ↔ Repository, ViewModel ↔ UI State) |
+| 4 Real-World | `com.jeffers.notimindlite.tier4_realworld` | Chaos / load / lifecycle (CloudChaos, NotificationBurst, PermissionRevocationLifecycle, EndToEndAppLifecycle, HighLoadBurst)                      |
 
-Shared base class: `com.notimind.lite.base.BaseRobolectricTest`
+Shared base class: `com.jeffers.notimindlite.base.BaseRobolectricTest`
 (`@RunWith(RobolectricTestRunner::class)`, `@Config(sdk = [33])`,
 in-memory Room via `Room.inMemoryDatabaseBuilder().allowMainThreadQueries()`,
 `PRAGMA foreign_keys = OFF`, calls `AppDatabase.setTestInstance` and `resetInstance`).

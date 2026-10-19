@@ -1,11 +1,11 @@
-package com.notimind.lite.tier1feature
+package com.jeffers.notimindlite.tier1feature
 
 import androidx.room.Room
+import com.jeffers.notimindlite.base.BaseRobolectricTest
 import com.jeffers.notimindlite.data.local.AppDatabase
 import com.jeffers.notimindlite.data.local.NotificationEntity
 import com.jeffers.notimindlite.migration.MigrationRunner
 import com.jeffers.notimindlite.migration.MigrationState
-import com.notimind.lite.base.BaseRobolectricTest
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Test

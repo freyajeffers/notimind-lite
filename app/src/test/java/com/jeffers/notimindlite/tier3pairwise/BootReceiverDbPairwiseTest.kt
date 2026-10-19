@@ -1,12 +1,12 @@
-package com.notimind.lite.tier3pairwise
+package com.jeffers.notimindlite.tier3pairwise
 
 import android.app.NotificationManager
 import android.content.Context
 import android.content.Intent
 import android.os.Build
 import androidx.core.app.NotificationCompat
+import com.jeffers.notimindlite.base.BaseRobolectricTest
 import com.jeffers.notimindlite.receiver.BootReceiver
-import com.notimind.lite.base.BaseRobolectricTest
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertTrue
 import org.junit.Test

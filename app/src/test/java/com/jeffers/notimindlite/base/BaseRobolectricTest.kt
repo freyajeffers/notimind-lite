@@ -1,4 +1,4 @@
-package com.notimind.lite.base
+package com.jeffers.notimindlite.base
 
 import android.app.Notification
 import android.content.Context

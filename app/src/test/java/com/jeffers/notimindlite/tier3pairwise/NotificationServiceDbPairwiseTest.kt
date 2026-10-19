@@ -1,7 +1,7 @@
-package com.notimind.lite.tier3pairwise
+package com.jeffers.notimindlite.tier3pairwise
 
+import com.jeffers.notimindlite.base.BaseRobolectricTest
 import com.jeffers.notimindlite.service.NotificationLoggerService
-import com.notimind.lite.base.BaseRobolectricTest
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll

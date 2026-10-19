@@ -1,10 +1,10 @@
-package com.notimind.lite.tier2boundary
+package com.jeffers.notimindlite.tier2boundary
 
 import android.content.Intent
 import android.content.pm.PackageManager
+import com.jeffers.notimindlite.base.BaseRobolectricTest
 import com.jeffers.notimindlite.data.local.AppDatabase
 import com.jeffers.notimindlite.receiver.BootReceiver
-import com.notimind.lite.base.BaseRobolectricTest
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
@@ -71,7 +71,7 @@ class ArchitectureBoundaryTest : BaseRobolectricTest() {
     @Test
     fun tc_R1_T2_004_intentFilterActionIsolation() = runBlocking {
         val receiver = BootReceiver()
-        val unhandledIntent = Intent("com.notimind.lite.UNHANDLED_CUSTOM_ACTION")
+        val unhandledIntent = Intent("com.jeffers.notimindlite.UNHANDLED_CUSTOM_ACTION")
 
         receiver.onReceive(context, unhandledIntent)
         // H3: assert the receiver silently swallowed the unhandled action without posting

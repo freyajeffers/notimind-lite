@@ -1,4 +1,4 @@
-package com.notimind.lite.base
+package com.jeffers.notimindlite.base
 
 import android.content.Context
 import androidx.room.Room

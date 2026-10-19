@@ -1,4 +1,4 @@
-package com.notimind.lite.tier4realworld
+package com.jeffers.notimindlite.tier4realworld
 
 import com.google.android.gms.tasks.Tasks
 import com.google.firebase.firestore.CollectionReference
@@ -8,13 +8,13 @@ import com.google.firebase.firestore.FirebaseFirestoreException
 import com.google.firebase.firestore.QueryDocumentSnapshot
 import com.google.firebase.firestore.QuerySnapshot
 import com.google.firebase.firestore.WriteBatch
+import com.jeffers.notimindlite.base.BaseRobolectricTest
 import com.jeffers.notimindlite.data.local.AppDatabase
 import com.jeffers.notimindlite.data.local.NotificationDao
 import com.jeffers.notimindlite.data.local.NotificationEntity
 import com.jeffers.notimindlite.data.local.SyncStatus
 import com.jeffers.notimindlite.data.sync.FirestoreSyncRepository
 import com.jeffers.notimindlite.util.SyncEncryptionHelper
-import com.notimind.lite.base.BaseRobolectricTest
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every

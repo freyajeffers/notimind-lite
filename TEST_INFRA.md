@@ -19,10 +19,10 @@ No real Android hardware devices, emulators, or cloud endpoints (Firebase, exter
 
 ## 3. Directory Layout & Test Suite Hierarchy
 
-All test source files are organized under `app/src/test/java/com/notimind/lite/`:
+All test source files are organized under `app/src/test/java/com/jeffers/notimindlite/`:
 
 ```
-app/src/test/java/com/notimind/lite/
+app/src/test/java/com/jeffers/notimindlite/
 ├── base/
 │   ├── BaseRobolectricTest.kt              # Base test class with context & database helper setup
 │   └── RoomDatabaseRule.kt                 # JUnit Rule for managing In-Memory Room DB lifecycle

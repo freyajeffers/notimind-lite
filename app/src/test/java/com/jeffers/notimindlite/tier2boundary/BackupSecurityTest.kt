@@ -1,8 +1,8 @@
-package com.notimind.lite.tier2boundary
+package com.jeffers.notimindlite.tier2boundary
 
 import android.content.Context
+import com.jeffers.notimindlite.base.BaseRobolectricTest
 import com.jeffers.notimindlite.domain.backup.EncryptedBackupManager
-import com.notimind.lite.base.BaseRobolectricTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull

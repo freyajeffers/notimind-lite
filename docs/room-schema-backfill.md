@@ -5,7 +5,7 @@ This document records an honest accounting of why historical Room schemas
 strategy, and what would actually be required to backfill them.
 
 The investigation was prompted by the `@Ignore`d scaffolded test in
-[`tier1_feature/MigrationTest.migration_17_to_18_runsSuccessfullyAndPreservesNotificationsTable`](../app/src/test/java/com/notimind/lite/tier1_feature/MigrationTest.kt).
+[`tier1_feature/MigrationTest.migration_17_to_18_runsSuccessfullyAndPreservesNotificationsTable`](../app/src/test/java/com/jeffers/notimindlite/tier1_feature/MigrationTest.kt).
 The scaffold is correct, compilable, and matches the official Room migration
 testing recipe — but it cannot run because `MigrationTestHelper.createDatabase(17)`
 requires `app/src/test/resources/com.jeffers.notimindlite.data.local.AppDatabase/17.json`

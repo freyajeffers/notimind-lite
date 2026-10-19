@@ -1,4 +1,4 @@
-package com.notimind.lite.tier2boundary
+package com.jeffers.notimindlite.tier2boundary
 
 import com.jeffers.notimindlite.data.local.NotificationEntity
 import com.jeffers.notimindlite.util.ReciprocalRankFusion

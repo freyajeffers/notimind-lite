@@ -1,9 +1,9 @@
-package com.notimind.lite.tier2boundary
+package com.jeffers.notimindlite.tier2boundary
 
 import android.content.Context
 import androidx.test.core.app.ApplicationProvider
+import com.jeffers.notimindlite.base.BaseRobolectricTest
 import com.jeffers.notimindlite.service.NotificationLoggerService
-import com.notimind.lite.base.BaseRobolectricTest
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals

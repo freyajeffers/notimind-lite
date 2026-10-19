@@ -1,9 +1,9 @@
-package com.notimind.lite.tier2boundary
+package com.jeffers.notimindlite.tier2boundary
 
 import android.content.Intent
+import com.jeffers.notimindlite.base.BaseRobolectricTest
 import com.jeffers.notimindlite.receiver.SnoozeReminderReceiver
 import com.jeffers.notimindlite.util.SnoozeReminderScheduler
-import com.notimind.lite.base.BaseRobolectricTest
 import org.junit.Assert.assertNotNull
 import org.junit.Test
 

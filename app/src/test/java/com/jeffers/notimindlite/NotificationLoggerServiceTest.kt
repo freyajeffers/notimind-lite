@@ -1,13 +1,8 @@
 package com.jeffers.notimindlite
 
-import android.app.Notification
-import android.content.Context
-import android.os.Bundle
-import android.os.Process
 import android.service.notification.StatusBarNotification
-import androidx.test.core.app.ApplicationProvider
+import com.jeffers.notimindlite.base.BaseRobolectricTest
 import com.jeffers.notimindlite.service.NotificationLoggerService
-import com.notimind.lite.base.BaseRobolectricTest
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeout
@@ -21,7 +16,6 @@ import org.robolectric.annotation.Config
 
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [33])
-@Suppress("DEPRECATION")
 class NotificationLoggerServiceTest : BaseRobolectricTest() {
     @Test
     fun service_createsSuccessfullyWithoutNpe() {
@@ -111,24 +105,13 @@ class NotificationLoggerServiceTest : BaseRobolectricTest() {
             val service = serviceController.create().get()
 
             // USB debugging clutter notification from com.android.systemui
-            val usbNotification = Notification().apply {
-                extras = Bundle().apply {
-                    putCharSequence(Notification.EXTRA_TITLE, "USB debugging connected")
-                    putCharSequence(Notification.EXTRA_TEXT, "Tap to disable USB debugging")
-                }
-                priority = Notification.PRIORITY_MIN // -2
-            }
-            val usbSbn = StatusBarNotification(
-                "com.android.systemui",
-                "com.android.systemui",
-                201,
-                "com.android.systemui|201|null|2001",
-                1000,
-                0,
-                0,
-                usbNotification,
-                Process.myUserHandle(),
-                System.currentTimeMillis()
+            val usbSbn = createMockStatusBarNotification(
+                MockStatusBarParams(
+                    packageName = "com.android.systemui",
+                    key = "com.android.systemui|201|null|2001",
+                    title = "USB debugging connected",
+                    text = "Tap to disable USB debugging"
+                )
             )
 
             service.onNotificationPosted(usbSbn)
@@ -136,26 +119,14 @@ class NotificationLoggerServiceTest : BaseRobolectricTest() {
 
             assertNoNotifications("System USB debugging notification clutter must be suppressed")
 
-            // System charging clutter notification from android with category "service"
-            val chargingNotification = Notification().apply {
-                extras = Bundle().apply {
-                    putCharSequence(Notification.EXTRA_TITLE, "Charging connected")
-                    putCharSequence(Notification.EXTRA_TEXT, "Charging phone")
-                }
-                category = "service"
-                priority = Notification.PRIORITY_MIN
-            }
-            val chargingSbn = StatusBarNotification(
-                "android",
-                "android",
-                202,
-                "android|202|null|2002",
-                1000,
-                0,
-                0,
-                chargingNotification,
-                Process.myUserHandle(),
-                System.currentTimeMillis()
+            // System charging clutter notification from android
+            val chargingSbn = createMockStatusBarNotification(
+                MockStatusBarParams(
+                    packageName = "android",
+                    key = "android|202|null|2002",
+                    title = "Charging connected",
+                    text = "Charging phone"
+                )
             )
 
             service.onNotificationPosted(chargingSbn)

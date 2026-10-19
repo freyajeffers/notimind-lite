@@ -1,7 +1,7 @@
-package com.notimind.lite.tier2boundary
+package com.jeffers.notimindlite.tier2boundary
 
+import com.jeffers.notimindlite.base.BaseRobolectricTest
 import com.jeffers.notimindlite.util.DatabaseExporter
-import com.notimind.lite.base.BaseRobolectricTest
 import io.mockk.coEvery
 import io.mockk.mockkObject
 import io.mockk.unmockkAll

@@ -1,10 +1,10 @@
-package com.notimind.lite.tier1feature
+package com.jeffers.notimindlite.tier1feature
 
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
+import com.jeffers.notimindlite.base.BaseRobolectricTest
 import com.jeffers.notimindlite.data.local.AppDatabase
-import com.notimind.lite.base.BaseRobolectricTest
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertSame

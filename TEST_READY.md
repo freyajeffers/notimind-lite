@@ -2,14 +2,14 @@
 
 ## 1. Executive Summary
 
-The automated unit and integration test suite for **NotiMind Lite** is integrated under `app/src/test/java/com/notimind/lite/`.
+The automated unit and integration test suite for **NotiMind Lite** is integrated under `app/src/test/java/com/jeffers/notimindlite/`.
 
 The current debug unit-test gate passes under `./gradlew :app:testDebugUnitTest`. Tests use Robolectric and in-memory Room where appropriate; Firebase and SQLCipher-backed production paths are not fully covered by JVM tests and require device/integration validation.
 
 ## 2. Test Suite Architecture & Summary Matrix
 
 ```
-app/src/test/java/com/notimind/lite/
+app/src/test/java/com/jeffers/notimindlite/
 ├── base/
 │   ├── BaseRobolectricTest.kt              # Robolectric 4.16.1 & Room In-Memory test setup base
 │   └── RoomDatabaseRule.kt                 # JUnit Rule for managing Room DB lifecycle

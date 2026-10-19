@@ -1,7 +1,7 @@
-package com.notimind.lite.tier1feature
+package com.jeffers.notimindlite.tier1feature
 
+import com.jeffers.notimindlite.base.BaseRobolectricTest
 import com.jeffers.notimindlite.data.local.NotificationEntity
-import com.notimind.lite.base.BaseRobolectricTest
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals

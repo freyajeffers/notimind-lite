@@ -1,4 +1,4 @@
-package com.notimind.lite.tier4realworld
+package com.jeffers.notimindlite.tier4realworld
 
 import android.database.sqlite.SQLiteFullException
 import com.google.android.gms.tasks.Tasks

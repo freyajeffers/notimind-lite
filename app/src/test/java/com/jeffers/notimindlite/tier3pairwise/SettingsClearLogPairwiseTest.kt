@@ -1,6 +1,6 @@
-package com.notimind.lite.tier3pairwise
+package com.jeffers.notimindlite.tier3pairwise
 
-import com.notimind.lite.base.BaseRobolectricTest
+import com.jeffers.notimindlite.base.BaseRobolectricTest
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
