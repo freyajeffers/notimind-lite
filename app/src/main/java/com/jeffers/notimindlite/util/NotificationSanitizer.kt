@@ -56,7 +56,7 @@ class NotificationSanitizer(
             packageName = packageName,
             appName = parsingHelper.resolveAppName(packageName),
             appIconUri = appIconUri(packageName),
-            title = san.title,
+            title = finalTitle,
             content = san.content,
             postTime = postTime,
             lastUpdatedTime = now,

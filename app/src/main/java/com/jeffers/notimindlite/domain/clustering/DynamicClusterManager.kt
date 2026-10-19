@@ -355,6 +355,20 @@ object DynamicClusterManager {
         }
     }
 
+    internal fun resetForTesting() {
+        synchronized(this) {
+            rootClusters.clear()
+            isInitialized = false
+        }
+    }
+
+    internal fun initializeVocabularyForTesting() {
+        synchronized(this) {
+            initializeVocabulary()
+            isInitialized = true
+        }
+    }
+
     private fun initializeVocabulary() {
         HIERARCHICAL_VOCABULARY.forEach { (domain, subMap) ->
             val domainNode = rootClusters.getOrPut(domain) { ClusterNode(domain) }

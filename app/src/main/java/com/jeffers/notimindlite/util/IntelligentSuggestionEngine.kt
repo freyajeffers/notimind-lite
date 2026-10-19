@@ -17,6 +17,10 @@ object IntelligentSuggestionEngine {
         com.jeffers.notimindlite.domain.suggestion.IntelligentSuggestionEngine
             .recordSearch(query, ids)
 
+    internal fun clearHistoryForTesting() =
+        com.jeffers.notimindlite.domain.suggestion.IntelligentSuggestionEngine
+            .clearHistoryForTesting()
+
     suspend fun predictSuggestions(
         dismissedNotifications: List<NotificationEntity>
     ): List<NotificationEntity> = com.jeffers.notimindlite.domain.suggestion

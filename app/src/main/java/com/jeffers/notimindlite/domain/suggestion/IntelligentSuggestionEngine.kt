@@ -31,6 +31,14 @@ object IntelligentSuggestionEngine {
         searchHistory.add(SearchEvent(query, System.currentTimeMillis(), ids))
     }
 
+    internal fun clearHistoryForTesting() {
+        searchHistory.clear()
+    }
+
+    internal fun recordSearchWithTimestampForTesting(query: String, ids: List<Long>, timestamp: Long) {
+        searchHistory.add(SearchEvent(query, timestamp, ids))
+    }
+
     /**
      * Predicts the most relevant dismissed notifications for the current context.
      *
