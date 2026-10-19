@@ -2,7 +2,6 @@ package com.jeffers.notimindlite.util
 
 import android.content.Context
 import android.os.Build
-import android.provider.Settings
 import android.util.Base64
 import android.util.Log
 import com.google.firebase.auth.FirebaseAuth
@@ -70,28 +69,28 @@ object AuditLogger {
             return authUid
         }
 
-        val deviceId = try {
-            Settings.Secure.getString(context.contentResolver, Settings.Secure.ANDROID_ID)
-        } catch (ignored: SecurityException) {
-            // READ_PHONE_STATE / Settings permission missing on some OEM builds.
-            null
-        }
-
-        return if (!deviceId.isNullOrBlank()) {
-            "device_$deviceId"
-        } else {
-            "device_${Build.BOARD}_${Build.MODEL.hashCode()}"
-        }
+        return "device_${getDeviceId(context)}"
     }
 
     /**
-     * Retrieves the unique device identifier.
+     * Retrieves the unique app-scoped device installation identifier.
      */
     fun getDeviceId(context: Context): String = try {
-        Settings.Secure.getString(context.contentResolver, Settings.Secure.ANDROID_ID)
-            ?: "unknown_device_${Build.MODEL}"
-    } catch (ignored: SecurityException) {
-        "unknown_device_${Build.MODEL}"
+        val prefs = context.getSharedPreferences("app_audit_identity", Context.MODE_PRIVATE)
+        val installId = prefs.getString("install_id", null)
+        if (!installId.isNullOrBlank()) {
+            installId
+        } else {
+            val newId = java.util.UUID
+                .randomUUID()
+                .toString()
+            val editor = prefs.edit()
+            editor.putString("install_id", newId)
+            editor.apply()
+            newId
+        }
+    } catch (ignored: Exception) {
+        "device_instance_${Build.MODEL.hashCode()}"
     }
 
     /**

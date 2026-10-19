@@ -223,15 +223,15 @@ class MainActivity : ComponentActivity() {
 
     private fun launchStartupMaintenance(database: AppDatabase) {
         lifecycleScope.launch(Dispatchers.IO) {
-            try {
+            runCatching {
                 com.jeffers.notimindlite.util.DatabaseMigrator
                     .executeRawDbMergeAndRebuildFts(applicationContext, database)
-            } catch (e: Exception) {
+            }.onFailure { e ->
                 android.util.Log.e("MainActivity", "Failed merging staging DB", e)
             }
-            try {
+            runCatching {
                 DynamicClusterManager.initialize(applicationContext)
-            } catch (e: Exception) {
+            }.onFailure { e ->
                 // Startup helpers are best-effort so a stale cache cannot block the UI.
                 android.util.Log.e("MainActivity", "Failed initializing notification clusters", e)
             }
@@ -239,12 +239,12 @@ class MainActivity : ComponentActivity() {
             // between launches. Cleanup runs at startup because the encryption
             // path only invokes it post-export; users who skip export entirely
             // would otherwise accumulate files forever.
-            try {
+            runCatching {
                 com.jeffers.notimindlite.util.DatabaseExportHelper.cleanupExportFiles(
                     applicationContext,
                     EXPORT_CACHE_MAX_AGE_MILLIS
                 )
-            } catch (e: Exception) {
+            }.onFailure { e ->
                 android.util.Log.e("MainActivity", "Failed cleaning export cache", e)
             }
         }

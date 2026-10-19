@@ -68,3 +68,4 @@ summary.md
 !/exports-scripts/sqlcipher-create-fixture.sh
 !/exports-scripts/sqlcipher-run-migration.sh
 .worktrees/
+*.zip

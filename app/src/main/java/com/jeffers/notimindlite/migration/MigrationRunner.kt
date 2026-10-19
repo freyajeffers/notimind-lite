@@ -98,6 +98,7 @@ class MigrationRunner(
                     sourceHelper.close()
                     target.close()
                     val movedSidecars = mutableListOf<Pair<File, File>>()
+                    var cutoverSucceeded = false
                     try {
                         sidecars.filter { it.first.isFile }.forEach { (current, backup) ->
                             check(current.renameTo(backup)) { "Unable to quarantine ${current.name}" }
@@ -112,13 +113,14 @@ class MigrationRunner(
                             cutover,
                             movedSidecars.map { it.second }
                         )
-                        if (finalized.state != MigrationState.COMPLETE) {
-                            movedSidecars.asReversed().forEach { (current, backup) -> backup.renameTo(current) }
+                        if (finalized.state == MigrationState.COMPLETE) {
+                            cutoverSucceeded = true
                         }
                         finalized.state
-                    } catch (failure: Throwable) {
-                        movedSidecars.asReversed().forEach { (current, backup) -> backup.renameTo(current) }
-                        throw failure
+                    } finally {
+                        if (!cutoverSucceeded) {
+                            movedSidecars.asReversed().forEach { (current, backup) -> backup.renameTo(current) }
+                        }
                     }
                 }
             } finally {

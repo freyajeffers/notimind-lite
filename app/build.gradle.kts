@@ -21,7 +21,7 @@ android {
     applicationId = "com.jeffers.notimindlite"
     validationApplicationIdSuffix?.let { applicationIdSuffix = it }
     minSdk = targetMinSdk
-    targetSdk = 36
+    targetSdk = 37
     versionCode = 1
     versionName = "1.0-lite"
     manifestPlaceholders["migrationReceiverEnabled"] = "false"
@@ -114,23 +114,22 @@ android {
   lint {
     abortOnError = true
     checkDependencies = true
-    disable += listOf(
-      "InvalidFragmentVersionForActivityResult",
-      "ComposableNaming",
-      "UnusedResources",
-      "UseKtx",
-      "GradleDependency",
-      "NewerVersionAvailable",
-      "AndroidGradlePluginVersion",
-      "OldTargetApi",
-      "HardwareIds",
-      "MissingPermission",
-      "IdleBatteryChargingConstraints"
-    )
   }
 }
 
 detekt {
+  source.setFrom(
+    "src/main/java",
+    "src/test/java",
+    "src/androidTest/java"
+  )
+}
+
+tasks.register<io.gitlab.arturbosch.detekt.Detekt>("detektTests") {
+  description = "Runs detekt inspection on test sources"
+  group = "verification"
+  setSource(files("src/test/java", "src/androidTest/java"))
+  config.setFrom(files("$rootDir/config/detekt/detekt.yml"))
 }
 
 ksp {
@@ -181,6 +180,7 @@ dependencies {
   implementation(libs.androidx.compose.ui.graphics)
   implementation(libs.androidx.compose.ui.tooling.preview)
   implementation(libs.androidx.core.ktx)
+  implementation(libs.androidx.fragment.ktx)
   implementation(libs.androidx.lifecycle.runtime.compose)
   implementation(libs.androidx.lifecycle.runtime.ktx)
   implementation(libs.androidx.lifecycle.viewmodel.compose)

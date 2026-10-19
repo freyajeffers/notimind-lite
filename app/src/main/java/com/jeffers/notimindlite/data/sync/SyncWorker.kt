@@ -68,7 +68,6 @@ class SyncWorker(
                 .Builder()
                 .setRequiredNetworkType(NetworkType.UNMETERED)
                 .setRequiresCharging(true)
-                .setRequiresDeviceIdle(true)
                 .build()
 
             val request = PeriodicWorkRequestBuilder<SyncWorker>(
