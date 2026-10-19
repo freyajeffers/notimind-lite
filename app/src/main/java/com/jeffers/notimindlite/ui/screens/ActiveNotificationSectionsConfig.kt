@@ -54,7 +54,7 @@ internal fun LazyListScope.renderNotificationSections(config: ActiveNotification
             }
         }.distinctBy { "${it.packageName}_${it.title}_${it.content}" }
         val filteredList = if (!config.selectedPackages.isNullOrEmpty()) {
-            rawItemsList.filter { config.selectedPackages!!.contains(it.packageName) }
+            rawItemsList.filter { config.selectedPackages.contains(it.packageName) }
         } else {
             rawItemsList
         }

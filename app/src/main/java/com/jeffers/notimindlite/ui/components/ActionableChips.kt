@@ -1,6 +1,9 @@
 package com.jeffers.notimindlite.ui.components
 
 import android.content.ActivityNotFoundException
+import android.content.ClipData
+import android.content.ClipboardManager
+import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import androidx.compose.foundation.layout.Arrangement
@@ -33,13 +36,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
-import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -74,7 +75,6 @@ private fun actionChip(
 ) {
     var expanded by remember { mutableStateOf(false) }
     val context = LocalContext.current
-    val clipboardManager = LocalClipboardManager.current
 
     val config = actionChipConfig(entity)
 
@@ -125,7 +125,6 @@ private fun actionChip(
                 entity = entity,
                 expanded = expanded,
                 context = context,
-                clipboardManager = clipboardManager,
                 shareViaLabel = shareViaLabel,
                 onDismiss = { expanded = false }
             )
@@ -164,14 +163,17 @@ private fun actionChipMenu(params: ActionChipMenuParams) {
     val entity = params.entity
     val expanded = params.expanded
     val context = params.context
-    val clipboardManager = params.clipboardManager
     val shareViaLabel = params.shareViaLabel
     val onDismiss = params.onDismiss
     DropdownMenu(expanded = expanded, onDismissRequest = onDismiss) {
         DropdownMenuItem(
             text = { Text(menuLabelForCopy(entity)) },
             onClick = {
-                clipboardManager.setText(AnnotatedString(entity.value))
+                val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as?
+                    ClipboardManager
+                clipboard?.setPrimaryClip(
+                    ClipData.newPlainText("Actionable Content", entity.value)
+                )
                 onDismiss()
             },
             leadingIcon = {
@@ -244,8 +246,7 @@ private fun externalActionMenuItem(
 private data class ActionChipMenuParams(
     val entity: ActionableEntityExtractor.ActionableEntity,
     val expanded: Boolean,
-    val context: android.content.Context,
-    val clipboardManager: androidx.compose.ui.platform.ClipboardManager,
+    val context: Context,
     val shareViaLabel: String,
     val onDismiss: () -> Unit
 )

@@ -1,5 +1,8 @@
 package com.jeffers.notimindlite.ui.components
 
+import android.content.ClipData
+import android.content.ClipboardManager
+import android.content.Context
 import android.content.Intent
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -31,12 +34,10 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
@@ -52,7 +53,6 @@ fun BackupKeyDialog(
     onConfirm: (passphrase: CharArray?) -> Unit,
 ) {
     val context = LocalContext.current
-    val clipboardManager = LocalClipboardManager.current
     var passphrase by remember { mutableStateOf("") }
     var showPassword by remember { mutableStateOf(false) }
     val shareKeyPayload = stringResource(R.string.backup_share_key_payload, keyBase64)
@@ -119,7 +119,9 @@ fun BackupKeyDialog(
                             modifier = Modifier.weight(1f),
                         )
                         IconButton(onClick = {
-                            clipboardManager.setText(AnnotatedString(keyBase64))
+                            val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as?
+                                ClipboardManager
+                            clipboard?.setPrimaryClip(ClipData.newPlainText("Backup Key", keyBase64))
                         }) {
                             Icon(
                                 Icons.Default.ContentCopy,

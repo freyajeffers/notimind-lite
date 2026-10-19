@@ -62,9 +62,10 @@ class MainActivity : ComponentActivity() {
     @Suppress("TooGenericExceptionCaught", "LongMethod", "CyclomaticComplexMethod")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        enableEdgeToEdge()
-        window.statusBarColor = android.graphics.Color.BLACK
-        window.navigationBarColor = android.graphics.Color.BLACK
+        enableEdgeToEdge(
+            statusBarStyle = androidx.activity.SystemBarStyle.dark(android.graphics.Color.BLACK),
+            navigationBarStyle = androidx.activity.SystemBarStyle.dark(android.graphics.Color.BLACK)
+        )
 
         val preferencesRepository = PreferencesRepository(applicationContext)
         val migrationRunner = MigrationRunner(applicationContext)

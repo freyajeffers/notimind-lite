@@ -56,7 +56,7 @@ class NotificationSanitizer(
             packageName = packageName,
             appName = parsingHelper.resolveAppName(packageName),
             appIconUri = appIconUri(packageName),
-            title = san!!.title,
+            title = san.title,
             content = san.content,
             postTime = postTime,
             lastUpdatedTime = now,
@@ -70,7 +70,9 @@ class NotificationSanitizer(
             subText = san.subText,
             bigText = san.bigText,
             inboxLinesJson = inboxLinesJson,
-            priority = notification.priority,
+            priority = runCatching {
+                notification.javaClass.getField("priority").getInt(notification)
+            }.getOrDefault(0),
             groupKey = sbn.groupKey,
             isOngoing = isOngoing,
             isClearable = sbn.isClearable,

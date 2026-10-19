@@ -93,7 +93,19 @@ abstract class BaseRobolectricTest {
             }
         }
 
-        return StatusBarNotification(
+        val constructor = StatusBarNotification::class.java.getConstructor(
+            String::class.java,
+            String::class.java,
+            Int::class.javaPrimitiveType,
+            String::class.java,
+            Int::class.javaPrimitiveType,
+            Int::class.javaPrimitiveType,
+            Int::class.javaPrimitiveType,
+            Notification::class.java,
+            android.os.UserHandle::class.java,
+            Long::class.javaPrimitiveType
+        )
+        return constructor.newInstance(
             params.packageName,
             params.packageName,
             101,

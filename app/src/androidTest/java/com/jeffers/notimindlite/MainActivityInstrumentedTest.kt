@@ -11,8 +11,8 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.jeffers.notimindlite.data.auth.AuthManager
 import com.jeffers.notimindlite.data.local.AppDatabase
 import com.jeffers.notimindlite.data.local.PreferencesRepository
-import com.jeffers.notimindlite.ui.MainNavigation
-import com.jeffers.notimindlite.ui.theme.NotiMindLiteTheme
+import com.jeffers.notimindlite.ui.mainNavigation
+import com.jeffers.notimindlite.ui.theme.notiMindLiteTheme
 import org.junit.After
 import org.junit.Before
 import org.junit.Rule
@@ -45,11 +45,10 @@ class MainActivityInstrumentedTest {
     @Test
     fun mainActivity_launchesAndDisplaysNavigationTabs() {
         composeTestRule.setContent {
-            NotiMindLiteTheme {
-                MainNavigation(
+            notiMindLiteTheme {
+                mainNavigation(
                     notificationDao = database.notificationDao(),
                     authManager = AuthManager(ApplicationProvider.getApplicationContext()),
-                    db = database,
                     preferencesRepository = preferencesRepository
                 )
             }
@@ -61,11 +60,10 @@ class MainActivityInstrumentedTest {
     @Test
     fun mainActivity_navigatesToHistoryTabOnSelect() {
         composeTestRule.setContent {
-            NotiMindLiteTheme {
-                MainNavigation(
+            notiMindLiteTheme {
+                mainNavigation(
                     notificationDao = database.notificationDao(),
                     authManager = AuthManager(ApplicationProvider.getApplicationContext()),
-                    db = database,
                     preferencesRepository = preferencesRepository
                 )
             }
