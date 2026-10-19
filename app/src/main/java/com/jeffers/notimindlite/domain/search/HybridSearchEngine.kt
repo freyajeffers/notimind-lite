@@ -60,9 +60,13 @@ object HybridSearchEngine {
         if (tokens.isEmpty()) return notifications
 
         // 1. Keyword Pass (matches the suspend overload)
-        val keywordResults = notifications.filter {
-            matchesTokens(it, tokens)
-        }
+        val keywordResults = notifications
+            .filter { matchesTokens(it, tokens) }
+            .sortedWith(
+                compareByDescending<NotificationEntity> { notif ->
+                    tokens.count { notif.title.contains(it, ignoreCase = true) }
+                }.thenByDescending { it.postTime }
+            )
 
         // 2. Vector Pass (Semantic Search)
         val queryVector = VectorEmbeddingHelper.computeEmbedding(trimmedQuery)
@@ -96,9 +100,13 @@ object HybridSearchEngine {
         if (tokens.isEmpty()) return@withContext notifications
 
         // 1. Keyword Pass (Manual filter for provided list)
-        val keywordResults = notifications.filter {
-            matchesTokens(it, tokens)
-        }
+        val keywordResults = notifications
+            .filter { matchesTokens(it, tokens) }
+            .sortedWith(
+                compareByDescending<NotificationEntity> { notif ->
+                    tokens.count { notif.title.contains(it, ignoreCase = true) }
+                }.thenByDescending { it.postTime }
+            )
 
         // 2. Vector Pass (Semantic Search)
         val queryVector = VectorEmbeddingHelper.computeEmbedding(trimmedQuery)

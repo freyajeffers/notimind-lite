@@ -1,9 +1,31 @@
 package com.jeffers.notimindlite.util
 
-import android.util.LruCache
 import kotlin.math.sqrt
 
 private fun isFinite(value: Float): Boolean = !value.isNaN() && !value.isInfinite()
+
+private const val LRU_LOAD_FACTOR = 0.75f
+
+private class SimpleLruCache<K, V>(
+    private val capacity: Int
+) {
+    private val map = object : LinkedHashMap<K, V>(capacity, LRU_LOAD_FACTOR, true) {
+        override fun removeEldestEntry(eldest: MutableMap.MutableEntry<K, V>?): Boolean = size > capacity
+    }
+
+    @Synchronized
+    fun get(key: K): V? = map[key]
+
+    @Synchronized
+    fun put(key: K, value: V) {
+        map[key] = value
+    }
+
+    @Synchronized
+    fun evictAll() {
+        map.clear()
+    }
+}
 
 private const val HASH_BUCKETS = 64
 private const val TRIGRAM_LENGTH = 3
@@ -30,7 +52,7 @@ object VectorEmbeddingHelper {
 
     private var lowMemoryMode = false
     private var cacheSize = DEFAULT_CACHE_SIZE
-    private var embeddingCache = LruCache<String, FloatArray>(cacheSize)
+    private var embeddingCache = SimpleLruCache<String, FloatArray>(cacheSize)
 
     /** Applies runtime memory tuning without requiring process restart. */
     @Synchronized
@@ -41,7 +63,7 @@ object VectorEmbeddingHelper {
         if (this.lowMemoryMode == lowMemoryMode && this.cacheSize == targetSize) return
         this.lowMemoryMode = lowMemoryMode
         this.cacheSize = targetSize
-        embeddingCache = LruCache(targetSize)
+        embeddingCache = SimpleLruCache(targetSize)
     }
 
     fun setLowMemoryMode(enabled: Boolean) = configure(enabled)
