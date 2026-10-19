@@ -17,7 +17,6 @@ import org.robolectric.shadows.ShadowNotificationManager
 
 class EndToEndAppLifecycleTest : BaseRobolectricTest() {
     @Test
-    @Suppress("LongMethod")
     fun tc_T4_001_fullEndToEndApplicationLifecycleSimulation() = runTest {
         val serviceController = Robolectric.buildService(NotificationLoggerService::class.java)
         val service = serviceController.create().get()

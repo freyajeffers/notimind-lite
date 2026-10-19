@@ -46,7 +46,6 @@ import androidx.compose.ui.unit.sp
 import com.jeffers.notimindlite.R
 
 @Composable
-@Suppress("LongMethod", "FunctionNaming")
 fun BackupKeyDialog(
     keyBase64: String,
     onDismiss: () -> Unit,

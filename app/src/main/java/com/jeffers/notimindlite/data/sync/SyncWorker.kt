@@ -63,7 +63,6 @@ class SyncWorker(
         private const val SYNC_WORK_NAME = "notimind_firestore_sync"
         private const val PERIODIC_SYNC_INTERVAL_HOURS = 6L
 
-        @android.annotation.SuppressLint("IdleBatteryChargingConstraints")
         fun schedulePeriodicSync(context: Context) {
             val constraints = Constraints
                 .Builder()

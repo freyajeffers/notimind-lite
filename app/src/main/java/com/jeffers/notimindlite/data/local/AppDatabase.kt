@@ -303,7 +303,6 @@ abstract class AppDatabase : RoomDatabase() {
         }
 
         // split. Migration version numbers are part of the Room schema contract.
-        @Suppress("MaxLineLength", "MagicNumber") // CREATE INDEX DDL strings; cannot be safely
         val MIGRATION_17_18 = object : Migration(DB_VERSION_17, DB_VERSION_18) {
             override fun migrate(db: SupportSQLiteDatabase) {
                 db.execSQL("DROP INDEX IF EXISTS `index_notifications_packageName_isDismissed`")
@@ -331,140 +330,194 @@ abstract class AppDatabase : RoomDatabase() {
             }
         }
 
-        @Suppress("MaxLineLength", "MagicNumber", "LongMethod")
         val MIGRATION_18_19 = object : Migration(DB_VERSION_18, DB_VERSION_19) {
             override fun migrate(db: SupportSQLiteDatabase) {
-                // 1. Ensure all notifications have non-null groupKey
-                db.execSQL("UPDATE `notifications` SET `groupKey` = `packageName` WHERE `groupKey` IS NULL OR `groupKey` = ''")
-                db.execSQL("CREATE INDEX IF NOT EXISTS `index_notifications_groupKey_postTime` ON `notifications` (`groupKey`, `postTime`)")
-
-                // 2. Create notification_groups table
-                db.execSQL(
-                    """
-                    CREATE TABLE IF NOT EXISTS `notification_groups` (
-                        `groupKey` TEXT NOT NULL,
-                        `packageName` TEXT NOT NULL,
-                        `appName` TEXT NOT NULL,
-                        `appIconUri` TEXT,
-                        `latestPostTime` INTEGER NOT NULL DEFAULT 0,
-                        `notificationCount` INTEGER NOT NULL DEFAULT 0,
-                        `activeCount` INTEGER NOT NULL DEFAULT 0,
-                        `isPinned` INTEGER NOT NULL DEFAULT 0,
-                        `isDismissed` INTEGER NOT NULL DEFAULT 0,
-                        `summaryTitle` TEXT,
-                        `summaryText` TEXT,
-                        `lastUpdatedTime` INTEGER NOT NULL DEFAULT 0,
-                        PRIMARY KEY(`groupKey`)
-                    )
-                    """.trimIndent()
-                )
-
-                // 3. Create indices on notification_groups
-                db.execSQL("CREATE INDEX IF NOT EXISTS `index_notification_groups_latestPostTime` ON `notification_groups` (`latestPostTime`)")
-                db.execSQL("CREATE INDEX IF NOT EXISTS `index_notification_groups_packageName` ON `notification_groups` (`packageName`)")
-                db.execSQL("CREATE INDEX IF NOT EXISTS `index_notification_groups_isDismissed_latestPostTime` ON `notification_groups` (`isDismissed`, `latestPostTime`)")
-                db.execSQL("CREATE INDEX IF NOT EXISTS `index_notification_groups_isPinned_latestPostTime` ON `notification_groups` (`isPinned`, `latestPostTime`)")
-
-                // 4. Initial backfill of notification_groups from notifications table
-                db.execSQL(
-                    """
-                    INSERT OR REPLACE INTO `notification_groups` (
-                        `groupKey`, `packageName`, `appName`, `appIconUri`, `latestPostTime`, `notificationCount`, `activeCount`, `isPinned`, `isDismissed`, `summaryTitle`, `summaryText`, `lastUpdatedTime`
-                    )
-                    SELECT
-                        COALESCE(`groupKey`, `packageName`) AS `groupKey`,
-                        `packageName`,
-                        `appName`,
-                        `appIconUri`,
-                        MAX(`postTime`) AS `latestPostTime`,
-                        COUNT(*) AS `notificationCount`,
-                        SUM(CASE WHEN `isDismissed` = 0 THEN 1 ELSE 0 END) AS `activeCount`,
-                        MAX(CASE WHEN `isPinned` = 1 THEN 1 ELSE 0 END) AS `isPinned`,
-                        CASE WHEN SUM(CASE WHEN `isDismissed` = 0 THEN 1 ELSE 0 END) = 0 THEN 1 ELSE 0 END AS `isDismissed`,
-                        `title` AS `summaryTitle`,
-                        `content` AS `summaryText`,
-                        MAX(`lastUpdatedTime`) AS `lastUpdatedTime`
-                    FROM `notifications`
-                    WHERE `packageName` != ''
-                    GROUP BY COALESCE(`groupKey`, `packageName`)
-                    """.trimIndent()
-                )
-
-                // 5. Triggers for auto-updating notification_groups on changes to notifications table
-                db.execSQL(
-                    """
-                    CREATE TRIGGER IF NOT EXISTS `trg_notifications_after_insert`
-                    AFTER INSERT ON `notifications`
-                    BEGIN
-                        INSERT INTO `notification_groups` (
-                            `groupKey`, `packageName`, `appName`, `appIconUri`, `latestPostTime`, `notificationCount`, `activeCount`, `isPinned`, `isDismissed`, `summaryTitle`, `summaryText`, `lastUpdatedTime`
-                        ) VALUES (
-                            COALESCE(NEW.`groupKey`, NEW.`packageName`),
-                            NEW.`packageName`,
-                            NEW.`appName`,
-                            NEW.`appIconUri`,
-                            NEW.`postTime`,
-                            1,
-                            CASE WHEN NEW.`isDismissed` = 0 THEN 1 ELSE 0 END,
-                            NEW.`isPinned`,
-                            NEW.`isDismissed`,
-                            NEW.`title`,
-                            NEW.`content`,
-                            NEW.`lastUpdatedTime`
-                        )
-                        ON CONFLICT(`groupKey`) DO UPDATE SET
-                            `packageName` = NEW.`packageName`,
-                            `appName` = NEW.`appName`,
-                            `appIconUri` = COALESCE(NEW.`appIconUri`, `notification_groups`.`appIconUri`),
-                            `latestPostTime` = MAX(`notification_groups`.`latestPostTime`, NEW.`postTime`),
-                            `notificationCount` = (SELECT COUNT(*) FROM `notifications` WHERE COALESCE(`groupKey`, `packageName`) = COALESCE(NEW.`groupKey`, NEW.`packageName`)),
-                            `activeCount` = (SELECT COUNT(*) FROM `notifications` WHERE COALESCE(`groupKey`, `packageName`) = COALESCE(NEW.`groupKey`, NEW.`packageName`) AND `isDismissed` = 0),
-                            `isPinned` = (SELECT CASE WHEN COUNT(*) > 0 THEN 1 ELSE 0 END FROM `notifications` WHERE COALESCE(`groupKey`, `packageName`) = COALESCE(NEW.`groupKey`, NEW.`packageName`) AND `isPinned` = 1),
-                            `isDismissed` = (SELECT CASE WHEN COUNT(*) = 0 THEN 1 ELSE 0 END FROM `notifications` WHERE COALESCE(`groupKey`, `packageName`) = COALESCE(NEW.`groupKey`, NEW.`packageName`) AND `isDismissed` = 0),
-                            `summaryTitle` = CASE WHEN NEW.`postTime` >= `notification_groups`.`latestPostTime` THEN NEW.`title` ELSE `notification_groups`.`summaryTitle` END,
-                            `summaryText` = CASE WHEN NEW.`postTime` >= `notification_groups`.`latestPostTime` THEN NEW.`content` ELSE `notification_groups`.`summaryText` END,
-                            `lastUpdatedTime` = MAX(`notification_groups`.`lastUpdatedTime`, NEW.`lastUpdatedTime`);
-                    END
-                    """.trimIndent()
-                )
-
-                db.execSQL(
-                    """
-                    CREATE TRIGGER IF NOT EXISTS `trg_notifications_after_update`
-                    AFTER UPDATE ON `notifications`
-                    BEGIN
-                        UPDATE `notification_groups`
-                        SET
-                            `latestPostTime` = (SELECT COALESCE(MAX(`postTime`), 0) FROM `notifications` WHERE COALESCE(`groupKey`, `packageName`) = COALESCE(NEW.`groupKey`, NEW.`packageName`)),
-                            `notificationCount` = (SELECT COUNT(*) FROM `notifications` WHERE COALESCE(`groupKey`, `packageName`) = COALESCE(NEW.`groupKey`, NEW.`packageName`)),
-                            `activeCount` = (SELECT COUNT(*) FROM `notifications` WHERE COALESCE(`groupKey`, `packageName`) = COALESCE(NEW.`groupKey`, NEW.`packageName`) AND `isDismissed` = 0),
-                            `isPinned` = (SELECT CASE WHEN COUNT(*) > 0 THEN 1 ELSE 0 END FROM `notifications` WHERE COALESCE(`groupKey`, `packageName`) = COALESCE(NEW.`groupKey`, NEW.`packageName`) AND `isPinned` = 1),
-                            `isDismissed` = (SELECT CASE WHEN COUNT(*) = 0 THEN 1 ELSE 0 END FROM `notifications` WHERE COALESCE(`groupKey`, `packageName`) = COALESCE(NEW.`groupKey`, NEW.`packageName`) AND `isDismissed` = 0),
-                            `lastUpdatedTime` = (SELECT COALESCE(MAX(`lastUpdatedTime`), 0) FROM `notifications` WHERE COALESCE(`groupKey`, `packageName`) = COALESCE(NEW.`groupKey`, NEW.`packageName`))
-                        WHERE `groupKey` = COALESCE(NEW.`groupKey`, NEW.`packageName`);
-                    END
-                    """.trimIndent()
-                )
-
-                db.execSQL(
-                    """
-                    CREATE TRIGGER IF NOT EXISTS `trg_notifications_after_delete`
-                    AFTER DELETE ON `notifications`
-                    BEGIN
-                        UPDATE `notification_groups`
-                        SET
-                            `latestPostTime` = (SELECT COALESCE(MAX(`postTime`), 0) FROM `notifications` WHERE COALESCE(`groupKey`, `packageName`) = COALESCE(OLD.`groupKey`, OLD.`packageName`)),
-                            `notificationCount` = (SELECT COUNT(*) FROM `notifications` WHERE COALESCE(`groupKey`, `packageName`) = COALESCE(OLD.`groupKey`, OLD.`packageName`)),
-                            `activeCount` = (SELECT COUNT(*) FROM `notifications` WHERE COALESCE(`groupKey`, `packageName`) = COALESCE(OLD.`groupKey`, OLD.`packageName`) AND `isDismissed` = 0),
-                            `isPinned` = (SELECT CASE WHEN COUNT(*) > 0 THEN 1 ELSE 0 END FROM `notifications` WHERE COALESCE(`groupKey`, `packageName`) = COALESCE(OLD.`groupKey`, OLD.`packageName`) AND `isPinned` = 1),
-                            `isDismissed` = (SELECT CASE WHEN COUNT(*) = 0 THEN 1 ELSE 0 END FROM `notifications` WHERE COALESCE(`groupKey`, `packageName`) = COALESCE(OLD.`groupKey`, OLD.`packageName`) AND `isDismissed` = 0)
-                        WHERE `groupKey` = COALESCE(OLD.`groupKey`, OLD.`packageName`);
-
-                        DELETE FROM `notification_groups` WHERE `notificationCount` = 0;
-                    END
-                    """.trimIndent()
-                )
+                migrateNotificationGroups(db)
+                createNotificationGroupTriggers(db)
             }
+        }
+
+        private fun migrateNotificationGroups(db: SupportSQLiteDatabase) {
+            // 1. Ensure all notifications have non-null groupKey
+            db.execSQL(
+                "UPDATE `notifications` SET `groupKey` = `packageName` " +
+                    "WHERE `groupKey` IS NULL OR `groupKey` = ''"
+            )
+            db.execSQL(
+                "CREATE INDEX IF NOT EXISTS `index_notifications_groupKey_postTime` " +
+                    "ON `notifications` (`groupKey`, `postTime`)"
+            )
+
+            // 2. Create notification_groups table
+            db.execSQL(
+                """
+                CREATE TABLE IF NOT EXISTS `notification_groups` (
+                    `groupKey` TEXT NOT NULL,
+                    `packageName` TEXT NOT NULL,
+                    `appName` TEXT NOT NULL,
+                    `appIconUri` TEXT,
+                    `latestPostTime` INTEGER NOT NULL DEFAULT 0,
+                    `notificationCount` INTEGER NOT NULL DEFAULT 0,
+                    `activeCount` INTEGER NOT NULL DEFAULT 0,
+                    `isPinned` INTEGER NOT NULL DEFAULT 0,
+                    `isDismissed` INTEGER NOT NULL DEFAULT 0,
+                    `summaryTitle` TEXT,
+                    `summaryText` TEXT,
+                    `lastUpdatedTime` INTEGER NOT NULL DEFAULT 0,
+                    PRIMARY KEY(`groupKey`)
+                )
+                """.trimIndent()
+            )
+
+            // 3. Create indices on notification_groups
+            db.execSQL(
+                "CREATE INDEX IF NOT EXISTS `index_notification_groups_latestPostTime` " +
+                    "ON `notification_groups` (`latestPostTime`)"
+            )
+            db.execSQL(
+                "CREATE INDEX IF NOT EXISTS `index_notification_groups_packageName` " +
+                    "ON `notification_groups` (`packageName`)"
+            )
+            db.execSQL(
+                "CREATE INDEX IF NOT EXISTS `index_notification_groups_isDismissed_latestPostTime` " +
+                    "ON `notification_groups` (`isDismissed`, `latestPostTime`)"
+            )
+            db.execSQL(
+                "CREATE INDEX IF NOT EXISTS `index_notification_groups_isPinned_latestPostTime` " +
+                    "ON `notification_groups` (`isPinned`, `latestPostTime`)"
+            )
+
+            // 4. Initial backfill of notification_groups from notifications table
+            db.execSQL(
+                """
+                INSERT OR REPLACE INTO `notification_groups` (
+                    `groupKey`, `packageName`, `appName`, `appIconUri`,
+                    `latestPostTime`, `notificationCount`, `activeCount`,
+                    `isPinned`, `isDismissed`, `summaryTitle`, `summaryText`, `lastUpdatedTime`
+                )
+                SELECT
+                    COALESCE(`groupKey`, `packageName`) AS `groupKey`,
+                    `packageName`,
+                    `appName`,
+                    `appIconUri`,
+                    MAX(`postTime`) AS `latestPostTime`,
+                    COUNT(*) AS `notificationCount`,
+                    SUM(CASE WHEN `isDismissed` = 0 THEN 1 ELSE 0 END) AS `activeCount`,
+                    MAX(CASE WHEN `isPinned` = 1 THEN 1 ELSE 0 END) AS `isPinned`,
+                    CASE WHEN SUM(CASE WHEN `isDismissed` = 0 THEN 1 ELSE 0 END) = 0 THEN 1 ELSE 0 END AS `isDismissed`,
+                    `title` AS `summaryTitle`,
+                    `content` AS `summaryText`,
+                    MAX(`lastUpdatedTime`) AS `lastUpdatedTime`
+                FROM `notifications`
+                WHERE `packageName` != ''
+                GROUP BY COALESCE(`groupKey`, `packageName`)
+                """.trimIndent()
+            )
+        }
+
+        private fun createNotificationGroupTriggers(db: SupportSQLiteDatabase) {
+            // 5. Triggers for auto-updating notification_groups on changes to notifications table
+            db.execSQL(
+                """
+                CREATE TRIGGER IF NOT EXISTS `trg_notifications_after_insert`
+                AFTER INSERT ON `notifications`
+                BEGIN
+                    INSERT INTO `notification_groups` (
+                        `groupKey`, `packageName`, `appName`, `appIconUri`,
+                        `latestPostTime`, `notificationCount`, `activeCount`,
+                        `isPinned`, `isDismissed`, `summaryTitle`, `summaryText`, `lastUpdatedTime`
+                    ) VALUES (
+                        COALESCE(NEW.`groupKey`, NEW.`packageName`),
+                        NEW.`packageName`,
+                        NEW.`appName`,
+                        NEW.`appIconUri`,
+                        NEW.`postTime`,
+                        1,
+                        CASE WHEN NEW.`isDismissed` = 0 THEN 1 ELSE 0 END,
+                        NEW.`isPinned`,
+                        NEW.`isDismissed`,
+                        NEW.`title`,
+                        NEW.`content`,
+                        NEW.`lastUpdatedTime`
+                    )
+                    ON CONFLICT(`groupKey`) DO UPDATE SET
+                        `packageName` = NEW.`packageName`,
+                        `appName` = NEW.`appName`,
+                        `appIconUri` = COALESCE(NEW.`appIconUri`, `notification_groups`.`appIconUri`),
+                        `latestPostTime` = MAX(`notification_groups`.`latestPostTime`, NEW.`postTime`),
+                        `notificationCount` = (SELECT COUNT(*) FROM `notifications`
+                            WHERE COALESCE(`groupKey`, `packageName`) = COALESCE(NEW.`groupKey`, NEW.`packageName`)),
+                        `activeCount` = (SELECT COUNT(*) FROM `notifications`
+                            WHERE COALESCE(`groupKey`, `packageName`) = COALESCE(NEW.`groupKey`, NEW.`packageName`)
+                            AND `isDismissed` = 0),
+                        `isPinned` = (SELECT CASE WHEN COUNT(*) > 0 THEN 1 ELSE 0 END FROM `notifications`
+                            WHERE COALESCE(`groupKey`, `packageName`) = COALESCE(NEW.`groupKey`, NEW.`packageName`)
+                            AND `isPinned` = 1),
+                        `isDismissed` = (SELECT CASE WHEN COUNT(*) = 0 THEN 1 ELSE 0 END FROM `notifications`
+                            WHERE COALESCE(`groupKey`, `packageName`) = COALESCE(NEW.`groupKey`, NEW.`packageName`)
+                            AND `isDismissed` = 0),
+                        `summaryTitle` = CASE WHEN NEW.`postTime` >= `notification_groups`.`latestPostTime`
+                            THEN NEW.`title` ELSE `notification_groups`.`summaryTitle` END,
+                        `summaryText` = CASE WHEN NEW.`postTime` >= `notification_groups`.`latestPostTime`
+                            THEN NEW.`content` ELSE `notification_groups`.`summaryText` END,
+                        `lastUpdatedTime` = MAX(`notification_groups`.`lastUpdatedTime`, NEW.`lastUpdatedTime`);
+                END
+                """.trimIndent()
+            )
+
+            db.execSQL(
+                """
+                CREATE TRIGGER IF NOT EXISTS `trg_notifications_after_update`
+                AFTER UPDATE ON `notifications`
+                BEGIN
+                    UPDATE `notification_groups`
+                    SET
+                        `latestPostTime` = (SELECT COALESCE(MAX(`postTime`), 0) FROM `notifications`
+                            WHERE COALESCE(`groupKey`, `packageName`) = COALESCE(NEW.`groupKey`, NEW.`packageName`)),
+                        `notificationCount` = (SELECT COUNT(*) FROM `notifications`
+                            WHERE COALESCE(`groupKey`, `packageName`) = COALESCE(NEW.`groupKey`, NEW.`packageName`)),
+                        `activeCount` = (SELECT COUNT(*) FROM `notifications`
+                            WHERE COALESCE(`groupKey`, `packageName`) = COALESCE(NEW.`groupKey`, NEW.`packageName`)
+                            AND `isDismissed` = 0),
+                        `isPinned` = (SELECT CASE WHEN COUNT(*) > 0 THEN 1 ELSE 0 END FROM `notifications`
+                            WHERE COALESCE(`groupKey`, `packageName`) = COALESCE(NEW.`groupKey`, NEW.`packageName`)
+                            AND `isPinned` = 1),
+                        `isDismissed` = (SELECT CASE WHEN COUNT(*) = 0 THEN 1 ELSE 0 END FROM `notifications`
+                            WHERE COALESCE(`groupKey`, `packageName`) = COALESCE(NEW.`groupKey`, NEW.`packageName`)
+                            AND `isDismissed` = 0),
+                        `lastUpdatedTime` = (SELECT COALESCE(MAX(`lastUpdatedTime`), 0) FROM `notifications`
+                            WHERE COALESCE(`groupKey`, `packageName`) = COALESCE(NEW.`groupKey`, NEW.`packageName`))
+                    WHERE `groupKey` = COALESCE(NEW.`groupKey`, NEW.`packageName`);
+                END
+                """.trimIndent()
+            )
+
+            db.execSQL(
+                """
+                CREATE TRIGGER IF NOT EXISTS `trg_notifications_after_delete`
+                AFTER DELETE ON `notifications`
+                BEGIN
+                    UPDATE `notification_groups`
+                    SET
+                        `latestPostTime` = (SELECT COALESCE(MAX(`postTime`), 0) FROM `notifications`
+                            WHERE COALESCE(`groupKey`, `packageName`) = COALESCE(OLD.`groupKey`, OLD.`packageName`)),
+                        `notificationCount` = (SELECT COUNT(*) FROM `notifications`
+                            WHERE COALESCE(`groupKey`, `packageName`) = COALESCE(OLD.`groupKey`, OLD.`packageName`)),
+                        `activeCount` = (SELECT COUNT(*) FROM `notifications`
+                            WHERE COALESCE(`groupKey`, `packageName`) = COALESCE(OLD.`groupKey`, OLD.`packageName`)
+                            AND `isDismissed` = 0),
+                        `isPinned` = (SELECT CASE WHEN COUNT(*) > 0 THEN 1 ELSE 0 END FROM `notifications`
+                            WHERE COALESCE(`groupKey`, `packageName`) = COALESCE(OLD.`groupKey`, OLD.`packageName`)
+                            AND `isPinned` = 1),
+                        `isDismissed` = (SELECT CASE WHEN COUNT(*) = 0 THEN 1 ELSE 0 END FROM `notifications`
+                            WHERE COALESCE(`groupKey`, `packageName`) = COALESCE(OLD.`groupKey`, OLD.`packageName`)
+                            AND `isDismissed` = 0)
+                    WHERE `groupKey` = COALESCE(OLD.`groupKey`, OLD.`packageName`);
+
+                    DELETE FROM `notification_groups` WHERE `notificationCount` = 0;
+                END
+                """.trimIndent()
+            )
         }
 
         private val DB_CALLBACK = object : RoomDatabase.Callback() {
@@ -526,7 +579,6 @@ abstract class AppDatabase : RoomDatabase() {
             }
         }
 
-        @Suppress("CyclomaticComplexMethod")
         fun getCeInstance(context: Context): AppDatabase {
             val appContext = context.applicationContext
             val userManager = appContext.getSystemService(Context.USER_SERVICE) as? UserManager
@@ -543,28 +595,6 @@ abstract class AppDatabase : RoomDatabase() {
             } else {
                 ceInstance ?: synchronized(this) {
                     ceInstance ?: run {
-                        val databaseName = databaseName(CE_DATABASE_NAME, profileId)
-                        val preferences = PreferencesRepository(appContext)
-                        val encryptionRequested =
-                            preferences.securityManager.dbEncrypted.value &&
-                                preferences.securityManager.dbEncryptionMode.value != DbEncryptionMode.NONE
-                        val legacyPlaintextPending = MigrationRunner(appContext).preflight(databaseName).plaintextExists
-                        val consent = EncryptionMigrationConsent.get(appContext)
-                        val migrationState = if (
-                            encryptionRequested &&
-                            legacyPlaintextPending &&
-                            consent == EncryptionMigrationConsent.Decision.ACCEPTED
-                        ) {
-                            MigrationRunner(appContext).migrateLegacyDatabase(databaseName)
-                        } else {
-                            MigrationState.NOT_REQUIRED
-                        }
-                        when (migrationState) {
-                            MigrationState.NOT_REQUIRED, MigrationState.COMPLETE -> Unit
-                            else -> error("Legacy database migration did not complete safely")
-                        }
-                        val useEncryption = encryptionRequested &&
-                            (!legacyPlaintextPending || consent == EncryptionMigrationConsent.Decision.ACCEPTED)
                         val instance = buildCeInstance(appContext, profileId)
                         ceInstance = instance
                         ceProfileId = profileId

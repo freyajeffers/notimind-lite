@@ -51,7 +51,6 @@ object DatabaseExporter {
      * explicitly; callers restoring cross-device must pass any throwaway key alongside
      * the passphrase (the key value is irrelevant once the passphrase unwraps the DEK).
      */
-    @Suppress("LongParameterList")
     suspend fun performRestore(
         context: Context,
         backupFile: File,

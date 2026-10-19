@@ -273,13 +273,6 @@ class NotificationLoggerService : NotificationListenerService() {
         return enabledListeners.split(':').any { it == short || it == long }
     }
 
-    @Suppress(
-        "ReturnCount", "LongMethod", "CyclomaticComplexMethod"
-    ) // PackageManager lookups (app label, launch intent) intentionally return null on any failure so
-    // extraction stays resilient across OEM variants; this method has 10 returns because each guard
-    // returns early (blank content, summary, stale, missing app, etc.) — the function is intentionally
-    // structured as a filter pipeline. Splitting it is tracked as future work; current contract is
-    // well-covered by NotificationLoggerServiceTest.
     private fun shouldCaptureNotification(sbn: StatusBarNotification): Boolean {
         if (sbn.packageName == applicationContext.packageName) return false
         val preferences = com.jeffers.notimindlite.data.local

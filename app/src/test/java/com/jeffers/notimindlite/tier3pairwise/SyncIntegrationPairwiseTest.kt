@@ -97,7 +97,6 @@ class SyncIntegrationPairwiseTest : BaseRobolectricTest() {
     }
 
     @Test
-    @Suppress("LongMethod")
     fun sync_should_update_local_record_when_remote_version_is_newer() = runTest {
         val key = "conflict_remote_newer"
         val localNotif = NotificationEntity(

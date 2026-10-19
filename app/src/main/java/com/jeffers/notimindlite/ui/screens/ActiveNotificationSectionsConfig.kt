@@ -27,7 +27,6 @@ internal data class ActiveNotificationSectionsConfig(
     val toggleSection: (String) -> Unit
 )
 
-@Suppress("LongMethod")
 internal fun LazyListScope.renderNotificationSections(config: ActiveNotificationSectionsConfig) {
     config.sectionOrder.forEach { section ->
         val isExpanded = config.expandedSection == section.keyName

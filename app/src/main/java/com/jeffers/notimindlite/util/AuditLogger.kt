@@ -29,7 +29,6 @@ import javax.crypto.spec.SecretKeySpec
  * the specific failure mode, but the exception itself is intentionally not re-thrown because
  * the caller path is "probe then degrade"; logging would add noise without adding safety.
  */
-@Suppress("SwallowedException", "TooManyFunctions")
 object AuditLogger {
     // 11 functions cover: device id resolution, HMAC sign/verify, persistent log append/read/parse,
     // data-clearance detection, backup event logging, Firestore upload — each maps to a documented
@@ -59,11 +58,10 @@ object AuditLogger {
      * Resolves the effective user identifier for Firestore logging.
      * Uses FirebaseAuth UID if logged in, otherwise falls back to the device's ANDROID_ID.
      */
-    @android.annotation.SuppressLint("HardwareIds")
     fun resolveUserId(context: Context): String {
         val authUid = try {
             FirebaseAuth.getInstance().currentUser?.uid
-        } catch (e: IllegalStateException) {
+        } catch (ignored: IllegalStateException) {
             // FirebaseAuth not initialized yet (AppInitializer race during boot).
             null
         }
@@ -74,7 +72,7 @@ object AuditLogger {
 
         val deviceId = try {
             Settings.Secure.getString(context.contentResolver, Settings.Secure.ANDROID_ID)
-        } catch (e: SecurityException) {
+        } catch (ignored: SecurityException) {
             // READ_PHONE_STATE / Settings permission missing on some OEM builds.
             null
         }
@@ -89,11 +87,10 @@ object AuditLogger {
     /**
      * Retrieves the unique device identifier.
      */
-    @android.annotation.SuppressLint("HardwareIds")
     fun getDeviceId(context: Context): String = try {
         Settings.Secure.getString(context.contentResolver, Settings.Secure.ANDROID_ID)
             ?: "unknown_device_${Build.MODEL}"
-    } catch (e: SecurityException) {
+    } catch (ignored: SecurityException) {
         "unknown_device_${Build.MODEL}"
     }
 
@@ -127,7 +124,7 @@ object AuditLogger {
     private fun getPersistentLogFile(context: Context): File {
         val storageContext = try {
             context.createDeviceProtectedStorageContext()
-        } catch (e: IllegalStateException) {
+        } catch (ignored: IllegalStateException) {
             // Direct Boot not supported (rare OEM); fall back to credential-protected storage.
             context
         }
@@ -167,7 +164,7 @@ object AuditLogger {
         try {
             val deviceContext = try {
                 context.createDeviceProtectedStorageContext()
-            } catch (e: IllegalStateException) {
+            } catch (ignored: IllegalStateException) {
                 context
             }
 
@@ -312,7 +309,7 @@ object AuditLogger {
 
         try {
             logFile.forEachLine { line ->
-                parsePersistentLogLine(line, deviceId)?.let(entries::add)
+                parsePersistentLogLine(line)?.let(entries::add)
             }
         } catch (e: java.io.IOException) {
             Log.e(TAG, "Failed to read persistent audit logs", e)
@@ -320,10 +317,7 @@ object AuditLogger {
         return entries
     }
 
-    @Suppress("MagicNumber", "UnusedParameter")
-    // deviceId parameter is kept in the signature for future per-line device validation
-    // (e.g., rejecting logs from a device the current install does not recognize).
-    private fun parsePersistentLogLine(line: String, deviceId: String): PersistentAuditEntry? {
+    private fun parsePersistentLogLine(line: String): PersistentAuditEntry? {
         val parts = line.split("|")
         if (line.isBlank() || parts.size < logLineMinParts) {
             return null

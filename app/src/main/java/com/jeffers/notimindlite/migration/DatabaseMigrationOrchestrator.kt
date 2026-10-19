@@ -89,7 +89,6 @@ class DatabaseMigrationOrchestrator(
      * Permanently removes the quarantine copies after the encrypted database is active.
      * The caller must invoke this only after successful cutover and any required validation.
      */
-    @Suppress("ReturnCount")
     fun finalizeSuccessfulCutover(
         result: MigrationResult,
         additionalBackupFiles: List<File> = emptyList()

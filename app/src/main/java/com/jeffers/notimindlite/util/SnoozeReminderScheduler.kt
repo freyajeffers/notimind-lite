@@ -22,7 +22,6 @@ object SnoozeReminderScheduler {
      * @param content The content of the notification.
      * @param delayMs The delay in milliseconds before the reminder is triggered.
      */
-    @android.annotation.SuppressLint("MissingPermission")
     fun scheduleSnooze(
         context: Context,
         notificationId: String,

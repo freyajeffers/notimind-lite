@@ -34,11 +34,6 @@ class FirestoreSyncRepository(
      * @param userId The authenticated user's ID.
      * @param secretKey The user's unique encryption key (managed via Keystore/User Session).
      */
-    @Suppress(
-        "NestedBlockDepth"
-    ) // sync() is a single-pass pipeline (upload → fetch → merge → return). try/catch at the top
-    // intentionally wraps all 3 phases; nested loops (chunked batch, per-notification, per-field)
-    // are required to preserve Firestore batch atomicity. Phase extraction is tracked as future work.
     suspend fun sync(userId: String, secretKey: SecretKey): Result<Int> = try {
         val dao = db.notificationDao()
         val userCol = notificationCollection(userId)
@@ -135,7 +130,6 @@ class FirestoreSyncRepository(
      * Builds the encrypted field map for a single notification. Extracted from [sync]
      * to keep the outer function under detekt's LongMethod / NestedBlockDepth thresholds.
      */
-    @Suppress("LongMethod") // Single mapping table; splitting would scatter field-by-field logic.
     private fun buildEncryptedNotificationMap(
         notification: NotificationEntity,
         secretKey: SecretKey
@@ -176,14 +170,18 @@ class FirestoreSyncRepository(
      * [sync] alongside [buildEncryptedNotificationMap] to keep the outer function
      * under detekt's LongMethod / NestedBlockDepth thresholds.
      */
-    @Suppress(
-        "LongMethod",
-        "LongParameterList",
-        "CyclomaticComplexMethod",
-        "MagicNumber"
-    ) // 6-arg constructor mirrors the Firestore document schema (32+ fields). MagicNumbers
-    // here are schema defaults (0, 1, false, true) that match NotificationEntity column types;
-    // lifting them to constants would obscure the schema mapping.
+    private fun decryptField(
+        doc: com.google.firebase.firestore.DocumentSnapshot,
+        field: String,
+        secretKey: SecretKey
+    ): String? = doc.getString(field)?.let { SyncEncryptionHelper.decrypt(it, secretKey) }
+
+    private fun decryptFieldRequired(
+        doc: com.google.firebase.firestore.DocumentSnapshot,
+        field: String,
+        secretKey: SecretKey
+    ): String = decryptField(doc, field, secretKey) ?: ""
+
     private fun buildNotificationEntityFromRemote(
         doc: com.google.firebase.firestore.DocumentSnapshot,
         key: String,
@@ -196,8 +194,8 @@ class FirestoreSyncRepository(
         key = key,
         packageName = doc.getString("packageName") ?: "",
         appName = doc.getString("appName") ?: "",
-        title = doc.getString("title")?.let { SyncEncryptionHelper.decrypt(it, secretKey) } ?: "",
-        content = doc.getString("content")?.let { SyncEncryptionHelper.decrypt(it, secretKey) } ?: "",
+        title = decryptFieldRequired(doc, "title", secretKey),
+        content = decryptFieldRequired(doc, "content", secretKey),
         postTime = remotePostTime,
         lastUpdatedTime = remoteLastUpdatedTime,
         updateCount = doc.getLong("updateCount")?.toInt() ?: 1,
@@ -205,11 +203,11 @@ class FirestoreSyncRepository(
         isPersistent = doc.getBoolean("isPersistent") ?: false,
         isRead = doc.getBoolean("isRead") ?: false,
         isGroupSummary = doc.getBoolean("isGroupSummary") ?: false,
-        category = doc.getString("category")?.let { SyncEncryptionHelper.decrypt(it, secretKey) },
-        channelId = doc.getString("channelId")?.let { SyncEncryptionHelper.decrypt(it, secretKey) },
-        subText = doc.getString("subText")?.let { SyncEncryptionHelper.decrypt(it, secretKey) },
-        bigText = doc.getString("bigText")?.let { SyncEncryptionHelper.decrypt(it, secretKey) },
-        inboxLinesJson = doc.getString("inboxLinesJson")?.let { SyncEncryptionHelper.decrypt(it, secretKey) },
+        category = decryptField(doc, "category", secretKey),
+        channelId = decryptField(doc, "channelId", secretKey),
+        subText = decryptField(doc, "subText", secretKey),
+        bigText = decryptField(doc, "bigText", secretKey),
+        inboxLinesJson = decryptField(doc, "inboxLinesJson", secretKey),
         priority = doc.getLong("priority")?.toInt() ?: 0,
         groupKey = doc.getString("groupKey"),
         isOngoing = doc.getBoolean("isOngoing") ?: false,
@@ -217,9 +215,9 @@ class FirestoreSyncRepository(
         actionsCount = doc.getLong("actionsCount")?.toInt() ?: 0,
         dismissReason = doc.getLong("dismissReason")?.toInt(),
         dismissTime = doc.getLong("dismissTime"),
-        intentUri = doc.getString("intentUri")?.let { SyncEncryptionHelper.decrypt(it, secretKey) },
+        intentUri = decryptField(doc, "intentUri", secretKey),
         isPinned = doc.getBoolean("isPinned") ?: false,
-        actionLabels = doc.getString("actionLabels")?.let { SyncEncryptionHelper.decrypt(it, secretKey) },
+        actionLabels = decryptField(doc, "actionLabels", secretKey),
         smallIconRes = doc.getLong("smallIconRes")?.toInt() ?: 0,
         appIconUri = doc.getString("appIconUri"),
         syncStatus = SyncStatus.SYNCED,

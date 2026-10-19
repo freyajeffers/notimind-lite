@@ -48,7 +48,6 @@ object EncryptedBackupManager {
     private const val IV_LENGTH = BackupFileFormat.IV_LEN
     private const val BUFFER_SIZE = 8192
 
-    @Suppress("LongParameterList", "ReturnCount")
     suspend fun createAuthorizedBackup(
         context: Context,
         sourceDbFile: File,
@@ -88,7 +87,6 @@ object EncryptedBackupManager {
         }
     }
 
-    @Suppress("ReturnCount")
     suspend fun restoreAuthorizedBackup(
         context: Context,
         sourceBackupFile: File,
@@ -176,7 +174,6 @@ object EncryptedBackupManager {
             false
         }
 
-    @Suppress("ReturnCount")
     private fun resolveDekForRestore(
         bytes: ByteArray,
         fallbackKey: SecretKey,
@@ -214,7 +211,6 @@ object EncryptedBackupManager {
         return fallbackKey
     }
 
-    @Suppress("NestedBlockDepth")
     private fun performEncryption(
         source: File,
         dest: File,

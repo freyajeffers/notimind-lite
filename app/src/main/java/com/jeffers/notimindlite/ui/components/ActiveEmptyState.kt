@@ -49,7 +49,6 @@ import androidx.compose.ui.unit.dp
  * parameters bundle icon, copy, modifiers, and three optional slot Composables so the
  * three public entry points can stay narrow and readable.
  */
-@Suppress("LongParameterList", "FunctionNaming", "MagicNumber")
 @Composable
 private fun EmptyStateShell(
     icon: ImageVector,
@@ -147,7 +146,6 @@ private const val THIRD_STEP_INDEX = 3
  * the call site is a single Composable invocation (callers never need to thread an
  * intermediate state object).
  */
-@Suppress("LongParameterList", "FunctionNaming")
 @Composable
 fun ActivePermissionEmptyState(
     title: String,
@@ -183,7 +181,6 @@ fun ActivePermissionEmptyState(
     )
 }
 
-@Suppress("FunctionNaming") // Composable PascalCase required by Compose API.
 @Composable
 private fun StepRow(index: Int, text: String) {
     androidx.compose.foundation.layout.Row(
@@ -216,7 +213,6 @@ private fun StepRow(index: Int, text: String) {
  * Shown when permission is granted but no notifications have been captured yet.
  * Tells the user that capture is automatic — no setup required beyond permission.
  */
-@Suppress("FunctionNaming") // Composable PascalCase required by Compose API.
 @Composable
 fun ActiveFirstRunEmptyState(
     title: String,
@@ -242,7 +238,6 @@ fun ActiveFirstRunEmptyState(
  * Shown when a search query produced zero matches. Offers a "clear search" CTA so the
  * user is never stuck staring at a result-less list with no escape hatch.
  */
-@Suppress("FunctionNaming") // Composable PascalCase required by Compose API.
 @Composable
 fun ActiveSearchEmptyState(
     title: String,

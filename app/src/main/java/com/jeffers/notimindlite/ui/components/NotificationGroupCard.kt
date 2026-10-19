@@ -1,5 +1,3 @@
-@file:Suppress("MatchingDeclarationName")
-
 package com.jeffers.notimindlite.ui.components
 
 import androidx.compose.animation.AnimatedVisibility
@@ -108,7 +106,6 @@ fun groupNotifications(
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-@Suppress("LongMethod", "FunctionNaming", "LongParameterList", "MaxLineLength")
 fun NotificationGroupCard(
     group: UiNotificationGroup,
     dateTimeFormatter: DateTimeFormatter,
@@ -134,130 +131,21 @@ fun NotificationGroupCard(
         )
     ) {
         Column(modifier = Modifier.padding(if (compactMode) 6.dp else 10.dp)) {
-            // Group Header
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clickable { onToggleGroupExpand() }
-                    .padding(vertical = 4.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier.weight(1f)
-                ) {
-                    if (showAppIcons) appIconImage(appIconUri = group.appIconUri)
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Column(modifier = Modifier.weight(1f)) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Text(
-                                text = group.appName,
-                                fontWeight = FontWeight.Bold,
-                                fontSize = 14.sp,
-                                color = MaterialTheme.colorScheme.primary,
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis
-                            )
-                            Spacer(modifier = Modifier.width(6.dp))
-                            Surface(
-                                color = MaterialTheme.colorScheme.primaryContainer,
-                                shape = RoundedCornerShape(4.dp)
-                            ) {
-                                Row(
-                                    modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
-                                    verticalAlignment = Alignment.CenterVertically
-                                ) {
-                                    Icon(
-                                        imageVector = Icons.Default.Layers,
-                                        contentDescription = null,
-                                        tint = MaterialTheme.colorScheme.onPrimaryContainer,
-                                        modifier = Modifier.size(11.dp)
-                                    )
-                                    Spacer(modifier = Modifier.width(3.dp))
-                                    Text(
-                                        text = "${group.items.size}",
-                                        fontSize = 11.sp,
-                                        fontWeight = FontWeight.Bold,
-                                        color = MaterialTheme.colorScheme.onPrimaryContainer
-                                    )
-                                }
-                            }
-                        }
-                        if (latestItem != null && latestItem.title.isNotBlank()) {
-                            Text(
-                                text = latestItem.title,
-                                style = MaterialTheme.typography.bodySmall,
-                                fontWeight = FontWeight.Medium,
-                                color = MaterialTheme.colorScheme.onSurface,
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis
-                            )
-                        }
-                        Text(
-                            text = formattedTime,
-                            style = MaterialTheme.typography.labelSmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
-                        )
+            GroupHeader(
+                group = group,
+                formattedTime = formattedTime,
+                latestItem = latestItem,
+                isGroupExpanded = isGroupExpanded,
+                showAppIcons = showAppIcons,
+                onToggleGroupExpand = onToggleGroupExpand,
+                onTogglePinned = {
+                    scope.launch {
+                        val newPinned = !group.isPinned
+                        val keys = group.items.map { it.key }
+                        dao.updatePinnedStatusBatch(keys, newPinned)
                     }
                 }
-
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    TooltipBox(
-                        positionProvider = TooltipDefaults.rememberTooltipPositionProvider(TooltipAnchorPosition.Above),
-                        tooltip = {
-                            PlainTooltip {
-                                Text(stringResource(if (group.isPinned) R.string.notification_group_unpin_all else R.string.notification_group_pin_all))
-                            }
-                        },
-                        state = rememberTooltipState()
-                    ) {
-                        IconButton(
-                            onClick = {
-                                scope.launch {
-                                    val newPinned = !group.isPinned
-                                    val keys = group.items.map { it.key }
-                                    dao.updatePinnedStatusBatch(keys, newPinned)
-                                }
-                            },
-                            modifier = Modifier.size(28.dp)
-                        ) {
-                            Icon(
-                                imageVector = if (group.isPinned) Icons.Default.Bookmark else Icons.Outlined.BookmarkBorder,
-                                contentDescription = stringResource(if (group.isPinned) R.string.notification_group_unpin else R.string.notification_group_pin),
-                                tint = if (group.isPinned) {
-                                    MaterialTheme.colorScheme.primary
-                                } else {
-                                    MaterialTheme.colorScheme.onSurfaceVariant
-                                },
-                                modifier = Modifier.size(18.dp)
-                            )
-                        }
-                    }
-
-                    Spacer(modifier = Modifier.width(4.dp))
-                    TooltipBox(
-                        positionProvider = TooltipDefaults.rememberTooltipPositionProvider(TooltipAnchorPosition.Above),
-                        tooltip = {
-                            PlainTooltip {
-                                Text(stringResource(if (isGroupExpanded) R.string.notification_group_collapse else R.string.notification_group_expand))
-                            }
-                        },
-                        state = rememberTooltipState()
-                    ) {
-                        IconButton(
-                            onClick = onToggleGroupExpand,
-                            modifier = Modifier.size(28.dp)
-                        ) {
-                            Icon(
-                                imageVector = if (isGroupExpanded) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
-                                contentDescription = stringResource(if (isGroupExpanded) R.string.notification_group_collapse_short else R.string.notification_group_expand_short),
-                                modifier = Modifier.size(20.dp)
-                            )
-                        }
-                    }
-                }
-            }
+            )
 
             // Child Notifications List
             AnimatedVisibility(
@@ -277,6 +165,174 @@ fun NotificationGroupCard(
                         }
                     }
                 }
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun GroupHeader(
+    group: UiNotificationGroup,
+    formattedTime: String,
+    latestItem: NotificationEntity?,
+    isGroupExpanded: Boolean,
+    showAppIcons: Boolean,
+    onToggleGroupExpand: () -> Unit,
+    onTogglePinned: () -> Unit
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable { onToggleGroupExpand() }
+            .padding(vertical = 4.dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier.weight(1f)
+        ) {
+            if (showAppIcons) appIconImage(appIconUri = group.appIconUri)
+            Spacer(modifier = Modifier.width(8.dp))
+            Column(modifier = Modifier.weight(1f)) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        text = group.appName,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 14.sp,
+                        color = MaterialTheme.colorScheme.primary,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Surface(
+                        color = MaterialTheme.colorScheme.primaryContainer,
+                        shape = RoundedCornerShape(4.dp)
+                    ) {
+                        Row(
+                            modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Layers,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.onPrimaryContainer,
+                                modifier = Modifier.size(11.dp)
+                            )
+                            Spacer(modifier = Modifier.width(3.dp))
+                            Text(
+                                text = "${group.items.size}",
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.onPrimaryContainer
+                            )
+                        }
+                    }
+                }
+                if (latestItem != null && latestItem.title.isNotBlank()) {
+                    Text(
+                        text = latestItem.title,
+                        style = MaterialTheme.typography.bodySmall,
+                        fontWeight = FontWeight.Medium,
+                        color = MaterialTheme.colorScheme.onSurface,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                }
+                Text(
+                    text = formattedTime,
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
+                )
+            }
+        }
+
+        GroupHeaderActions(
+            isPinned = group.isPinned,
+            isGroupExpanded = isGroupExpanded,
+            onToggleGroupExpand = onToggleGroupExpand,
+            onTogglePinned = onTogglePinned
+        )
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun GroupHeaderActions(
+    isPinned: Boolean,
+    isGroupExpanded: Boolean,
+    onToggleGroupExpand: () -> Unit,
+    onTogglePinned: () -> Unit
+) {
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        val pinAllTooltipRes = if (isPinned) {
+            R.string.notification_group_unpin_all
+        } else {
+            R.string.notification_group_pin_all
+        }
+        TooltipBox(
+            positionProvider = TooltipDefaults.rememberTooltipPositionProvider(TooltipAnchorPosition.Above),
+            tooltip = {
+                PlainTooltip {
+                    Text(stringResource(pinAllTooltipRes))
+                }
+            },
+            state = rememberTooltipState()
+        ) {
+            IconButton(
+                onClick = onTogglePinned,
+                modifier = Modifier.size(28.dp)
+            ) {
+                val pinIcon = if (isPinned) Icons.Default.Bookmark else Icons.Outlined.BookmarkBorder
+                val pinDescRes = if (isPinned) {
+                    R.string.notification_group_unpin
+                } else {
+                    R.string.notification_group_pin
+                }
+                Icon(
+                    imageVector = pinIcon,
+                    contentDescription = stringResource(pinDescRes),
+                    tint = if (isPinned) {
+                        MaterialTheme.colorScheme.primary
+                    } else {
+                        MaterialTheme.colorScheme.onSurfaceVariant
+                    },
+                    modifier = Modifier.size(18.dp)
+                )
+            }
+        }
+
+        Spacer(modifier = Modifier.width(4.dp))
+        val expandTooltipRes = if (isGroupExpanded) {
+            R.string.notification_group_collapse
+        } else {
+            R.string.notification_group_expand
+        }
+        TooltipBox(
+            positionProvider = TooltipDefaults.rememberTooltipPositionProvider(TooltipAnchorPosition.Above),
+            tooltip = {
+                PlainTooltip {
+                    Text(stringResource(expandTooltipRes))
+                }
+            },
+            state = rememberTooltipState()
+        ) {
+            IconButton(
+                onClick = onToggleGroupExpand,
+                modifier = Modifier.size(28.dp)
+            ) {
+                val expandIcon = if (isGroupExpanded) Icons.Default.ExpandLess else Icons.Default.ExpandMore
+                val expandDescRes = if (isGroupExpanded) {
+                    R.string.notification_group_collapse_short
+                } else {
+                    R.string.notification_group_expand_short
+                }
+                Icon(
+                    imageVector = expandIcon,
+                    contentDescription = stringResource(expandDescRes),
+                    modifier = Modifier.size(20.dp)
+                )
             }
         }
     }

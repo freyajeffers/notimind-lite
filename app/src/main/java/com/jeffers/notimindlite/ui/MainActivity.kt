@@ -51,7 +51,6 @@ private const val EXPORT_CACHE_MAX_AGE_MILLIS = 3600_000L
 class MainActivity : ComponentActivity() {
     private lateinit var authManager: com.jeffers.notimindlite.data.auth.AuthManager
 
-    @android.annotation.SuppressLint("InvalidFragmentVersionForActivityResult")
     private val requestPermissionLauncher =
         registerForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted ->
             if (isGranted) {
@@ -59,7 +58,6 @@ class MainActivity : ComponentActivity() {
             }
         }
 
-    @Suppress("TooGenericExceptionCaught", "LongMethod", "CyclomaticComplexMethod")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge(
@@ -68,31 +66,7 @@ class MainActivity : ComponentActivity() {
         )
 
         val preferencesRepository = PreferencesRepository(applicationContext)
-        val migrationRunner = MigrationRunner(applicationContext)
-        val profileId = PreferencesRepository.activeProfileId(applicationContext)
-        val databaseName = if (profileId == PreferencesRepository.DEFAULT_PROFILE_ID) {
-            AppDatabase.CE_DATABASE_NAME
-        } else {
-            "${AppDatabase.CE_DATABASE_NAME}_$profileId"
-        }
-        val migrationConsentRequired = preferencesRepository.securityManager.dbEncrypted.value &&
-            preferencesRepository.securityManager.dbEncryptionMode.value != DbEncryptionMode.NONE &&
-            EncryptionMigrationConsent.get(applicationContext) == EncryptionMigrationConsent.Decision.UNKNOWN &&
-            migrationRunner.preflight(databaseName).plaintextExists
-
-        if (migrationConsentRequired) {
-            setContent {
-                com.jeffers.notimindlite.ui.theme.notiMindLiteTheme {
-                    encryptionMigrationConsentDialog(
-                        onDecision = { decision ->
-                            EncryptionMigrationConsent.set(applicationContext, decision)
-                            recreate()
-                        }
-                    )
-                }
-            }
-            return
-        }
+        if (handleMigrationConsent(preferencesRepository)) return
 
         val database = AppDatabase.getDatabase(applicationContext)
         val dao = database.notificationDao()
@@ -104,33 +78,7 @@ class MainActivity : ComponentActivity() {
         }
 
         checkPostNotificationsPermission()
-
-        lifecycleScope.launch(Dispatchers.IO) {
-            try {
-                com.jeffers.notimindlite.util.DatabaseMigrator
-                    .executeRawDbMergeAndRebuildFts(applicationContext, database)
-            } catch (e: Exception) {
-                android.util.Log.e("MainActivity", "Failed merging staging DB", e)
-            }
-            try {
-                DynamicClusterManager.initialize(applicationContext)
-            } catch (e: Exception) {
-                // Startup helpers are best-effort so a stale cache cannot block the UI.
-                android.util.Log.e("MainActivity", "Failed initializing notification clusters", e)
-            }
-            // H2: purge stale cache backups >1h so the cacheDir doesn't fill up
-            // between launches. Cleanup runs at startup because the encryption
-            // path only invokes it post-export; users who skip export entirely
-            // would otherwise accumulate files forever.
-            try {
-                com.jeffers.notimindlite.util.DatabaseExportHelper.cleanupExportFiles(
-                    applicationContext,
-                    EXPORT_CACHE_MAX_AGE_MILLIS
-                )
-            } catch (e: Exception) {
-                android.util.Log.e("MainActivity", "Failed cleaning export cache", e)
-            }
-        }
+        launchStartupMaintenance(database)
 
         setContent {
             val themeAccent by preferencesRepository.displayManager.themeAccent.collectAsState()
@@ -240,6 +188,64 @@ class MainActivity : ComponentActivity() {
                 ) != PackageManager.PERMISSION_GRANTED
             ) {
                 requestPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+            }
+        }
+    }
+
+    private fun handleMigrationConsent(preferencesRepository: PreferencesRepository): Boolean {
+        val migrationRunner = MigrationRunner(applicationContext)
+        val profileId = PreferencesRepository.activeProfileId(applicationContext)
+        val databaseName = if (profileId == PreferencesRepository.DEFAULT_PROFILE_ID) {
+            AppDatabase.CE_DATABASE_NAME
+        } else {
+            "${AppDatabase.CE_DATABASE_NAME}_$profileId"
+        }
+        val migrationConsentRequired = preferencesRepository.securityManager.dbEncrypted.value &&
+            preferencesRepository.securityManager.dbEncryptionMode.value != DbEncryptionMode.NONE &&
+            EncryptionMigrationConsent.get(applicationContext) == EncryptionMigrationConsent.Decision.UNKNOWN &&
+            migrationRunner.preflight(databaseName).plaintextExists
+
+        if (migrationConsentRequired) {
+            setContent {
+                com.jeffers.notimindlite.ui.theme.notiMindLiteTheme {
+                    encryptionMigrationConsentDialog(
+                        onDecision = { decision ->
+                            EncryptionMigrationConsent.set(applicationContext, decision)
+                            recreate()
+                        }
+                    )
+                }
+            }
+            return true
+        }
+        return false
+    }
+
+    private fun launchStartupMaintenance(database: AppDatabase) {
+        lifecycleScope.launch(Dispatchers.IO) {
+            try {
+                com.jeffers.notimindlite.util.DatabaseMigrator
+                    .executeRawDbMergeAndRebuildFts(applicationContext, database)
+            } catch (e: Exception) {
+                android.util.Log.e("MainActivity", "Failed merging staging DB", e)
+            }
+            try {
+                DynamicClusterManager.initialize(applicationContext)
+            } catch (e: Exception) {
+                // Startup helpers are best-effort so a stale cache cannot block the UI.
+                android.util.Log.e("MainActivity", "Failed initializing notification clusters", e)
+            }
+            // H2: purge stale cache backups >1h so the cacheDir doesn't fill up
+            // between launches. Cleanup runs at startup because the encryption
+            // path only invokes it post-export; users who skip export entirely
+            // would otherwise accumulate files forever.
+            try {
+                com.jeffers.notimindlite.util.DatabaseExportHelper.cleanupExportFiles(
+                    applicationContext,
+                    EXPORT_CACHE_MAX_AGE_MILLIS
+                )
+            } catch (e: Exception) {
+                android.util.Log.e("MainActivity", "Failed cleaning export cache", e)
             }
         }
     }

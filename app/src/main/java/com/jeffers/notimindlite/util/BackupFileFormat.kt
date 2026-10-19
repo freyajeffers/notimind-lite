@@ -113,7 +113,6 @@ internal object BackupFileFormat {
         return WrappedDekMetadata(salt, iterations, kekIv, wrappedDek)
     }
 
-    @Suppress("ThrowsCount") // Multiple integrity validations fail-fast with specific reasons
     fun parse(bytes: ByteArray): ParsedHeader {
         if (bytes.size < HEADER_BASE_OVERHEAD + IV_LEN) {
             fail("File too short to contain a valid header")

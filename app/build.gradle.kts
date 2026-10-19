@@ -121,7 +121,10 @@ android {
       "GradleDependency",
       "NewerVersionAvailable",
       "AndroidGradlePluginVersion",
-      "OldTargetApi"
+      "OldTargetApi",
+      "HardwareIds",
+      "MissingPermission",
+      "IdleBatteryChargingConstraints"
     )
   }
 }

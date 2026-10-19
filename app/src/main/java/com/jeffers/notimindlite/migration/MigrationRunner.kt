@@ -39,22 +39,32 @@ class MigrationRunner(
 
     fun preflight(): MigrationPreflight = preflight(AppDatabase.CE_DATABASE_NAME)
 
+    private fun validateMigrationPreconditions(
+        diagnostics: MigrationPreflight,
+        databaseName: String
+    ): MigrationState? {
+        if (!diagnostics.plaintextExists) return MigrationState.NOT_REQUIRED
+        if (diagnostics.encryptedExists || diagnostics.plaintextDatabase.name != databaseName) {
+            return MigrationState.RETRYABLE_FAILURE
+        }
+        val directory = diagnostics.plaintextDatabase.parentFile ?: return MigrationState.RETRYABLE_FAILURE
+        val encryptedTemp = File(directory, "$databaseName.tmp_encrypted")
+        val quarantine = File(directory, "$databaseName.quarantine")
+        if (encryptedTemp.exists() || quarantine.exists()) return MigrationState.RETRYABLE_FAILURE
+        return null
+    }
+
     /** Performs one guarded production migration for the active database identity. */
-    @Suppress("ReturnCount", "LongMethod", "TooGenericExceptionCaught")
     fun migrateLegacyDatabase(databaseName: String = AppDatabase.CE_DATABASE_NAME): MigrationState {
         synchronized(MIGRATION_LOCK) {
             val diagnostics = preflight(databaseName)
-            if (!diagnostics.plaintextExists) return MigrationState.NOT_REQUIRED
-            if (diagnostics.encryptedExists) return MigrationState.RETRYABLE_FAILURE
-            if (diagnostics.plaintextDatabase.name != databaseName) {
-                return MigrationState.RETRYABLE_FAILURE
-            }
+            val earlyState = validateMigrationPreconditions(diagnostics, databaseName)
+            if (earlyState != null) return earlyState
 
             val directory = diagnostics.plaintextDatabase.parentFile
                 ?: return MigrationState.RETRYABLE_FAILURE
             val encryptedTemp = File(directory, "$databaseName.tmp_encrypted")
             val quarantine = File(directory, "$databaseName.quarantine")
-            if (encryptedTemp.exists() || quarantine.exists()) return MigrationState.RETRYABLE_FAILURE
 
             val targetFactory = EncryptedDatabaseFactory.openHelperFactory(context, databaseName)
                 ?: return MigrationState.RETRYABLE_FAILURE

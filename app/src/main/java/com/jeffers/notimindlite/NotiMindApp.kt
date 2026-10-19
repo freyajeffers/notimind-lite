@@ -18,6 +18,10 @@ class NotiMindApp :
     android.content.ComponentCallbacks2 {
     companion object {
         private const val TAG = "NotiMindApp"
+        private const val TRIM_MEMORY_RUNNING_LOW_LEVEL = 10
+        private const val TRIM_MEMORY_RUNNING_CRITICAL_LEVEL = 15
+        private const val TRIM_MEMORY_UI_HIDDEN_LEVEL = 20
+        private const val TRIM_MEMORY_COMPLETE_LEVEL = 80
     }
 
     override fun onCreate() {
@@ -35,13 +39,12 @@ class NotiMindApp :
         Log.i(TAG, "NotiMind Lite Application Initialized")
     }
 
-    @Suppress("DEPRECATION") // ComponentCallbacks2 trim constants: see AGENTS.md §10
     override fun onTrimMemory(level: Int) {
         super.onTrimMemory(level)
         Log.i(TAG, "onTrimMemory triggered with level: $level")
 
         when (level) {
-            android.content.ComponentCallbacks2.TRIM_MEMORY_UI_HIDDEN -> {
+            TRIM_MEMORY_UI_HIDDEN_LEVEL -> {
                 AppIconCache.clearCache()
                 val preferences = PreferencesRepository(this)
                 if (preferences.securityManager.autoLockDb.value || preferences.securityManager.appLockEnabled.value) {
@@ -50,15 +53,15 @@ class NotiMindApp :
                 }
             }
 
-            android.content.ComponentCallbacks2.TRIM_MEMORY_RUNNING_LOW,
-            android.content.ComponentCallbacks2.TRIM_MEMORY_RUNNING_CRITICAL -> {
+            TRIM_MEMORY_RUNNING_LOW_LEVEL,
+            TRIM_MEMORY_RUNNING_CRITICAL_LEVEL -> {
                 AppIconCache.clearCache()
                 com.jeffers.notimindlite.util.VectorEmbeddingHelper
                     .clearCache()
                 Log.w(TAG, "Running Low/Critical: Forced cache clear")
             }
 
-            android.content.ComponentCallbacks2.TRIM_MEMORY_COMPLETE -> {
+            TRIM_MEMORY_COMPLETE_LEVEL -> {
                 AppIconCache.clearCache()
                 com.jeffers.notimindlite.util.VectorEmbeddingHelper
                     .clearCache()

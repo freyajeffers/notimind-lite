@@ -117,7 +117,6 @@ class FirestoreSyncRepositoryTest {
     }
 
     @Test
-    @Suppress("LongMethod")
     fun `sync should resolve conflicts using Last Write Wins`() = runBlocking {
         val userId = "test_user"
         val key = "conflict_1"

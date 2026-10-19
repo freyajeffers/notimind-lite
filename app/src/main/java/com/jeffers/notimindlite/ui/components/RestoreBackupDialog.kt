@@ -30,7 +30,6 @@ import androidx.compose.ui.unit.dp
 import com.jeffers.notimindlite.R
 
 @Composable
-@Suppress("LongMethod", "FunctionNaming")
 fun RestoreBackupDialog(
     fileName: String,
     onDismiss: () -> Unit,
