@@ -92,4 +92,48 @@ class NotificationParsingHelperTest {
         assertNull(helper.extractInboxLinesJson(null))
         assertNull(helper.extractInboxLinesJson(Bundle()))
     }
+
+    @Test
+    fun buildActionLabelsJson_nullOrEmpty_returnsNull() {
+        assertNull(helper.buildActionLabelsJson(null))
+        assertNull(helper.buildActionLabelsJson(emptyArray()))
+    }
+
+    @Test
+    fun buildActionLabelsJson_withValidActions_serializesLabelsCorrectly() {
+        val action1 = Notification.Action.Builder(null as android.graphics.drawable.Icon?, "Reply", null).build()
+        val action2 = Notification.Action.Builder(null as android.graphics.drawable.Icon?, "Mark as Read", null).build()
+        val json = helper.buildActionLabelsJson(arrayOf(action1, action2))
+
+        assertNotNull(json)
+        assertEquals("[\"Reply\",\"Mark as Read\"]", json)
+    }
+
+    @Test
+    fun buildActionLabelsJson_withNullTitleAction_usesFallbackLabel() {
+        val action = Notification.Action.Builder(null as android.graphics.drawable.Icon?, null, null).build()
+        val json = helper.buildActionLabelsJson(arrayOf(action))
+
+        assertNotNull(json)
+        assertEquals("[\"Action 0\"]", json)
+    }
+
+    @Test
+    fun resolveAppName_unknownPackage_returnsPackageNameFallback() {
+        val resolved = helper.resolveAppName("com.nonexistent.fake.app")
+        assertEquals("com.nonexistent.fake.app", resolved)
+    }
+
+    @Test
+    fun safeSmallIconRes_withoutSmallIcon_returnsZero() {
+        val notification = Notification()
+        val iconRes = helper.safeSmallIconRes(notification)
+        assertEquals(0, iconRes)
+    }
+
+    @Test
+    fun safeLaunchIntentUri_unknownPackage_returnsNull() {
+        val uri = helper.safeLaunchIntentUri("com.nonexistent.fake.app")
+        assertNull(uri)
+    }
 }

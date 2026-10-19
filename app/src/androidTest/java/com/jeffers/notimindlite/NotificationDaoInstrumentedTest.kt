@@ -170,4 +170,45 @@ class NotificationDaoInstrumentedTest {
         assertEquals(1, remaining.size)
         assertEquals("key_b", remaining[0].key)
     }
+
+    @Test
+    fun embeddingIndexer_computesAndPersistsEmbeddingInDatabase() = runBlocking {
+        val entity = NotificationEntity(
+            key = "embedding_key_1",
+            packageName = "com.banking.app",
+            appName = "Bank",
+            title = "Monthly Statement",
+            content = "Your monthly statement for checking account is ready"
+        )
+        val id = dao.insert(entity)
+        val inserted = dao.getNotificationById(id)
+        assertNotNull(inserted)
+        org.junit.Assert.assertNull(inserted?.embedding)
+
+        val indexer = com.jeffers.notimindlite.util
+            .NotificationEmbeddingIndexer()
+        indexer.indexSingle(dao, inserted!!)
+
+        val updated = dao.getNotificationById(id)
+        assertNotNull(updated)
+        assertNotNull(updated?.embedding)
+        assertTrue(updated!!.embedding!!.isNotEmpty())
+    }
+
+    @Test
+    fun markAsRead_withAutoDeleteOnRead_deletesNotificationRow() = runBlocking {
+        val entity = NotificationEntity(
+            key = "auto_delete_1",
+            packageName = "com.chat.temp",
+            appName = "Chat",
+            title = "Ephemeral",
+            content = "Will be deleted on read",
+            isRead = false
+        )
+        dao.insert(entity)
+        assertNotNull(dao.getNotificationByKey("auto_delete_1"))
+
+        dao.markAsRead("auto_delete_1", autoDeleteOnRead = true)
+        org.junit.Assert.assertNull(dao.getNotificationByKey("auto_delete_1"))
+    }
 }
