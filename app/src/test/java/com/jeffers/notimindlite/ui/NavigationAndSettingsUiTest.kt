@@ -9,7 +9,7 @@ import com.jeffers.notimindlite.data.local.NotificationEntity
 import com.jeffers.notimindlite.data.local.PreferenceManager
 import com.jeffers.notimindlite.ui.Screen
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.test.runTest
+import kotlinx.coroutines.runBlocking
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -35,12 +35,16 @@ class NavigationAndSettingsUiTest {
             .inMemoryDatabaseBuilder(context, AppDatabase::class.java)
             .allowMainThreadQueries()
             .build()
+        AppDatabase.setTestInstance(db)
         dao = db.notificationDao()
     }
 
     @After
     fun tearDown() {
-        db.close()
+        AppDatabase.resetInstance()
+        if (::db.isInitialized && db.isOpen) {
+            db.close()
+        }
     }
 
     @Test
@@ -64,7 +68,7 @@ class NavigationAndSettingsUiTest {
     }
 
     @Test
-    fun testClearLog_clearsDatabaseAndFlows() = runTest {
+    fun testClearLog_clearsDatabaseAndFlows() = runBlocking {
         // Insert sample notifications
         for (i in 1..10) {
             dao.insert(
@@ -94,7 +98,7 @@ class NavigationAndSettingsUiTest {
     }
 
     @Test
-    fun testLogHistorySearchFilter_matchesAllFields() = runTest {
+    fun testLogHistorySearchFilter_matchesAllFields() = runBlocking {
         val n1 = NotificationEntity(
             id = 1L, key = "k1", packageName = "com.chat.messenger", appName = "ChatApp",
             title = "Meeting reminder", content = "Project Sync at 3pm", postTime = 1000L, isDismissed = true
@@ -137,7 +141,7 @@ class NavigationAndSettingsUiTest {
     }
 
     @Test
-    fun testRapidDismissRecompositionLatency_sub16msSLA() = runTest {
+    fun testRapidDismissRecompositionLatency_sub16msSLA() = runBlocking {
         // Populate 100 active notifications
         for (i in 1..100) {
             dao.insert(
