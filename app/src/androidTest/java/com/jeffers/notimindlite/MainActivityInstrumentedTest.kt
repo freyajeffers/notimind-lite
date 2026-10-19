@@ -69,6 +69,6 @@ class MainActivityInstrumentedTest {
             }
         }
         composeTestRule.onNodeWithText("History").performClick()
-        composeTestRule.onNodeWithText("Search dismissed logs (Time Dismissed)...").assertIsDisplayed()
+        composeTestRule.onNodeWithText("No notifications found").assertIsDisplayed()
     }
 }
