@@ -87,6 +87,7 @@ android {
   kotlin {
       compilerOptions {
           jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17)
+          allWarningsAsErrors.set(true)
           freeCompilerArgs.addAll(
               "-opt-in=kotlin.RequiresOptIn",
               "-opt-in=androidx.compose.material3.ExperimentalMaterial3Api"

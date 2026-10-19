@@ -12,6 +12,7 @@ import com.jeffers.notimindlite.data.local.AppDatabase
 import com.jeffers.notimindlite.data.local.PreferencesRepository
 import com.jeffers.notimindlite.util.AppIconCache
 import com.jeffers.notimindlite.util.DatabaseLockManager
+import com.jeffers.notimindlite.util.VectorEmbeddingHelper
 
 class NotiMindApp :
     Application(),
@@ -20,7 +21,6 @@ class NotiMindApp :
         private const val TAG = "NotiMindApp"
         private const val TRIM_MEMORY_RUNNING_LOW_LEVEL = 10
         private const val TRIM_MEMORY_RUNNING_CRITICAL_LEVEL = 15
-        private const val TRIM_MEMORY_UI_HIDDEN_LEVEL = 20
         private const val TRIM_MEMORY_COMPLETE_LEVEL = 80
     }
 
@@ -43,34 +43,21 @@ class NotiMindApp :
         super.onTrimMemory(level)
         Log.i(TAG, "onTrimMemory triggered with level: $level")
 
-        when (level) {
-            TRIM_MEMORY_UI_HIDDEN_LEVEL -> {
-                AppIconCache.clearCache()
-                val preferences = PreferencesRepository(this)
-                if (preferences.securityManager.autoLockDb.value || preferences.securityManager.appLockEnabled.value) {
-                    DatabaseLockManager.lock()
-                    AppDatabase.resetInstance()
-                }
+        if (level == android.content.ComponentCallbacks2.TRIM_MEMORY_UI_HIDDEN) {
+            AppIconCache.clearCache()
+            val preferences = PreferencesRepository(this)
+            if (preferences.securityManager.autoLockDb.value || preferences.securityManager.appLockEnabled.value) {
+                DatabaseLockManager.lock()
+                AppDatabase.resetInstance()
             }
-
-            TRIM_MEMORY_RUNNING_LOW_LEVEL,
-            TRIM_MEMORY_RUNNING_CRITICAL_LEVEL -> {
-                AppIconCache.clearCache()
-                com.jeffers.notimindlite.util.VectorEmbeddingHelper
-                    .clearCache()
-                Log.w(TAG, "Running Low/Critical: Forced cache clear")
-            }
-
-            TRIM_MEMORY_COMPLETE_LEVEL -> {
-                AppIconCache.clearCache()
-                com.jeffers.notimindlite.util.VectorEmbeddingHelper
-                    .clearCache()
-                Log.w(TAG, "Trim Memory Complete: Final cache clear")
-            }
-
-            else -> {
-                // Other trim memory levels do not require aggressive cache evictions
-            }
+        } else if (level == TRIM_MEMORY_RUNNING_LOW_LEVEL || level == TRIM_MEMORY_RUNNING_CRITICAL_LEVEL) {
+            AppIconCache.clearCache()
+            VectorEmbeddingHelper.clearCache()
+            Log.w(TAG, "Running Low/Critical: Forced cache clear")
+        } else if (level == TRIM_MEMORY_COMPLETE_LEVEL) {
+            AppIconCache.clearCache()
+            VectorEmbeddingHelper.clearCache()
+            Log.w(TAG, "Trim Memory Complete: Final cache clear")
         }
     }
 
