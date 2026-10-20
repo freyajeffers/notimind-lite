@@ -136,4 +136,46 @@ class DynamicClusterManagerTest {
             .findMatchingClusters(listOf("pizza"))
         assertTrue(matches.containsKey("delivery"))
     }
+
+    @Test
+    fun inferDomainFromPackageName_identifiesAdditionalDomains() {
+        assertEquals("shopping", inferDomainFromPackageName("com.ebay.shopping", "eBay Deals"))
+        assertEquals("travel", inferDomainFromPackageName("com.delta.flight", "Delta Airline"))
+        assertEquals("health", inferDomainFromPackageName("com.fitbit.health", "Fitbit Med"))
+        assertEquals("productivity", inferDomainFromPackageName("com.todoist.task", "Todoist Notes"))
+        assertEquals("smarthome", inferDomainFromPackageName("com.ring.home", "Ring Camera"))
+        assertEquals("media", inferDomainFromPackageName("com.spotify.music", "Spotify Audio"))
+        assertEquals("news", inferDomainFromPackageName("com.bbc.news", "BBC Daily"))
+        assertEquals("game", inferDomainFromPackageName("com.ea.game", "EA Play"))
+    }
+
+    @Test
+    fun meaningfulPackageParts_handlesSingleSegmentOrEmptyPrefixes() {
+        val parts = meaningfulPackageParts("com.android.app.mobile.apps")
+        assertTrue(parts.isEmpty())
+
+        val standalone = meaningfulPackageParts("myapp")
+        assertEquals(listOf("myapp"), standalone)
+    }
+
+    @Test
+    fun appKeywords_handlesNullAndBlankLabels() {
+        val keywordsNull = appKeywords(null, listOf("part1", "part2"))
+        assertEquals(listOf("part1", "part2"), keywordsNull)
+
+        val keywordsBlank = appKeywords("   ", listOf("part"))
+        assertTrue(keywordsBlank.contains("part"))
+    }
+
+    @Test
+    fun findMatchingClusters_handlesEmptyKeywordsAndMultipleMatches() {
+        DynamicClusterManager.initializeVocabularyForTesting()
+
+        val emptyMatches = DynamicClusterManager.findMatchingClusters(emptyList())
+        assertTrue(emptyMatches.isEmpty())
+
+        val multiMatches = DynamicClusterManager.findMatchingClusters(listOf("bitcoin", "pizza"))
+        assertTrue(multiMatches.containsKey("finance"))
+        assertTrue(multiMatches.containsKey("delivery"))
+    }
 }

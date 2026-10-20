@@ -37,4 +37,38 @@ class SecureFileShredderTest {
 
         assertTrue(SecureFileShredder.shred(file))
     }
+
+    @Test
+    fun shredRefusesDirectory() {
+        val dir = Files.createTempDirectory("notimind-shred-dir").toFile()
+        try {
+            assertFalse(SecureFileShredder.shred(dir))
+            assertTrue(dir.exists())
+        } finally {
+            dir.delete()
+        }
+    }
+
+    @Test
+    fun shredHandlesEmptyZeroByteFileSuccessfully() {
+        val file = Files.createTempFile("notimind-empty", ".db").toFile()
+        try {
+            assertTrue(SecureFileShredder.shred(file))
+            assertFalse(file.exists())
+        } finally {
+            if (file.exists()) file.delete()
+        }
+    }
+
+    @Test
+    fun shredRequiresPositiveChunkSize() {
+        val file = Files.createTempFile("notimind-chunk", ".db").toFile()
+        try {
+            org.junit.Assert.assertThrows(IllegalArgumentException::class.java) {
+                SecureFileShredder.shred(file, chunkSize = 0)
+            }
+        } finally {
+            file.delete()
+        }
+    }
 }

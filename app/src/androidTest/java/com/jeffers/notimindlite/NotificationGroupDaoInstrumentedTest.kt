@@ -4,7 +4,9 @@ import android.content.Context
 import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import com.jeffers.notimindlite.data.local.AppDao
 import com.jeffers.notimindlite.data.local.AppDatabase
+import com.jeffers.notimindlite.data.local.AppEntity
 import com.jeffers.notimindlite.data.local.NotificationDao
 import com.jeffers.notimindlite.data.local.NotificationEntity
 import com.jeffers.notimindlite.data.local.NotificationGroupDao
@@ -27,6 +29,7 @@ class NotificationGroupDaoInstrumentedTest {
     private lateinit var notificationDao: NotificationDao
     private lateinit var groupDao: NotificationGroupDao
     private lateinit var groupDetailDao: NotificationGroupDetailDao
+    private lateinit var appDao: AppDao
 
     @Before
     fun setup() {
@@ -38,6 +41,7 @@ class NotificationGroupDaoInstrumentedTest {
         notificationDao = database.notificationDao()
         groupDao = database.notificationGroupDao()
         groupDetailDao = database.notificationGroupDetailDao()
+        appDao = database.appDao()
     }
 
     @After
@@ -200,5 +204,104 @@ class NotificationGroupDaoInstrumentedTest {
         assertTrue(allGroups[0].isPinned)
         assertEquals("social_group", allGroups[1].groupKey)
         assertFalse(allGroups[1].isPinned)
+    }
+
+    @Test
+    fun activeAndDismissedGroupsWithChildrenFlow_emitsFilteredGroupsAndChildren() = runBlocking {
+        val now = System.currentTimeMillis()
+        val activeNotif = NotificationEntity(
+            key = "item_active_child",
+            packageName = "com.calendar.app",
+            appName = "Calendar",
+            title = "Standup",
+            content = "Starting now",
+            postTime = now,
+            groupKey = "cal_active",
+            isDismissed = false
+        )
+        val dismissedNotif = NotificationEntity(
+            key = "item_dismissed_child",
+            packageName = "com.promo.app",
+            appName = "Promo",
+            title = "Discount",
+            content = "50% off",
+            postTime = now - 5000,
+            groupKey = "promo_dismissed",
+            isDismissed = true
+        )
+        notificationDao.insertNotifications(listOf(activeNotif, dismissedNotif))
+
+        val activeGroupsWithChildren = groupDao.getActiveGroupsWithChildrenFlow().first()
+        assertEquals(1, activeGroupsWithChildren.size)
+        assertEquals("cal_active", activeGroupsWithChildren[0].group.groupKey)
+        assertEquals(1, activeGroupsWithChildren[0].notifications.size)
+        assertEquals("item_active_child", activeGroupsWithChildren[0].notifications[0].key)
+
+        val dismissedGroupsWithChildren = groupDao.getDismissedGroupsWithChildrenFlow().first()
+        assertEquals(1, dismissedGroupsWithChildren.size)
+        assertEquals("promo_dismissed", dismissedGroupsWithChildren[0].group.groupKey)
+        assertEquals(1, dismissedGroupsWithChildren[0].notifications.size)
+        assertEquals("item_dismissed_child", dismissedGroupsWithChildren[0].notifications[0].key)
+    }
+
+    @Test
+    fun getAppWithGroupsAndNotifications_emitsAssociatedRelations() = runBlocking {
+        val now = System.currentTimeMillis()
+        val app = AppEntity(
+            packageName = "com.chat.team",
+            appName = "TeamChat"
+        )
+        appDao.insertOrUpdateApp(app)
+
+        val notif1 = NotificationEntity(
+            key = "chat_rel_1",
+            packageName = "com.chat.team",
+            appName = "TeamChat",
+            title = "Engineering",
+            content = "Build success",
+            postTime = now - 1000,
+            groupKey = "team_eng"
+        )
+        val notif2 = NotificationEntity(
+            key = "chat_rel_2",
+            packageName = "com.chat.team",
+            appName = "TeamChat",
+            title = "General",
+            content = "Lunch time",
+            postTime = now,
+            groupKey = "team_gen"
+        )
+        notificationDao.insertNotifications(listOf(notif1, notif2))
+
+        val appWithRelations = groupDao.getAppWithGroupsAndNotifications("com.chat.team").first()
+        assertNotNull(appWithRelations)
+        assertEquals("TeamChat", appWithRelations?.app?.appName)
+        assertEquals(2, appWithRelations?.groups?.size)
+        assertEquals(2, appWithRelations?.notifications?.size)
+    }
+
+    @Test
+    fun getNotificationWithGroupAndApp_emitsCombinedEntity() = runBlocking {
+        val app = AppEntity(
+            packageName = "com.banking.secure",
+            appName = "SecureBank"
+        )
+        appDao.insertOrUpdateApp(app)
+
+        val notif = NotificationEntity(
+            key = "notif_combo_key",
+            packageName = "com.banking.secure",
+            appName = "SecureBank",
+            title = "Deposit Received",
+            content = "Salary arrived",
+            groupKey = "bank_deposits"
+        )
+        notificationDao.insertNotifications(listOf(notif))
+
+        val combined = groupDao.getNotificationWithGroupAndApp("notif_combo_key").first()
+        assertNotNull(combined)
+        assertEquals("notif_combo_key", combined?.notification?.key)
+        assertEquals("bank_deposits", combined?.group?.groupKey)
+        assertEquals("SecureBank", combined?.app?.appName)
     }
 }

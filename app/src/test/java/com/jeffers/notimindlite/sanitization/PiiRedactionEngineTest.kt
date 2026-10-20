@@ -61,4 +61,31 @@ class PiiRedactionEngineTest {
         val out = PiiRedactionEngine.redact(null)
         assertNull(out)
     }
+
+    @Test
+    fun `csv escaping handles double quotes and newlines`() {
+        val input = "Hello \"World\"\nNext Line\rAnother"
+        val out = PiiRedactionEngine.redact(input)
+        assertNotNull(out)
+        assertEquals("Hello \"\"World\"\" Next Line Another", out)
+    }
+
+    @Test
+    fun `short numeric tokens under 4 digits are not redacted as OTP`() {
+        val input = "Order 123 has arrived"
+        val out = PiiRedactionEngine.redact(input)
+        assertNotNull(out)
+        assertEquals("Order 123 has arrived", out)
+    }
+
+    @Test
+    fun `multiple pii types redacted concurrently`() {
+        val input = "User alice@test.com paid $45.00 via +1 800 555 0199 code 998811"
+        val out = PiiRedactionEngine.redact(input)
+        assertNotNull(out)
+        assertEquals(
+            "User [REDACTED-EMAIL] paid [REDACTED-CURRENCY] via [REDACTED-PHONE] code [REDACTED-OTP]",
+            out
+        )
+    }
 }
