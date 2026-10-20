@@ -5,8 +5,10 @@ import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.jeffers.notimindlite.data.local.AppDatabase
+import com.jeffers.notimindlite.data.local.Converters
 import com.jeffers.notimindlite.data.local.NotificationDao
 import com.jeffers.notimindlite.data.local.NotificationEntity
+import com.jeffers.notimindlite.data.local.SyncStatus
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import org.junit.After
@@ -324,5 +326,127 @@ class NotificationDaoInstrumentedTest {
         assertEquals(2, recent.size)
         assertEquals("recent_new", recent[0].key)
         assertEquals("recent_mid", recent[1].key)
+    }
+
+    @Test
+    fun syncOperations_lifecycle_getUnsynced_updateStatus_and_purgePendingDeletes() = runBlocking {
+        val entity = NotificationEntity(
+            key = "sync_lifecycle_key",
+            packageName = "com.test.sync",
+            appName = "SyncApp",
+            title = "Sync Title",
+            content = "Sync Content",
+            syncStatus = SyncStatus.PENDING_UPLOAD
+        )
+        dao.insert(entity)
+
+        val unsyncedBefore = dao.getUnsyncedNotifications()
+        assertTrue(unsyncedBefore.any { it.key == "sync_lifecycle_key" })
+
+        dao.updateSyncStatus("sync_lifecycle_key", SyncStatus.SYNCED)
+        val unsyncedAfter = dao.getUnsyncedNotifications()
+        assertFalse(unsyncedAfter.any { it.key == "sync_lifecycle_key" })
+        assertEquals(SyncStatus.SYNCED, dao.getNotificationByKey("sync_lifecycle_key")?.syncStatus)
+
+        dao.markPendingDelete("sync_lifecycle_key")
+        assertEquals(SyncStatus.PENDING_DELETE, dao.getNotificationByKey("sync_lifecycle_key")?.syncStatus)
+
+        dao.purgePendingDeletes()
+        assertNull(dao.getNotificationByKey("sync_lifecycle_key"))
+    }
+
+    @Test
+    fun syncOperations_updateSyncStatusBatch_updatesMultipleKeys() = runBlocking {
+        val n1 = NotificationEntity(
+            key = "batch_s_1",
+            packageName = "p",
+            appName = "A",
+            title = "T1",
+            content = "C1",
+            syncStatus = SyncStatus.PENDING_UPLOAD
+        )
+        val n2 = NotificationEntity(
+            key = "batch_s_2",
+            packageName = "p",
+            appName = "A",
+            title = "T2",
+            content = "C2",
+            syncStatus = SyncStatus.PENDING_UPLOAD
+        )
+        dao.insertNotifications(listOf(n1, n2))
+
+        assertEquals(2, dao.getUnsyncedNotifications().filter { it.key.startsWith("batch_s_") }.size)
+
+        dao.updateSyncStatusBatch(listOf("batch_s_1", "batch_s_2"), SyncStatus.SYNCED)
+
+        assertEquals(0, dao.getUnsyncedNotifications().filter { it.key.startsWith("batch_s_") }.size)
+        assertEquals(SyncStatus.SYNCED, dao.getNotificationByKey("batch_s_1")?.syncStatus)
+        assertEquals(SyncStatus.SYNCED, dao.getNotificationByKey("batch_s_2")?.syncStatus)
+    }
+
+    @Test
+    fun embeddingOperations_updateEmbeddingsBatch_and_getNeedingVectorization() = runBlocking {
+        val withoutEmbedding = NotificationEntity(
+            key = "vec_test_key",
+            packageName = "p",
+            appName = "A",
+            title = "Needs Embedding",
+            content = "Content",
+            embedding = null
+        )
+        val id = dao.insert(withoutEmbedding)
+
+        val needingVectorization = dao.getNotificationsNeedingVectorization()
+        assertTrue(needingVectorization.any { it.id == id })
+
+        val sampleEmbedding = floatArrayOf(0.1f, 0.2f, 0.3f, 0.4f)
+        val rawBytes = Converters().fromFloatArray(sampleEmbedding)!!
+        dao.updateEmbeddingsBatch(listOf(id to rawBytes))
+
+        val needingVectorizationAfter = dao.getNotificationsNeedingVectorization()
+        assertFalse(needingVectorizationAfter.any { it.id == id })
+
+        val updatedEntity = dao.getNotificationById(id)
+        assertNotNull(updatedEntity)
+        assertNotNull(updatedEntity?.embedding)
+        assertEquals(4, updatedEntity?.embedding?.size)
+        assertEquals(0.1f, updatedEntity?.embedding?.get(0) ?: 0f, 0.001f)
+    }
+
+    @Test
+    fun dismissedAndTotalCountFlow_emitsAccurateCounts() = runBlocking {
+        val nActive1 = NotificationEntity(
+            key = "count_act_1",
+            packageName = "p",
+            appName = "A",
+            title = "T1",
+            content = "C1",
+            isDismissed = false
+        )
+        val nActive2 = NotificationEntity(
+            key = "count_act_2",
+            packageName = "p",
+            appName = "A",
+            title = "T2",
+            content = "C2",
+            isDismissed = false
+        )
+        val nDismissed = NotificationEntity(
+            key = "count_dis_1",
+            packageName = "p",
+            appName = "A",
+            title = "T3",
+            content = "C3",
+            isDismissed = true
+        )
+        dao.insertNotifications(listOf(nActive1, nActive2, nDismissed))
+
+        assertEquals(3, dao.getTotalNotificationCountFlow().first())
+        assertEquals(1, dao.getDismissedNotificationCountFlow().first())
+
+        dao.markDismissed("count_act_1")
+
+        assertEquals(3, dao.getTotalNotificationCountFlow().first())
+        assertEquals(2, dao.getDismissedNotificationCountFlow().first())
     }
 }

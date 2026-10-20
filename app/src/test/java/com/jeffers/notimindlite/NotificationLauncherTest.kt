@@ -97,4 +97,36 @@ class NotificationLauncherTest {
             NotificationLauncher.getActionIntentCacheSize()
         )
     }
+
+    @Test
+    fun notificationLauncher_nullPendingIntents_doNotIncreaseCache() {
+        NotificationLauncher.clearCache()
+        NotificationLauncher.registerPendingIntent("null_key", null)
+        NotificationLauncher.registerActionIntent("null_key", 0, null)
+
+        org.junit.Assert.assertEquals(0, NotificationLauncher.getPendingIntentCacheSize())
+        org.junit.Assert.assertEquals(0, NotificationLauncher.getActionIntentCacheSize())
+        org.junit.Assert.assertFalse(NotificationLauncher.isActionAvailable("null_key", 0))
+    }
+
+    @Test
+    fun notificationLauncher_triggerAction_executesWhenAvailable_andReturnsFalseWhenAbsent() {
+        val context = ApplicationProvider.getApplicationContext<Context>()
+        val intent = Intent(context, com.jeffers.notimindlite.ui.MainActivity::class.java)
+        val pendingIntent = PendingIntent.getActivity(context, 0, intent, PendingIntent.FLAG_IMMUTABLE)
+
+        NotificationLauncher.clearCache()
+        val key = "action_key_1"
+        NotificationLauncher.registerActionIntent(key, 0, pendingIntent)
+
+        org.junit.Assert.assertTrue(NotificationLauncher.isActionAvailable(key, 0))
+        org.junit.Assert.assertFalse(NotificationLauncher.isActionAvailable(key, 1))
+        org.junit.Assert.assertFalse(NotificationLauncher.isActionAvailable("unknown_key", 0))
+
+        val resultSuccess = NotificationLauncher.triggerAction(key, 0)
+        org.junit.Assert.assertTrue(resultSuccess)
+
+        val resultNotFound = NotificationLauncher.triggerAction(key, 1)
+        org.junit.Assert.assertFalse(resultNotFound)
+    }
 }

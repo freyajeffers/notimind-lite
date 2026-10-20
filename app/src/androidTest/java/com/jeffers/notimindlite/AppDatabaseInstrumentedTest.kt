@@ -227,4 +227,85 @@ class AppDatabaseInstrumentedTest {
         assertEquals(2, retrieved?.dismissReason)
         assertEquals(targetDismissTime, retrieved?.dismissTime)
     }
+
+    @Test
+    fun instrumented_markDismissedBatch_dismissesAllSpecifiedKeys() = runBlocking {
+        val n1 = NotificationEntity(
+            key = "batch_dis_1",
+            packageName = "p",
+            appName = "A",
+            title = "T1",
+            content = "C1",
+            isDismissed = false
+        )
+        val n2 = NotificationEntity(
+            key = "batch_dis_2",
+            packageName = "p",
+            appName = "A",
+            title = "T2",
+            content = "C2",
+            isDismissed = false
+        )
+        val n3 = NotificationEntity(
+            key = "batch_dis_3",
+            packageName = "p",
+            appName = "A",
+            title = "T3",
+            content = "C3",
+            isDismissed = false
+        )
+        dao.insertNotifications(listOf(n1, n2, n3))
+
+        val dismissTime = 1234567890L
+        dao.markDismissedBatch(listOf("batch_dis_1", "batch_dis_2"), dismissTime = dismissTime)
+
+        val r1 = dao.getNotificationByKey("batch_dis_1")
+        val r2 = dao.getNotificationByKey("batch_dis_2")
+        val r3 = dao.getNotificationByKey("batch_dis_3")
+
+        assertTrue(r1?.isDismissed == true)
+        assertEquals(dismissTime, r1?.dismissTime)
+        assertTrue(r2?.isDismissed == true)
+        assertEquals(dismissTime, r2?.dismissTime)
+        assertFalse(r3?.isDismissed == true)
+    }
+
+    @Test
+    fun instrumented_markDismissedWithReasonBatch_updatesAllSpecifiedKeysWithReason() = runBlocking {
+        val n1 = NotificationEntity(
+            key = "batch_reason_1",
+            packageName = "p",
+            appName = "A",
+            title = "T1",
+            content = "C1",
+            isDismissed = false
+        )
+        val n2 = NotificationEntity(
+            key = "batch_reason_2",
+            packageName = "p",
+            appName = "A",
+            title = "T2",
+            content = "C2",
+            isDismissed = false
+        )
+        dao.insertNotifications(listOf(n1, n2))
+
+        val dismissTime = 5555555555L
+        dao.markDismissedWithReasonBatch(
+            keys = listOf("batch_reason_1", "batch_reason_2"),
+            reason = 4,
+            dismissTime = dismissTime
+        )
+
+        val r1 = dao.getNotificationByKey("batch_reason_1")
+        val r2 = dao.getNotificationByKey("batch_reason_2")
+
+        assertTrue(r1?.isDismissed == true)
+        assertEquals(4, r1?.dismissReason)
+        assertEquals(dismissTime, r1?.dismissTime)
+
+        assertTrue(r2?.isDismissed == true)
+        assertEquals(4, r2?.dismissReason)
+        assertEquals(dismissTime, r2?.dismissTime)
+    }
 }
