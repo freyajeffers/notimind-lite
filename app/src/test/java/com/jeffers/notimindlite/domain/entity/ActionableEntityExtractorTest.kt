@@ -63,4 +63,43 @@ class ActionableEntityExtractorTest {
         val entities = ActionableEntityExtractor.extract(text)
         assertTrue(entities.isEmpty())
     }
+
+    @Test
+    fun extract_location_detectsStreetAddressAndReturnsLocationEntity() {
+        val text = "Pick up your order at 789 Broadway Ave this afternoon"
+        val entities = ActionableEntityExtractor.extract(text)
+
+        val locationEntities = entities.filter { it.type == ActionableEntityExtractor.EntityType.LOCATION }
+        assertEquals(1, locationEntities.size)
+        assertEquals("789 Broadway Ave", locationEntities[0].value)
+    }
+
+    @Test
+    fun extract_allThreeTypes_detectsUrlOtpAndLocationInOrder() {
+        val text = "Deliver to 100 Main St then open https://delivery.app and use pin 4567"
+        val entities = ActionableEntityExtractor.extract(text)
+
+        assertEquals(3, entities.size)
+        assertEquals(ActionableEntityExtractor.EntityType.LOCATION, entities[0].type)
+        assertEquals("100 Main St", entities[0].value)
+
+        assertEquals(ActionableEntityExtractor.EntityType.URL, entities[1].type)
+        assertEquals("https://delivery.app", entities[1].value)
+
+        assertEquals(ActionableEntityExtractor.EntityType.OTP, entities[2].type)
+        assertEquals("4567", entities[2].value)
+
+        assertTrue(entities[0].range.first < entities[1].range.first)
+        assertTrue(entities[1].range.first < entities[2].range.first)
+    }
+
+    @Test
+    fun extract_urlsWithQueryAndFragment() {
+        val text = "Track parcel at https://track.shipment.com/order?id=12345#status"
+        val entities = ActionableEntityExtractor.extract(text)
+
+        val urlEntities = entities.filter { it.type == ActionableEntityExtractor.EntityType.URL }
+        assertEquals(1, urlEntities.size)
+        assertEquals("https://track.shipment.com/order?id=12345#status", urlEntities[0].value)
+    }
 }

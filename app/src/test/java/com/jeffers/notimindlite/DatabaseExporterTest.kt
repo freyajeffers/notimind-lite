@@ -159,4 +159,17 @@ class DatabaseExporterTest {
         assertTrue(lines[0].contains("\"key\":\"n1\""))
         assertTrue(lines[1].contains("\"key\":\"n2\""))
     }
+
+    @Test
+    fun testExportWithEmptyListProducesValidStructures() {
+        val emptyJson = DatabaseExporter.exportToJsonString(emptyList())
+        assertEquals("[]", emptyJson)
+
+        val emptyCsv = DatabaseExporter.exportToCsvString(emptyList())
+        assertTrue(emptyCsv.startsWith("ID,Package,AppName,Title,Content,PostTime,IsDismissed,DismissReason,IsPinned"))
+        assertEquals(1, emptyCsv.lines().filter { it.isNotBlank() }.size)
+
+        val emptyNdjson = DatabaseExporter.exportToNdjsonString(emptyList())
+        assertTrue(emptyNdjson.isBlank())
+    }
 }

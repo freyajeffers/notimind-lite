@@ -179,4 +179,51 @@ class AppDaoInstrumentedTest {
         assertEquals(2, queryDao.getTotalNotificationCountFlow().first())
         assertEquals(1, queryDao.getUnreadCountFlow().first())
     }
+
+    @Test
+    fun getAllAppsWithNotificationsFlow_emitsAlphabeticallyWithCorrectChildCounts() = runBlocking {
+        val appB = AppEntity(
+            packageName = "com.beta.app",
+            appName = "Beta App"
+        )
+        val appA = AppEntity(
+            packageName = "com.alpha.app",
+            appName = "Alpha App"
+        )
+        appDao.insertOrUpdateApp(appB)
+        appDao.insertOrUpdateApp(appA)
+
+        val notifA1 = NotificationEntity(
+            key = "alpha_1",
+            packageName = "com.alpha.app",
+            appName = "Alpha App",
+            title = "A1",
+            content = "C1"
+        )
+        val notifA2 = NotificationEntity(
+            key = "alpha_2",
+            packageName = "com.alpha.app",
+            appName = "Alpha App",
+            title = "A2",
+            content = "C2"
+        )
+        val notifB1 = NotificationEntity(
+            key = "beta_1",
+            packageName = "com.beta.app",
+            appName = "Beta App",
+            title = "B1",
+            content = "C1"
+        )
+        notificationDao.insertNotifications(listOf(notifA1, notifA2, notifB1))
+
+        val appsWithNotifications = appDao.getAllAppsWithNotificationsFlow().first()
+        assertEquals(2, appsWithNotifications.size)
+
+        // Alphabetical by appName: Alpha App first, then Beta App
+        assertEquals("Alpha App", appsWithNotifications[0].app.appName)
+        assertEquals(2, appsWithNotifications[0].notifications.size)
+
+        assertEquals("Beta App", appsWithNotifications[1].app.appName)
+        assertEquals(1, appsWithNotifications[1].notifications.size)
+    }
 }

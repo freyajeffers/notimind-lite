@@ -13,6 +13,7 @@ import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
@@ -209,6 +210,119 @@ class NotificationDaoInstrumentedTest {
         assertNotNull(dao.getNotificationByKey("auto_delete_1"))
 
         dao.markAsRead("auto_delete_1", autoDeleteOnRead = true)
-        org.junit.Assert.assertNull(dao.getNotificationByKey("auto_delete_1"))
+        assertNull(dao.getNotificationByKey("auto_delete_1"))
+    }
+
+    @Test
+    fun markAsReadBatch_withAutoDeleteOnRead_deletesBatchRows() = runBlocking {
+        val notif1 = NotificationEntity(
+            key = "batch_del_1",
+            packageName = "com.test.batchdel",
+            appName = "BatchDel",
+            title = "Item 1",
+            content = "Content 1",
+            isRead = false
+        )
+        val notif2 = NotificationEntity(
+            key = "batch_del_2",
+            packageName = "com.test.batchdel",
+            appName = "BatchDel",
+            title = "Item 2",
+            content = "Content 2",
+            isRead = false
+        )
+        dao.insertNotifications(listOf(notif1, notif2))
+
+        assertNotNull(dao.getNotificationByKey("batch_del_1"))
+        assertNotNull(dao.getNotificationByKey("batch_del_2"))
+
+        dao.markAsReadBatch(listOf("batch_del_1", "batch_del_2"), autoDeleteOnRead = true)
+
+        assertNull(dao.getNotificationByKey("batch_del_1"))
+        assertNull(dao.getNotificationByKey("batch_del_2"))
+    }
+
+    @Test
+    fun markAllAsRead_withAutoDeleteOnRead_deletesAllUnreadRowsAndPreservesReadRows() = runBlocking {
+        val unread1 = NotificationEntity(
+            key = "mark_all_unread_1",
+            packageName = "com.test.del",
+            appName = "DelApp",
+            title = "Unread 1",
+            content = "Text",
+            isRead = false
+        )
+        val unread2 = NotificationEntity(
+            key = "mark_all_unread_2",
+            packageName = "com.test.del",
+            appName = "DelApp",
+            title = "Unread 2",
+            content = "Text",
+            isRead = false
+        )
+        val alreadyRead = NotificationEntity(
+            key = "mark_all_read_kept",
+            packageName = "com.test.del",
+            appName = "DelApp",
+            title = "Already Read",
+            content = "Text",
+            isRead = true
+        )
+        dao.insertNotifications(listOf(unread1, unread2, alreadyRead))
+
+        dao.markAllAsRead(autoDeleteOnRead = true)
+
+        assertNull(dao.getNotificationByKey("mark_all_unread_1"))
+        assertNull(dao.getNotificationByKey("mark_all_unread_2"))
+        assertNotNull(dao.getNotificationByKey("mark_all_read_kept"))
+    }
+
+    @Test
+    fun deleteByKeys_removesOnlyMatchingKeys() = runBlocking {
+        val n1 = NotificationEntity(key = "k_del_1", packageName = "p", appName = "A", title = "T1", content = "C1")
+        val n2 = NotificationEntity(key = "k_del_2", packageName = "p", appName = "A", title = "T2", content = "C2")
+        val n3 = NotificationEntity(key = "k_del_3", packageName = "p", appName = "A", title = "T3", content = "C3")
+        dao.insertNotifications(listOf(n1, n2, n3))
+
+        dao.deleteByKeys(listOf("k_del_1", "k_del_3"))
+
+        assertNull(dao.getNotificationByKey("k_del_1"))
+        assertNotNull(dao.getNotificationByKey("k_del_2"))
+        assertNull(dao.getNotificationByKey("k_del_3"))
+    }
+
+    @Test
+    fun getRecentNotificationsList_returnsOrderedByPostTime() = runBlocking {
+        val now = System.currentTimeMillis()
+        val oldest = NotificationEntity(
+            key = "recent_old",
+            packageName = "p",
+            appName = "A",
+            title = "Old",
+            content = "Old",
+            postTime = now - 10000
+        )
+        val middle = NotificationEntity(
+            key = "recent_mid",
+            packageName = "p",
+            appName = "A",
+            title = "Mid",
+            content = "Mid",
+            postTime = now - 5000
+        )
+        val newest = NotificationEntity(
+            key = "recent_new",
+            packageName = "p",
+            appName = "A",
+            title = "New",
+            content = "New",
+            postTime = now
+        )
+        dao.insertNotifications(listOf(oldest, middle, newest))
+
+        val recent = dao.getRecentNotificationsList(limit = 2)
+        assertEquals(2, recent.size)
+        assertEquals("recent_new", recent[0].key)
+        assertEquals("recent_mid", recent[1].key)
     }
 }
