@@ -7,9 +7,11 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.jeffers.notimindlite.data.local.AppDatabase
 import com.jeffers.notimindlite.data.local.NotificationDao
 import com.jeffers.notimindlite.data.local.NotificationEntity
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
@@ -121,5 +123,108 @@ class AppDatabaseInstrumentedTest {
 
         val retrieved = dao.getAllNotificationsList().first { it.key == "pin_key_1" }
         assertTrue(retrieved.isPinned)
+    }
+
+    @Test
+    fun instrumented_updatePinnedStatus_and_updatePinnedStatusBatch() = runBlocking {
+        val notif1 = NotificationEntity(
+            key = "pin_batch_1",
+            packageName = "com.test.pin1",
+            appName = "Pin1",
+            title = "Notice 1",
+            content = "Body 1",
+            isPinned = false
+        )
+        val notif2 = NotificationEntity(
+            key = "pin_batch_2",
+            packageName = "com.test.pin2",
+            appName = "Pin2",
+            title = "Notice 2",
+            content = "Body 2",
+            isPinned = false
+        )
+        dao.insertNotifications(listOf(notif1, notif2))
+
+        dao.updatePinnedStatus("pin_batch_1", isPinned = true)
+        val afterSingle = dao.getNotificationByKey("pin_batch_1")
+        assertTrue(afterSingle?.isPinned == true)
+
+        dao.updatePinnedStatusBatch(listOf("pin_batch_1", "pin_batch_2"), isPinned = false)
+        val afterBatch1 = dao.getNotificationByKey("pin_batch_1")
+        val afterBatch2 = dao.getNotificationByKey("pin_batch_2")
+        assertFalse(afterBatch1?.isPinned == true)
+        assertFalse(afterBatch2?.isPinned == true)
+    }
+
+    @Test
+    fun instrumented_markAsReadBatch_updatesReadState() = runBlocking {
+        val notif1 = NotificationEntity(
+            key = "read_batch_1",
+            packageName = "com.test.read",
+            appName = "ReadApp",
+            title = "Message 1",
+            content = "Unread text",
+            isRead = false
+        )
+        val notif2 = NotificationEntity(
+            key = "read_batch_2",
+            packageName = "com.test.read",
+            appName = "ReadApp",
+            title = "Message 2",
+            content = "Unread text 2",
+            isRead = false
+        )
+        dao.insertNotifications(listOf(notif1, notif2))
+
+        dao.markAsReadBatch(listOf("read_batch_1", "read_batch_2"), autoDeleteOnRead = false)
+
+        val updated1 = dao.getNotificationByKey("read_batch_1")
+        val updated2 = dao.getNotificationByKey("read_batch_2")
+        assertTrue(updated1?.isRead == true)
+        assertTrue(updated2?.isRead == true)
+    }
+
+    @Test
+    fun instrumented_markAllAsRead_and_unreadCountFlow() = runBlocking {
+        val notifs = (1..3).map { index ->
+            NotificationEntity(
+                key = "unread_flow_$index",
+                packageName = "com.test.unread",
+                appName = "UnreadApp",
+                title = "Alert $index",
+                content = "Content $index",
+                isRead = false
+            )
+        }
+        dao.insertNotifications(notifs)
+
+        val unreadInitial = dao.getUnreadCountFlow().first()
+        assertEquals(3, unreadInitial)
+
+        dao.markAllAsRead(autoDeleteOnRead = false)
+
+        val unreadAfter = dao.getUnreadCountFlow().first()
+        assertEquals(0, unreadAfter)
+    }
+
+    @Test
+    fun instrumented_markDismissedWithReason_updatesDismissReasonAndTimestamp() = runBlocking {
+        val entity = NotificationEntity(
+            key = "dismiss_reason_key",
+            packageName = "com.test.reason",
+            appName = "ReasonApp",
+            title = "Dismiss Me",
+            content = "Reason test",
+            isDismissed = false
+        )
+        dao.insertNotification(entity)
+
+        val targetDismissTime = 9876543210L
+        dao.markDismissedWithReason("dismiss_reason_key", reason = 2, dismissTime = targetDismissTime)
+
+        val retrieved = dao.getNotificationByKey("dismiss_reason_key")
+        assertTrue(retrieved?.isDismissed == true)
+        assertEquals(2, retrieved?.dismissReason)
+        assertEquals(targetDismissTime, retrieved?.dismissTime)
     }
 }
