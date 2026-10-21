@@ -304,4 +304,22 @@ class NotificationGroupDaoInstrumentedTest {
         assertEquals("bank_deposits", combined?.group?.groupKey)
         assertEquals("SecureBank", combined?.app?.appName)
     }
+
+    @Test
+    fun getAppWithGroupsAndNotifications_missingPackage_emitsNull() = runBlocking {
+        val result = groupDao.getAppWithGroupsAndNotifications("com.nonexistent.app").first()
+        assertNull(result)
+    }
+
+    @Test
+    fun getNotificationWithGroupAndApp_missingKey_emitsNull() = runBlocking {
+        val result = groupDao.getNotificationWithGroupAndApp("missing_key_123").first()
+        assertNull(result)
+    }
+
+    @Test
+    fun groupDetailDao_getGroupByKey_missingGroupKey_returnsNull() = runBlocking {
+        val result = groupDetailDao.getGroupByKey("missing_group_key")
+        assertNull(result)
+    }
 }

@@ -521,4 +521,154 @@ class NotificationDaoInstrumentedTest {
         assertEquals("sort_dis_later", results[0].key)
         assertEquals("sort_dis_earlier", results[1].key)
     }
+
+    @Test
+    fun getRecentlyDismissedFlow_and_getLostNotificationsFlow_differentiatesUserVsSystemDismissal() = runBlocking {
+        val userDismissed = NotificationEntity(
+            key = "user_dismissed",
+            packageName = "com.test",
+            appName = "TestApp",
+            title = "User Dismissed",
+            content = "Swiped",
+            isDismissed = true,
+            dismissReason = 1
+        )
+        val systemDismissed = NotificationEntity(
+            key = "system_dismissed",
+            packageName = "com.test",
+            appName = "TestApp",
+            title = "System Dismissed",
+            content = "Timed out",
+            isDismissed = true,
+            dismissReason = 8
+        )
+        val unknownDismissed = NotificationEntity(
+            key = "unknown_dismissed",
+            packageName = "com.test",
+            appName = "TestApp",
+            title = "Unknown Dismissed",
+            content = "No reason",
+            isDismissed = true,
+            dismissReason = null
+        )
+        val activeNotif = NotificationEntity(
+            key = "active_notif",
+            packageName = "com.test",
+            appName = "TestApp",
+            title = "Still Active",
+            content = "Active",
+            isDismissed = false
+        )
+        dao.insertNotifications(listOf(userDismissed, systemDismissed, unknownDismissed, activeNotif))
+
+        val recentDismissed = dao.getRecentlyDismissedFlow().first()
+        assertEquals(1, recentDismissed.size)
+        assertEquals("user_dismissed", recentDismissed[0].key)
+
+        val lostNotifs = dao.getLostNotificationsFlow().first()
+        assertEquals(2, lostNotifs.size)
+        assertTrue(lostNotifs.any { it.key == "system_dismissed" })
+        assertTrue(lostNotifs.any { it.key == "unknown_dismissed" })
+        assertFalse(lostNotifs.any { it.key == "user_dismissed" })
+    }
+
+    @Test
+    fun getFilteredNotificationsFlow_capturesSystemCategoryAndPriorityClutter() = runBlocking {
+        val sysPackage = NotificationEntity(
+            key = "sys_pkg",
+            packageName = "com.android.systemui",
+            appName = "SystemUI",
+            title = "System Alert",
+            content = "USB plugged"
+        )
+        val clutterCategory = NotificationEntity(
+            key = "clutter_cat",
+            packageName = "com.download.manager",
+            appName = "Downloader",
+            title = "Downloading",
+            content = "45%",
+            category = "progress"
+        )
+        val lowPriority = NotificationEntity(
+            key = "low_prio",
+            packageName = "com.weather.app",
+            appName = "Weather",
+            title = "Temperature",
+            content = "72F",
+            priority = -1
+        )
+        val normalUserNotif = NotificationEntity(
+            key = "normal_user",
+            packageName = "com.messaging.chat",
+            appName = "Messenger",
+            title = "Message from Bob",
+            content = "Hey!",
+            category = "msg",
+            priority = 1
+        )
+        dao.insertNotifications(listOf(sysPackage, clutterCategory, lowPriority, normalUserNotif))
+
+        val filtered = dao.getFilteredNotificationsFlow().first()
+        assertEquals(3, filtered.size)
+        assertTrue(filtered.any { it.key == "sys_pkg" })
+        assertTrue(filtered.any { it.key == "clutter_cat" })
+        assertTrue(filtered.any { it.key == "low_prio" })
+        assertFalse(filtered.any { it.key == "normal_user" })
+    }
+
+    @Test
+    fun getPinnedNotificationsFlow_emitsOnlyPinnedEntities() = runBlocking {
+        val pinned = NotificationEntity(
+            key = "pinned_item",
+            packageName = "com.test",
+            appName = "TestApp",
+            title = "Pinned Alert",
+            content = "Important note",
+            isPinned = true
+        )
+        val unpinned = NotificationEntity(
+            key = "unpinned_item",
+            packageName = "com.test",
+            appName = "TestApp",
+            title = "Regular Alert",
+            content = "Routine note",
+            isPinned = false
+        )
+        dao.insertNotifications(listOf(pinned, unpinned))
+
+        val pinnedList = dao.getPinnedNotificationsFlow().first()
+        assertEquals(1, pinnedList.size)
+        assertEquals("pinned_item", pinnedList[0].key)
+    }
+
+    @Test
+    fun getActiveNotificationsFlow_ordersOngoingBeforeNonOngoing() = runBlocking {
+        val now = System.currentTimeMillis()
+        val nonOngoing = NotificationEntity(
+            key = "non_ongoing",
+            packageName = "com.chat",
+            appName = "Chat",
+            title = "Message",
+            content = "Content",
+            postTime = now,
+            isOngoing = false,
+            isDismissed = false
+        )
+        val ongoingOlder = NotificationEntity(
+            key = "ongoing_older",
+            packageName = "com.player",
+            appName = "Player",
+            title = "Playing track",
+            content = "Song",
+            postTime = now - 20000,
+            isOngoing = true,
+            isDismissed = false
+        )
+        dao.insertNotifications(listOf(nonOngoing, ongoingOlder))
+
+        val activeList = dao.getActiveNotificationsFlow().first()
+        assertEquals(2, activeList.size)
+        assertEquals("ongoing_older", activeList[0].key)
+        assertEquals("non_ongoing", activeList[1].key)
+    }
 }
