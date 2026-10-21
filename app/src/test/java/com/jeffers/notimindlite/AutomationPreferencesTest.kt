@@ -59,4 +59,71 @@ class AutomationPreferencesTest {
                 .any { it.id.isBlank() }
         )
     }
+
+    @Test
+    fun addRuleAndRemoveRule_updatesStateAndPersists() {
+        val context = ApplicationProvider.getApplicationContext<Context>()
+        val repository = PreferencesRepository(context)
+        repository.automationManager.setRules(emptyList())
+
+        val rule1 = AutoExecuteRule("rule_add_1", "com.slack", "meeting", 0)
+        val rule2 = AutoExecuteRule("rule_add_2", "com.discord", "game", 1)
+
+        repository.automationManager.addRule(rule1)
+        assertEquals(1, repository.automationManager.rules.value.size)
+        assertEquals(
+            "rule_add_1",
+            repository.automationManager.rules.value[0]
+                .id
+        )
+
+        repository.automationManager.addRule(rule2)
+        assertEquals(2, repository.automationManager.rules.value.size)
+
+        repository.automationManager.removeRule("rule_add_1")
+        assertEquals(1, repository.automationManager.rules.value.size)
+        assertEquals(
+            "rule_add_2",
+            repository.automationManager.rules.value[0]
+                .id
+        )
+
+        repository.automationManager.removeRule("rule_add_2")
+        assertTrue(
+            repository.automationManager.rules.value
+                .isEmpty()
+        )
+    }
+
+    @Test
+    fun setRules_deduplicatesById() {
+        val context = ApplicationProvider.getApplicationContext<Context>()
+        val repository = PreferencesRepository(context)
+
+        val r1 = AutoExecuteRule("dup_id", "com.slack", "first", 0)
+        val r2 = AutoExecuteRule("dup_id", "com.slack", "second", 1)
+
+        repository.automationManager.setRules(listOf(r1, r2))
+        assertEquals(1, repository.automationManager.rules.value.size)
+        assertEquals(
+            "first",
+            repository.automationManager.rules.value[0]
+                .titleContains
+        )
+    }
+
+    @Test
+    fun reload_reReadsFromPreferences() {
+        val context = ApplicationProvider.getApplicationContext<Context>()
+        val repo = PreferencesRepository(context)
+        repo.automationManager.setAutoActOnNotification(true)
+        repo.automationManager.setDefaultReplyMethod("copy")
+        repo.automationManager.setLongPressAction("dismiss")
+
+        repo.automationManager.reload()
+
+        assertTrue(repo.automationManager.autoActOnNotification.value)
+        assertEquals("copy", repo.automationManager.defaultReplyMethod.value)
+        assertEquals("dismiss", repo.automationManager.longPressAction.value)
+    }
 }

@@ -75,4 +75,55 @@ class PreferencesDeviceTest {
         val blocklist = repository.captureManager.blocklist.value
         assertTrue(blocklist.contains("com.spam.app"))
     }
+
+    @Test
+    fun storageManager_updatesDbAndCacheLimits() {
+        repository.storageManager.setMaxDbMb(100)
+        assertEquals(100, repository.storageManager.maxDbMb.value)
+
+        repository.storageManager.setVectorCacheMax(500)
+        assertEquals(500, repository.storageManager.vectorCacheMax.value)
+
+        repository.storageManager.setLowMemoryMode(true)
+        assertTrue(repository.storageManager.lowMemoryMode.value)
+
+        repository.storageManager.setLowMemoryMode(false)
+        assertFalse(repository.storageManager.lowMemoryMode.value)
+    }
+
+    @Test
+    fun retentionDays_clampsBoundsProperly() {
+        repository.setRetentionDays(50)
+        assertEquals(50, repository.retentionDays.value)
+
+        repository.setRetentionDays(0)
+        assertEquals(1, repository.retentionDays.value)
+
+        repository.setRetentionDays(10000)
+        assertEquals(3650, repository.retentionDays.value)
+    }
+
+    @Test
+    fun semanticWeight_clampsBoundsProperly() {
+        repository.setSemanticWeight(75)
+        assertEquals(75, repository.semanticWeight.value)
+
+        repository.setSemanticWeight(-10)
+        assertEquals(0, repository.semanticWeight.value)
+
+        repository.setSemanticWeight(150)
+        assertEquals(100, repository.semanticWeight.value)
+    }
+
+    @Test
+    fun automationManager_persistsConfiguredActions() {
+        repository.automationManager.setAutoActOnNotification(true)
+        assertTrue(repository.automationManager.autoActOnNotification.value)
+
+        repository.automationManager.setDefaultReplyMethod("copy")
+        assertEquals("copy", repository.automationManager.defaultReplyMethod.value)
+
+        repository.automationManager.setLongPressAction("reply")
+        assertEquals("reply", repository.automationManager.longPressAction.value)
+    }
 }
