@@ -17,6 +17,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
@@ -225,5 +226,194 @@ class AppDaoInstrumentedTest {
 
         assertEquals("Beta App", appsWithNotifications[1].app.appName)
         assertEquals(1, appsWithNotifications[1].notifications.size)
+    }
+
+    @Test
+    fun notificationQueryDao_markAsRead_and_autoDeleteOnRead() = runBlocking {
+        val notif1 = NotificationEntity(
+            key = "query_read_1",
+            packageName = "com.test.app",
+            appName = "TestApp",
+            title = "Test 1",
+            content = "Unread message 1",
+            isRead = false
+        )
+        val notif2 = NotificationEntity(
+            key = "query_read_2",
+            packageName = "com.test.app",
+            appName = "TestApp",
+            title = "Test 2",
+            content = "Unread message 2",
+            isRead = false
+        )
+        notificationDao.insertNotifications(listOf(notif1, notif2))
+        assertEquals(2, queryDao.getUnreadCountFlow().first())
+
+        // Mark notif1 as read with autoDeleteOnRead = false
+        queryDao.markAsRead("query_read_1", autoDeleteOnRead = false)
+        assertEquals(1, queryDao.getUnreadCountFlow().first())
+        val fetched1 = notificationDao.getNotificationByKey("query_read_1")
+        assertNotNull(fetched1)
+        assertTrue(fetched1?.isRead == true)
+
+        // Mark notif2 as read with autoDeleteOnRead = true -> should be deleted
+        queryDao.markAsRead("query_read_2", autoDeleteOnRead = true)
+        assertEquals(0, queryDao.getUnreadCountFlow().first())
+        val fetched2 = notificationDao.getNotificationByKey("query_read_2")
+        assertNull(fetched2)
+    }
+
+    @Test
+    fun notificationQueryDao_markAllAsRead_and_autoDeleteOnRead() = runBlocking {
+        val u1 = NotificationEntity(
+            key = "all_read_1",
+            packageName = "com.test.app",
+            appName = "TestApp",
+            title = "Unread 1",
+            content = "Content",
+            isRead = false
+        )
+        val u2 = NotificationEntity(
+            key = "all_read_2",
+            packageName = "com.test.app",
+            appName = "TestApp",
+            title = "Unread 2",
+            content = "Content",
+            isRead = false
+        )
+        notificationDao.insertNotifications(listOf(u1, u2))
+        assertEquals(2, queryDao.getUnreadCountFlow().first())
+
+        // Mark all as read without deleting
+        queryDao.markAllAsRead(autoDeleteOnRead = false)
+        assertEquals(0, queryDao.getUnreadCountFlow().first())
+        assertEquals(2, queryDao.getNotificationCount())
+
+        // Insert new unread notifications
+        val u3 = NotificationEntity(
+            key = "all_read_3",
+            packageName = "com.test.app",
+            appName = "TestApp",
+            title = "Unread 3",
+            content = "Content",
+            isRead = false
+        )
+        val u4 = NotificationEntity(
+            key = "all_read_4",
+            packageName = "com.test.app",
+            appName = "TestApp",
+            title = "Unread 4",
+            content = "Content",
+            isRead = false
+        )
+        notificationDao.insertNotifications(listOf(u3, u4))
+        assertEquals(2, queryDao.getUnreadCountFlow().first())
+        assertEquals(4, queryDao.getNotificationCount())
+
+        // Mark all as read WITH autoDeleteOnRead = true -> should delete only unread ones (u3, u4)
+        queryDao.markAllAsRead(autoDeleteOnRead = true)
+        assertEquals(0, queryDao.getUnreadCountFlow().first())
+        assertEquals(2, queryDao.getNotificationCount())
+        assertNotNull(notificationDao.getNotificationByKey("all_read_1"))
+        assertNotNull(notificationDao.getNotificationByKey("all_read_2"))
+        assertNull(notificationDao.getNotificationByKey("all_read_3"))
+        assertNull(notificationDao.getNotificationByKey("all_read_4"))
+    }
+
+    @Test
+    fun notificationQueryDao_markAsReadBatch_and_autoDelete() = runBlocking {
+        val b1 = NotificationEntity(
+            key = "batch_1",
+            packageName = "com.pkg",
+            appName = "App",
+            title = "T1",
+            content = "C1",
+            isRead = false
+        )
+        val b2 = NotificationEntity(
+            key = "batch_2",
+            packageName = "com.pkg",
+            appName = "App",
+            title = "T2",
+            content = "C2",
+            isRead = false
+        )
+        val b3 = NotificationEntity(
+            key = "batch_3",
+            packageName = "com.pkg",
+            appName = "App",
+            title = "T3",
+            content = "C3",
+            isRead = false
+        )
+        notificationDao.insertNotifications(listOf(b1, b2, b3))
+
+        // Empty batch no-op
+        queryDao.markAsReadBatch(emptyList(), autoDeleteOnRead = false)
+        assertEquals(3, queryDao.getUnreadCountFlow().first())
+
+        // Mark batch as read
+        queryDao.markAsReadBatch(listOf("batch_1", "batch_2"), autoDeleteOnRead = false)
+        assertEquals(1, queryDao.getUnreadCountFlow().first())
+        assertTrue(notificationDao.getNotificationByKey("batch_1")?.isRead == true)
+        assertTrue(notificationDao.getNotificationByKey("batch_2")?.isRead == true)
+        assertFalse(notificationDao.getNotificationByKey("batch_3")?.isRead == true)
+
+        // Delete batch using autoDeleteOnRead = true
+        queryDao.markAsReadBatch(listOf("batch_2", "batch_3"), autoDeleteOnRead = true)
+        assertNotNull(notificationDao.getNotificationByKey("batch_1"))
+        assertNull(notificationDao.getNotificationByKey("batch_2"))
+        assertNull(notificationDao.getNotificationByKey("batch_3"))
+    }
+
+    @Test
+    fun notificationQueryDao_updatePinnedStatus_singleAndBatch() = runBlocking {
+        val p1 = NotificationEntity(
+            key = "pin_1",
+            packageName = "com.pkg",
+            appName = "App",
+            title = "P1",
+            content = "C1",
+            isPinned = false
+        )
+        val p2 = NotificationEntity(
+            key = "pin_2",
+            packageName = "com.pkg",
+            appName = "App",
+            title = "P2",
+            content = "C2",
+            isPinned = false
+        )
+        val p3 = NotificationEntity(
+            key = "pin_3",
+            packageName = "com.pkg",
+            appName = "App",
+            title = "P3",
+            content = "C3",
+            isPinned = false
+        )
+        notificationDao.insertNotifications(listOf(p1, p2, p3))
+
+        // Pin single
+        queryDao.updatePinnedStatus("pin_1", true)
+        val pinnedAfterSingle = queryDao.getPinnedNotificationsFlow().first()
+        assertEquals(1, pinnedAfterSingle.size)
+        assertEquals("pin_1", pinnedAfterSingle[0].key)
+
+        // Pin batch
+        queryDao.updatePinnedStatusBatch(listOf("pin_2", "pin_3"), true)
+        val pinnedAfterBatch = queryDao.getPinnedNotificationsFlow().first()
+        assertEquals(3, pinnedAfterBatch.size)
+
+        // Unpin single
+        queryDao.updatePinnedStatus("pin_1", false)
+        val pinnedAfterUnpinSingle = queryDao.getPinnedNotificationsFlow().first()
+        assertEquals(2, pinnedAfterUnpinSingle.size)
+        assertFalse(pinnedAfterUnpinSingle.any { it.key == "pin_1" })
+
+        // Unpin batch
+        queryDao.updatePinnedStatusBatch(listOf("pin_2", "pin_3"), false)
+        val pinnedEmpty = queryDao.getPinnedNotificationsFlow().first()
+        assertTrue(pinnedEmpty.isEmpty())
     }
 }
