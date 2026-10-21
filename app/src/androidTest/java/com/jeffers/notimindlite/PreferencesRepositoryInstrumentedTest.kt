@@ -48,5 +48,75 @@ class PreferencesRepositoryInstrumentedTest {
         assertTrue(accent.isNotBlank())
     }
 
+    @Test
+    fun telemetryManager_updatesEnabledAndLevel() {
+        preferencesRepository.telemetryManager.setEnabled(true)
+        assertTrue(preferencesRepository.telemetryManager.enabled.value)
+
+        preferencesRepository.telemetryManager.setLevel("full")
+        assertEquals("full", preferencesRepository.telemetryManager.level.value)
+
+        preferencesRepository.telemetryManager.setLevel("unknown_invalid_level")
+        assertEquals("minimal", preferencesRepository.telemetryManager.level.value)
+
+        preferencesRepository.telemetryManager.setEnabled(false)
+        assertEquals(false, preferencesRepository.telemetryManager.enabled.value)
+    }
+
+    @Test
+    fun syncManager_updatesFlagsAndSyncConstraints() {
+        preferencesRepository.syncManager.setEnableSync(true)
+        assertTrue(preferencesRepository.syncManager.enableSync.value)
+
+        preferencesRepository.syncManager.setSyncWifiOnly(true)
+        assertTrue(preferencesRepository.syncManager.syncWifiOnly.value)
+
+        preferencesRepository.syncManager.setSyncChargingOnly(true)
+        assertTrue(preferencesRepository.syncManager.syncChargingOnly.value)
+
+        preferencesRepository.syncManager.setUseSupabaseSync(true)
+        assertTrue(preferencesRepository.syncManager.useSupabaseSync.value)
+
+        // Reset
+        preferencesRepository.syncManager.setEnableSync(false)
+        assertEquals(false, preferencesRepository.syncManager.enableSync.value)
+    }
+
+    @Test
+    fun displayManager_updatesUiDisplayPreferences() {
+        preferencesRepository.displayManager.setCompactMode(true)
+        assertTrue(preferencesRepository.displayManager.compactMode.value)
+
+        preferencesRepository.displayManager.setShowAppIcons(false)
+        assertEquals(false, preferencesRepository.displayManager.showAppIcons.value)
+
+        preferencesRepository.displayManager.setGroupByApp(true)
+        assertTrue(preferencesRepository.displayManager.groupByApp.value)
+
+        preferencesRepository.displayManager.setPreviewLength(200)
+        assertEquals(200, preferencesRepository.displayManager.previewLength.value)
+    }
+
+    @Test
+    fun preferencesRepository_topLevelFlagsRoundTrip() {
+        preferencesRepository.setAutoDeleteOnRead(true)
+        assertTrue(preferencesRepository.autoDeleteOnRead.value)
+
+        preferencesRepository.setEnableSemanticRanking(false)
+        assertEquals(false, preferencesRepository.enableSemanticRanking.value)
+
+        preferencesRepository.setExportEncryption(false)
+        assertEquals(false, preferencesRepository.exportEncryption.value)
+
+        preferencesRepository.setBackupIntervalDays(7)
+        assertEquals(7, preferencesRepository.backupIntervalDays.value)
+
+        // Restore defaults
+        preferencesRepository.setAutoDeleteOnRead(false)
+        preferencesRepository.setEnableSemanticRanking(true)
+        preferencesRepository.setExportEncryption(true)
+        preferencesRepository.setBackupIntervalDays(0)
+    }
+
     private fun preferencesManager(repo: PreferencesRepository): Any = repo.securityManager
 }

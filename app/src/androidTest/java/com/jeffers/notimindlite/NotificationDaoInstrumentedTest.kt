@@ -449,4 +449,76 @@ class NotificationDaoInstrumentedTest {
         assertEquals(3, dao.getTotalNotificationCountFlow().first())
         assertEquals(2, dao.getDismissedNotificationCountFlow().first())
     }
+
+    @Test
+    fun getAllNotificationsSortedByReceived_and_SortedByDismissed() = runBlocking {
+        val now = System.currentTimeMillis()
+        val n1 = NotificationEntity(
+            key = "sort_item_1",
+            packageName = "com.package.one",
+            appName = "App 1",
+            title = "Item 1",
+            content = "C1",
+            postTime = now - 5000,
+            isDismissed = true,
+            dismissTime = now - 1000
+        )
+        val n2 = NotificationEntity(
+            key = "sort_item_2",
+            packageName = "com.package.two",
+            appName = "App 2",
+            title = "Item 2",
+            content = "C2",
+            postTime = now,
+            isDismissed = true,
+            dismissTime = now - 10000
+        )
+        dao.insertNotifications(listOf(n1, n2))
+
+        val byReceived = dao.getAllNotificationsSortedByReceived().first()
+        assertEquals(2, byReceived.size)
+        assertEquals("sort_item_2", byReceived[0].key)
+        assertEquals("sort_item_1", byReceived[1].key)
+
+        val byDismissed = dao.getAllNotificationsSortedByDismissed().first()
+        assertEquals(2, byDismissed.size)
+        assertEquals("sort_item_1", byDismissed[0].key)
+        assertEquals("sort_item_2", byDismissed[1].key)
+    }
+
+    @Test
+    fun getDismissedNotificationsSortedByDismissed_emitsOnlyDismissedOrderedByDismissTime() = runBlocking {
+        val active = NotificationEntity(
+            key = "sort_active",
+            packageName = "com.test",
+            appName = "TestApp",
+            title = "Active",
+            content = "Content",
+            isDismissed = false
+        )
+        val dismissedEarlier = NotificationEntity(
+            key = "sort_dis_earlier",
+            packageName = "com.test",
+            appName = "TestApp",
+            title = "Dismissed Earlier",
+            content = "Content",
+            isDismissed = true,
+            dismissTime = 1000L
+        )
+        val dismissedLater = NotificationEntity(
+            key = "sort_dis_later",
+            packageName = "com.test",
+            appName = "TestApp",
+            title = "Dismissed Later",
+            content = "Content",
+            isDismissed = true,
+            dismissTime = 5000L
+        )
+        dao.insertNotifications(listOf(active, dismissedEarlier, dismissedLater))
+
+        val results = dao.getDismissedNotificationsSortedByDismissed().first()
+        assertEquals(2, results.size)
+        assertEquals("sort_dis_later", results[0].key)
+        assertEquals("sort_dis_earlier", results[1].key)
+    }
 }
