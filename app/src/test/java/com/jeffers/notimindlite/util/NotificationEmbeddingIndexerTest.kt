@@ -92,4 +92,25 @@ class NotificationEmbeddingIndexerTest {
         coVerify(exactly = 1) { mockDao.updateEmbedding(100L, any()) }
         coVerify(exactly = 1) { mockDao.updateEmbedding(200L, any()) }
     }
+
+    @Test
+    fun indexSingle_databaseException_isHandledGracefullyWithoutCrashing() = runBlocking {
+        val mockDao = mockk<NotificationDao>()
+        io.mockk.coEvery { mockDao.updateEmbedding(any(), any()) } throws
+            android.database.sqlite.SQLiteException("Simulated SQLite write error")
+
+        val indexer = NotificationEmbeddingIndexer()
+        val entity = NotificationEntity(
+            id = 99L,
+            key = "key_err",
+            packageName = "com.test.err",
+            appName = "ErrApp",
+            title = "Test",
+            content = "Body"
+        )
+
+        // Should not throw SQLiteException
+        indexer.indexSingle(mockDao, entity)
+        coVerify(exactly = 1) { mockDao.updateEmbedding(99L, any()) }
+    }
 }
