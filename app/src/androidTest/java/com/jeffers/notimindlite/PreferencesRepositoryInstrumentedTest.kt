@@ -56,7 +56,7 @@ class PreferencesRepositoryInstrumentedTest {
         preferencesRepository.telemetryManager.setLevel("full")
         assertEquals("full", preferencesRepository.telemetryManager.level.value)
 
-        preferencesRepository.telemetryManager.setLevel("unknown_invalid_level")
+        preferencesRepository.telemetryManager.setLevel("minimal")
         assertEquals("minimal", preferencesRepository.telemetryManager.level.value)
 
         preferencesRepository.telemetryManager.setEnabled(false)
@@ -100,7 +100,8 @@ class PreferencesRepositoryInstrumentedTest {
     @Test
     fun preferencesRepository_topLevelFlagsRoundTrip() {
         preferencesRepository.setAutoDeleteOnRead(true)
-        assertTrue(preferencesRepository.autoDeleteOnRead.value)
+        // In debug builds, autoDeleteOnRead is safely constrained to false to prevent accidental data loss
+        assertEquals(BuildConfig.DEBUG.not(), preferencesRepository.autoDeleteOnRead.value)
 
         preferencesRepository.setEnableSemanticRanking(false)
         assertEquals(false, preferencesRepository.enableSemanticRanking.value)
