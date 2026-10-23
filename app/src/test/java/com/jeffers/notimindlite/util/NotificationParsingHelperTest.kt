@@ -76,6 +76,46 @@ class NotificationParsingHelperTest {
     }
 
     @Test
+    fun parseTitleAndContent_fallsBackToSummaryTextWhenTextAndBigTextEmpty() {
+        val bundle = Bundle().apply {
+            putCharSequence(Notification.EXTRA_TITLE, "Download Complete")
+            putCharSequence(Notification.EXTRA_TEXT, "")
+            putCharSequence(Notification.EXTRA_BIG_TEXT, "   ")
+            putCharSequence(Notification.EXTRA_SUMMARY_TEXT, "1 file downloaded")
+        }
+
+        val result = helper.parseTitleAndContent(bundle)
+        assertEquals("Download Complete", result.title)
+        assertEquals("1 file downloaded", result.content)
+    }
+
+    @Test
+    fun parseTitleAndContent_allBlankContentReturnsEmptyString() {
+        val bundle = Bundle().apply {
+            putCharSequence(Notification.EXTRA_TITLE, "")
+            putCharSequence(Notification.EXTRA_CONVERSATION_TITLE, "")
+            putCharSequence(Notification.EXTRA_TEXT, "   ")
+            putCharSequence(Notification.EXTRA_BIG_TEXT, "   ")
+            putCharSequence(Notification.EXTRA_SUMMARY_TEXT, "   ")
+        }
+
+        val result = helper.parseTitleAndContent(bundle)
+        assertEquals("", result.title)
+        assertEquals("", result.content)
+    }
+
+    @Test
+    fun extractInboxLinesJson_withStringArray_serializesSuccessfully() {
+        val bundle = Bundle().apply {
+            putStringArray(Notification.EXTRA_TEXT_LINES, arrayOf("Line 1", "Line 2"))
+        }
+
+        val json = helper.extractInboxLinesJson(bundle)
+        assertNotNull(json)
+        assertEquals("[\"Line 1\",\"Line 2\"]", json)
+    }
+
+    @Test
     fun extractInboxLinesJson_withValidLines_serializesToJsonArray() {
         val lines = arrayOf<CharSequence>("First line", "Second line", "Third line")
         val bundle = Bundle().apply {

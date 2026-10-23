@@ -100,4 +100,60 @@ class ReciprocalRankFusionTest {
         // Entity 2 (Rank 1 in Semantic) should definitely be first
         assertEquals(2L, fused[0].notification.id)
     }
+
+    @Test
+    fun merge_emptyInputs_returnsEmptyList() {
+        val fused = ReciprocalRankFusion.merge(emptyList(), emptyList())
+        assertTrue(fused.isEmpty())
+    }
+
+    @Test
+    fun merge_onlyFtsResults_preservesOrderWithNullSemanticAttributes() {
+        val e1 = createEntity(1, "First")
+        val e2 = createEntity(2, "Second")
+        val fused = ReciprocalRankFusion.merge(listOf(e1, e2), emptyList())
+
+        assertEquals(2, fused.size)
+        assertEquals(1L, fused[0].notification.id)
+        assertEquals(1, fused[0].ftsRank)
+        assertEquals(null, fused[0].semanticRank)
+        assertEquals(null, fused[0].semanticSimilarityScore)
+
+        assertEquals(2L, fused[1].notification.id)
+        assertEquals(2, fused[1].ftsRank)
+    }
+
+    @Test
+    fun merge_onlySemanticResults_preservesOrderWithNullFtsRank() {
+        val e1 = createEntity(10, "First Semantic")
+        val e2 = createEntity(20, "Second Semantic")
+        val fused = ReciprocalRankFusion.merge(
+            emptyList(),
+            listOf(SemanticSearchResult(e1, 0.95f), SemanticSearchResult(e2, 0.85f))
+        )
+
+        assertEquals(2, fused.size)
+        assertEquals(10L, fused[0].notification.id)
+        assertEquals(null, fused[0].ftsRank)
+        assertEquals(1, fused[0].semanticRank)
+        assertEquals(0.95f, fused[0].semanticSimilarityScore)
+
+        assertEquals(20L, fused[1].notification.id)
+        assertEquals(2, fused[1].semanticRank)
+        assertEquals(0.85f, fused[1].semanticSimilarityScore)
+    }
+
+    @Test
+    fun merge_customKFactor_modifiesScoreDistribution() {
+        val e1 = createEntity(100, "Item 1")
+        val e2 = createEntity(200, "Item 2")
+
+        val fusedSmallK = ReciprocalRankFusion.merge(listOf(e1, e2), emptyList(), k = 1.0)
+        val fusedLargeK = ReciprocalRankFusion.merge(listOf(e1, e2), emptyList(), k = 100.0)
+
+        // Rank 1 contribution with k=1.0 is 1.0 / (1.0 + 1) = 0.5
+        assertEquals(0.5, fusedSmallK[0].rrfScore, 0.0001)
+        // Rank 1 contribution with k=100.0 is 1.0 / (100.0 + 1) = ~0.0099
+        assertEquals(1.0 / 101.0, fusedLargeK[0].rrfScore, 0.0001)
+    }
 }
