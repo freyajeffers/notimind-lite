@@ -81,4 +81,56 @@ class SnoozeReminderSchedulerTest {
     fun cancelSnooze_whenNoAlarmScheduled_executesWithoutCrashing() {
         SnoozeReminderScheduler.cancelSnooze(context, "unregistered_id")
     }
+
+    @Test
+    fun scheduleSnooze_replacesExistingAlarmWithSameId() {
+        val notifId = "snooze_replacement_target"
+
+        // Schedule first
+        SnoozeReminderScheduler.scheduleSnooze(
+            context = context,
+            notificationId = notifId,
+            title = "First Title",
+            content = "First Content",
+            delayMs = 10_000L
+        )
+
+        // Reschedule with updated content
+        SnoozeReminderScheduler.scheduleSnooze(
+            context = context,
+            notificationId = notifId,
+            title = "Updated Title",
+            content = "Updated Content",
+            delayMs = 20_000L
+        )
+
+        val intent = Intent(context, SnoozeReminderReceiver::class.java)
+        val pi = PendingIntent.getBroadcast(
+            context,
+            notifId.hashCode(),
+            intent,
+            PendingIntent.FLAG_NO_CREATE or PendingIntent.FLAG_IMMUTABLE
+        )
+        assertNotNull(pi)
+    }
+
+    @Test
+    fun scheduleSnooze_zeroOrNegativeDelay_schedulesGracefully() {
+        SnoozeReminderScheduler.scheduleSnooze(
+            context = context,
+            notificationId = "immediate_snooze",
+            title = "Immediate",
+            content = "Due now",
+            delayMs = 0L
+        )
+
+        val intent = Intent(context, SnoozeReminderReceiver::class.java)
+        val pi = PendingIntent.getBroadcast(
+            context,
+            "immediate_snooze".hashCode(),
+            intent,
+            PendingIntent.FLAG_NO_CREATE or PendingIntent.FLAG_IMMUTABLE
+        )
+        assertNotNull(pi)
+    }
 }

@@ -64,4 +64,50 @@ class ConvertersTest {
             converters.toSyncStatus("UNKNOWN_SYNC_STATUS_VALUE")
         }
     }
+
+    @Test
+    fun floatArrayConversion_roundTripsSpecialFloatsAndInfinities() {
+        val original = floatArrayOf(
+            Float.POSITIVE_INFINITY,
+            Float.NEGATIVE_INFINITY,
+            -0.0f,
+            0.0f,
+            Float.MIN_VALUE,
+            Float.MAX_VALUE
+        )
+        val bytes = converters.fromFloatArray(original)
+        assertNotNull(bytes)
+        val restored = converters.toFloatArray(bytes)
+        assertNotNull(restored)
+        assertEquals(original.size, restored!!.size)
+        assertEquals(Float.POSITIVE_INFINITY, restored[0], 0.0f)
+        assertEquals(Float.NEGATIVE_INFINITY, restored[1], 0.0f)
+        assertEquals(-0.0f, restored[2], 0.0f)
+        assertEquals(0.0f, restored[3], 0.0f)
+        assertEquals(Float.MIN_VALUE, restored[4], 0.0f)
+        assertEquals(Float.MAX_VALUE, restored[5], 0.0f)
+    }
+
+    @Test
+    fun floatArrayConversion_handlesUnalignedByteArrayGracefully() {
+        // 7 bytes: should extract 7 / 4 = 1 float and ignore trailing 3 unaligned bytes
+        val unalignedBytes = byteArrayOf(0, 0, 0, 0, 1, 2, 3)
+        val restored = converters.toFloatArray(unalignedBytes)
+        assertNotNull(restored)
+        assertEquals(1, restored!!.size)
+        assertEquals(0.0f, restored[0], 0.0f)
+    }
+
+    @Test
+    fun floatArrayConversion_roundTripsLargeEmbeddingVector() {
+        val size = 768
+        val vector = FloatArray(size) { i -> (i.toFloat() * 0.001f) - 0.384f }
+        val bytes = converters.fromFloatArray(vector)
+        assertNotNull(bytes)
+        assertEquals(size * 4, bytes!!.size)
+
+        val restored = converters.toFloatArray(bytes)
+        assertNotNull(restored)
+        assertArrayEquals(vector, restored!!, 0.000001f)
+    }
 }

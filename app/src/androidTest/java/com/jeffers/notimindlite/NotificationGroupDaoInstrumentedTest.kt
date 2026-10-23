@@ -322,4 +322,93 @@ class NotificationGroupDaoInstrumentedTest {
         val result = groupDetailDao.getGroupByKey("missing_group_key")
         assertNull(result)
     }
+
+    @Test
+    fun groupDetailDao_getNotificationsForGroup_retrievesByExplicitGroupKeyInPostTimeDesc() = runBlocking {
+        val now = System.currentTimeMillis()
+        val n1 = NotificationEntity(
+            key = "detail_g1_1",
+            packageName = "com.chat.detail",
+            appName = "DetailChat",
+            title = "First Message",
+            content = "Hello",
+            postTime = now - 5000,
+            groupKey = "thread_alpha"
+        )
+        val n2 = NotificationEntity(
+            key = "detail_g1_2",
+            packageName = "com.chat.detail",
+            appName = "DetailChat",
+            title = "Second Message",
+            content = "World",
+            postTime = now,
+            groupKey = "thread_alpha"
+        )
+        val otherGroup = NotificationEntity(
+            key = "detail_g2_1",
+            packageName = "com.chat.detail",
+            appName = "DetailChat",
+            title = "Different thread",
+            content = "Other",
+            postTime = now - 1000,
+            groupKey = "thread_beta"
+        )
+        notificationDao.insertNotifications(listOf(n1, n2, otherGroup))
+
+        val list = groupDetailDao.getNotificationsForGroup("thread_alpha")
+        assertEquals(2, list.size)
+        assertEquals("detail_g1_2", list[0].key)
+        assertEquals("detail_g1_1", list[1].key)
+    }
+
+    @Test
+    fun groupDetailDao_getNotificationsForGroup_fallsBackToPackageNameWhenGroupKeyIsNull() = runBlocking {
+        val now = System.currentTimeMillis()
+        val nWithoutGroup = NotificationEntity(
+            key = "fallback_notif",
+            packageName = "com.standalone.app",
+            appName = "Standalone",
+            title = "Alert",
+            content = "No group key specified",
+            postTime = now,
+            groupKey = null
+        )
+        notificationDao.insertNotifications(listOf(nWithoutGroup))
+
+        val list = groupDetailDao.getNotificationsForGroup("com.standalone.app")
+        assertEquals(1, list.size)
+        assertEquals("fallback_notif", list[0].key)
+
+        val emptyQuery = groupDetailDao.getNotificationsForGroup("com.other.app")
+        assertTrue(emptyQuery.isEmpty())
+    }
+
+    @Test
+    fun groupDetailDao_getNotificationsForGroupFlow_emitsOrderedNotifications() = runBlocking {
+        val now = System.currentTimeMillis()
+        val n1 = NotificationEntity(
+            key = "flow_g1",
+            packageName = "com.flow.test",
+            appName = "FlowTest",
+            title = "Older",
+            content = "Older content",
+            postTime = now - 2000,
+            groupKey = "flow_group"
+        )
+        val n2 = NotificationEntity(
+            key = "flow_g2",
+            packageName = "com.flow.test",
+            appName = "FlowTest",
+            title = "Newer",
+            content = "Newer content",
+            postTime = now,
+            groupKey = "flow_group"
+        )
+        notificationDao.insertNotifications(listOf(n1, n2))
+
+        val flowResult = groupDetailDao.getNotificationsForGroupFlow("flow_group").first()
+        assertEquals(2, flowResult.size)
+        assertEquals("flow_g2", flowResult[0].key)
+        assertEquals("flow_g1", flowResult[1].key)
+    }
 }

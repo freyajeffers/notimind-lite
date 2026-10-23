@@ -5,13 +5,16 @@ import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.jeffers.notimindlite.data.local.AppDatabase
+import com.jeffers.notimindlite.data.local.Converters
 import com.jeffers.notimindlite.data.local.NotificationDao
 import com.jeffers.notimindlite.data.local.NotificationEntity
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import org.junit.After
+import org.junit.Assert.assertArrayEquals
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
@@ -307,5 +310,81 @@ class AppDatabaseInstrumentedTest {
         assertTrue(r2?.isDismissed == true)
         assertEquals(4, r2?.dismissReason)
         assertEquals(dismissTime, r2?.dismissTime)
+    }
+
+    @Test
+    fun instrumented_markDismissedWithReasonByMatching_updatesDismissReasonAndState() = runBlocking {
+        val notif = NotificationEntity(
+            key = "reason_match_key",
+            packageName = "com.match.pkg",
+            appName = "MatchApp",
+            title = "Special Offer",
+            content = "Use code 50OFF",
+            isDismissed = false
+        )
+        dao.insertNotification(notif)
+
+        dao.markDismissedWithReasonByMatching(
+            key = "reason_match_key",
+            packageName = "com.match.pkg",
+            title = "Special Offer",
+            content = "Use code 50OFF",
+            reason = 12
+        )
+
+        val retrieved = dao.getNotificationByKey("reason_match_key")
+        assertNotNull(retrieved)
+        assertTrue(retrieved!!.isDismissed)
+        assertEquals(12, retrieved.dismissReason)
+        assertNotNull(retrieved.dismissTime)
+    }
+
+    @Test
+    fun instrumented_insert_automaticallyPopulatesAppAndGroupEntities() = runBlocking {
+        val notif = NotificationEntity(
+            key = "auto_pop_key",
+            packageName = "com.autopop.chat",
+            appName = "AutoPop Chat",
+            title = "Message from Alice",
+            content = "Hey there!",
+            groupKey = "chat_group_alpha",
+            isDismissed = false
+        )
+        dao.insertNotification(notif)
+
+        val app = database.appDao().getAppByPackage("com.autopop.chat")
+        assertNotNull(app)
+        assertEquals("AutoPop Chat", app?.appName)
+
+        val group = database.notificationGroupDetailDao().getGroupByKey("chat_group_alpha")
+        assertNotNull(group)
+        assertEquals("com.autopop.chat", group?.packageName)
+        assertEquals(1, group?.notificationCount)
+        assertEquals(1, group?.activeCount)
+        assertFalse(group!!.isDismissed)
+    }
+
+    @Test
+    fun instrumented_updateEmbeddingsBatch_updatesMultipleNotifications() = runBlocking {
+        val n1 = NotificationEntity(key = "emb_1", packageName = "p", appName = "A", title = "T1", content = "C1")
+        val n2 = NotificationEntity(key = "emb_2", packageName = "p", appName = "A", title = "T2", content = "C2")
+        val ids = dao.insertNotifications(listOf(n1, n2))
+        val id1 = ids[0]
+        val id2 = ids[1]
+
+        val emb1 = floatArrayOf(0.1f, 0.2f, 0.3f, 0.4f)
+        val emb2 = floatArrayOf(0.5f, 0.6f, 0.7f, 0.8f)
+        val emb1Bytes = Converters().fromFloatArray(emb1)!!
+        val emb2Bytes = Converters().fromFloatArray(emb2)!!
+
+        val batch = listOf(Pair(id1, emb1Bytes), Pair(id2, emb2Bytes))
+        dao.updateEmbeddingsBatch(batch)
+
+        val r1 = dao.getNotificationByKey("emb_1")
+        val r2 = dao.getNotificationByKey("emb_2")
+        assertNotNull(r1?.embedding)
+        assertNotNull(r2?.embedding)
+        assertArrayEquals(emb1, r1?.embedding, 0.001f)
+        assertArrayEquals(emb2, r2?.embedding, 0.001f)
     }
 }

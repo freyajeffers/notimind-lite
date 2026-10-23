@@ -102,4 +102,43 @@ class ActionableEntityExtractorTest {
         assertEquals(1, urlEntities.size)
         assertEquals("https://track.shipment.com/order?id=12345#status", urlEntities[0].value)
     }
+
+    @Test
+    fun extract_numericTokensOutsideFourToEightDigits_areIgnored() {
+        val text = "Order 123 has 123456789 items and room 9"
+        val entities = ActionableEntityExtractor.extract(text)
+        val otpEntities = entities.filter { it.type == ActionableEntityExtractor.EntityType.OTP }
+        assertTrue(otpEntities.isEmpty())
+    }
+
+    @Test
+    fun extract_alphanumericTokens_areNotExtractedAsOtp() {
+        val text = "Reference code ABC1234 or USER9999 was generated"
+        val entities = ActionableEntityExtractor.extract(text)
+        val otpEntities = entities.filter { it.type == ActionableEntityExtractor.EntityType.OTP }
+        assertTrue(otpEntities.isEmpty())
+    }
+
+    @Test
+    fun extract_urlWithPunctuation_excludesTrailingPunctuation() {
+        val text = "Visit https://example.com/api, or check https://example.com/test!"
+        val entities = ActionableEntityExtractor.extract(text)
+        val urlEntities = entities.filter { it.type == ActionableEntityExtractor.EntityType.URL }
+
+        assertEquals(2, urlEntities.size)
+        assertEquals("https://example.com/api", urlEntities[0].value)
+        assertEquals("https://example.com/test", urlEntities[1].value)
+    }
+
+    @Test
+    fun extract_rangeIndices_matchExactSubstringInOriginalText() {
+        val text = "Use verification 883921 on https://auth.provider.org now"
+        val entities = ActionableEntityExtractor.extract(text)
+
+        assertEquals(2, entities.size)
+        for (entity in entities) {
+            val substring = text.substring(entity.range.first, entity.range.last + 1)
+            assertEquals(entity.value, substring)
+        }
+    }
 }

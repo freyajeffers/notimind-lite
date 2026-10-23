@@ -88,4 +88,38 @@ class PiiRedactionEngineTest {
             out
         )
     }
+
+    @Test
+    fun `numeric tokens over 6 digits are not redacted as OTP`() {
+        val input = "Account number is 1234567 in the system"
+        val out = PiiRedactionEngine.redact(input)
+        assertNotNull(out)
+        assertEquals("Account number is 1234567 in the system", out)
+    }
+
+    @Test
+    fun `empty or whitespace string returns unchanged`() {
+        val empty = ""
+        val whitespace = "   \t  "
+        assertEquals("", PiiRedactionEngine.redact(empty))
+        assertEquals("   \t  ", PiiRedactionEngine.redact(whitespace))
+    }
+
+    @Test
+    fun `luhn invalid 16 digit card is masked rather than dropped`() {
+        // 4111 1111 1111 1112 fails Luhn check
+        val input = "4111 1111 1111 1112"
+        val out = PiiRedactionEngine.redact(input)
+        assertNotNull("Luhn-invalid card should not be fail-closed dropped", out)
+        assertEquals("[REDACTED-CC]", out)
+    }
+
+    @Test
+    fun `adjacent phone and otp artifacts collapse into single phone placeholder`() {
+        // e.g. a phone number followed by a numeric token
+        val input = "+1 (555) 123-4567 1234"
+        val out = PiiRedactionEngine.redact(input)
+        assertNotNull(out)
+        assertEquals("[REDACTED-PHONE]", out)
+    }
 }
