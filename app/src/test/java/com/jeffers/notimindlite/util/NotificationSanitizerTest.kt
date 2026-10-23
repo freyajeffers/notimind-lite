@@ -122,16 +122,64 @@ class NotificationSanitizerTest {
         assertEquals("See you tomorrow", entity.content)
     }
 
+    @Test
+    fun sanitizeAndBuild_withSummarySubText_returnsNull() {
+        val sbn = createMockStatusBarNotification(
+            packageName = "com.chat.app",
+            title = "New messages",
+            text = "Conversation update",
+            subText = "2 more notifications"
+        )
+
+        assertNull(sanitizer.sanitizeAndBuild(sbn, sbn.notification))
+    }
+
+    @Test
+    fun sanitizeAndBuild_withOngoingAndClearableFlags_setsAttributesProperly() {
+        val sbn = createMockStatusBarNotification(
+            packageName = "com.media.player",
+            title = "Playing Track",
+            text = "Artist - Song",
+            flags = Notification.FLAG_ONGOING_EVENT or Notification.FLAG_NO_CLEAR
+        )
+
+        val entity = sanitizer.sanitizeAndBuild(sbn, sbn.notification)
+        assertNotNull(entity)
+        assertTrue(entity!!.isOngoing)
+        assertTrue(entity.isPersistent)
+        assertEquals(false, entity.isClearable)
+    }
+
+    @Test
+    fun sanitizeAndBuild_withGroupSummaryFlag_setsIsGroupSummary() {
+        val sbn = createMockStatusBarNotification(
+            packageName = "com.group.chat",
+            title = "Group Chat",
+            text = "3 unread messages",
+            flags = Notification.FLAG_GROUP_SUMMARY
+        )
+
+        val entity = sanitizer.sanitizeAndBuild(sbn, sbn.notification)
+        assertNotNull(entity)
+        assertTrue(entity!!.isGroupSummary)
+    }
+
     private fun createMockStatusBarNotification(
         packageName: String,
         title: String,
         text: String,
-        postTime: Long = System.currentTimeMillis()
+        postTime: Long = System.currentTimeMillis(),
+        subText: String? = null,
+        flags: Int = 0
     ): StatusBarNotification {
         val notification = Notification().apply {
+            this.flags = flags
             extras = Bundle().apply {
                 putCharSequence(Notification.EXTRA_TITLE, title)
                 putCharSequence(Notification.EXTRA_TEXT, text)
+                if (subText != null) {
+                    putCharSequence(Notification.EXTRA_SUB_TEXT, subText)
+                }
             }
         }
         val constructor = StatusBarNotification::class.java.getConstructor(
