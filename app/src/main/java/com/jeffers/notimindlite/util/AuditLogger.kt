@@ -15,7 +15,6 @@ import java.io.FileOutputStream
 import java.nio.charset.StandardCharsets
 import java.security.MessageDigest
 import javax.crypto.Mac
-import javax.crypto.spec.SecretKeySpec
 
 /**
  * AuditLogger manages persistent on-disk signed audit logs and synchronizes
@@ -38,6 +37,10 @@ object AuditLogger {
 
     // HMAC signing moved to AndroidKeyStore: non-exportable, device-backed symmetric key.
     private const val AUDIT_HMAC_KEY_ALIAS = "NotiMind_Audit_HMAC_Key"
+    private const val hmacKeySizeBits = 256
+
+    @Volatile
+    private var fallbackHmacKey: javax.crypto.SecretKey? = null
 
     /**
      * Retrieves or generates an Android KeyStore-backed HMAC-SHA256 secret key.
@@ -55,23 +58,39 @@ object AuditLogger {
             // ignore and proceed to key generation
         }
 
-        val keyGenerator = javax.crypto.KeyGenerator.getInstance(android.security.keystore.KeyProperties.KEY_ALGORITHM_HMAC_SHA256, "AndroidKeyStore")
-        val spec = android.security.keystore.KeyGenParameterSpec.Builder(
-            AUDIT_HMAC_KEY_ALIAS,
-            android.security.keystore.KeyProperties.PURPOSE_SIGN or android.security.keystore.KeyProperties.PURPOSE_VERIFY
-        )
-            .setKeySize(256)
-            .setDigests(android.security.keystore.KeyProperties.DIGEST_SHA256)
-            .setUserAuthenticationRequired(false)
-            .build()
-        keyGenerator.init(spec)
-        return keyGenerator.generateKey()
+        try {
+            val keyGenerator = javax.crypto.KeyGenerator.getInstance(
+                android.security.keystore.KeyProperties.KEY_ALGORITHM_HMAC_SHA256,
+                "AndroidKeyStore"
+            )
+            val spec = android.security.keystore.KeyGenParameterSpec.Builder(
+                AUDIT_HMAC_KEY_ALIAS,
+                android.security.keystore.KeyProperties.PURPOSE_SIGN or
+                    android.security.keystore.KeyProperties.PURPOSE_VERIFY
+            )
+                .setKeySize(hmacKeySizeBits)
+                .setDigests(android.security.keystore.KeyProperties.DIGEST_SHA256)
+                .setUserAuthenticationRequired(false)
+                .build()
+            keyGenerator.init(spec)
+            return keyGenerator.generateKey()
+        } catch (e: java.security.GeneralSecurityException) {
+            Log.w(TAG, "AndroidKeyStore HMAC unavailable; using process-local fallback", e)
+            return fallbackHmacKey ?: synchronized(this) {
+                fallbackHmacKey ?: javax.crypto.KeyGenerator
+                    .getInstance("HmacSHA256")
+                    .apply { init(hmacKeySizeBits) }
+                    .generateKey()
+                    .also { fallbackHmacKey = it }
+            }
+        }
     }
 
     /**
      * Generates a cryptographic HMAC-SHA256 signature for a log entry using the
      * AndroidKeyStore-backed key.
      */
+    @Suppress("UNUSED_PARAMETER")
     fun signLogEntry(data: String, deviceId: String): String {
         val key = getOrCreateHmacKey()
         val mac = Mac.getInstance("HmacSHA256")
@@ -148,31 +167,9 @@ object AuditLogger {
     }
 
     /**
-     * Generates a cryptographic HMAC-SHA256 signature for a log entry.
-     */
-    fun signLogEntry_legacy(data: String, deviceId: String): String {
-        val secretKeyBytes = ("NotiMind_TamperProof_Audit_Key_Salt_2026" + deviceId).toByteArray(StandardCharsets.UTF_8)
-        val keySpec = SecretKeySpec(secretKeyBytes, "HmacSHA256")
-        val mac = Mac.getInstance("HmacSHA256")
-        mac.init(keySpec)
-        val hmacBytes = mac.doFinal(data.toByteArray(StandardCharsets.UTF_8))
-        return Base64.encodeToString(hmacBytes, Base64.NO_WRAP)
-    }
-
-    /**
-     * Verifies an HMAC-SHA256 signature for a log entry.
-     */
-    fun verifySignature_legacy(data: String, signature: String, deviceId: String): Boolean {
-        val expected = signLogEntry_legacy(data, deviceId)
-        return java.security.MessageDigest.isEqual(
-            expected.toByteArray(Charsets.UTF_8),
-            signature.toByteArray(Charsets.UTF_8)
-        )
-    }
-
-    /**
      * Gets the persistent storage directory for audit logs.
-     * Uses Device Protected Storage (Direct Boot) if available so logs survive across credential encryption state.
+     * Uses Device Protected Storage (Direct Boot) if available so logs survive
+     * across credential encryption state.
      */
     private fun getPersistentLogFile(context: Context): File {
         val storageContext = try {
