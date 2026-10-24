@@ -17,7 +17,7 @@ import androidx.compose.ui.unit.sp
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-internal fun logHistoryCardHeader(state: com.jeffers.notimindlite.ui.screens.LogHistoryCardState) {
+internal fun LogHistoryCardHeader(state: com.jeffers.notimindlite.ui.screens.LogHistoryCardState) {
     val item = state.item
 
     Row(

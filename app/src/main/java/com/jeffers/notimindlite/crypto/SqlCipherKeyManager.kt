@@ -36,7 +36,7 @@ object SqlCipherKeyManager {
 
         val passphrase = ByteArray(PASSPHRASE_BYTES).also { java.security.SecureRandom().nextBytes(it) }
         val encrypted = if (useKeystore) encrypt(databaseName, passphrase) else passphrase
-        check(prefs.edit().putString(VALUE, Base64.encodeToString(encrypted, Base64.NO_WRAP)).commit()) {
+        check(prefs.edit(commit = true) {putString(VALUE, Base64.encodeToString(encrypted, Base64.NO_WRAP))}) {
             "Unable to persist SQLCipher passphrase"
         }
         return passphrase

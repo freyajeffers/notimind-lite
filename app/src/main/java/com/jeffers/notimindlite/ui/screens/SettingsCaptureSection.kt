@@ -31,7 +31,7 @@ import com.jeffers.notimindlite.data.local.PreferencesRepository
 import kotlinx.coroutines.launch
 
 @Composable
-fun settingsCaptureSection(preferencesRepository: PreferencesRepository) {
+fun SettingsCaptureSection(preferencesRepository: PreferencesRepository) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
@@ -47,7 +47,7 @@ fun settingsCaptureSection(preferencesRepository: PreferencesRepository) {
 }
 
 @Composable
-private fun captureToggleSection(preferencesRepository: PreferencesRepository) {
+private fun CaptureToggleSection(preferencesRepository: PreferencesRepository) {
     val scope = rememberCoroutineScope()
     val captureEnabled by preferencesRepository.captureManager.enabled.collectAsState(initial = true)
     val foregroundOnly by preferencesRepository.captureManager.foregroundOnly.collectAsState(initial = false)
@@ -82,7 +82,7 @@ private fun captureToggleSection(preferencesRepository: PreferencesRepository) {
 }
 
 @Composable
-private fun captureTextFieldSection(preferencesRepository: PreferencesRepository) {
+private fun CaptureTextFieldSection(preferencesRepository: PreferencesRepository) {
     val scope = rememberCoroutineScope()
     val allowlist by preferencesRepository.captureManager.allowlist.collectAsState(initial = "")
     val blocklist by preferencesRepository.captureManager.blocklist.collectAsState(initial = "")
@@ -124,7 +124,7 @@ private fun captureTextFieldSection(preferencesRepository: PreferencesRepository
 }
 
 @Composable
-private fun captureToggleRow(
+private fun CaptureToggleRow(
     title: String,
     summary: String,
     checked: Boolean,
@@ -154,7 +154,7 @@ private data class CaptureTextFieldConfig(
 )
 
 @Composable
-private fun captureTextFieldRow(config: CaptureTextFieldConfig) {
+private fun CaptureTextFieldRow(config: CaptureTextFieldConfig) {
     Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
         Column(modifier = Modifier.weight(1f)) {
             Text(config.title, style = MaterialTheme.typography.bodyLarge)

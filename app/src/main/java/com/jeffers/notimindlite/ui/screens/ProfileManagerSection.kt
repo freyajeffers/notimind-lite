@@ -25,7 +25,7 @@ import com.jeffers.notimindlite.data.local.ProfilePreferencesManager
 
 /** Compose-only profile manager. Each profile has independent settings and Room storage. */
 @Composable
-fun profileManagerSection(repository: ProfilePreferencesManager) {
+fun ProfileManagerSection(repository: ProfilePreferencesManager) {
     val context = LocalContext.current
     val profiles by repository.profiles.collectAsState()
     val activeId by repository.activeProfileId.collectAsState()

@@ -18,7 +18,7 @@ import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.launch
 
 @Composable
-internal fun activeNotificationsFab(listState: LazyListState) {
+internal fun ActiveNotificationsFab(listState: LazyListState) {
     val scope = rememberCoroutineScope()
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         SmallFloatingActionButton(

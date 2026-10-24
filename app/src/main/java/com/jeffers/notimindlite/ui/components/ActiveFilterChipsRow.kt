@@ -31,7 +31,7 @@ import com.jeffers.notimindlite.R
  * Pure-Composable, additive — does not change any existing call sites.
  */
 @Composable
-fun activeFilterChipsRow(
+fun ActiveFilterChipsRow(
     label: String,
     chips: List<ActiveFilterChip>,
     clearAllLabel: String,

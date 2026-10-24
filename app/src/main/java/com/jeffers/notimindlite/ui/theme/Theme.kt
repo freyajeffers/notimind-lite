@@ -117,7 +117,7 @@ private val AmoledColorScheme = DarkColorScheme.copy(
 )
 
 @Composable
-fun notiMindLiteTheme(
+fun NotiMindLiteTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
     dynamicColor: Boolean = true,
     amoledTheme: Boolean = false,

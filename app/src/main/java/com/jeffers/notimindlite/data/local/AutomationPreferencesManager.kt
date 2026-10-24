@@ -47,24 +47,24 @@ class AutomationPreferencesManager(
 
     fun setRules(rules: List<AutoExecuteRule>) {
         val safe = rules.distinctBy { it.id }
-        preferences.edit().putString(KEY_RULES, encodeRules(safe)).apply()
+        preferences.edit {putString(KEY_RULES, encodeRules(safe))}
         _rules.value = safe
     }
 
     fun setAutoActOnNotification(value: Boolean) {
-        preferences.edit().putBoolean(KEY_AUTO_ACT_ON_NOTIFICATION, value).apply()
+        preferences.edit {putBoolean(KEY_AUTO_ACT_ON_NOTIFICATION, value)}
         _autoActOnNotification.value = value
     }
 
     fun setDefaultReplyMethod(value: String) {
         val safe = if (value in REPLY_METHODS) value else "inline"
-        preferences.edit().putString(KEY_DEFAULT_REPLY_METHOD, safe).apply()
+        preferences.edit {putString(KEY_DEFAULT_REPLY_METHOD, safe)}
         _defaultReplyMethod.value = safe
     }
 
     fun setLongPressAction(value: String) {
         val safe = if (value in LONG_PRESS_ACTIONS) value else "open"
-        preferences.edit().putString(KEY_LONG_PRESS_ACTION, safe).apply()
+        preferences.edit {putString(KEY_LONG_PRESS_ACTION, safe)}
         _longPressAction.value = safe
     }
 

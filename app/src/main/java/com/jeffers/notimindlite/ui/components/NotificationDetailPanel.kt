@@ -25,7 +25,7 @@ import java.time.format.DateTimeFormatter
  * It is displayed when a notification card in the LogHistoryScreen is expanded.
  */
 @Composable
-fun notificationDetailPanel(
+fun NotificationDetailPanel(
     item: NotificationEntity,
     dateTimeFormatter: DateTimeFormatter
 ) {
@@ -60,7 +60,7 @@ fun notificationDetailPanel(
 }
 
 @Composable
-private fun detailRow(label: String, value: String) {
+private fun DetailRow(label: String, value: String) {
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.SpaceBetween,

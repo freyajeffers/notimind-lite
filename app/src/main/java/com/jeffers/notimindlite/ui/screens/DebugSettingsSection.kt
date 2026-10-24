@@ -22,7 +22,7 @@ import com.jeffers.notimindlite.R
 import com.jeffers.notimindlite.data.local.PreferencesRepository
 
 @Composable
-fun debugSettingsSection(preferencesRepository: PreferencesRepository) {
+fun DebugSettingsSection(preferencesRepository: PreferencesRepository) {
     val retentionDays by preferencesRepository.retentionDays.collectAsState(initial = 30)
     val exportEncryption by preferencesRepository.exportEncryption.collectAsState(initial = true)
     val captureNotifications by preferencesRepository.captureManager.enabled.collectAsState(initial = true)
@@ -69,7 +69,7 @@ fun debugSettingsSection(preferencesRepository: PreferencesRepository) {
 }
 
 @Composable
-private fun debugRetentionRow(retentionDays: Int) {
+private fun DebugRetentionRow(retentionDays: Int) {
     Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
         Column(modifier = Modifier.weight(1f)) {
             Text(stringResource(R.string.pref_retention_days_title), style = MaterialTheme.typography.bodyLarge)
@@ -87,7 +87,7 @@ private fun debugRetentionRow(retentionDays: Int) {
 }
 
 @Composable
-private fun debugCaptureRow() {
+private fun DebugCaptureRow() {
     Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
         Column(modifier = Modifier.weight(1f)) {
             Text(stringResource(R.string.pref_capture_notifications_title), style = MaterialTheme.typography.bodyLarge)
@@ -102,7 +102,7 @@ private fun debugCaptureRow() {
 }
 
 @Composable
-private fun retentionRow(preferencesRepository: PreferencesRepository, retentionDays: Int) {
+private fun RetentionRow(preferencesRepository: PreferencesRepository, retentionDays: Int) {
     Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
         Column(modifier = Modifier.weight(1f)) {
             Text(stringResource(R.string.pref_retention_days_title), style = MaterialTheme.typography.bodyLarge)
@@ -124,7 +124,7 @@ private fun retentionRow(preferencesRepository: PreferencesRepository, retention
 }
 
 @Composable
-private fun exportEncryptionRow(preferencesRepository: PreferencesRepository, enabled: Boolean) {
+private fun ExportEncryptionRow(preferencesRepository: PreferencesRepository, enabled: Boolean) {
     Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
         Column(modifier = Modifier.weight(1f)) {
             Text(stringResource(R.string.pref_export_encryption_title), style = MaterialTheme.typography.bodyLarge)
@@ -139,7 +139,7 @@ private fun exportEncryptionRow(preferencesRepository: PreferencesRepository, en
 }
 
 @Composable
-private fun captureRow(preferencesRepository: PreferencesRepository, enabled: Boolean) {
+private fun CaptureRow(preferencesRepository: PreferencesRepository, enabled: Boolean) {
     Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
         Column(modifier = Modifier.weight(1f)) {
             Text(stringResource(R.string.pref_capture_notifications_title), style = MaterialTheme.typography.bodyLarge)

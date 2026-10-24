@@ -39,7 +39,7 @@ import com.jeffers.notimindlite.R
  * a set of quick-action sub-buttons (Sync, Backup, Settings).
  */
 @Composable
-fun speedDialSettingsFab(
+fun SpeedDialSettingsFab(
     onSyncClick: () -> Unit,
     onBackupClick: () -> Unit,
     onSettingsClick: () -> Unit,
@@ -61,7 +61,7 @@ fun speedDialSettingsFab(
 }
 
 @Composable
-private fun speedDialFabContent(
+private fun SpeedDialFabContent(
     expanded: Boolean,
     callbacks: SpeedDialCallbacks,
     modifier: Modifier = Modifier
@@ -131,7 +131,7 @@ private data class SpeedDialCallbacks(
 )
 
 @Composable
-private fun speedDialActions(
+private fun SpeedDialActions(
     scale: Float,
     close: () -> Unit,
     onSyncClick: () -> Unit,
@@ -159,7 +159,7 @@ private fun speedDialActions(
 }
 
 @Composable
-private fun speedDialItem(
+private fun SpeedDialItem(
     icon: ImageVector,
     label: String,
     scale: Float,

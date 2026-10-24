@@ -83,12 +83,12 @@ private fun readString(preferences: SharedPreferences, key: String, legacyKey: S
     preferences.getString(key, preferences.getString(legacyKey, "")) ?: ""
 
 private inline fun <reified T> prefsUpdate(preferences: SharedPreferences, key: String, value: T, state: () -> Unit) {
-    val editor = preferences.edit()
-    when (value) {
-        is Boolean -> editor.putBoolean(key, value)
-        is Int -> editor.putInt(key, value)
-        is String -> editor.putString(key, value)
+    preferences.edit {
+        when (value) {
+            is Boolean -> putBoolean(key, value)
+            is Int -> putInt(key, value)
+            is String -> putString(key, value)
+        }
     }
-    editor.apply()
     state()
 }

@@ -24,7 +24,7 @@ import org.json.JSONArray
 import java.time.format.DateTimeFormatter
 
 @Composable
-internal fun logHistoryExpandedContent(
+internal fun LogHistoryExpandedContent(
     item: NotificationEntity,
     dateTimeFormatter: DateTimeFormatter,
     highlightQuery: String
@@ -69,7 +69,7 @@ internal fun logHistoryExpandedContent(
 }
 
 @Composable
-private fun inboxLinesPanel(inboxLines: List<String>) {
+private fun InboxLinesPanel(inboxLines: List<String>) {
     Spacer(modifier = Modifier.height(6.dp))
     Surface(
         shape = androidx.compose.foundation.shape

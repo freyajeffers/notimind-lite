@@ -37,7 +37,7 @@ fun logHistorySearchSuggestions(query: String, activeList: List<NotificationEnti
 }
 
 @Composable
-fun logHistorySearchDropdown(
+fun LogHistorySearchDropdown(
     config: LogHistorySearchDropdownConfig
 ) {
     val expanded = config.expanded

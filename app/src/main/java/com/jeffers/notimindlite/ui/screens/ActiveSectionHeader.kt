@@ -24,7 +24,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 
 @Composable
-internal fun activeSectionHeader(
+internal fun ActiveSectionHeader(
     section: NotificationSection,
     isExpanded: Boolean,
     itemsCount: Int,

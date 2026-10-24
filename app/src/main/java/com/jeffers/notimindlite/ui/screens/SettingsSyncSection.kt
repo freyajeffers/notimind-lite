@@ -40,7 +40,7 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
 @Composable
-fun settingsSyncSection(preferencesRepository: PreferencesRepository) {
+fun SettingsSyncSection(preferencesRepository: PreferencesRepository) {
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
     val syncInterval by preferencesRepository.syncManager.syncInterval.collectAsState(initial = 60)
@@ -106,7 +106,7 @@ fun settingsSyncSection(preferencesRepository: PreferencesRepository) {
 }
 
 @Composable
-private fun syncIntervalRow(syncInterval: Int, onChange: (Int) -> Unit) {
+private fun SyncIntervalRow(syncInterval: Int, onChange: (Int) -> Unit) {
     Row(
         modifier = Modifier.fillMaxWidth(),
         verticalAlignment = androidx.compose.ui.Alignment.CenterVertically
@@ -129,7 +129,7 @@ private fun syncIntervalRow(syncInterval: Int, onChange: (Int) -> Unit) {
 }
 
 @Composable
-private fun syncToggleRow(title: String, summary: String, checked: Boolean, onChecked: (Boolean) -> Unit) {
+private fun SyncToggleRow(title: String, summary: String, checked: Boolean, onChecked: (Boolean) -> Unit) {
     Row(
         modifier = Modifier.fillMaxWidth(),
         verticalAlignment = androidx.compose.ui.Alignment.CenterVertically
@@ -147,7 +147,7 @@ private fun syncToggleRow(title: String, summary: String, checked: Boolean, onCh
 }
 
 @Composable
-private fun syncNowRow(lastSyncTs: Long, syncRunning: Boolean, onClick: () -> Unit) {
+private fun SyncNowRow(lastSyncTs: Long, syncRunning: Boolean, onClick: () -> Unit) {
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.SpaceBetween,

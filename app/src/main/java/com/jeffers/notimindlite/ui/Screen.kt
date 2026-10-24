@@ -69,7 +69,7 @@ sealed class Screen(
 }
 
 @Composable
-fun mainNavigation(
+fun MainNavigation(
     modifier: Modifier = Modifier,
     notificationDao: NotificationDao,
     authManager: AuthManager,

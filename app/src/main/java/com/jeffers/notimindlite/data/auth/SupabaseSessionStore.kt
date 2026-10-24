@@ -103,7 +103,7 @@ class SupabaseSessionStore(
             .getInstance("AES/GCM/NoPadding")
             .apply { init(Cipher.ENCRYPT_MODE, secretKey()) }
         val encrypted = cipher.iv + cipher.doFinal(value.toByteArray())
-        prefs.edit().putString("secret_$name", Base64.encodeToString(encrypted, Base64.NO_WRAP)).apply()
+        prefs.edit {putString("secret_$name", Base64.encodeToString(encrypted, Base64.NO_WRAP))}
     }
 
     private fun readSecret(name: String): String? = prefs.getString("secret_$name", null)?.let {

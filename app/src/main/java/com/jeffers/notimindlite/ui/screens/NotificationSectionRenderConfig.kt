@@ -43,7 +43,7 @@ internal fun LazyListScope.notificationSection(config: NotificationSectionRender
 }
 
 @Composable
-private fun notificationSectionGroup(
+private fun NotificationSectionGroup(
     config: NotificationSectionRenderConfig,
     group: UiNotificationGroup
 ) {
@@ -63,7 +63,7 @@ private fun notificationSectionGroup(
 }
 
 @Composable
-private fun notificationSectionCard(
+private fun NotificationSectionCard(
     config: NotificationSectionRenderConfig,
     item: com.jeffers.notimindlite.data.local.NotificationEntity
 ) {

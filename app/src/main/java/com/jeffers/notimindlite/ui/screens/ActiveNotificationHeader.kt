@@ -34,7 +34,7 @@ import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.launch
 
 @Composable
-internal fun activeNotificationHeader(config: com.jeffers.notimindlite.ui.screens.LogNotificationCardConfig) {
+internal fun ActiveNotificationHeader(config: com.jeffers.notimindlite.ui.screens.LogNotificationCardConfig) {
     val item = config.item
 
     Row(
@@ -61,7 +61,7 @@ internal fun activeNotificationHeader(config: com.jeffers.notimindlite.ui.screen
 }
 
 @Composable
-private fun notificationHeaderActions(config: LogNotificationCardConfig) {
+private fun NotificationHeaderActions(config: LogNotificationCardConfig) {
     Row(verticalAlignment = Alignment.CenterVertically) {
         notificationPinButton(config)
         Spacer(modifier = Modifier.width(6.dp))
@@ -72,7 +72,7 @@ private fun notificationHeaderActions(config: LogNotificationCardConfig) {
 }
 
 @Composable
-private fun notificationPinButton(config: LogNotificationCardConfig) {
+private fun NotificationPinButton(config: LogNotificationCardConfig) {
     val item = config.item
     val scope = rememberCoroutineScope()
     TooltipBox(
@@ -100,7 +100,7 @@ private fun notificationPinButton(config: LogNotificationCardConfig) {
 }
 
 @Composable
-private fun notificationDismissedStatus(item: com.jeffers.notimindlite.data.local.NotificationEntity) {
+private fun NotificationDismissedStatus(item: com.jeffers.notimindlite.data.local.NotificationEntity) {
     if (!item.isDismissed) return
     Surface(
         color = MaterialTheme.colorScheme.secondary.copy(alpha = 0.2f),
@@ -117,7 +117,7 @@ private fun notificationDismissedStatus(item: com.jeffers.notimindlite.data.loca
 }
 
 @Composable
-private fun notificationOpenButton(item: com.jeffers.notimindlite.data.local.NotificationEntity) {
+private fun NotificationOpenButton(item: com.jeffers.notimindlite.data.local.NotificationEntity) {
     val context = androidx.compose.ui.platform.LocalContext.current
     TooltipBox(
         positionProvider = TooltipDefaults.rememberTooltipPositionProvider(

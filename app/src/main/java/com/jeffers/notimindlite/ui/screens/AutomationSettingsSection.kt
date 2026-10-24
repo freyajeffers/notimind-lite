@@ -15,7 +15,7 @@ import com.jeffers.notimindlite.R
 import com.jeffers.notimindlite.data.local.PreferencesRepository
 
 @Composable
-fun automationSettingsSection(preferencesRepository: PreferencesRepository) {
+fun AutomationSettingsSection(preferencesRepository: PreferencesRepository) {
     val autoActOnNotification by preferencesRepository.automationManager
         .autoActOnNotification
         .collectAsState(initial = false)

@@ -32,9 +32,9 @@ object EncryptionMigrationConsent {
         check(
             context.applicationContext
                 .getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-                .edit()
-                .putString(DECISION_KEY, value)
-                .commit()
+                .edit(commit = true) {
+                    putString(DECISION_KEY, value)
+                }
         ) { "Unable to persist encryption migration consent" }
     }
 }

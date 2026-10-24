@@ -22,7 +22,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 
 @Composable
-fun globalErrorScreen(
+fun GlobalErrorScreen(
     message: String,
     actionLabel: String = "Retry",
     onActionClick: () -> Unit,

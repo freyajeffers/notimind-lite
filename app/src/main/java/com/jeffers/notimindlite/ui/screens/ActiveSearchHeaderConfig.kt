@@ -65,7 +65,7 @@ internal fun LazyListScope.activeSearchHeader(config: ActiveSearchHeaderConfig) 
 }
 
 @Composable
-private fun activeSearchHeaderContent(config: ActiveSearchHeaderConfig) {
+private fun ActiveSearchHeaderContent(config: ActiveSearchHeaderConfig) {
     var expandedDropdown by remember { mutableStateOf(false) }
     val query = config.searchQuery
     val suggestions = config.searchSuggestions
@@ -127,7 +127,7 @@ private fun activeSearchHeaderContent(config: ActiveSearchHeaderConfig) {
 }
 
 @Composable
-private fun activeSearchDropdown(
+private fun ActiveSearchDropdown(
     config: ActiveSearchDropdownConfig
 ) {
     val searchConfig = config.searchConfig

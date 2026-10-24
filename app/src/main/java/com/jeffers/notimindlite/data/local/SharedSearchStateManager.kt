@@ -42,17 +42,17 @@ class SharedSearchStateManager(
     }
 
     fun setQuery(value: String) {
-        preferences.edit().putString(KEY_QUERY, value).apply()
+        preferences.edit {putString(KEY_QUERY, value)}
         _query.value = value
     }
 
     fun setPackages(value: List<String>?) {
-        preferences.edit().putString(KEY_PACKAGES, value?.joinToString(",")).apply()
+        preferences.edit {putString(KEY_PACKAGES, value?.joinToString(","))}
         _packages.value = value
     }
 
     fun setReason(value: Int?) {
-        preferences.edit().putInt(KEY_REASON, value ?: -1).apply()
+        preferences.edit {putInt(KEY_REASON, value ?: -1)}
         _reason.value = value
     }
 
@@ -79,7 +79,7 @@ class SharedSearchStateManager(
     }.getOrDefault(emptyList())
 
     private fun persistRecentSearches(values: List<String>) {
-        preferences.edit().putString(KEY_RECENT, JSONArray(values).toString()).apply()
+        preferences.edit {putString(KEY_RECENT, JSONArray(values).toString())}
     }
 
     companion object {

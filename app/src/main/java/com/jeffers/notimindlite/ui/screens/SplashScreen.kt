@@ -33,7 +33,7 @@ private const val SPLASH_HANDOFF_DELAY_MS = 450L
  * It handles initial resource loading and transitions to the main navigation.
  */
 @Composable
-fun splashScreen(onTimeout: () -> Unit) {
+fun SplashScreen(onTimeout: () -> Unit) {
     var scale by remember { mutableFloatStateOf(INITIAL_SPLASH_SCALE) }
 
     LaunchedEffect(Unit) {
