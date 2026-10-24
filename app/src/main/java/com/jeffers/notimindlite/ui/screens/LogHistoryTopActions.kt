@@ -40,7 +40,7 @@ data class LogHistoryTopActions(
 )
 
 @Composable
-fun LogHistoryTopActions(config: LogHistoryTopActions) {
+fun logHistoryTopActions(config: LogHistoryTopActions) {
     if (!config.selectedPackages.isNullOrEmpty() ||
         config.selectedReasonFilter != null || config.searchQuery.isNotBlank()
     ) {
@@ -55,7 +55,7 @@ fun LogHistoryTopActions(config: LogHistoryTopActions) {
 }
 
 @Composable
-private fun LogHistoryFilterMenu(config: LogHistoryTopActions) {
+private fun logHistoryFilterMenu(config: LogHistoryTopActions) {
     Box {
         val hasActiveFilters = !config.selectedPackages.isNullOrEmpty() ||
             config.selectedReasonFilter != null
@@ -83,7 +83,7 @@ private fun LogHistoryFilterMenu(config: LogHistoryTopActions) {
 }
 
 @Composable
-private fun LogHistoryFilterDropdown(config: LogHistoryTopActions) {
+private fun logHistoryFilterDropdown(config: LogHistoryTopActions) {
     DropdownMenu(
         expanded = config.showFilterMenu,
         onDismissRequest = { config.setShowFilterMenu(false) }

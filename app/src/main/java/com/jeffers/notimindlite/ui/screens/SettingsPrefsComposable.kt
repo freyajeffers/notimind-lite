@@ -39,7 +39,7 @@ import com.jeffers.notimindlite.data.local.DbEncryptionMode
 import com.jeffers.notimindlite.data.local.PreferencesRepository
 
 @Composable
-fun SettingsPreferencesSection(preferencesRepository: PreferencesRepository) {
+fun settingsPreferencesSection(preferencesRepository: PreferencesRepository) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
@@ -58,12 +58,12 @@ fun SettingsPreferencesSection(preferencesRepository: PreferencesRepository) {
 }
 
 @Composable
-internal fun DisabledPreferenceRow(title: String, summary: String) {
+internal fun disabledPreferenceRow(title: String, summary: String) {
     preferenceSwitchRow(title, summary, checked = false, onCheckedChange = {}, enabled = false)
 }
 
 @Composable
-internal fun PreferenceSwitchRow(
+internal fun preferenceSwitchRow(
     title: String,
     summary: String,
     checked: Boolean,
@@ -89,7 +89,7 @@ internal fun PreferenceSwitchRow(
 }
 
 @Composable
-internal fun PreferenceSelectRow(
+internal fun preferenceSelectRow(
     title: String,
     selected: String,
     options: List<Pair<String, String>>,

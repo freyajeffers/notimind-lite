@@ -16,7 +16,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 
 @Composable
-internal fun AppPackageOptionRow(
+internal fun appPackageOptionRow(
     packageName: String,
     label: String,
     checked: Boolean,

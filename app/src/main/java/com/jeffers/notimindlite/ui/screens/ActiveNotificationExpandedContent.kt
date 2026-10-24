@@ -24,7 +24,7 @@ import com.jeffers.notimindlite.data.local.NotificationEntity
 import org.json.JSONArray
 
 @Composable
-internal fun ActiveNotificationExpandedContent(
+internal fun activeNotificationExpandedContent(
     item: NotificationEntity,
     dateTimeFormatter: java.time.format.DateTimeFormatter,
     highlightQuery: String
@@ -61,7 +61,7 @@ internal fun ActiveNotificationExpandedContent(
 }
 
 @Composable
-private fun ActiveInboxLinesPanel(inboxLines: List<String>) {
+private fun activeInboxLinesPanel(inboxLines: List<String>) {
     Spacer(modifier = Modifier.height(6.dp))
     Surface(
         shape = RoundedCornerShape(6.dp),

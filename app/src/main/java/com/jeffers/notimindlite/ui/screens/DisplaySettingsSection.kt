@@ -20,7 +20,7 @@ import com.jeffers.notimindlite.R
 import com.jeffers.notimindlite.data.local.PreferencesRepository
 
 @Composable
-fun DisplaySettingsSection(preferencesRepository: PreferencesRepository) {
+fun displaySettingsSection(preferencesRepository: PreferencesRepository) {
     val compactMode by preferencesRepository.displayManager.compactMode.collectAsState(initial = false)
     val showAppIcons by preferencesRepository.displayManager.showAppIcons.collectAsState(initial = true)
     val groupByApp by preferencesRepository.displayManager.groupByApp.collectAsState(initial = true)
@@ -82,7 +82,7 @@ fun DisplaySettingsSection(preferencesRepository: PreferencesRepository) {
 private const val PREVIEW_TEXT_WEIGHT = 0.7f
 
 @Composable
-private fun PreviewLengthRow(previewLength: Int, preferencesRepository: PreferencesRepository) {
+private fun previewLengthRow(previewLength: Int, preferencesRepository: PreferencesRepository) {
     Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
         Column(modifier = Modifier.fillMaxWidth(PREVIEW_TEXT_WEIGHT)) {
             Text(stringResource(R.string.pref_preview_length_title), style = MaterialTheme.typography.bodyLarge)

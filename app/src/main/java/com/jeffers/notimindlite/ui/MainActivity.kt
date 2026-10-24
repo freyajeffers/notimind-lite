@@ -252,7 +252,7 @@ class MainActivity : ComponentActivity() {
 }
 
 @Composable
-private fun EncryptionMigrationConsentDialog(
+private fun encryptionMigrationConsentDialog(
     onDecision: (EncryptionMigrationConsent.Decision) -> Unit
 ) {
     AlertDialog(

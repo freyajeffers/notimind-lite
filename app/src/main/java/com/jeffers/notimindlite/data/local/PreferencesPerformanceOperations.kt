@@ -40,7 +40,7 @@ internal class PreferencesPerformanceOperationsImpl(
 
     override fun setThreadPoolSize(value: Int) {
         val safe = value.coerceIn(MIN_THREAD_POOL_SIZE, MAX_THREAD_POOL_SIZE)
-        preferences.edit {putInt(KEY_THREAD_POOL_SIZE, safe)}
+        preferences.edit().putInt(KEY_THREAD_POOL_SIZE, safe).apply()
     }
 
     override fun getEmbeddingRateMs() = preferences
@@ -48,7 +48,7 @@ internal class PreferencesPerformanceOperationsImpl(
         .coerceAtLeast(0L)
 
     override fun setEmbeddingRateMs(value: Long) {
-        preferences.edit {putLong(KEY_EMBEDDING_RATE_MS, value.coerceAtLeast(0L))}
+        preferences.edit().putLong(KEY_EMBEDDING_RATE_MS, value.coerceAtLeast(0L)).apply()
     }
 
     override fun getDbCompactionDays() = preferences
@@ -56,7 +56,7 @@ internal class PreferencesPerformanceOperationsImpl(
         .coerceAtLeast(1)
 
     override fun setDbCompactionDays(value: Int) {
-        preferences.edit {putInt(KEY_DB_COMPACTION_DAYS, value.coerceAtLeast(1))}
+        preferences.edit().putInt(KEY_DB_COMPACTION_DAYS, value.coerceAtLeast(1)).apply()
     }
 
     override fun getReindexDays() = preferences
@@ -64,14 +64,14 @@ internal class PreferencesPerformanceOperationsImpl(
         .coerceAtLeast(1)
 
     override fun setReindexDays(value: Int) {
-        preferences.edit {putInt(KEY_REINDEX_DAYS, value.coerceAtLeast(1))}
+        preferences.edit().putInt(KEY_REINDEX_DAYS, value.coerceAtLeast(1)).apply()
     }
 
     override fun isEmbeddingOffloadEnabled() = preferences
         .getBoolean(KEY_EMBEDDING_OFFLOAD, DEFAULT_EMBEDDING_OFFLOAD)
 
     override fun setEmbeddingOffloadEnabled(value: Boolean) {
-        preferences.edit {putBoolean(KEY_EMBEDDING_OFFLOAD, value)}
+        preferences.edit().putBoolean(KEY_EMBEDDING_OFFLOAD, value).apply()
     }
 
     private companion object {

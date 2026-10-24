@@ -38,7 +38,7 @@ import kotlinx.coroutines.withContext
 import java.util.Locale
 
 @Composable
-fun SettingsPreferencesBackupSection() {
+fun settingsPreferencesBackupSection() {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     var message by remember { mutableStateOf<String?>(null) }

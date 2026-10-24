@@ -48,7 +48,7 @@ import com.jeffers.notimindlite.R
 import com.jeffers.notimindlite.domain.entity.ActionableEntityExtractor
 
 @Composable
-fun ActionableChips(
+fun actionableChips(
     text: String,
     modifier: Modifier = Modifier
 ) {
@@ -70,7 +70,7 @@ fun ActionableChips(
 }
 
 @Composable
-private fun ActionChip(
+private fun actionChip(
     entity: ActionableEntityExtractor.ActionableEntity
 ) {
     var expanded by remember { mutableStateOf(false) }
@@ -159,7 +159,7 @@ private fun actionChipConfig(
 }
 
 @Composable
-private fun ActionChipMenu(params: ActionChipMenuParams) {
+private fun actionChipMenu(params: ActionChipMenuParams) {
     val entity = params.entity
     val expanded = params.expanded
     val context = params.context
@@ -207,7 +207,7 @@ private fun ActionChipMenu(params: ActionChipMenuParams) {
 }
 
 @Composable
-private fun ExternalActionMenuItem(
+private fun externalActionMenuItem(
     entity: ActionableEntityExtractor.ActionableEntity,
     context: android.content.Context,
     onDismiss: () -> Unit
@@ -224,7 +224,7 @@ private fun ExternalActionMenuItem(
         },
         onClick = {
             try {
-                val intent = Intent(Intent.ACTION_VIEW, externalUriFor(entity).toUri()).apply {
+                val intent = Intent(Intent.ACTION_VIEW, Uri.parse(externalUriFor(entity))).apply {
                     addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
                 }
                 context.startActivity(intent)

@@ -31,7 +31,7 @@ import com.jeffers.notimindlite.data.local.PreferencesRepository
 import kotlinx.coroutines.launch
 
 @Composable
-fun SettingsPrivacySection(preferencesRepository: PreferencesRepository) {
+fun settingsPrivacySection(preferencesRepository: PreferencesRepository) {
     val scope = rememberCoroutineScope()
     val autoDelete by preferencesRepository.autoDeleteOnRead.collectAsState(initial = false)
     val anonymizeTitles by preferencesRepository.anonymizeTitles.collectAsState(initial = false)
@@ -89,7 +89,7 @@ fun SettingsPrivacySection(preferencesRepository: PreferencesRepository) {
 }
 
 @Composable
-private fun PreferenceToggleRow(
+private fun preferenceToggleRow(
     title: String,
     summary: String,
     checked: Boolean,
@@ -110,7 +110,7 @@ private fun PreferenceToggleRow(
 }
 
 @Composable
-private fun StrictPrivacyRow(enabled: Boolean, onChanged: (Boolean) -> Unit) {
+private fun strictPrivacyRow(enabled: Boolean, onChanged: (Boolean) -> Unit) {
     preferenceToggleRow(
         title = "Strict Privacy Mode",
         summary = "Disable all crash reporting and anonymous usage telemetry.",

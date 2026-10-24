@@ -15,7 +15,7 @@ import com.jeffers.notimindlite.R
 import com.jeffers.notimindlite.data.local.PreferencesRepository
 
 @Composable
-fun SearchSyncSection(preferencesRepository: PreferencesRepository) {
+fun searchSyncSection(preferencesRepository: PreferencesRepository) {
     val enableSync by preferencesRepository.syncManager.enableSync.collectAsState(initial = true)
     val enableVector by preferencesRepository.syncManager.enableVector.collectAsState(initial = true)
     val enableFts4 by preferencesRepository.syncManager.enableFts4.collectAsState(initial = true)

@@ -40,33 +40,33 @@ class ExperimentalPreferencesManager(
 
     fun setFeatureFlagsUrl(value: String) {
         val safe = value.trim().take(MAX_FEATURE_FLAGS_URL_LENGTH)
-        preferences.edit {putString(KEY_FEATURE_FLAGS_URL, safe)}
+        preferences.edit().putString(KEY_FEATURE_FLAGS_URL, safe).apply()
         _featureFlagsUrl.value = safe
     }
 
     fun setMockDataEnabled(value: Boolean) {
-        preferences.edit {putBoolean(KEY_MOCK_DATA_ENABLED, value)}
+        preferences.edit().putBoolean(KEY_MOCK_DATA_ENABLED, value).apply()
         _mockDataEnabled.value = value
     }
 
     fun setTestModeFlags(value: String) {
         val safe = value.trim().take(MAX_TEST_MODE_FLAGS_LENGTH)
-        preferences.edit {putString(KEY_TEST_MODE_FLAGS, safe)}
+        preferences.edit().putString(KEY_TEST_MODE_FLAGS, safe).apply()
         _testModeFlags.value = safe
     }
 
     fun setOffloadEmbeddings(value: Boolean) {
-        preferences.edit {putBoolean(KEY_OFFLOAD_EMBEDDINGS, value)}
+        preferences.edit().putBoolean(KEY_OFFLOAD_EMBEDDINGS, value).apply()
         _offloadEmbeddings.value = value
     }
 
     fun setUseFts5(value: Boolean) {
-        preferences.edit {putBoolean(KEY_USE_FTS5, value)}
+        preferences.edit().putBoolean(KEY_USE_FTS5, value).apply()
         _useFts5.value = value
     }
 
     fun setVectorGpu(value: Boolean) {
-        preferences.edit {putBoolean(KEY_VECTOR_GPU, value)}
+        preferences.edit().putBoolean(KEY_VECTOR_GPU, value).apply()
         _vectorGpu.value = value
     }
 

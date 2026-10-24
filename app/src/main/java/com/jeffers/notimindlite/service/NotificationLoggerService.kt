@@ -134,7 +134,11 @@ class NotificationLoggerService : NotificationListenerService() {
                 }
 
                 else -> {
-                    val bmp = createBitmap(drawable.intrinsicWidth.coerceAtLeast(1), drawable.intrinsicHeight.coerceAtLeast(1))
+                    val bmp = Bitmap.createBitmap(
+                        drawable.intrinsicWidth.coerceAtLeast(1),
+                        drawable.intrinsicHeight.coerceAtLeast(1),
+                        Bitmap.Config.ARGB_8888
+                    )
                     val canvas = Canvas(bmp)
                     drawable.setBounds(0, 0, canvas.width, canvas.height)
                     drawable.draw(canvas)

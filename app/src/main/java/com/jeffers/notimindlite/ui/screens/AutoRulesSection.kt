@@ -20,7 +20,7 @@ import com.jeffers.notimindlite.data.local.AutoExecuteRule
 import com.jeffers.notimindlite.data.local.PreferencesRepository
 
 @Composable
-fun AutoRulesSection(preferencesRepository: PreferencesRepository, config: AutoRulesConfig) {
+fun autoRulesSection(preferencesRepository: PreferencesRepository, config: AutoRulesConfig) {
     Column(modifier = Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
             OutlinedTextField(

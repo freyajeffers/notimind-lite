@@ -171,7 +171,7 @@ data class LogHistorySearchState(
 )
 
 @Composable
-private fun LogHistorySearchField(state: LogHistorySearchState) {
+private fun logHistorySearchField(state: LogHistorySearchState) {
     val searchQuery = state.searchQuery
     val onSearchChange = state.onSearchChange
     val onDone = state.onDone
@@ -225,7 +225,7 @@ private fun filterAndSortNotifications(
 }
 
 @Composable
-private fun NotificationIconPrefetch(
+private fun notificationIconPrefetch(
     context: android.content.Context,
     listState: androidx.compose.foundation.lazy.LazyListState,
     notificationGroups: List<UiNotificationGroup>
@@ -541,7 +541,7 @@ private val renderLogHistoryScreen:
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun LogHistoryScreen(dao: NotificationDao, preferences: com.jeffers.notimindlite.data.local.PreferencesRepository) {
+fun logHistoryScreen(dao: NotificationDao, preferences: com.jeffers.notimindlite.data.local.PreferencesRepository) {
     renderLogHistoryScreen(dao, preferences)
 }
 
@@ -739,7 +739,7 @@ private val renderLogHistoryList: @Composable (LogHistoryListConfig) -> Unit = {
 }
 
 @Composable
-private fun LogHistoryScrollActions(
+private fun logHistoryScrollActions(
     itemCount: Int,
     listState: androidx.compose.foundation.lazy.LazyListState,
     scope: kotlinx.coroutines.CoroutineScope
@@ -763,7 +763,7 @@ private fun LogHistoryScrollActions(
 }
 
 @Composable
-private fun LogHistoryScrollButton(
+private fun logHistoryScrollButton(
     icon: ImageVector,
     description: String,
     onClick: () -> Unit
@@ -785,7 +785,7 @@ private fun LogHistoryScrollButton(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-internal fun DismissStatusBadge(item: NotificationEntity) {
+internal fun dismissStatusBadge(item: NotificationEntity) {
     if (item.isDismissed && item.dismissReason != null) {
         Spacer(modifier = Modifier.width(6.dp))
         Surface(
@@ -819,7 +819,7 @@ internal fun DismissStatusBadge(item: NotificationEntity) {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun LogHistoryCard(state: LogHistoryCardState) {
+fun logHistoryCard(state: LogHistoryCardState) {
     val item = state.item
     val dateTimeFormatter = state.dateTimeFormatter
     val dao = state.dao

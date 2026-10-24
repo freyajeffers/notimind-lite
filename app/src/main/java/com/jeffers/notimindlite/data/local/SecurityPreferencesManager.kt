@@ -83,7 +83,7 @@ class SecurityPreferencesManager(
         updateSecurityBoolean(preferences, KEY_DB_ENCRYPTED, value) { _dbEncrypted.value = value }
 
     fun setDbEncryptionMode(value: DbEncryptionMode) {
-        preferences.edit {putString(KEY_DB_ENCRYPTION_MODE, value.persisted)}
+        preferences.edit().putString(KEY_DB_ENCRYPTION_MODE, value.persisted).apply()
         _dbEncryptionMode.value = value
     }
 
@@ -106,7 +106,7 @@ private fun updateSecurityBoolean(
     value: Boolean,
     state: () -> Unit,
 ) {
-    preferences.edit {putBoolean(key, value)}
+    preferences.edit().putBoolean(key, value).apply()
     state()
 }
 

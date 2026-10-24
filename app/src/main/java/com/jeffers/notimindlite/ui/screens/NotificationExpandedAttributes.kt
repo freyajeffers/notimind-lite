@@ -21,7 +21,7 @@ import java.time.Instant
 import java.time.format.DateTimeFormatter
 
 @Composable
-fun NotificationExpandedAttributes(
+fun notificationExpandedAttributes(
     item: NotificationEntity,
     dateTimeFormatter: DateTimeFormatter,
     modifier: Modifier = Modifier
@@ -49,7 +49,7 @@ fun NotificationExpandedAttributes(
 }
 
 @Composable
-private fun NotificationIdentityAttributes(item: NotificationEntity, formatter: DateTimeFormatter) {
+private fun notificationIdentityAttributes(item: NotificationEntity, formatter: DateTimeFormatter) {
     attributeRow("Package", item.packageName)
     if (item.appName.isNotBlank() && item.appName != item.packageName) {
         attributeRow("App Name", item.appName)
@@ -71,7 +71,7 @@ private fun NotificationIdentityAttributes(item: NotificationEntity, formatter: 
 }
 
 @Composable
-private fun NotificationStateAttributes(item: NotificationEntity) {
+private fun notificationStateAttributes(item: NotificationEntity) {
     if (item.isOngoing) attributeRow("Ongoing", "Yes")
     if (item.isPersistent) attributeRow("Persistent", "Yes")
     if (!item.isClearable) attributeRow("Clearable", "No")
@@ -89,7 +89,7 @@ private fun NotificationStateAttributes(item: NotificationEntity) {
 }
 
 @Composable
-private fun NotificationSyncAttributes(item: NotificationEntity, formatter: DateTimeFormatter) {
+private fun notificationSyncAttributes(item: NotificationEntity, formatter: DateTimeFormatter) {
     attributeRow("Sync Status", item.syncStatus.name)
     if (item.lastSyncedAt > 0) {
         attributeRow("Last Synced", formatter.format(Instant.ofEpochMilli(item.lastSyncedAt)))
@@ -100,7 +100,7 @@ private fun NotificationSyncAttributes(item: NotificationEntity, formatter: Date
 }
 
 @Composable
-fun AttributeRow(label: String, value: String) {
+fun attributeRow(label: String, value: String) {
     val (labelWeight, valueWeight) = labelValueWeights
     Row(
         modifier = Modifier.fillMaxWidth(),

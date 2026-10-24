@@ -45,7 +45,7 @@ class ProfilePreferencesManager(
     fun setActiveProfile(id: String): Boolean {
         if (_profiles.value.none { it.id == id }) return false
         activeId = id
-        store.edit {putString(KEY_ACTIVE_PROFILE, id)}
+        store.edit().putString(KEY_ACTIVE_PROFILE, id).apply()
         _activeProfileId.value = id
         onProfileChanged?.invoke()
         return true
@@ -87,16 +87,16 @@ class ProfilePreferencesManager(
             source.optString("name", "Imported profile").take(MAX_PROFILE_NAME_LENGTH),
             source.optLong("createdAt", System.currentTimeMillis())
         )
-        appContext.getSharedPreferences("notimind_lite_prefs_$id", Context.MODE_PRIVATE).edit {
-            root.optJSONObject("settings")?.keys()?.forEach { key ->
-                when (val value = root.getJSONObject("settings").get(key)) {
-                    is Boolean -> putBoolean(key, value)
-                    is Int -> putInt(key, value)
-                    is Long -> putLong(key, value)
-                    is String -> putString(key, value)
-                }
+        val editor = appContext.getSharedPreferences("notimind_lite_prefs_$id", Context.MODE_PRIVATE).edit()
+        root.optJSONObject("settings")?.keys()?.forEach { key ->
+            when (val value = root.getJSONObject("settings").get(key)) {
+                is Boolean -> editor.putBoolean(key, value)
+                is Int -> editor.putInt(key, value)
+                is Long -> editor.putLong(key, value)
+                is String -> editor.putString(key, value)
             }
         }
+        editor.apply()
         writeProfiles(_profiles.value + profile)
         return profile
     }
@@ -108,7 +108,7 @@ class ProfilePreferencesManager(
 
     private fun createDefaultProfile(): List<Profile> {
         val profile = Profile(DEFAULT_PROFILE_ID, "Default", System.currentTimeMillis())
-        store.edit {putString(KEY_PROFILES, encodeProfiles(listOf(profile)))}
+        store.edit().putString(KEY_PROFILES, encodeProfiles(listOf(profile))).apply()
         return listOf(profile)
     }
 
@@ -126,7 +126,7 @@ class ProfilePreferencesManager(
         } else {
             listOf(Profile(DEFAULT_PROFILE_ID, "Default", 0L)) + value
         }
-        store.edit {putString(KEY_PROFILES, encodeProfiles(safe))}
+        store.edit().putString(KEY_PROFILES, encodeProfiles(safe)).apply()
         _profiles.value = safe
     }
 

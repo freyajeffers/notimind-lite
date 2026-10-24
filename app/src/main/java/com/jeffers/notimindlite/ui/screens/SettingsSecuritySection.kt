@@ -23,7 +23,7 @@ import com.jeffers.notimindlite.data.local.PreferencesRepository
 import kotlinx.coroutines.launch
 
 @Composable
-fun SettingsSecuritySection(preferencesRepository: PreferencesRepository) {
+fun settingsSecuritySection(preferencesRepository: PreferencesRepository) {
     val scope = rememberCoroutineScope()
     val encryptedExports by preferencesRepository.securityManager.encryptedExports.collectAsState(initial = true)
     val requirePassphrase by preferencesRepository.securityManager.requirePassphrase.collectAsState(initial = true)
@@ -70,7 +70,7 @@ fun SettingsSecuritySection(preferencesRepository: PreferencesRepository) {
 }
 
 @Composable
-private fun SecurityToggleRow(
+private fun securityToggleRow(
     title: String,
     summary: String,
     checked: Boolean,

@@ -39,35 +39,35 @@ class DisplayPreferencesManager(
     }
 
     fun setShowAppIcons(value: Boolean) {
-        preferences.edit {putBoolean(KEY_SHOW_APP_ICONS, value)}
+        preferences.edit().putBoolean(KEY_SHOW_APP_ICONS, value).apply()
         _showAppIcons.value = value
     }
 
     fun setSortOrder(value: String) {
         val safe = if (value in SORT_ORDERS) value else "newest"
-        preferences.edit {putString(KEY_SORT_ORDER, safe)}
+        preferences.edit().putString(KEY_SORT_ORDER, safe).apply()
         _sortOrder.value = safe
     }
 
     fun setGroupByApp(value: Boolean) {
-        preferences.edit {putBoolean(KEY_GROUP_BY_APP, value)}
+        preferences.edit().putBoolean(KEY_GROUP_BY_APP, value).apply()
         _groupByApp.value = value
     }
 
     fun setPreviewLength(value: Int) {
         val safe = value.coerceIn(MIN_PREVIEW_LENGTH, MAX_PREVIEW_LENGTH)
-        preferences.edit {putInt(KEY_PREVIEW_LENGTH, safe)}
+        preferences.edit().putInt(KEY_PREVIEW_LENGTH, safe).apply()
         _previewLength.value = safe
     }
 
     fun setThemeAccent(value: String) {
         val safe = if (value in THEME_ACCENTS) value else "system"
-        preferences.edit {putString(KEY_THEME_ACCENT, safe)}
+        preferences.edit().putString(KEY_THEME_ACCENT, safe).apply()
         _themeAccent.value = safe
     }
 
     fun setCompactMode(value: Boolean) {
-        preferences.edit {putBoolean(KEY_COMPACT_MODE, value)}
+        preferences.edit().putBoolean(KEY_COMPACT_MODE, value).apply()
         _compactMode.value = value
     }
 

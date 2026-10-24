@@ -22,7 +22,7 @@ import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-internal fun LogHistoryHeaderActions(state: LogHistoryCardState) {
+internal fun logHistoryHeaderActions(state: LogHistoryCardState) {
     val item = state.item
     val context = LocalContext.current
     val scope = rememberCoroutineScope()

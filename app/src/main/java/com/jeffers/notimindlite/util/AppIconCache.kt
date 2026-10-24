@@ -53,7 +53,7 @@ object AppIconCache {
     }
 
     private fun decodeSampledBitmapFromUri(context: Context, uriString: String, targetSize: Int): Bitmap? = try {
-        val uri = uriString.toUri()
+        val uri = Uri.parse(uriString)
         val options = BitmapFactory.Options().apply {
             inJustDecodeBounds = true
         }

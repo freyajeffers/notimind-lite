@@ -15,17 +15,17 @@ class ExhaustivePreferencesRepository(
     /** Initialize the active profile's store, not the legacy unscoped store. */
     fun initializeDefaults(profileId: String = "default") {
         val backing = appContext.getSharedPreferences("notimind_lite_prefs_$profileId", Context.MODE_PRIVATE)
-        backing.edit {
-            ExhaustivePreferencesDefaults.applyCoreDefaults(backing, this)
-            ExhaustivePreferencesDefaults.applyDisplayDefaults(backing, this)
-            ExhaustivePreferencesDefaults.applyActionDefaults(backing, this)
-            ExhaustivePreferencesDefaults.applyAutomationDefaults(backing, this)
-            ExhaustivePreferencesDefaults.applySecurityDefaults(backing, this)
-            ExhaustivePreferencesDefaults.applyPerformanceDefaults(backing, this)
-            ExhaustivePreferencesDefaults.applyDevDefaults(backing, this)
-            ExhaustivePreferencesDefaults.applyAdvancedDefaults(backing, this)
+        val edit = backing.edit()
+        ExhaustivePreferencesDefaults.applyCoreDefaults(backing, edit)
+        ExhaustivePreferencesDefaults.applyDisplayDefaults(backing, edit)
+        ExhaustivePreferencesDefaults.applyActionDefaults(backing, edit)
+        ExhaustivePreferencesDefaults.applyAutomationDefaults(backing, edit)
+        ExhaustivePreferencesDefaults.applySecurityDefaults(backing, edit)
+        ExhaustivePreferencesDefaults.applyPerformanceDefaults(backing, edit)
+        ExhaustivePreferencesDefaults.applyDevDefaults(backing, edit)
+        ExhaustivePreferencesDefaults.applyAdvancedDefaults(backing, edit)
 
-        }
+        edit.apply()
     }
 
     // Helpers moved to ExhaustivePreferencesDefaults to reduce class size and satisfy detekt thresholds.

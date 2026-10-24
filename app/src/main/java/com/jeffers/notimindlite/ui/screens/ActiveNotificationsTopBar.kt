@@ -18,7 +18,7 @@ import androidx.compose.ui.res.stringResource
 import com.jeffers.notimindlite.R
 
 @Composable
-internal fun ActiveNotificationsTopBar(
+internal fun activeNotificationsTopBar(
     selectedPackages: List<String>?,
     searchQuery: String,
     onClearFilters: () -> Unit,

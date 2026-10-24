@@ -74,7 +74,7 @@ import java.io.FileOutputStream
 import javax.crypto.SecretKey
 
 @Composable
-fun SettingsScreen(
+fun settingsScreen(
     authManager: AuthManager,
     preferencesRepository: com.jeffers.notimindlite.data.local.PreferencesRepository
 ) {
@@ -136,7 +136,7 @@ fun SettingsScreen(
 }
 
 @Composable
-private fun SettingsBackupSection(
+private fun settingsBackupSection(
     prefMgr: PreferenceManager,
     listenerGranted: Boolean,
     snackbarHostState: SnackbarHostState
@@ -193,7 +193,7 @@ private fun SettingsBackupSection(
 }
 
 @Composable
-private fun SettingsVersionFooter(context: Context) {
+private fun settingsVersionFooter(context: Context) {
     val versionName = remember { getVersionName(context) }
     val versionCode = remember { getVersionCode(context) }
     Spacer(modifier = Modifier.height(8.dp))
@@ -219,7 +219,7 @@ private fun getVersionCode(context: Context): Int =
     }.getOrDefault(0)
 
 @Composable
-private fun NotificationAccessCard(context: Context, listenerGranted: Boolean) {
+private fun notificationAccessCard(context: Context, listenerGranted: Boolean) {
     val cardColor = if (listenerGranted) {
         MaterialTheme.colorScheme.surfaceVariant
     } else {
@@ -278,7 +278,7 @@ private fun NotificationAccessCard(context: Context, listenerGranted: Boolean) {
 }
 
 @Composable
-private fun NotificationAccessButton(context: Context, listenerGranted: Boolean) {
+private fun notificationAccessButton(context: Context, listenerGranted: Boolean) {
     val containerColor = if (listenerGranted) {
         MaterialTheme.colorScheme.primaryContainer
     } else {
@@ -310,7 +310,7 @@ private fun NotificationAccessButton(context: Context, listenerGranted: Boolean)
 }
 
 @Composable
-private fun AccountSection(
+private fun accountSection(
     session: UserSession,
     authManager: AuthManager,
     scope: CoroutineScope,
@@ -339,7 +339,7 @@ private fun AccountSection(
 }
 
 @Composable
-private fun AuthenticatedAccount(
+private fun authenticatedAccount(
     session: UserSession,
     authManager: AuthManager,
     context: Context
@@ -377,7 +377,7 @@ private fun AuthenticatedAccount(
 }
 
 @Composable
-private fun UnauthenticatedAccount(
+private fun unauthenticatedAccount(
     session: UserSession,
     authManager: AuthManager,
     scope: CoroutineScope,

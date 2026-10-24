@@ -43,7 +43,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 @Composable
-private fun AdvancedSwitchRow(
+private fun advancedSwitchRow(
     titleRes: Int,
     summaryRes: Int,
     checked: Boolean,
@@ -67,7 +67,7 @@ private fun AdvancedSwitchRow(
 }
 
 @Composable
-private fun AdvancedNumberRow(
+private fun advancedNumberRow(
     titleRes: Int,
     summaryRes: Int,
     value: Int,
@@ -118,7 +118,7 @@ private data class AdvancedSettingsConfig(
 )
 
 @Composable
-fun SettingsAdvancedSection(
+fun settingsAdvancedSection(
     preferencesRepository: PreferencesRepository,
     onMigrationCompleted: () -> Unit
 ) {
@@ -176,7 +176,7 @@ fun SettingsAdvancedSection(
 }
 
 @Composable
-private fun AdvancedSettingsCard(
+private fun advancedSettingsCard(
     config: AdvancedSettingsConfig
 ) {
     Card(
@@ -217,7 +217,7 @@ private fun AdvancedSettingsCard(
 }
 
 @Composable
-private fun MigrationControls(
+private fun migrationControls(
     visible: Boolean,
     migrationMessage: String?,
     onShowMigration: () -> Unit,
@@ -241,7 +241,7 @@ private fun MigrationControls(
 }
 
 @Composable
-private fun MigrationConfirmationDialog(config: MigrationDialogConfig) {
+private fun migrationConfirmationDialog(config: MigrationDialogConfig) {
     if (!config.visible) return
     AlertDialog(
         onDismissRequest = config.onDismiss,

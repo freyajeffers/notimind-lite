@@ -84,9 +84,9 @@ object AuditLogger {
             val newId = java.util.UUID
                 .randomUUID()
                 .toString()
-            prefs.edit {
-                putString("install_id", newId)
-            }
+            val editor = prefs.edit()
+            editor.putString("install_id", newId)
+            editor.apply()
             newId
         }
     } catch (ignored: Exception) {
@@ -197,7 +197,7 @@ object AuditLogger {
 
             // Set markers for future detection
             devicePrefs.edit().putBoolean("initialized_prior", true).apply()
-            regularPrefs.edit {putBoolean("app_state_valid", true)}
+            regularPrefs.edit().putBoolean("app_state_valid", true).apply()
         } catch (e: IllegalStateException) {
             // SharedPreferences backend unavailable (storage unmounted).
             Log.e(TAG, "Error checking app data clear status", e)

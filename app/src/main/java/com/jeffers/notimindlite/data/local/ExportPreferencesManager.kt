@@ -37,17 +37,17 @@ class ExportPreferencesManager(
             .distinct()
             .joinToString(",")
             .ifBlank { DEFAULT_FORMATS }
-        preferences.edit {putString(KEY_FORMATS, safe)}
+        preferences.edit().putString(KEY_FORMATS, safe).apply()
         _formats.value = safe
     }
 
     fun setAnonymize(value: Boolean) {
-        preferences.edit {putBoolean(KEY_ANONYMIZE, value)}
+        preferences.edit().putBoolean(KEY_ANONYMIZE, value).apply()
         _anonymize.value = value
     }
 
     fun setAnonymizeTitles(value: Boolean) {
-        preferences.edit {putBoolean(KEY_ANONYMIZE_TITLES, value)}
+        preferences.edit().putBoolean(KEY_ANONYMIZE_TITLES, value).apply()
         _anonymizeTitles.value = value
     }
 

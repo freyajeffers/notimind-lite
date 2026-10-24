@@ -27,12 +27,12 @@ class TelemetryPreferencesManager(
     }
 
     fun setEnabled(value: Boolean) {
-        preferences.edit {putBoolean(KEY_ENABLED, value)}
+        preferences.edit().putBoolean(KEY_ENABLED, value).apply()
         _enabled.value = value
     }
 
     fun setLevel(value: String) {
-        preferences.edit {putString(KEY_LEVEL, value)}
+        preferences.edit().putString(KEY_LEVEL, value).apply()
         _level.value = value
     }
 

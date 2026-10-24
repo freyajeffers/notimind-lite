@@ -247,7 +247,7 @@ enum class NotificationSection(
 }
 
 @Composable
-fun AppIconImage(appIconUri: String?, modifier: Modifier = Modifier) {
+fun appIconImage(appIconUri: String?, modifier: Modifier = Modifier) {
     val imageBitmap = remember(appIconUri) {
         if (!appIconUri.isNullOrEmpty()) {
             try {
@@ -498,7 +498,7 @@ private val renderActiveNotificationsScreen:
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class, ExperimentalLayoutApi::class)
 @Composable
-fun ActiveNotificationsScreen(dao: NotificationDao, preferences: PreferencesRepository) {
+fun activeNotificationsScreen(dao: NotificationDao, preferences: PreferencesRepository) {
     renderActiveNotificationsScreen(dao, preferences)
 }
 
@@ -608,7 +608,7 @@ private data class ActiveNotificationsListConfig(
 )
 
 @Composable
-private fun RenderActiveNotificationsList(config: ActiveNotificationsListConfig) {
+private fun renderActiveNotificationsList(config: ActiveNotificationsListConfig) {
     LazyColumn(
         state = config.listState,
         modifier = Modifier
@@ -735,7 +735,7 @@ data class LogNotificationCardConfig(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun LogNotificationCard(config: LogNotificationCardConfig) {
+fun logNotificationCard(config: LogNotificationCardConfig) {
     val item = config.item
     val dateTimeFormatter = config.dateTimeFormatter
     val dao = config.dao
@@ -782,7 +782,7 @@ fun LogNotificationCard(config: LogNotificationCardConfig) {
 }
 
 @Composable
-private fun NotificationCollapsedContent(config: LogNotificationCardConfig) {
+private fun notificationCollapsedContent(config: LogNotificationCardConfig) {
     val item = config.item
     val highlightQuery = config.highlightQuery
     val previewLength = config.previewLength

@@ -46,22 +46,22 @@ class SyncPreferencesManager(
 
     fun setSyncInterval(value: Int) {
         val safe = value.coerceIn(MIN_SYNC_INTERVAL, MAX_SYNC_INTERVAL)
-        preferences.edit {putInt(KEY_SYNC_INTERVAL, safe)}
+        preferences.edit().putInt(KEY_SYNC_INTERVAL, safe).apply()
         _syncInterval.value = safe
     }
 
     fun setSyncWifiOnly(value: Boolean) {
-        preferences.edit {putBoolean(KEY_SYNC_WIFI_ONLY, value)}
+        preferences.edit().putBoolean(KEY_SYNC_WIFI_ONLY, value).apply()
         _syncWifiOnly.value = value
     }
 
     fun setSyncChargingOnly(value: Boolean) {
-        preferences.edit {putBoolean(KEY_SYNC_CHARGING_ONLY, value)}
+        preferences.edit().putBoolean(KEY_SYNC_CHARGING_ONLY, value).apply()
         _syncChargingOnly.value = value
     }
 
     fun setLastSyncTs(value: Long) {
-        preferences.edit {putLong(KEY_LAST_SYNC_TS, value)}
+        preferences.edit().putLong(KEY_LAST_SYNC_TS, value).apply()
         _lastSyncTs.value = value
     }
 
@@ -70,22 +70,22 @@ class SyncPreferencesManager(
     }
 
     fun setUseSupabaseSync(value: Boolean) {
-        preferences.edit {putBoolean(KEY_USE_SUPABASE_SYNC, value)}
+        preferences.edit().putBoolean(KEY_USE_SUPABASE_SYNC, value).apply()
         _useSupabaseSync.value = value
     }
 
     fun setEnableSync(value: Boolean) {
-        preferences.edit {putBoolean(KEY_ENABLE_SYNC, value)}
+        preferences.edit().putBoolean(KEY_ENABLE_SYNC, value).apply()
         _enableSync.value = value
     }
 
     fun setEnableVector(value: Boolean) {
-        preferences.edit {putBoolean(KEY_ENABLE_VECTOR, value)}
+        preferences.edit().putBoolean(KEY_ENABLE_VECTOR, value).apply()
         _enableVector.value = value
     }
 
     fun setEnableFts4(value: Boolean) {
-        preferences.edit {putBoolean(KEY_ENABLE_FTS4, value)}
+        preferences.edit().putBoolean(KEY_ENABLE_FTS4, value).apply()
         _enableFts4.value = value
     }
 

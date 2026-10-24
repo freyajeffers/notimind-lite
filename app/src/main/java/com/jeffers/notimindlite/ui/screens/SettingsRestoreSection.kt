@@ -39,7 +39,7 @@ import java.io.FileOutputStream
 import javax.crypto.SecretKey
 
 @Composable
-internal fun RestoreCard(
+internal fun restoreCard(
     prefMgr: PreferenceManager,
     listenerGranted: Boolean,
     onPickBackup: () -> Unit,
@@ -121,7 +121,7 @@ data class RestoreDialogConfig(
 )
 
 @Composable
-fun RestoreDialogs(config: RestoreDialogConfig) {
+fun restoreDialogs(config: RestoreDialogConfig) {
     val currentUri = config.selectedBackupUri
     if (config.showRestoreDialog && currentUri != null) {
         val pickedDisplayName = currentUri.lastPathSegment
