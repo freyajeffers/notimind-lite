@@ -35,7 +35,61 @@ object AuditLogger {
     // callers (BootReceiver, SyncWorker, Settings screen) without changing behavior.
     private const val TAG = "AuditLogger"
     private const val LOG_FILE_NAME = "notimind_persistent_audit.log"
-    private const val HMAC_KEY_SALT = "NotiMind_TamperProof_Audit_Key_Salt_2026"
+
+    // HMAC signing moved to AndroidKeyStore: non-exportable, device-backed symmetric key.
+    private const val AUDIT_HMAC_KEY_ALIAS = "NotiMind_Audit_HMAC_Key"
+
+    /**
+     * Retrieves or generates an Android KeyStore-backed HMAC-SHA256 secret key.
+     * The key is non-exportable and lives in the AndroidKeyStore; it cannot be
+     * extracted from the device. This provides tamper-resistance over a static
+     * salt-derived key.
+     */
+    private fun getOrCreateHmacKey(): javax.crypto.SecretKey {
+        try {
+            val keyStore = java.security.KeyStore.getInstance("AndroidKeyStore")
+            keyStore.load(null)
+            val existing = keyStore.getKey(AUDIT_HMAC_KEY_ALIAS, null)
+            if (existing is javax.crypto.SecretKey) return existing
+        } catch (_: Exception) {
+            // ignore and proceed to key generation
+        }
+
+        val keyGenerator = javax.crypto.KeyGenerator.getInstance(android.security.keystore.KeyProperties.KEY_ALGORITHM_HMAC_SHA256, "AndroidKeyStore")
+        val spec = android.security.keystore.KeyGenParameterSpec.Builder(
+            AUDIT_HMAC_KEY_ALIAS,
+            android.security.keystore.KeyProperties.PURPOSE_SIGN or android.security.keystore.KeyProperties.PURPOSE_VERIFY
+        )
+            .setKeySize(256)
+            .setDigests(android.security.keystore.KeyProperties.DIGEST_SHA256)
+            .setUserAuthenticationRequired(false)
+            .build()
+        keyGenerator.init(spec)
+        return keyGenerator.generateKey()
+    }
+
+    /**
+     * Generates a cryptographic HMAC-SHA256 signature for a log entry using the
+     * AndroidKeyStore-backed key.
+     */
+    fun signLogEntry(data: String, deviceId: String): String {
+        val key = getOrCreateHmacKey()
+        val mac = Mac.getInstance("HmacSHA256")
+        mac.init(key)
+        val hmacBytes = mac.doFinal(data.toByteArray(StandardCharsets.UTF_8))
+        return Base64.encodeToString(hmacBytes, Base64.NO_WRAP)
+    }
+
+    /**
+     * Verifies an HMAC-SHA256 signature for a log entry using the AndroidKeyStore key.
+     */
+    fun verifySignature(data: String, signature: String, deviceId: String): Boolean {
+        val expected = signLogEntry(data, deviceId)
+        return java.security.MessageDigest.isEqual(
+            expected.toByteArray(Charsets.UTF_8),
+            signature.toByteArray(Charsets.UTF_8)
+        )
+    }
 
     // Persistent log line layout: pipe-separated fields, index 0..4. Producer is
     // appendPersistentLog(); consumer is parsePersistentLogLine(). Any change here must be mirrored.
@@ -96,8 +150,8 @@ object AuditLogger {
     /**
      * Generates a cryptographic HMAC-SHA256 signature for a log entry.
      */
-    fun signLogEntry(data: String, deviceId: String): String {
-        val secretKeyBytes = (HMAC_KEY_SALT + deviceId).toByteArray(StandardCharsets.UTF_8)
+    fun signLogEntry_legacy(data: String, deviceId: String): String {
+        val secretKeyBytes = ("NotiMind_TamperProof_Audit_Key_Salt_2026" + deviceId).toByteArray(StandardCharsets.UTF_8)
         val keySpec = SecretKeySpec(secretKeyBytes, "HmacSHA256")
         val mac = Mac.getInstance("HmacSHA256")
         mac.init(keySpec)
@@ -108,8 +162,8 @@ object AuditLogger {
     /**
      * Verifies an HMAC-SHA256 signature for a log entry.
      */
-    fun verifySignature(data: String, signature: String, deviceId: String): Boolean {
-        val expected = signLogEntry(data, deviceId)
+    fun verifySignature_legacy(data: String, signature: String, deviceId: String): Boolean {
+        val expected = signLogEntry_legacy(data, deviceId)
         return java.security.MessageDigest.isEqual(
             expected.toByteArray(Charsets.UTF_8),
             signature.toByteArray(Charsets.UTF_8)
