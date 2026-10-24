@@ -223,6 +223,17 @@ dependencies {
   "ksp"(libs.androidx.room.compiler)
 }
 
+configurations.all {
+    resolutionStrategy.eachDependency {
+        if (requested.group == "org.bouncycastle" &&
+            (requested.name == "bcpkix-jdk18on" || requested.name == "bcprov-jdk18on" || requested.name == "bcutil-jdk18on")
+        ) {
+            useVersion(libs.versions.bouncycastle.get())
+            because("Patches Bouncy Castle vulnerabilities (CVE-2026-5588, CVE-2026-13506)")
+        }
+    }
+}
+
 // Auto-generate the Android debug keystore if it does not exist.
 // AGP 9.3.2's validateSigning{Debug,Release} tasks require the file
 // at the path configured in `signingConfigs.debugConfig` (above).
