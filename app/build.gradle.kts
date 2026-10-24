@@ -279,15 +279,19 @@ afterEvaluate {
 }
 
 // Prevent accidental debug-signed release artifacts: require explicit release
-// signing configuration. If a release keystore is not present, fail the release
-// assembly tasks early with an actionable message.
-if (!file(System.getenv("SIGNING_STORE_FILE") ?: "${rootDir}/release.keystore").exists()) {
-  tasks.register("verifyReleaseSigning") {
-    doLast {
-      throw GradleException("Release keystore not found at '${rootDir}/release.keystore'. Set SIGNING_STORE_FILE and related env vars (SIGNING_STORE_PASSWORD, SIGNING_KEY_ALIAS, SIGNING_KEY_PASSWORD) for a proper release signing configuration. Releasing with debug signing is forbidden.")
-    }
-  }
-  tasks.matching { it.name == "assembleRelease" || it.name.startsWith("bundleRelease") || it.name.startsWith("packageRelease") }
-    .configureEach { dependsOn("verifyReleaseSigning") }
+// signing configuration. If a release keystore is not present, fail release
+// invocation during configuration instead of producing a debug-signed artifact.
+val releaseTaskRequested = gradle.startParameter.taskNames.any { taskName ->
+  taskName.endsWith("assembleRelease") ||
+    taskName.endsWith("bundleRelease") ||
+    taskName.endsWith("packageRelease")
+}
+val configuredReleaseKeystore = file(System.getenv("SIGNING_STORE_FILE") ?: "${rootDir}/release.keystore")
+if (releaseTaskRequested && !configuredReleaseKeystore.exists()) {
+  throw GradleException(
+    "Release keystore not found at '${configuredReleaseKeystore.absolutePath}'. " +
+      "Set SIGNING_STORE_FILE and related signing environment variables. " +
+      "Releasing with debug signing is forbidden."
+  )
 }
 
