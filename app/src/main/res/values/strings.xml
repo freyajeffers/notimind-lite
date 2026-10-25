@@ -22,6 +22,7 @@
     <string name="backup_dialog_passphrase_description">Optional passphrase for cross-device or post-reinstall restore:</string>
     <string name="backup_dialog_passphrase_label">Passphrase (optional)</string>
     <string name="backup_dialog_local_only_hint">If left blank, this backup can only be restored on this device while the app remains installed.</string>
+    <string name="backup_dialog_key_sharing_warning">The backup key is secret. Clipboard and sharing may expose it to other apps or history; clear or archive it securely.</string>
     <string name="backup_dialog_copy_key">Copy backup key</string>
     <string name="backup_dialog_create">Create Backup</string>
     <string name="restore_dialog_title">Restore Encrypted Backup</string>

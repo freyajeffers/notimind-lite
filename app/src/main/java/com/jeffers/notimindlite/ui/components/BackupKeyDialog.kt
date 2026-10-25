@@ -27,6 +27,7 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -44,6 +45,82 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.jeffers.notimindlite.R
+import kotlinx.coroutines.delay
+
+private const val CLIPBOARD_CLEAR_DELAY_MILLIS = 30_000L
+
+@Composable
+private fun ClearCopiedBackupKeyFromClipboard(
+    context: Context,
+    keyBase64: String,
+    clipboardKeyCopied: Boolean,
+    onCleared: () -> Unit,
+) {
+    LaunchedEffect(clipboardKeyCopied, keyBase64) {
+        if (!clipboardKeyCopied) return@LaunchedEffect
+        delay(CLIPBOARD_CLEAR_DELAY_MILLIS)
+        val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as? ClipboardManager
+        if (clipboard?.primaryClip?.itemCount == 1 &&
+            clipboard.primaryClip?.getItemAt(0)?.coerceToText(context)?.toString() == keyBase64
+        ) {
+            clipboard.clearPrimaryClip()
+        }
+        onCleared()
+    }
+}
+
+@Composable
+private fun BackupKeyActions(
+    context: Context,
+    keyBase64: String,
+    shareKeyPayload: String,
+    shareKeyChooser: String,
+    onCopied: (Boolean) -> Unit,
+) {
+    Surface(
+        color = MaterialTheme.colorScheme.surfaceVariant,
+        shape = RoundedCornerShape(8.dp),
+        modifier = Modifier.fillMaxWidth(),
+    ) {
+        Row(
+            modifier = Modifier.padding(12.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween,
+        ) {
+            Text(
+                text = keyBase64,
+                fontSize = 12.sp,
+                modifier = Modifier.weight(1f),
+            )
+            IconButton(onClick = {
+                val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as? ClipboardManager
+                clipboard?.setPrimaryClip(ClipData.newPlainText("Backup Key", keyBase64))
+                onCopied(clipboard != null)
+            }) {
+                Icon(
+                    Icons.Default.ContentCopy,
+                    contentDescription = stringResource(R.string.backup_dialog_copy_key),
+                    modifier = Modifier.size(18.dp),
+                )
+            }
+        }
+    }
+    TextButton(
+        onClick = {
+            val shareIntent = Intent(Intent.ACTION_SEND).apply {
+                type = "text/plain"
+                putExtra(Intent.EXTRA_TEXT, shareKeyPayload)
+                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            }
+            context.startActivity(Intent.createChooser(shareIntent, shareKeyChooser))
+        },
+        modifier = Modifier,
+    ) {
+        Icon(Icons.Default.Share, contentDescription = "Share backup key", modifier = Modifier.size(16.dp))
+        Spacer(Modifier.width(4.dp))
+        Text(stringResource(R.string.backup_key_share))
+    }
+}
 
 @Composable
 fun BackupKeyDialog(
@@ -54,8 +131,16 @@ fun BackupKeyDialog(
     val context = LocalContext.current
     var passphrase by remember { mutableStateOf("") }
     var showPassword by remember { mutableStateOf(false) }
+    var clipboardKeyCopied by remember { mutableStateOf(false) }
     val shareKeyPayload = stringResource(R.string.backup_share_key_payload, keyBase64)
     val shareKeyChooser = stringResource(R.string.backup_share_key_chooser)
+
+    ClearCopiedBackupKeyFromClipboard(
+        context = context,
+        keyBase64 = keyBase64,
+        clipboardKeyCopied = clipboardKeyCopied,
+        onCleared = { clipboardKeyCopied = false },
+    )
 
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -102,54 +187,18 @@ fun BackupKeyDialog(
                     stringResource(R.string.backup_dialog_local_only_hint),
                     style = MaterialTheme.typography.bodySmall,
                 )
-                Surface(
-                    color = MaterialTheme.colorScheme.surfaceVariant,
-                    shape = RoundedCornerShape(8.dp),
-                    modifier = Modifier.fillMaxWidth(),
-                ) {
-                    Row(
-                        modifier = Modifier.padding(12.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                    ) {
-                        Text(
-                            text = keyBase64,
-                            fontSize = 12.sp,
-                            modifier = Modifier.weight(1f),
-                        )
-                        IconButton(onClick = {
-                            val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as?
-                                ClipboardManager
-                            clipboard?.setPrimaryClip(ClipData.newPlainText("Backup Key", keyBase64))
-                        }) {
-                            Icon(
-                                Icons.Default.ContentCopy,
-                                contentDescription = stringResource(R.string.backup_dialog_copy_key),
-                                modifier = Modifier.size(18.dp),
-                            )
-                        }
-                    }
-                }
-                TextButton(
-                    onClick = {
-                        val shareIntent = Intent(Intent.ACTION_SEND).apply {
-                            type = "text/plain"
-                            putExtra(Intent.EXTRA_TEXT, shareKeyPayload)
-                            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                        }
-                        context.startActivity(
-                            Intent.createChooser(
-                                shareIntent,
-                                shareKeyChooser
-                            )
-                        )
-                    },
-                    modifier = Modifier.align(Alignment.End),
-                ) {
-                    Icon(Icons.Default.Share, contentDescription = "Share backup key", modifier = Modifier.size(16.dp))
-                    Spacer(Modifier.width(4.dp))
-                    Text(stringResource(R.string.backup_key_share))
-                }
+                Text(
+                    stringResource(R.string.backup_dialog_key_sharing_warning),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.error,
+                )
+                BackupKeyActions(
+                    context = context,
+                    keyBase64 = keyBase64,
+                    shareKeyPayload = shareKeyPayload,
+                    shareKeyChooser = shareKeyChooser,
+                    onCopied = { clipboardKeyCopied = it },
+                )
             }
         },
         confirmButton = {
