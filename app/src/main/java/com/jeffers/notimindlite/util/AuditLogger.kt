@@ -75,7 +75,10 @@ object AuditLogger {
             keyGenerator.init(spec)
             return keyGenerator.generateKey()
         } catch (e: java.security.GeneralSecurityException) {
-            Log.w(TAG, "AndroidKeyStore HMAC unavailable; using process-local fallback", e)
+            if (!isRobolectricRuntime()) {
+                throw e
+            }
+            Log.w(TAG, "AndroidKeyStore HMAC unavailable in Robolectric; using process-local fallback", e)
             return fallbackHmacKey ?: synchronized(this) {
                 fallbackHmacKey ?: javax.crypto.KeyGenerator
                     .getInstance("HmacSHA256")
@@ -84,6 +87,13 @@ object AuditLogger {
                     .also { fallbackHmacKey = it }
             }
         }
+    }
+
+    private fun isRobolectricRuntime(): Boolean = try {
+        Class.forName("org.robolectric.Robolectric")
+        true
+    } catch (_: ClassNotFoundException) {
+        false
     }
 
     /**
