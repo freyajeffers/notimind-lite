@@ -23,6 +23,8 @@ class SupabaseAuthManager(
         const val PKCE_VERIFIER_BYTES = 32
         const val HTTP_SUCCESS_MIN = 200
         const val HTTP_SUCCESS_MAX = 299
+        const val AUTH_CONNECT_TIMEOUT_MILLIS = 15_000
+        const val AUTH_READ_TIMEOUT_MILLIS = 15_000
         const val JWT_PAYLOAD_INDEX = 1
     }
 
@@ -61,9 +63,11 @@ class SupabaseAuthManager(
         val currentVerifier = verifier ?: return@withContext Result.failure(
             IllegalStateException("Missing PKCE verifier")
         )
+        val endpoint = BuildConfig.SUPABASE_URL + "/auth/v1/token?grant_type=pkce"
+        val connection = URL(endpoint).openConnection() as HttpURLConnection
         try {
-            val endpoint = BuildConfig.SUPABASE_URL + "/auth/v1/token?grant_type=pkce"
-            val connection = URL(endpoint).openConnection() as HttpURLConnection
+            connection.connectTimeout = AUTH_CONNECT_TIMEOUT_MILLIS
+            connection.readTimeout = AUTH_READ_TIMEOUT_MILLIS
             connection.requestMethod = "POST"
             connection.doOutput = true
             connection.setRequestProperty("apikey", BuildConfig.SUPABASE_ANON_KEY)
@@ -79,7 +83,7 @@ class SupabaseAuthManager(
             } else {
                 connection.errorStream
             }
-            val body = responseStream.bufferedReader().use { it.readText() }
+            val body = responseStream?.bufferedReader()?.use { it.readText() }.orEmpty()
             if (responseCode !in HTTP_SUCCESS_MIN..HTTP_SUCCESS_MAX) {
                 error(JSONObject(body).optString("msg", "Supabase sign-in failed"))
             }
@@ -93,6 +97,8 @@ class SupabaseAuthManager(
             Result.failure(e)
         } catch (e: org.json.JSONException) {
             Result.failure(e)
+        } finally {
+            connection.disconnect()
         }
     }
 
