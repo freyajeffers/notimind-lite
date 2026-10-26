@@ -6,7 +6,9 @@ All notable changes to NotiMind Lite are documented here. This project adheres t
 
 ## [Unreleased] - Preference Runtime, UX Polish & Reliability
 
-- **fix(notification)**: Remove unreachable pre-API-33 app-label lookup; `minSdk` is 33, so package queries use the API 33+ flags overload consistently.
+- **fix(perf)**: Replace the embedding-executor non-null assertion with synchronized local reuse/recreation; test reuse and shutdown behavior.
+- **fix(notification)**: Reject null sanitized titles explicitly instead of asserting non-null in notification capture.
+- **cleanup(notification)**: Remove unreachable pre-API-33 app-label lookup; `minSdk` is 33, so package queries use the API 33+ flags overload consistently.
 - **fix(sync)**: Bound Supabase PKCE, refresh, notification-sync, and settings-sync requests; close connections on every exit and handle empty/malformed refresh error bodies safely. Backup notarization now serializes JSON safely and always disconnects after its bounded request.
 - **security(auth)**: Migrate legacy plaintext Supabase tokens to Android Keystore-backed encrypted preferences; encrypted values take precedence, and plaintext fallback is removed after a successful atomic migration.
 - **build**: Replaced deprecated Groovy space-assignment syntax in Android Gradle properties; `--warning-mode all` now reports only Android Gradle Plugin and Detekt plugin deprecations.

@@ -14,12 +14,15 @@ object PerformanceExecutors {
     fun embeddingExecutor(context: Context): ExecutorService {
         val size = PreferencesRepository(context).getThreadPoolSize()
         synchronized(this) {
-            if (executor == null || configuredSize != size) {
-                executor?.shutdown()
-                executor = Executors.newFixedThreadPool(size)
+            val currentExecutor = executor
+            if (currentExecutor != null && configuredSize == size) {
+                return currentExecutor
+            }
+            currentExecutor?.shutdown()
+            return Executors.newFixedThreadPool(size).also {
+                executor = it
                 configuredSize = size
             }
-            return executor!!
         }
     }
 

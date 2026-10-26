@@ -44,7 +44,7 @@ class NotificationSanitizer(
         val finalTitle = san?.let {
             if (preferences.anonymizeTitles.value) "[REDACTED-TITLE]" else it.title
         }
-        if (san == null || shouldReject(finalTitle!!, san.content, san.subText, postTime, now)) {
+        if (san == null || finalTitle == null || shouldReject(finalTitle, san.content, san.subText, postTime, now)) {
             return null
         }
 
