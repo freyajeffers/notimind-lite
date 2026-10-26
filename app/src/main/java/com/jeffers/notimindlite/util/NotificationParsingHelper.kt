@@ -3,6 +3,7 @@ package com.jeffers.notimindlite.util
 import android.app.Notification
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.os.Build
 import android.os.Bundle
 import android.util.Log
 import org.json.JSONArray
@@ -44,7 +45,15 @@ class NotificationParsingHelper(
     }
 
     fun resolveAppName(packageName: String): String = try {
-        val appInfo = packageManager.getApplicationInfo(packageName, PackageManager.MATCH_UNINSTALLED_PACKAGES)
+        val appInfo = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            packageManager.getApplicationInfo(
+                packageName,
+                PackageManager.ApplicationInfoFlags.of(0)
+            )
+        } else {
+            @Suppress("DEPRECATION")
+            packageManager.getApplicationInfo(packageName, PackageManager.MATCH_UNINSTALLED_PACKAGES)
+        }
         packageManager.getApplicationLabel(appInfo).toString()
     } catch (e: PackageManager.NameNotFoundException) {
         Log.w("NotificationParsing", "Application package no longer exists: $packageName", e)

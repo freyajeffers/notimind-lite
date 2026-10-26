@@ -64,6 +64,11 @@ private fun ClearCopiedBackupKeyFromClipboard(
             clipboard.primaryClip?.getItemAt(0)?.coerceToText(context)?.toString() == keyBase64
         ) {
             clipboard.clearPrimaryClip()
+            android.widget.Toast.makeText(
+                context,
+                R.string.backup_dialog_copied_key_cleared,
+                android.widget.Toast.LENGTH_SHORT
+            ).show()
         }
         onCleared()
     }
