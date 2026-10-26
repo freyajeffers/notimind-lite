@@ -145,6 +145,25 @@ class BackupFileFormatTest {
     }
 
     @Test
+    fun isLegacyRaw_acceptsRawIvCiphertextAndTag() {
+        val rawLegacy = ByteArray(BackupFileFormat.IV_LEN + 1 + GCM_TAG_BYTES)
+        assertEquals(true, BackupFileFormat.isLegacyRaw(rawLegacy))
+    }
+
+    @Test
+    fun isLegacyRaw_rejectsVersionedAndTruncatedPayloads() {
+        val malformedVersioned = BackupFileFormat.MAGIC + ByteArray(BackupFileFormat.IV_LEN + GCM_TAG_BYTES)
+        val truncatedRaw = ByteArray(BackupFileFormat.IV_LEN + GCM_TAG_BYTES)
+
+        assertEquals(false, BackupFileFormat.isLegacyRaw(malformedVersioned))
+        assertEquals(false, BackupFileFormat.isLegacyRaw(truncatedRaw))
+    }
+
+    private companion object {
+        const val GCM_TAG_BYTES = 16
+    }
+
+    @Test
     fun parse_truncatedCiphertext_throwsFormatException() {
         val truncatedCiphertext = ByteArrayOutputStream()
             .apply {

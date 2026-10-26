@@ -47,7 +47,6 @@ object EncryptedBackupManager {
     private const val TAG_LENGTH = 128
     private const val IV_LENGTH = BackupFileFormat.IV_LEN
     private const val BUFFER_SIZE = 8192
-    private const val GCM_TAG_LENGTH_BYTES = 16
 
     suspend fun createAuthorizedBackup(
         context: Context,
@@ -168,10 +167,7 @@ object EncryptedBackupManager {
         }
     }
 
-    private fun isLegacyRawBackup(bytes: ByteArray): Boolean =
-        bytes.size > IV_LENGTH + GCM_TAG_LENGTH_BYTES &&
-            !bytes.copyOfRange(0, minOf(bytes.size, BackupFileFormat.MAGIC.size))
-                .contentEquals(BackupFileFormat.MAGIC)
+    private fun isLegacyRawBackup(bytes: ByteArray): Boolean = BackupFileFormat.isLegacyRaw(bytes)
 
     private fun isFilePassphraseWrapped(bytes: ByteArray): Boolean =
         try {

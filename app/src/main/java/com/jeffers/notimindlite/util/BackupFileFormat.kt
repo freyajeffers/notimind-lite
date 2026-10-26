@@ -34,6 +34,7 @@ internal object BackupFileFormat {
     private const val MAX_PLAUSIBLE_ITERATIONS = 10_000_000
     private const val MAX_WRAPPED_DEK_LEN = 256
     private const val GCM_AUTH_TAG_LEN = 16
+    private const val MIN_LEGACY_CIPHERTEXT_LEN = 1
     private const val HEADER_BASE_OVERHEAD = 6
     private const val INT_SIZE_BYTES = 4
 
@@ -71,6 +72,10 @@ internal object BackupFileFormat {
     ) : IllegalArgumentException(message, cause)
 
     private fun fail(message: String): Nothing = throw FormatException(message)
+
+    fun isLegacyRaw(bytes: ByteArray): Boolean =
+        bytes.size >= IV_LEN + GCM_AUTH_TAG_LEN + MIN_LEGACY_CIPHERTEXT_LEN &&
+            !bytes.copyOfRange(0, MAGIC_LEN).contentEquals(MAGIC)
 
     fun writeWrapped(payload: WrappedPayload): ByteArray {
         val out = ByteArrayOutputStream(
