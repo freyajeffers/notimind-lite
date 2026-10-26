@@ -47,14 +47,17 @@ android {
       keyAlias 'androiddebugkey'
       keyPassword 'android'
     }
-    def releaseKeystorePath = System.getenv('SIGNING_STORE_FILE') ?: "${rootDir}/release.keystore"
-    def releaseKeystoreFile = file(releaseKeystorePath)
-    if (releaseKeystoreFile.exists()) {
+    def releaseKeystorePath = System.getenv('SIGNING_STORE_FILE')
+    def releaseKeystoreFile = releaseKeystorePath ? file(releaseKeystorePath) : null
+    def releaseStorePassword = System.getenv('SIGNING_STORE_PASSWORD')
+    def releaseKeyAlias = System.getenv('SIGNING_KEY_ALIAS')
+    def releaseKeyPassword = System.getenv('SIGNING_KEY_PASSWORD')
+    if (releaseKeystoreFile?.exists() && releaseStorePassword && releaseKeyAlias && releaseKeyPassword) {
       create('releaseConfig') {
         storeFile releaseKeystoreFile
-        storePassword System.getenv('SIGNING_STORE_PASSWORD') ?: 'placeholder'
-        keyAlias System.getenv('SIGNING_KEY_ALIAS') ?: 'placeholder'
-        keyPassword System.getenv('SIGNING_KEY_PASSWORD') ?: 'placeholder'
+        storePassword releaseStorePassword
+        keyAlias releaseKeyAlias
+        keyPassword releaseKeyPassword
       }
     }
   }
@@ -240,10 +243,17 @@ afterEvaluate {
 def releaseTaskRequested = gradle.startParameter.taskNames.any { taskName ->
   taskName.endsWith('assembleRelease') || taskName.endsWith('bundleRelease') || taskName.endsWith('packageRelease')
 }
-def configuredReleaseKeystore = file(System.getenv('SIGNING_STORE_FILE') ?: "${rootDir}/release.keystore")
-if (releaseTaskRequested && !configuredReleaseKeystore.exists()) {
+def configuredReleaseKeystorePath = System.getenv('SIGNING_STORE_FILE')
+def configuredReleaseKeystore = configuredReleaseKeystorePath ? file(configuredReleaseKeystorePath) : null
+def releaseSigningValuesPresent = [
+  System.getenv('SIGNING_STORE_PASSWORD'),
+  System.getenv('SIGNING_KEY_ALIAS'),
+  System.getenv('SIGNING_KEY_PASSWORD')
+].every { it }
+if (releaseTaskRequested && (!configuredReleaseKeystore?.exists() || !releaseSigningValuesPresent)) {
   throw new GradleException(
-    "Release keystore not found at '${configuredReleaseKeystore.absolutePath}'. " +
-      'Set SIGNING_STORE_FILE and related signing environment variables. Releasing with debug signing is forbidden.'
+    'Release build requires an existing keystore and all signing variables: ' +
+      'SIGNING_STORE_FILE, SIGNING_STORE_PASSWORD, SIGNING_KEY_ALIAS, SIGNING_KEY_PASSWORD. ' +
+      'Debug signing fallback is forbidden.'
   )
 }

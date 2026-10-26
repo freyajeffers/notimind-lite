@@ -6,8 +6,7 @@ All notable changes to NotiMind Lite are documented here. This project adheres t
 
 ## [Unreleased] - Preference Runtime, UX Polish & Reliability
 
-### 🛡️ Security Remediation
-
+- **fix(build)**: Release builds now require a configured existing release keystore and all signing credentials; placeholder credentials and debug-signing fallback are rejected.
 - **fix(backup)**: Restrict legacy raw-IV restore fallback to sufficiently sized files that do not carry the versioned `NMB1` magic, preventing malformed versioned backups from falling through to legacy decryption.
 
 ### 🚀 Features & Runtime Integration
