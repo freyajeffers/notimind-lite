@@ -47,6 +47,7 @@ object EncryptedBackupManager {
     private const val TAG_LENGTH = 128
     private const val IV_LENGTH = BackupFileFormat.IV_LEN
     private const val BUFFER_SIZE = 8192
+    private const val GCM_TAG_LENGTH_BYTES = 16
 
     suspend fun createAuthorizedBackup(
         context: Context,
@@ -167,6 +168,11 @@ object EncryptedBackupManager {
         }
     }
 
+    private fun isLegacyRawBackup(bytes: ByteArray): Boolean =
+        bytes.size > IV_LENGTH + GCM_TAG_LENGTH_BYTES &&
+            !bytes.copyOfRange(0, minOf(bytes.size, BackupFileFormat.MAGIC.size))
+                .contentEquals(BackupFileFormat.MAGIC)
+
     private fun isFilePassphraseWrapped(bytes: ByteArray): Boolean =
         try {
             BackupFileFormat.parse(bytes).keySource == BackupFileFormat.KEY_SOURCE_PASSPHRASE_WRAPPED
@@ -186,8 +192,9 @@ object EncryptedBackupManager {
         }
 
         if (header == null) {
-            // Legacy format: raw [12B IV][ciphertext] without NMB1 header. Use fallback key.
-            return fallbackKey
+            // Only accept the historical raw [IV][ciphertext+GCM tag] layout when
+            // it cannot be mistaken for a malformed/versioned NMB1 backup.
+            return fallbackKey.takeIf { isLegacyRawBackup(bytes) }
         }
 
         if (header.keySource == BackupFileFormat.KEY_SOURCE_PASSPHRASE_WRAPPED) {
@@ -282,7 +289,7 @@ object EncryptedBackupManager {
             val (iv, ciphertext) = if (header != null) {
                 Pair(header.dataIv, header.ciphertext)
             } else {
-                if (bytes.size < IV_LENGTH) return false
+                if (!isLegacyRawBackup(bytes)) return false
                 val iv = bytes.copyOfRange(0, IV_LENGTH)
                 val ct = bytes.copyOfRange(IV_LENGTH, bytes.size)
                 Pair(iv, ct)

@@ -6,6 +6,10 @@ All notable changes to NotiMind Lite are documented here. This project adheres t
 
 ## [Unreleased] - Preference Runtime, UX Polish & Reliability
 
+### 🛡️ Security Remediation
+
+- **fix(backup)**: Restrict legacy raw-IV restore fallback to sufficiently sized files that do not carry the versioned `NMB1` magic, preventing malformed versioned backups from falling through to legacy decryption.
+
 ### 🚀 Features & Runtime Integration
 
 - **feat(prefs)**: Apply profile defaults, capture filters, performance tuning, maintenance scheduling, and runtime preference accessors across capture, sync, search, retention, and UI modules.
