@@ -2,7 +2,7 @@ name: Android CI
 
 on:
   push:
-    branches: [ "master", "main" ]
+    branches: [ "master", "main", "remediation/**" ]
     paths-ignore:
       - '**.md'
       - 'docs/**'
@@ -111,6 +111,7 @@ jobs:
   # --------------------------------------------------------------------------
   build-release:
     name: Assemble Release APK
+    if: ${{ vars.RELEASE_SIGNING_ENABLED == 'true' && github.event_name != 'pull_request' }}
     runs-on: ubuntu-24.04
     timeout-minutes: 25
 
@@ -129,7 +130,20 @@ jobs:
         with:
           cache-provider: enhanced
 
+      - name: Restore release signing keystore
+        env:
+          SIGNING_KEYSTORE_BASE64: ${{ secrets.SIGNING_KEYSTORE_BASE64 }}
+        run: |
+          test -n "$SIGNING_KEYSTORE_BASE64"
+          printf '%s' "$SIGNING_KEYSTORE_BASE64" | base64 --decode > "$RUNNER_TEMP/release.keystore"
+          chmod 600 "$RUNNER_TEMP/release.keystore"
+
       - name: Build Release APK
+        env:
+          SIGNING_STORE_FILE: ${{ runner.temp }}/release.keystore
+          SIGNING_STORE_PASSWORD: ${{ secrets.SIGNING_STORE_PASSWORD }}
+          SIGNING_KEY_ALIAS: ${{ secrets.SIGNING_KEY_ALIAS }}
+          SIGNING_KEY_PASSWORD: ${{ secrets.SIGNING_KEY_PASSWORD }}
         run: ./gradlew assembleRelease
 
       - name: Upload Release APK
