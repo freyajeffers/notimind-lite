@@ -119,19 +119,37 @@ class SupabaseSessionStore(
         prefs.edit().putString("secret_$name", Base64.encodeToString(encrypted, Base64.NO_WRAP)).apply()
     }
 
-    private fun readSecret(name: String): String? = prefs.getString("secret_$name", null)?.let {
-        runCatching {
-            val bytes = Base64.decode(it, Base64.NO_WRAP)
-            Cipher
+    private fun readSecret(name: String): String? {
+        val encryptedValue = prefs.getString("secret_$name", null)
+        if (encryptedValue != null) {
+            return decryptSecret(encryptedValue)
+        }
+
+        val legacyValue = prefs.getString(name, null) ?: return null
+        return runCatching {
+            val cipher = Cipher
                 .getInstance("AES/GCM/NoPadding")
-                .apply {
-                    init(
-                        Cipher.DECRYPT_MODE,
-                        secretKey(),
-                        GCMParameterSpec(GCM_TAG_BITS, bytes.copyOfRange(0, GCM_IV_BYTES))
-                    )
-                }.doFinal(bytes.copyOfRange(GCM_IV_BYTES, bytes.size))
-                .toString(Charsets.UTF_8)
+                .apply { init(Cipher.ENCRYPT_MODE, secretKey()) }
+            val encrypted = cipher.iv + cipher.doFinal(legacyValue.toByteArray())
+            val migrated = prefs.edit()
+                .putString("secret_$name", Base64.encodeToString(encrypted, Base64.NO_WRAP))
+                .remove(name)
+                .commit()
+            legacyValue.takeIf { migrated }
         }.getOrNull()
-    } ?: prefs.getString(name, null)
+    }
+
+    private fun decryptSecret(value: String): String? = runCatching {
+        val bytes = Base64.decode(value, Base64.NO_WRAP)
+        Cipher
+            .getInstance("AES/GCM/NoPadding")
+            .apply {
+                init(
+                    Cipher.DECRYPT_MODE,
+                    secretKey(),
+                    GCMParameterSpec(GCM_TAG_BITS, bytes.copyOfRange(0, GCM_IV_BYTES))
+                )
+            }.doFinal(bytes.copyOfRange(GCM_IV_BYTES, bytes.size))
+            .toString(Charsets.UTF_8)
+    }.getOrNull()
 }

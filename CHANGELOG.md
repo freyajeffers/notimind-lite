@@ -8,6 +8,7 @@ All notable changes to NotiMind Lite are documented here. This project adheres t
 
 - **fix(notification)**: Remove unreachable pre-API-33 app-label lookup; `minSdk` is 33, so package queries use the API 33+ flags overload consistently.
 - **fix(sync)**: Bound Supabase PKCE, refresh, notification-sync, and settings-sync requests; close connections on every exit and handle empty/malformed refresh error bodies safely. Backup notarization now serializes JSON safely and always disconnects after its bounded request.
+- **security(auth)**: Migrate legacy plaintext Supabase tokens to Android Keystore-backed encrypted preferences; encrypted values take precedence, and plaintext fallback is removed after a successful atomic migration.
 - **build**: Replaced deprecated Groovy space-assignment syntax in Android Gradle properties; `--warning-mode all` now reports only Android Gradle Plugin and Detekt plugin deprecations.
 - **deps**: Update Firebase BoM to 35.1.0 and Fragment KTX to 1.9.1, resolving the current Gradle lint dependency-update findings.
 - **ci**: Run Android CI on `remediation/**` pushes; gate release APK jobs behind the explicit `RELEASE_SIGNING_ENABLED` repository variable so unsigned builds are not attempted by default.
