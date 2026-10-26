@@ -6,7 +6,7 @@ All notable changes to NotiMind Lite are documented here. This project adheres t
 
 ## [Unreleased] - Preference Runtime, UX Polish & Reliability
 
-- **fix(auth)**: Bound Supabase PKCE token-exchange connection/read waits and always disconnect the HTTP connection, including on malformed or failed responses.
+- **fix(sync)**: Bound Supabase PKCE, refresh, notification-sync, and settings-sync requests; close connections on every exit and handle empty/malformed refresh error bodies safely. Backup notarization now serializes JSON safely and always disconnects after its bounded request.
 - **ci**: Run Android CI on `remediation/**` pushes; gate release APK jobs behind the explicit `RELEASE_SIGNING_ENABLED` repository variable so unsigned builds are not attempted by default.
 - **fix(backup)**: Clear a copied backup key when the dialog is dismissed or confirmed, as well as after its 30-second expiry, without clearing clipboard content replaced by the user.
 - **fix(backup)**: Restrict legacy raw-IV restore fallback to sufficiently sized files that do not carry the versioned `NMB1` magic, preventing malformed versioned backups from falling through to legacy decryption.

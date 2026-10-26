@@ -68,25 +68,31 @@ class SupabaseSettingsSyncRepository(
         prefer: String? = null
     ): String {
         val c = URL(BuildConfig.SUPABASE_URL + path).openConnection() as HttpURLConnection
-        c.requestMethod = method
-        c.setRequestProperty("apikey", BuildConfig.SUPABASE_ANON_KEY)
-        c.setRequestProperty("Authorization", "Bearer $token")
-        c.setRequestProperty("Content-Type", "application/json")
-        prefer?.let { c.setRequestProperty("Prefer", it) }
-        if (body != null) {
-            c.doOutput = true
-            c.outputStream.use { it.write(body.toByteArray()) }
+        try {
+            c.connectTimeout = SUPABASE_HTTP_CONNECT_TIMEOUT_MILLIS
+            c.readTimeout = SUPABASE_HTTP_READ_TIMEOUT_MILLIS
+            c.requestMethod = method
+            c.setRequestProperty("apikey", BuildConfig.SUPABASE_ANON_KEY)
+            c.setRequestProperty("Authorization", "Bearer $token")
+            c.setRequestProperty("Content-Type", "application/json")
+            prefer?.let { c.setRequestProperty("Prefer", it) }
+            if (body != null) {
+                c.doOutput = true
+                c.outputStream.use { it.write(body.toByteArray()) }
+            }
+            val responseCode = c.responseCode
+            val stream = if (responseCode in HTTP_SUCCESS_MIN..HTTP_SUCCESS_MAX) {
+                c.inputStream
+            } else {
+                c.errorStream
+            }
+            val result = stream?.bufferedReader()?.use { it.readText() }.orEmpty()
+            if (responseCode !in HTTP_SUCCESS_MIN..HTTP_SUCCESS_MAX) {
+                error("Supabase HTTP $responseCode: $result")
+            }
+            return result
+        } finally {
+            c.disconnect()
         }
-        val responseCode = c.responseCode
-        val stream = if (responseCode in HTTP_SUCCESS_MIN..HTTP_SUCCESS_MAX) {
-            c.inputStream
-        } else {
-            c.errorStream
-        }
-        val result = stream.bufferedReader().use { it.readText() }
-        if (responseCode !in HTTP_SUCCESS_MIN..HTTP_SUCCESS_MAX) {
-            error("Supabase HTTP $responseCode: $result")
-        }
-        return result
     }
 }

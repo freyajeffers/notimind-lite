@@ -75,26 +75,33 @@ object BackupNotaryClient {
         return response.token()
     }
 
-    private suspend fun fetchSignatureFromServer(hash: String, token: String): String = try {
+    private suspend fun fetchSignatureFromServer(hash: String, token: String): String {
         val connection = URL(NOTARY_SERVER_URL).openConnection() as HttpURLConnection
-        connection.requestMethod = "POST"
-        connection.doOutput = true
-        connection.setRequestProperty("Content-Type", "application/json")
-        connection.connectTimeout = NOTARY_CONNECT_TIMEOUT_MS
-        connection.readTimeout = NOTARY_READ_TIMEOUT_MS
+        return try {
+            connection.requestMethod = "POST"
+            connection.doOutput = true
+            connection.setRequestProperty("Content-Type", "application/json")
+            connection.connectTimeout = NOTARY_CONNECT_TIMEOUT_MS
+            connection.readTimeout = NOTARY_READ_TIMEOUT_MS
 
-        val payload = "{\"hash\":\"$hash\", \"token\":\"$token\"}"
-        connection.outputStream.use { it.write(payload.toByteArray(Charsets.UTF_8)) }
+            val payload = org.json.JSONObject()
+                .put("hash", hash)
+                .put("token", token)
+                .toString()
+            connection.outputStream.use { it.write(payload.toByteArray(Charsets.UTF_8)) }
 
-        check(connection.responseCode == HttpURLConnection.HTTP_OK) {
-            "Notary server returned ${connection.responseCode}"
+            check(connection.responseCode == HttpURLConnection.HTTP_OK) {
+                "Notary server returned ${connection.responseCode}"
+            }
+            connection.inputStream.bufferedReader().use { it.readText().trim() }
+        } catch (e: java.net.MalformedURLException) {
+            Log.e(TAG, "Notary URL invalid", e)
+            throw java.io.IOException("Notary URL invalid", e)
+        } catch (e: java.io.IOException) {
+            Log.e(TAG, "Notary server unavailable or IO error", e)
+            throw e
+        } finally {
+            connection.disconnect()
         }
-        connection.inputStream.bufferedReader().use { it.readText().trim() }
-    } catch (e: java.net.MalformedURLException) {
-        Log.e(TAG, "Notary URL invalid", e)
-        throw java.io.IOException("Notary URL invalid", e)
-    } catch (e: java.io.IOException) {
-        Log.e(TAG, "Notary server unavailable or IO error", e)
-        throw e
     }
 }

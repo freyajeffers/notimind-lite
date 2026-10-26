@@ -7,6 +7,9 @@ import org.json.JSONObject
 import java.net.HttpURLConnection
 import java.net.URL
 
+internal const val SUPABASE_HTTP_CONNECT_TIMEOUT_MILLIS = 15_000
+internal const val SUPABASE_HTTP_READ_TIMEOUT_MILLIS = 15_000
+
 private const val HTTP_SUCCESS_MIN = 200
 private const val HTTP_SUCCESS_MAX = 299
 private const val DEFAULT_UPDATE_COUNT = 1
@@ -94,26 +97,32 @@ fun request(
     prefer: String? = null
 ): String {
     val connection = URL(BuildConfig.SUPABASE_URL + path).openConnection() as HttpURLConnection
-    connection.requestMethod = method
-    connection.setRequestProperty("apikey", BuildConfig.SUPABASE_ANON_KEY)
-    connection.setRequestProperty("Authorization", "Bearer $token")
-    connection.setRequestProperty("Content-Type", "application/json")
-    prefer?.let { connection.setRequestProperty("Prefer", it) }
-    if (body != null) {
-        connection.doOutput = true
-        connection.outputStream.use { it.write(body.toByteArray()) }
+    try {
+        connection.connectTimeout = SUPABASE_HTTP_CONNECT_TIMEOUT_MILLIS
+        connection.readTimeout = SUPABASE_HTTP_READ_TIMEOUT_MILLIS
+        connection.requestMethod = method
+        connection.setRequestProperty("apikey", BuildConfig.SUPABASE_ANON_KEY)
+        connection.setRequestProperty("Authorization", "Bearer $token")
+        connection.setRequestProperty("Content-Type", "application/json")
+        prefer?.let { connection.setRequestProperty("Prefer", it) }
+        if (body != null) {
+            connection.doOutput = true
+            connection.outputStream.use { it.write(body.toByteArray()) }
+        }
+        val responseCode = connection.responseCode
+        val stream = if (responseCode in HTTP_SUCCESS_MIN..HTTP_SUCCESS_MAX) {
+            connection.inputStream
+        } else {
+            connection.errorStream
+        }
+        val response = stream?.bufferedReader()?.use { it.readText() }.orEmpty()
+        if (responseCode !in HTTP_SUCCESS_MIN..HTTP_SUCCESS_MAX) {
+            error("Supabase HTTP $responseCode: $response")
+        }
+        return response
+    } finally {
+        connection.disconnect()
     }
-    val responseCode = connection.responseCode
-    val stream = if (responseCode in HTTP_SUCCESS_MIN..HTTP_SUCCESS_MAX) {
-        connection.inputStream
-    } else {
-        connection.errorStream
-    }
-    val response = stream.bufferedReader().use { it.readText() }
-    if (responseCode !in HTTP_SUCCESS_MIN..HTTP_SUCCESS_MAX) {
-        error("Supabase HTTP $responseCode: $response")
-    }
-    return response
 }
 
 fun encode(value: String) = java.net.URLEncoder.encode(value, Charsets.UTF_8.name())

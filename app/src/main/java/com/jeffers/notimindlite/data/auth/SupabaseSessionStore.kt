@@ -24,6 +24,8 @@ class SupabaseSessionStore(
     private companion object {
         const val HTTP_SUCCESS_MIN = 200
         const val HTTP_SUCCESS_MAX = 299
+        const val HTTP_CONNECT_TIMEOUT_MILLIS = 15_000
+        const val HTTP_READ_TIMEOUT_MILLIS = 15_000
         const val GCM_TAG_BITS = 128
         const val GCM_IV_BYTES = 12
         const val KEY_ALIAS = "notimind_supabase_session"
@@ -39,34 +41,45 @@ class SupabaseSessionStore(
                 refreshRequest(supabaseUrl, anonKey, refresh)
             } catch (e: IOException) {
                 Result.failure(e)
+            } catch (e: org.json.JSONException) {
+                Result.failure(IOException("Invalid Supabase refresh response", e))
             }
         }
 
     private fun refreshRequest(url: String, anonKey: String, refresh: String): Result<String> {
         val endpoint = "$url/auth/v1/token?grant_type=refresh_token"
         val connection = URL(endpoint).openConnection() as HttpURLConnection
-        connection.requestMethod = "POST"
-        connection.doOutput = true
-        connection.setRequestProperty("apikey", anonKey)
-        connection.setRequestProperty("Content-Type", "application/json")
-        val payload = JSONObject().put("refresh_token", refresh).toString()
-        connection.outputStream.use { it.write(payload.toByteArray()) }
-        val responseCode = connection.responseCode
-        val stream = if (responseCode in HTTP_SUCCESS_MIN..HTTP_SUCCESS_MAX) {
-            connection.inputStream
-        } else {
-            connection.errorStream
+        try {
+            connection.connectTimeout = HTTP_CONNECT_TIMEOUT_MILLIS
+            connection.readTimeout = HTTP_READ_TIMEOUT_MILLIS
+            connection.requestMethod = "POST"
+            connection.doOutput = true
+            connection.setRequestProperty("apikey", anonKey)
+            connection.setRequestProperty("Content-Type", "application/json")
+            val payload = JSONObject().put("refresh_token", refresh).toString()
+            connection.outputStream.use { it.write(payload.toByteArray()) }
+            val responseCode = connection.responseCode
+            val stream = if (responseCode in HTTP_SUCCESS_MIN..HTTP_SUCCESS_MAX) {
+                connection.inputStream
+            } else {
+                connection.errorStream
+            }
+            val body = stream?.bufferedReader()?.use { it.readText() }.orEmpty()
+            if (responseCode !in HTTP_SUCCESS_MIN..HTTP_SUCCESS_MAX) {
+                val message = runCatching { JSONObject(body).optString("msg") }
+                    .getOrNull()
+                    .orEmpty()
+                    .ifBlank { "Supabase refresh failed (HTTP $responseCode)" }
+                return Result.failure(IOException(message))
+            }
+            val response = JSONObject(body)
+            val token = response.getString("access_token")
+            saveSecret("access_token", token)
+            saveSecret("refresh_token", response.optString("refresh_token"))
+            return Result.success(token)
+        } finally {
+            connection.disconnect()
         }
-        val body = stream.bufferedReader().use { it.readText() }
-        if (responseCode !in HTTP_SUCCESS_MIN..HTTP_SUCCESS_MAX) {
-            val message = JSONObject(body).optString("msg", "Supabase refresh failed")
-            return Result.failure(IOException(message))
-        }
-        val response = JSONObject(body)
-        val token = response.getString("access_token")
-        saveSecret("access_token", token)
-        saveSecret("refresh_token", response.optString("refresh_token"))
-        return Result.success(token)
     }
 
     fun saveAccessToken(token: String) {
