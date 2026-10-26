@@ -7,6 +7,7 @@ All notable changes to NotiMind Lite are documented here. This project adheres t
 ## [Unreleased] - Preference Runtime, UX Polish & Reliability
 
 - **fix(build)**: Release builds now require a configured existing release keystore and all signing credentials; placeholder credentials and debug-signing fallback are rejected.
+- **fix(backup)**: Clear a copied backup key when the dialog is dismissed or confirmed, as well as after its 30-second expiry, without clearing clipboard content replaced by the user.
 - **fix(backup)**: Restrict legacy raw-IV restore fallback to sufficiently sized files that do not carry the versioned `NMB1` magic, preventing malformed versioned backups from falling through to legacy decryption.
 
 ### 🚀 Features & Runtime Integration

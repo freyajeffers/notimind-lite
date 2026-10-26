@@ -49,6 +49,22 @@ import kotlinx.coroutines.delay
 
 private const val CLIPBOARD_CLEAR_DELAY_MILLIS = 30_000L
 
+private fun clearBackupKeyClipboard(context: Context, keyBase64: String, notify: Boolean) {
+    val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as? ClipboardManager
+    if (clipboard?.primaryClip?.itemCount == 1 &&
+        clipboard.primaryClip?.getItemAt(0)?.coerceToText(context)?.toString() == keyBase64
+    ) {
+        clipboard.clearPrimaryClip()
+        if (notify) {
+            android.widget.Toast.makeText(
+                context,
+                R.string.backup_dialog_copied_key_cleared,
+                android.widget.Toast.LENGTH_SHORT
+            ).show()
+        }
+    }
+}
+
 @Composable
 private fun ClearCopiedBackupKeyFromClipboard(
     context: Context,
@@ -59,17 +75,7 @@ private fun ClearCopiedBackupKeyFromClipboard(
     LaunchedEffect(clipboardKeyCopied, keyBase64) {
         if (!clipboardKeyCopied) return@LaunchedEffect
         delay(CLIPBOARD_CLEAR_DELAY_MILLIS)
-        val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as? ClipboardManager
-        if (clipboard?.primaryClip?.itemCount == 1 &&
-            clipboard.primaryClip?.getItemAt(0)?.coerceToText(context)?.toString() == keyBase64
-        ) {
-            clipboard.clearPrimaryClip()
-            android.widget.Toast.makeText(
-                context,
-                R.string.backup_dialog_copied_key_cleared,
-                android.widget.Toast.LENGTH_SHORT
-            ).show()
-        }
+        clearBackupKeyClipboard(context, keyBase64, notify = true)
         onCleared()
     }
 }
@@ -148,7 +154,10 @@ fun BackupKeyDialog(
     )
 
     AlertDialog(
-        onDismissRequest = onDismiss,
+        onDismissRequest = {
+            clearBackupKeyClipboard(context, keyBase64, notify = false)
+            onDismiss()
+        },
         title = {
             Text(
                 stringResource(R.string.backup_dialog_title),
@@ -209,6 +218,7 @@ fun BackupKeyDialog(
         confirmButton = {
             TextButton(
                 onClick = {
+                    clearBackupKeyClipboard(context, keyBase64, notify = false)
                     val pass = if (passphrase.isBlank()) null else passphrase.toCharArray()
                     onConfirm(pass)
                 },
@@ -217,7 +227,10 @@ fun BackupKeyDialog(
             }
         },
         dismissButton = {
-            TextButton(onClick = onDismiss) {
+            TextButton(onClick = {
+                clearBackupKeyClipboard(context, keyBase64, notify = false)
+                onDismiss()
+            }) {
                 Text(stringResource(R.string.common_cancel))
             }
         },
