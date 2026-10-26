@@ -12,8 +12,8 @@ plugins {
 }
 
 android {
-  namespace 'com.jeffers.notimindlite'
-  compileSdk 37
+  namespace = 'com.jeffers.notimindlite'
+  compileSdk = 37
 
   def targetMinSdk = (project.findProperty('minSdk') as String)?.toInteger() ?: 33
   def validationApplicationIdSuffix = project.findProperty('validationApplicationIdSuffix') as String
@@ -65,12 +65,12 @@ android {
   buildTypes {
     release {
       minifyEnabled true
-      shrinkResources true
+      shrinkResources = true
       proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
-      signingConfig signingConfigs.findByName('releaseConfig') ?: signingConfigs.getByName('debugConfig')
+      signingConfig = signingConfigs.findByName('releaseConfig') ?: signingConfigs.getByName('debugConfig')
     }
     debug {
-      signingConfig signingConfigs.getByName('debugConfig')
+      signingConfig = signingConfigs.getByName('debugConfig')
       manifestPlaceholders['migrationReceiverEnabled'] = 'true'
     }
   }
@@ -92,8 +92,8 @@ android {
   }
 
   buildFeatures {
-    compose true
-    buildConfig true
+    compose = true
+    buildConfig = true
   }
 
   packaging {
@@ -110,13 +110,13 @@ android {
 
   testOptions {
     unitTests {
-      includeAndroidResources true
+      includeAndroidResources = true
     }
   }
 
   lint {
-    abortOnError true
-    checkDependencies true
+    abortOnError = true
+    checkDependencies = true
   }
 }
 
