@@ -44,6 +44,7 @@ import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.net.toUri
 import com.jeffers.notimindlite.R
 import com.jeffers.notimindlite.domain.entity.ActionableEntityExtractor
 
@@ -224,7 +225,7 @@ private fun externalActionMenuItem(
         },
         onClick = {
             try {
-                val intent = Intent(Intent.ACTION_VIEW, Uri.parse(externalUriFor(entity))).apply {
+                val intent = Intent(Intent.ACTION_VIEW, externalUriFor(entity).toUri()).apply {
                     addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
                 }
                 context.startActivity(intent)
