@@ -33,20 +33,24 @@ class SupabaseSessionStoreDeviceTest {
     fun isolateSessionPreferences() {
         val prefs = context.getSharedPreferences(prefsName, Context.MODE_PRIVATE)
         originalPreferenceValues = isolatedPreferenceKeys.associateWith { prefs.getString(it, null) }
-        prefs.edit().also { editor ->
-            isolatedPreferenceKeys.forEach(editor::remove)
-        }.commit()
+        prefs
+            .edit()
+            .also { editor ->
+                isolatedPreferenceKeys.forEach(editor::remove)
+            }.commit()
     }
 
     @After
     fun restoreSessionPreferences() {
         val prefs = context.getSharedPreferences(prefsName, Context.MODE_PRIVATE)
-        prefs.edit().also { editor ->
-            isolatedPreferenceKeys.forEach(editor::remove)
-            originalPreferenceValues.forEach { (key, value) ->
-                if (value != null) editor.putString(key, value)
-            }
-        }.commit()
+        prefs
+            .edit()
+            .also { editor ->
+                isolatedPreferenceKeys.forEach(editor::remove)
+                originalPreferenceValues.forEach { (key, value) ->
+                    if (value != null) editor.putString(key, value)
+                }
+            }.commit()
     }
 
     @Test
@@ -86,7 +90,8 @@ class SupabaseSessionStoreDeviceTest {
     fun readAccessToken_invalidEncryptedValueDoesNotFallBackToPlaintext() {
         val prefs = context.getSharedPreferences(prefsName, Context.MODE_PRIVATE)
         assertTrue(
-            prefs.edit()
+            prefs
+                .edit()
                 .putString("secret_access_token", "malformed-ciphertext")
                 .putString("access_token", "legacy-access-token")
                 .commit()

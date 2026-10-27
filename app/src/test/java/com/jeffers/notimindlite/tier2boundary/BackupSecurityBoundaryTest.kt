@@ -3,8 +3,6 @@ package com.jeffers.notimindlite.tier2boundary
 import com.jeffers.notimindlite.base.BaseRobolectricTest
 import com.jeffers.notimindlite.domain.backup.EncryptedBackupManager
 import io.mockk.every
-import io.mockk.mockkObject
-import io.mockk.unmockkAll
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertFalse

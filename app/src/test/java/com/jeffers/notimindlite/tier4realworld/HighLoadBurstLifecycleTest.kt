@@ -4,11 +4,7 @@ import android.app.NotificationManager
 import android.content.Context
 import android.content.Intent
 import com.jeffers.notimindlite.base.BaseRobolectricTest
-import com.jeffers.notimindlite.data.local.NotificationEntity
 import com.jeffers.notimindlite.receiver.BootReceiver
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.async
-import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue

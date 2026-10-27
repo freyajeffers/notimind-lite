@@ -1,15 +1,10 @@
 package com.jeffers.notimindlite.tier4realworld
 
-import android.app.Notification
-import android.os.Bundle
-import android.service.notification.StatusBarNotification
 import com.jeffers.notimindlite.base.BaseRobolectricTest
 import com.jeffers.notimindlite.data.local.NotificationEntity
-import com.jeffers.notimindlite.service.NotificationLoggerService
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith

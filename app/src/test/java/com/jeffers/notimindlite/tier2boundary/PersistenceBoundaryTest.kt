@@ -13,7 +13,6 @@ import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
-import kotlin.random.Random
 import kotlin.system.measureNanoTime
 
 class PersistenceBoundaryTest : BaseRobolectricTest() {

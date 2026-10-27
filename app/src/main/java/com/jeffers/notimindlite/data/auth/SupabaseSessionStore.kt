@@ -131,10 +131,12 @@ class SupabaseSessionStore(
                 .getInstance("AES/GCM/NoPadding")
                 .apply { init(Cipher.ENCRYPT_MODE, secretKey()) }
             val encrypted = cipher.iv + cipher.doFinal(legacyValue.toByteArray())
-            val migrated = prefs.edit()
-                .putString("secret_$name", Base64.encodeToString(encrypted, Base64.NO_WRAP))
-                .remove(name)
-                .commit()
+            val migrated =
+                prefs
+                    .edit()
+                    .putString("secret_$name", Base64.encodeToString(encrypted, Base64.NO_WRAP))
+                    .remove(name)
+                    .commit()
             legacyValue.takeIf { migrated }
         }.getOrNull()
     }

@@ -51,7 +51,7 @@ jobs:
           add-job-summary-as-pr-comment: on-failure
 
       - name: Run Detekt & Android Lint
-        run: ./gradlew detekt lintDebug
+        run: ./gradlew detekt detektTests ktlintCheck lintDebug
 
       - name: Upload Lint & Detekt Reports
         if: always()

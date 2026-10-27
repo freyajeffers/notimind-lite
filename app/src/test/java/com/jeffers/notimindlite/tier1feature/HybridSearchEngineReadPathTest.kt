@@ -1,6 +1,5 @@
 package com.jeffers.notimindlite.tier1feature
 
-import androidx.test.core.app.ApplicationProvider
 import com.jeffers.notimindlite.base.BaseRobolectricTest
 import com.jeffers.notimindlite.util.HybridSearchEngine
 import com.jeffers.notimindlite.util.VectorEmbeddingHelper

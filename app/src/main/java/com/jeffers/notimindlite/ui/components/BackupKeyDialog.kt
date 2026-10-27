@@ -27,8 +27,8 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -52,15 +52,19 @@ private const val CLIPBOARD_CLEAR_DELAY_MILLIS = 30_000L
 private fun clearBackupKeyClipboard(context: Context, keyBase64: String, notify: Boolean) {
     val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as? ClipboardManager
     if (clipboard?.primaryClip?.itemCount == 1 &&
-        clipboard.primaryClip?.getItemAt(0)?.coerceToText(context)?.toString() == keyBase64
+        clipboard.primaryClip
+            ?.getItemAt(0)
+            ?.coerceToText(context)
+            ?.toString() == keyBase64
     ) {
         clipboard.clearPrimaryClip()
         if (notify) {
-            android.widget.Toast.makeText(
-                context,
-                R.string.backup_dialog_copied_key_cleared,
-                android.widget.Toast.LENGTH_SHORT
-            ).show()
+            android.widget.Toast
+                .makeText(
+                    context,
+                    R.string.backup_dialog_copied_key_cleared,
+                    android.widget.Toast.LENGTH_SHORT
+                ).show()
         }
     }
 }

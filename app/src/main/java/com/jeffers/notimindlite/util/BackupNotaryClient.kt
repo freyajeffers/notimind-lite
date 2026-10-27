@@ -7,9 +7,10 @@ import com.google.android.play.core.integrity.IntegrityTokenRequest
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.tasks.await
 import kotlinx.coroutines.withContext
+import org.json.JSONObject
 import java.net.HttpURLConnection
 import java.net.URL
-import java.util.*
+import java.util.UUID
 
 /**
  * BackupNotaryClient handles the remote attestation and signing of backup hashes.
@@ -84,10 +85,11 @@ object BackupNotaryClient {
             connection.connectTimeout = NOTARY_CONNECT_TIMEOUT_MS
             connection.readTimeout = NOTARY_READ_TIMEOUT_MS
 
-            val payload = org.json.JSONObject()
-                .put("hash", hash)
-                .put("token", token)
-                .toString()
+            val payload =
+                JSONObject()
+                    .put("hash", hash)
+                    .put("token", token)
+                    .toString()
             connection.outputStream.use { it.write(payload.toByteArray(Charsets.UTF_8)) }
 
             check(connection.responseCode == HttpURLConnection.HTTP_OK) {

@@ -6,7 +6,8 @@ All notable changes to NotiMind Lite are documented here. This project adheres t
 
 ## [Unreleased] - Preference Runtime, UX Polish & Reliability
 
-- **style**: Use AndroidX `String.toUri()` for external actionable-chip links while retaining `Uri.encode()` for map query construction.
+- **style(ktlint)**: Fix all 14 Kotlin style findings and add the KtLint Gradle check to the Android static-analysis workflow.
+- **style(ui)**: Use AndroidX `String.toUri()` for external actionable-chip links while retaining `Uri.encode()` for map query construction.
 - **fix(perf)**: Replace the embedding-executor non-null assertion with synchronized local reuse/recreation; test reuse and shutdown behavior.
 - **fix(notification)**: Reject null sanitized titles explicitly instead of asserting non-null in notification capture.
 - **cleanup(notification)**: Remove unreachable pre-API-33 app-label lookup; `minSdk` is 33, so package queries use the API 33+ flags overload consistently.

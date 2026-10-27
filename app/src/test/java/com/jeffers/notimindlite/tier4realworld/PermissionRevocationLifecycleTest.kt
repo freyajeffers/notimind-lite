@@ -1,6 +1,5 @@
 package com.jeffers.notimindlite.tier4realworld
 
-import android.content.Context
 import android.provider.Settings
 import com.jeffers.notimindlite.base.BaseRobolectricTest
 import com.jeffers.notimindlite.service.NotificationLoggerService

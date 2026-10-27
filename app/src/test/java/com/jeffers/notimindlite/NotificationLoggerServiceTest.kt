@@ -1,6 +1,5 @@
 package com.jeffers.notimindlite
 
-import android.service.notification.StatusBarNotification
 import com.jeffers.notimindlite.base.BaseRobolectricTest
 import com.jeffers.notimindlite.service.NotificationLoggerService
 import kotlinx.coroutines.delay

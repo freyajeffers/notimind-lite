@@ -2,6 +2,7 @@ package com.jeffers.notimindlite.util
 
 import android.content.Context
 import android.os.Build
+import android.security.keystore.KeyProperties
 import android.util.Base64
 import android.util.Log
 import com.google.firebase.auth.FirebaseAuth
@@ -15,6 +16,7 @@ import java.io.FileOutputStream
 import java.nio.charset.StandardCharsets
 import java.security.MessageDigest
 import javax.crypto.Mac
+import android.security.keystore.KeyGenParameterSpec.Builder as KeyGenParameterSpecBuilder
 
 /**
  * AuditLogger manages persistent on-disk signed audit logs and synchronizes
@@ -59,17 +61,16 @@ object AuditLogger {
         }
 
         try {
-            val keyGenerator = javax.crypto.KeyGenerator.getInstance(
-                android.security.keystore.KeyProperties.KEY_ALGORITHM_HMAC_SHA256,
-                "AndroidKeyStore"
-            )
-            val spec = android.security.keystore.KeyGenParameterSpec.Builder(
+            val keyGenerator =
+                javax.crypto.KeyGenerator.getInstance(
+                    KeyProperties.KEY_ALGORITHM_HMAC_SHA256,
+                    "AndroidKeyStore"
+                )
+            val spec = KeyGenParameterSpecBuilder(
                 AUDIT_HMAC_KEY_ALIAS,
-                android.security.keystore.KeyProperties.PURPOSE_SIGN or
-                    android.security.keystore.KeyProperties.PURPOSE_VERIFY
-            )
-                .setKeySize(hmacKeySizeBits)
-                .setDigests(android.security.keystore.KeyProperties.DIGEST_SHA256)
+                KeyProperties.PURPOSE_SIGN or KeyProperties.PURPOSE_VERIFY
+            ).setKeySize(hmacKeySizeBits)
+                .setDigests(KeyProperties.DIGEST_SHA256)
                 .setUserAuthenticationRequired(false)
                 .build()
             keyGenerator.init(spec)

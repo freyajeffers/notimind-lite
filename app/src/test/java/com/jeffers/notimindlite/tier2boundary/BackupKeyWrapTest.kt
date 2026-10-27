@@ -4,8 +4,6 @@ import com.jeffers.notimindlite.util.BackupFileFormat
 import com.jeffers.notimindlite.util.BackupKeyWrap
 import org.junit.Assert.assertArrayEquals
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertFalse
-import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertThrows
 import org.junit.Assert.assertTrue
 import org.junit.Test

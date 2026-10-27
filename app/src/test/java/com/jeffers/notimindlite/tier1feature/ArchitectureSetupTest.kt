@@ -1,6 +1,5 @@
 package com.jeffers.notimindlite.tier1feature
 
-import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import com.jeffers.notimindlite.base.BaseRobolectricTest
