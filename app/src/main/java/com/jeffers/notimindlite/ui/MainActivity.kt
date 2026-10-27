@@ -82,7 +82,7 @@ class MainActivity : ComponentActivity() {
 
         setContent {
             val themeAccent by preferencesRepository.displayManager.themeAccent.collectAsState()
-            com.jeffers.notimindlite.ui.theme.notiMindLiteTheme(
+            com.jeffers.notimindlite.ui.theme.NotiMindLiteTheme(
                 amoledTheme = themeAccent == "amoled",
                 dynamicColor = themeAccent == "system"
             ) {
@@ -123,7 +123,7 @@ class MainActivity : ComponentActivity() {
                         }
                     }
 
-                    mainNavigation(
+                    MainNavigation(
                         notificationDao = dao,
                         authManager = authManager,
                         preferencesRepository = preferencesRepository
@@ -207,8 +207,8 @@ class MainActivity : ComponentActivity() {
 
         if (migrationConsentRequired) {
             setContent {
-                com.jeffers.notimindlite.ui.theme.notiMindLiteTheme {
-                    encryptionMigrationConsentDialog(
+                com.jeffers.notimindlite.ui.theme.NotiMindLiteTheme {
+                    EncryptionMigrationConsentDialog(
                         onDecision = { decision ->
                             EncryptionMigrationConsent.set(applicationContext, decision)
                             recreate()
@@ -252,7 +252,7 @@ class MainActivity : ComponentActivity() {
 }
 
 @Composable
-private fun encryptionMigrationConsentDialog(
+private fun EncryptionMigrationConsentDialog(
     onDecision: (EncryptionMigrationConsent.Decision) -> Unit
 ) {
     AlertDialog(

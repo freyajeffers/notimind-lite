@@ -19,6 +19,7 @@ import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -29,12 +30,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.PopupProperties
+import com.jeffers.notimindlite.R
 import com.jeffers.notimindlite.data.local.PreferencesRepository
 
 internal data class ActiveSearchHeaderConfig(
@@ -60,12 +63,12 @@ private data class ActiveSearchDropdownConfig(
 
 internal fun LazyListScope.activeSearchHeader(config: ActiveSearchHeaderConfig) {
     item(key = "active_search_header") {
-        activeSearchHeaderContent(config)
+        ActiveSearchHeaderContent(config)
     }
 }
 
 @Composable
-private fun activeSearchHeaderContent(config: ActiveSearchHeaderConfig) {
+private fun ActiveSearchHeaderContent(config: ActiveSearchHeaderConfig) {
     var expandedDropdown by remember { mutableStateOf(false) }
     val query = config.searchQuery
     val suggestions = config.searchSuggestions
@@ -97,12 +100,22 @@ private fun activeSearchHeaderContent(config: ActiveSearchHeaderConfig) {
                     .focusRequester(config.focusRequester)
                     .onFocusChanged { config.onFocusChanged(it.isFocused) }
                     .semantics { contentDescription = "ActiveSearchField" },
-                placeholder = { androidx.compose.material3.Text("Search") },
-                leadingIcon = { Icon(Icons.Default.Search, contentDescription = "Search") },
+                placeholder = {
+                    Text(stringResource(R.string.active_notifications_search_placeholder))
+                },
+                leadingIcon = {
+                    Icon(
+                        Icons.Default.Search,
+                        contentDescription = stringResource(R.string.common_search)
+                    )
+                },
                 trailingIcon = {
                     if (query.isNotEmpty()) {
                         IconButton(onClick = { config.onQueryChanged("") }) {
-                            Icon(Icons.Default.Close, contentDescription = "Clear Search")
+                            Icon(
+                                Icons.Default.Close,
+                                contentDescription = stringResource(R.string.notification_action_clear_search)
+                            )
                         }
                     }
                 },
@@ -112,7 +125,7 @@ private fun activeSearchHeaderContent(config: ActiveSearchHeaderConfig) {
                 shape = androidx.compose.foundation.shape
                     .RoundedCornerShape(12.dp)
             )
-            activeSearchDropdown(
+            ActiveSearchDropdown(
                 ActiveSearchDropdownConfig(
                     searchConfig = config,
                     query = query,
@@ -127,7 +140,7 @@ private fun activeSearchHeaderContent(config: ActiveSearchHeaderConfig) {
 }
 
 @Composable
-private fun activeSearchDropdown(
+private fun ActiveSearchDropdown(
     config: ActiveSearchDropdownConfig
 ) {
     val searchConfig = config.searchConfig

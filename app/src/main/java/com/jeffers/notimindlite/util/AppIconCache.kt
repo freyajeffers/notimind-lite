@@ -3,9 +3,9 @@ package com.jeffers.notimindlite.util
 import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
-import android.net.Uri
 import android.util.Log
 import android.util.LruCache
+import androidx.core.net.toUri
 import java.io.FileNotFoundException
 import java.io.IOException
 import java.io.InputStream
@@ -53,7 +53,7 @@ object AppIconCache {
     }
 
     private fun decodeSampledBitmapFromUri(context: Context, uriString: String, targetSize: Int): Bitmap? = try {
-        val uri = Uri.parse(uriString)
+        val uri = uriString.toUri()
         val options = BitmapFactory.Options().apply {
             inJustDecodeBounds = true
         }

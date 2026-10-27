@@ -78,6 +78,11 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.CustomAccessibilityAction
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.customActions
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextOverflow
@@ -89,11 +94,11 @@ import com.jeffers.notimindlite.data.local.AppDatabase
 import com.jeffers.notimindlite.data.local.NotificationDao
 import com.jeffers.notimindlite.data.local.NotificationEntity
 import com.jeffers.notimindlite.domain.search.HybridSearchEngine
+import com.jeffers.notimindlite.ui.components.NotificationDetailPanel
 import com.jeffers.notimindlite.ui.components.NotificationGroupCard
 import com.jeffers.notimindlite.ui.components.UiNotificationGroup
 import com.jeffers.notimindlite.ui.components.groupNotifications
-import com.jeffers.notimindlite.ui.components.notificationDetailPanel
-import com.jeffers.notimindlite.ui.dialogs.appPackageSelectorDialog
+import com.jeffers.notimindlite.ui.dialogs.AppPackageSelectorDialog
 import com.jeffers.notimindlite.util.AppIconCache
 import com.jeffers.notimindlite.util.NotificationLauncher
 import kotlinx.coroutines.Dispatchers
@@ -119,15 +124,15 @@ private const val MAX_RECENT_SEARCHES = 9
 private const val SEARCH_FIELD_CORNER_RADIUS = 12
 
 enum class SortMode(
-    val label: String
+    val labelResourceId: Int
 ) {
-    DISMISSED("Time Dismissed"),
-    RECEIVED("Time Received"),
-    ALL("All Notifications"),
-    NEWEST("Newest First"),
-    OLDEST("Oldest First"),
-    APP_NAME("App Name"),
-    TITLE("Title")
+    DISMISSED(R.string.log_history_sort_dismissed),
+    RECEIVED(R.string.log_history_sort_received),
+    ALL(R.string.log_history_sort_all),
+    NEWEST(R.string.log_history_sort_newest),
+    OLDEST(R.string.log_history_sort_oldest),
+    APP_NAME(R.string.log_history_sort_app),
+    TITLE(R.string.log_history_sort_title)
 }
 
 private fun sortModeFromPreference(pref: String): SortMode = when (pref) {
@@ -171,7 +176,7 @@ data class LogHistorySearchState(
 )
 
 @Composable
-private fun logHistorySearchField(state: LogHistorySearchState) {
+private fun LogHistorySearchField(state: LogHistorySearchState) {
     val searchQuery = state.searchQuery
     val onSearchChange = state.onSearchChange
     val onDone = state.onDone
@@ -185,12 +190,12 @@ private fun logHistorySearchField(state: LogHistorySearchState) {
         modifier = modifier
             .fillMaxWidth()
             .onFocusChanged { onFocusChanged(it.isFocused) },
-        placeholder = { Text("Search") },
-        leadingIcon = { Icon(Icons.Default.Search, contentDescription = "Search") },
+        placeholder = { Text(stringResource(R.string.common_search)) },
+        leadingIcon = { Icon(Icons.Default.Search, contentDescription = stringResource(R.string.common_search)) },
         trailingIcon = {
             if (searchQuery.isNotEmpty()) {
                 IconButton(onClick = onClear) {
-                    Icon(Icons.Default.Close, contentDescription = "Clear Search")
+                    Icon(Icons.Default.Close, contentDescription = stringResource(R.string.common_clear_search))
                 }
             }
         },
@@ -225,7 +230,7 @@ private fun filterAndSortNotifications(
 }
 
 @Composable
-private fun notificationIconPrefetch(
+private fun NotificationIconPrefetch(
     context: android.content.Context,
     listState: androidx.compose.foundation.lazy.LazyListState,
     notificationGroups: List<UiNotificationGroup>
@@ -341,14 +346,18 @@ private val renderLogHistoryScreen:
             groupNotifications(filteredNotifs)
         }
 
-        notificationIconPrefetch(context, listState, notificationGroups)
+        NotificationIconPrefetch(context, listState, notificationGroups)
 
         Scaffold(
             topBar = {
                 TopAppBar(
-                    title = {},
+                    title = {
+                        Text(
+                            stringResource(R.string.log_history_title, filteredNotifs.size, activeList.size)
+                        )
+                    },
                     actions = {
-                        logHistoryTopActions(
+                        LogHistoryTopActions(
                             LogHistoryTopActions(
                                 selectedPackages = selectedPackages,
                                 selectedReasonFilter = selectedReasonFilter,
@@ -374,11 +383,14 @@ private val renderLogHistoryScreen:
                                 positionProvider = TooltipDefaults.rememberTooltipPositionProvider(
                                     TooltipAnchorPosition.Above
                                 ),
-                                tooltip = { PlainTooltip { Text("Sort Logs") } },
+                                tooltip = { PlainTooltip { Text(stringResource(R.string.log_history_sort_title)) } },
                                 state = rememberTooltipState()
                             ) {
                                 IconButton(onClick = { showSortMenu = true }) {
-                                    Icon(Icons.AutoMirrored.Filled.Sort, contentDescription = "Sort Log History")
+                                    Icon(
+                                        Icons.AutoMirrored.Filled.Sort,
+                                        contentDescription = stringResource(R.string.notification_action_sort_history)
+                                    )
                                 }
                             }
                             DropdownMenu(
@@ -432,7 +444,12 @@ private val renderLogHistoryScreen:
                                 )
                                 SortMode.entries.drop(BASE_SORT_MODE_COUNT).forEach { option ->
                                     DropdownMenuItem(
-                                        text = { Text("${option.label} ${if (sortMode == option) "✓" else ""}") },
+                                        text = {
+                                            Text(
+                                                "${stringResource(option.labelResourceId)} " +
+                                                    if (sortMode == option) "✓" else ""
+                                            )
+                                        },
                                         onClick = {
                                             sortMode = option
                                             preferences.displayManager.setSortOrder(sortModePreference(sortMode))
@@ -449,7 +466,7 @@ private val renderLogHistoryScreen:
                 )
             },
             floatingActionButton = {
-                logHistoryScrollActions(filteredNotifs.size, listState, scope)
+                LogHistoryScrollActions(filteredNotifs.size, listState, scope)
             }
         ) { innerPadding ->
             Column(
@@ -472,7 +489,7 @@ private val renderLogHistoryScreen:
                             .fillMaxWidth()
                             .padding(horizontal = 16.dp, vertical = 8.dp)
                     ) {
-                        logHistorySearchField(
+                        LogHistorySearchField(
                             LogHistorySearchState(
                                 searchQuery = searchQuery,
                                 onSearchChange = { searchQuery = it },
@@ -493,7 +510,7 @@ private val renderLogHistoryScreen:
                             )
                         )
 
-                        logHistorySearchDropdown(
+                        LogHistorySearchDropdown(
                             LogHistorySearchDropdownConfig(
                                 expanded = expandedDropdown,
                                 searchSuggestions = searchSuggestions,
@@ -541,7 +558,7 @@ private val renderLogHistoryScreen:
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun logHistoryScreen(dao: NotificationDao, preferences: com.jeffers.notimindlite.data.local.PreferencesRepository) {
+fun LogHistoryScreen(dao: NotificationDao, preferences: com.jeffers.notimindlite.data.local.PreferencesRepository) {
     renderLogHistoryScreen(dao, preferences)
 }
 
@@ -555,7 +572,7 @@ private val renderLogHistoryPackagePicker:
     ) -> Unit =
     { visible, selectedPackages, availableApps, setVisible, setPackages ->
         if (visible) {
-            appPackageSelectorDialog(
+            AppPackageSelectorDialog(
                 selectedPackages = selectedPackages ?: emptyList(),
                 availableApps = availableApps,
                 onDismiss = { setVisible(false) },
@@ -597,8 +614,8 @@ private val renderLogHistoryResults:
                 } else {
                     stringResource(R.string.log_history_empty_search)
                 },
-                description = "No notifications match your current filters.",
-                clearButtonText = "Clear All Filters",
+                description = stringResource(R.string.log_history_empty_filter_desc),
+                clearButtonText = stringResource(R.string.log_history_clear_filters),
                 onClearClick = {
                     config.setSearchQuery("")
                     config.setSelectedReasonFilter(null)
@@ -679,7 +696,7 @@ private val renderLogHistoryList: @Composable (LogHistoryListConfig) -> Unit = {
             val isGroupExpanded = !config.collapsedGroups.contains(group.groupKey)
             if (group.items.size == 1) {
                 val item = group.items[0]
-                logHistoryCard(
+                LogHistoryCard(
                     LogHistoryCardState(
                         item = item,
                         dateTimeFormatter = config.dateTimeFormatter,
@@ -713,7 +730,7 @@ private val renderLogHistoryList: @Composable (LogHistoryListConfig) -> Unit = {
                         )
                     },
                     renderChildCard = { childItem ->
-                        logHistoryCard(
+                        LogHistoryCard(
                             LogHistoryCardState(
                                 item = childItem,
                                 dateTimeFormatter = config.dateTimeFormatter,
@@ -739,7 +756,7 @@ private val renderLogHistoryList: @Composable (LogHistoryListConfig) -> Unit = {
 }
 
 @Composable
-private fun logHistoryScrollActions(
+private fun LogHistoryScrollActions(
     itemCount: Int,
     listState: androidx.compose.foundation.lazy.LazyListState,
     scope: kotlinx.coroutines.CoroutineScope
@@ -749,28 +766,31 @@ private fun logHistoryScrollActions(
         verticalArrangement = Arrangement.spacedBy(8.dp),
         horizontalAlignment = Alignment.End
     ) {
-        logHistoryScrollButton(
+        LogHistoryScrollButton(
             icon = Icons.Default.KeyboardArrowUp,
-            description = "Scroll to Top",
+            description = stringResource(R.string.common_scroll_top),
+            tooltip = stringResource(R.string.notification_action_scroll_top),
             onClick = { scope.launch { listState.animateScrollToItem(0) } }
         )
-        logHistoryScrollButton(
+        LogHistoryScrollButton(
             icon = Icons.Default.KeyboardArrowDown,
-            description = "Scroll to Bottom",
+            description = stringResource(R.string.common_scroll_bottom),
+            tooltip = stringResource(R.string.notification_action_scroll_bottom),
             onClick = { scope.launch { listState.animateScrollToItem(itemCount - 1) } }
         )
     }
 }
 
 @Composable
-private fun logHistoryScrollButton(
+private fun LogHistoryScrollButton(
     icon: ImageVector,
     description: String,
+    tooltip: String,
     onClick: () -> Unit
 ) {
     TooltipBox(
         positionProvider = TooltipDefaults.rememberTooltipPositionProvider(TooltipAnchorPosition.Above),
-        tooltip = { PlainTooltip { Text(description) } },
+        tooltip = { PlainTooltip { Text(tooltip) } },
         state = rememberTooltipState()
     ) {
         SmallFloatingActionButton(
@@ -785,7 +805,7 @@ private fun logHistoryScrollButton(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-internal fun dismissStatusBadge(item: NotificationEntity) {
+internal fun DismissStatusBadge(item: NotificationEntity) {
     if (item.isDismissed && item.dismissReason != null) {
         Spacer(modifier = Modifier.width(6.dp))
         Surface(
@@ -819,29 +839,46 @@ internal fun dismissStatusBadge(item: NotificationEntity) {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun logHistoryCard(state: LogHistoryCardState) {
+fun LogHistoryCard(state: LogHistoryCardState) {
     val item = state.item
     val dateTimeFormatter = state.dateTimeFormatter
     val dao = state.dao
     val isExpanded = state.isExpanded
     val highlightQuery = state.highlightQuery
     val onToggleExpand = state.onToggleExpand
+    val toggleDescription = stringResource(R.string.log_history_toggle_desc)
+    val expansionState = stringResource(
+        if (isExpanded) R.string.active_notifications_expanded else R.string.active_notifications_collapsed
+    )
+    val expandCollapseActionLabel = stringResource(
+        if (isExpanded) R.string.log_history_collapse_tooltip else R.string.log_history_expand_tooltip
+    )
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
 
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable(onClick = onToggleExpand),
+            .clickable(onClick = onToggleExpand)
+            .semantics {
+                contentDescription = toggleDescription
+                stateDescription = expansionState
+                customActions = listOf(
+                    CustomAccessibilityAction(expandCollapseActionLabel) {
+                        onToggleExpand()
+                        true
+                    }
+                )
+            },
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surface
         )
     ) {
         Column(modifier = Modifier.padding(14.dp)) {
-            logHistoryCardHeader(state)
+            LogHistoryCardHeader(state)
 
             if (isExpanded) {
-                logHistoryExpandedContent(
+                LogHistoryExpandedContent(
                     item = item,
                     dateTimeFormatter = dateTimeFormatter,
                     highlightQuery = highlightQuery

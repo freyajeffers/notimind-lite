@@ -8,6 +8,7 @@ import androidx.work.NetworkType
 import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
 import androidx.work.WorkerParameters
+import androidx.work.workDataOf
 import com.jeffers.notimindlite.data.auth.SupabaseAuthManager
 import com.jeffers.notimindlite.data.local.AppDatabase
 import com.jeffers.notimindlite.data.local.PreferencesRepository
@@ -54,12 +55,13 @@ class SyncWorker(
         result: kotlin.Result<Int>
     ): Result = if (result.isSuccess) {
         preferences.syncManager.setLastSyncTs(System.currentTimeMillis())
-        Result.success()
+        Result.success(workDataOf(OUTPUT_SYNC_COUNT to (result.getOrNull() ?: 0)))
     } else {
         Result.retry()
     }
 
     companion object {
+        const val OUTPUT_SYNC_COUNT = "sync_count"
         private const val SYNC_WORK_NAME = "notimind_firestore_sync"
         private const val PERIODIC_SYNC_INTERVAL_HOURS = 6L
 

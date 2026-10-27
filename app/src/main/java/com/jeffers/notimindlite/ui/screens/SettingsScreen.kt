@@ -50,6 +50,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.LocalLifecycleOwner
@@ -74,7 +76,7 @@ import java.io.FileOutputStream
 import javax.crypto.SecretKey
 
 @Composable
-fun settingsScreen(
+fun SettingsScreen(
     authManager: AuthManager,
     preferencesRepository: com.jeffers.notimindlite.data.local.PreferencesRepository
 ) {
@@ -89,7 +91,12 @@ fun settingsScreen(
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        accountSection(
+        Text(
+            text = stringResource(R.string.settings_title),
+            style = MaterialTheme.typography.headlineSmall,
+            fontWeight = FontWeight.SemiBold
+        )
+        AccountSection(
             session = session,
             authManager = authManager,
             scope = scope,
@@ -109,39 +116,40 @@ fun settingsScreen(
             lifecycleOwnerTop.lifecycle.addObserver(observer)
             onDispose { lifecycleOwnerTop.lifecycle.removeObserver(observer) }
         }
-        notificationAccessCard(context, listenerGrantedTop)
+        NotificationAccessCard(context, listenerGrantedTop)
 
-        settingsSyncSection(preferencesRepository = preferencesRepository)
+        SettingsSyncSection(preferencesRepository = preferencesRepository, isAuthenticated = session.isAuthenticated)
 
-        settingsBackupSection(
+        SettingsBackupSection(
             prefMgr = prefMgrTop,
             listenerGranted = listenerGrantedTop,
             snackbarHostState = snackbarHostState
         )
 
         // Continue with other sections
-        settingsCaptureSection(preferencesRepository = preferencesRepository)
-        profileManagerSection(repository = preferencesRepository.profileManager)
-        settingsPreferencesSection(preferencesRepository = preferencesRepository)
-        settingsPrivacySection(preferencesRepository = preferencesRepository)
-        settingsAdvancedSection(
+        SettingsCaptureSection(preferencesRepository = preferencesRepository)
+        ProfileManagerSection(repository = preferencesRepository.profileManager)
+        SettingsPreferencesSection(preferencesRepository = preferencesRepository)
+        SettingsPrivacySection(preferencesRepository = preferencesRepository)
+        SettingsAdvancedSection(
             preferencesRepository = preferencesRepository,
             onMigrationCompleted = { (context as? android.app.Activity)?.recreate() }
         )
-        settingsPreferencesBackupSection()
-        settingsVersionFooter(context)
+        SettingsPreferencesBackupSection()
+        SettingsVersionFooter(context)
 
         SnackbarHost(hostState = snackbarHostState)
     }
 }
 
 @Composable
-private fun settingsBackupSection(
+private fun SettingsBackupSection(
     prefMgr: PreferenceManager,
     listenerGranted: Boolean,
     snackbarHostState: SnackbarHostState
 ) {
     val context = LocalContext.current
+    val backupNetworkRequiredMessage = stringResource(R.string.backup_network_required)
     val scope = rememberCoroutineScope()
     var selectedBackupUri by remember { mutableStateOf<Uri?>(null) }
     var showRestoreDialog by remember { mutableStateOf(false) }
@@ -156,7 +164,7 @@ private fun settingsBackupSection(
             showRestoreDialog = true
         }
     }
-    restoreCard(
+    RestoreCard(
         prefMgr = prefMgr,
         listenerGranted = listenerGranted,
         onPickBackup = { pickBackupLauncher.launch(arrayOf("application/octet-stream", "*/*")) },
@@ -167,10 +175,12 @@ private fun settingsBackupSection(
                 backupKeyBase64 = com.jeffers.notimindlite.data.local.BackupKeyCodec
                     .encode(secretKey)
                 showBackupKeyDialog = true
+            } else {
+                scope.launch { snackbarHostState.showSnackbar(backupNetworkRequiredMessage) }
             }
         }
     )
-    restoreDialogs(
+    RestoreDialogs(
         config = RestoreDialogConfig(
             context = context,
             scope = scope,
@@ -187,13 +197,13 @@ private fun settingsBackupSection(
                 pendingBackupKey = null
             },
             snackbarHostState = snackbarHostState,
-            onSyncMessage = {}
+            onSyncMessage = { message -> scope.launch { snackbarHostState.showSnackbar(message) } }
         )
     )
 }
 
 @Composable
-private fun settingsVersionFooter(context: Context) {
+private fun SettingsVersionFooter(context: Context) {
     val versionName = remember { getVersionName(context) }
     val versionCode = remember { getVersionCode(context) }
     Spacer(modifier = Modifier.height(8.dp))
@@ -219,7 +229,7 @@ private fun getVersionCode(context: Context): Int =
     }.getOrDefault(0)
 
 @Composable
-private fun notificationAccessCard(context: Context, listenerGranted: Boolean) {
+private fun NotificationAccessCard(context: Context, listenerGranted: Boolean) {
     val cardColor = if (listenerGranted) {
         MaterialTheme.colorScheme.surfaceVariant
     } else {
@@ -272,13 +282,13 @@ private fun notificationAccessCard(context: Context, listenerGranted: Boolean) {
                     modifier = Modifier.weight(1f)
                 )
             }
-            notificationAccessButton(context, listenerGranted)
+            NotificationAccessButton(context, listenerGranted)
         }
     }
 }
 
 @Composable
-private fun notificationAccessButton(context: Context, listenerGranted: Boolean) {
+private fun NotificationAccessButton(context: Context, listenerGranted: Boolean) {
     val containerColor = if (listenerGranted) {
         MaterialTheme.colorScheme.primaryContainer
     } else {
@@ -290,16 +300,20 @@ private fun notificationAccessButton(context: Context, listenerGranted: Boolean)
         MaterialTheme.colorScheme.onError
     }
     val actionLabel = if (listenerGranted) {
-        R.string.settings_listener_open
+        R.string.active_notifications_settings
     } else {
-        R.string.settings_listener_grant
+        R.string.active_notifications_grant
     }
+    val actionContentDescription = stringResource(
+        if (listenerGranted) R.string.settings_listener_open else R.string.settings_listener_grant
+    )
     Button(
         onClick = {
             val intent = Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS)
             intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
             context.startActivity(intent)
         },
+        modifier = Modifier.semantics { contentDescription = actionContentDescription },
         colors = ButtonDefaults.buttonColors(
             containerColor = containerColor,
             contentColor = contentColor
@@ -310,7 +324,7 @@ private fun notificationAccessButton(context: Context, listenerGranted: Boolean)
 }
 
 @Composable
-private fun accountSection(
+private fun AccountSection(
     session: UserSession,
     authManager: AuthManager,
     scope: CoroutineScope,
@@ -325,21 +339,21 @@ private fun accountSection(
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             Text(
-                text = "Account",
+                text = stringResource(R.string.settings_section_account),
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.SemiBold
             )
             if (session.isAuthenticated) {
-                authenticatedAccount(session, authManager, context)
+                AuthenticatedAccount(session, authManager, context)
             } else {
-                unauthenticatedAccount(session, authManager, scope, context)
+                UnauthenticatedAccount(session, authManager, scope, context)
             }
         }
     }
 }
 
 @Composable
-private fun authenticatedAccount(
+private fun AuthenticatedAccount(
     session: UserSession,
     authManager: AuthManager,
     context: Context
@@ -348,7 +362,7 @@ private fun authenticatedAccount(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        Icon(Icons.Default.Person, contentDescription = "Profile")
+        Icon(Icons.Default.Person, contentDescription = stringResource(R.string.settings_profile_cd))
         Column {
             Text(
                 text = session.displayName
@@ -370,21 +384,21 @@ private fun authenticatedAccount(
         },
         colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
     ) {
-        Icon(Icons.AutoMirrored.Filled.Logout, contentDescription = "Sign out")
+        Icon(Icons.AutoMirrored.Filled.Logout, contentDescription = stringResource(R.string.settings_sign_out))
         Spacer(Modifier.width(8.dp))
-        Text("Sign Out")
+        Text(stringResource(R.string.settings_sign_out))
     }
 }
 
 @Composable
-private fun unauthenticatedAccount(
+private fun UnauthenticatedAccount(
     session: UserSession,
     authManager: AuthManager,
     scope: CoroutineScope,
     context: Context
 ) {
     Text(
-        text = "Sign in with Google to enable cloud backup & multi-device sync.",
+        text = stringResource(R.string.settings_sign_in_prompt),
         style = MaterialTheme.typography.bodyMedium
     )
     Button(
@@ -402,7 +416,15 @@ private fun unauthenticatedAccount(
     ) {
         Icon(Icons.AutoMirrored.Filled.Login, contentDescription = "Sign in")
         Spacer(Modifier.width(8.dp))
-        Text(if (session.isAuthenticating) "Signing In..." else "Sign in with Google")
+        Text(
+            stringResource(
+                if (session.isAuthenticating) {
+                    R.string.settings_sign_in_loading
+                } else {
+                    R.string.settings_sign_in_idle
+                }
+            )
+        )
     }
     session.error?.let { error ->
         Text(

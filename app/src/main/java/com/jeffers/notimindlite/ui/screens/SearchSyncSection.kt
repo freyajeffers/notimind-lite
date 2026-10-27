@@ -15,7 +15,7 @@ import com.jeffers.notimindlite.R
 import com.jeffers.notimindlite.data.local.PreferencesRepository
 
 @Composable
-fun searchSyncSection(preferencesRepository: PreferencesRepository) {
+fun SearchSyncSection(preferencesRepository: PreferencesRepository) {
     val enableSync by preferencesRepository.syncManager.enableSync.collectAsState(initial = true)
     val enableVector by preferencesRepository.syncManager.enableVector.collectAsState(initial = true)
     val enableFts4 by preferencesRepository.syncManager.enableFts4.collectAsState(initial = true)
@@ -24,25 +24,25 @@ fun searchSyncSection(preferencesRepository: PreferencesRepository) {
     Column(modifier = Modifier.fillMaxWidth().padding(vertical = 0.dp)) {
         Text(stringResource(R.string.pref_data_search_title), style = MaterialTheme.typography.titleMedium)
 
-        preferenceSwitchRow(
+        PreferenceSwitchRow(
             stringResource(R.string.pref_enable_sync_title),
             stringResource(R.string.pref_enable_sync_summary), enableSync,
             preferencesRepository.syncManager::setEnableSync
         )
 
-        preferenceSwitchRow(
+        PreferenceSwitchRow(
             stringResource(R.string.pref_enable_vector_title),
             stringResource(R.string.pref_enable_vector_summary), enableVector,
             preferencesRepository.syncManager::setEnableVector
         )
 
-        preferenceSwitchRow(
+        PreferenceSwitchRow(
             stringResource(R.string.pref_enable_fts4_title),
             stringResource(R.string.pref_enable_fts4_summary), enableFts4,
             preferencesRepository.syncManager::setEnableFts4
         )
 
-        preferenceSwitchRow(
+        PreferenceSwitchRow(
             stringResource(R.string.pref_semantic_ranking_title),
             stringResource(R.string.pref_semantic_ranking_summary), enableSemanticRanking,
             preferencesRepository::setEnableSemanticRanking

@@ -20,16 +20,33 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.CustomAccessibilityAction
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.customActions
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.jeffers.notimindlite.R
 
 @Composable
-internal fun activeSectionHeader(
+internal fun ActiveSectionHeader(
     section: NotificationSection,
     isExpanded: Boolean,
     itemsCount: Int,
     onToggle: () -> Unit
 ) {
+    val sectionAccessibilityTitle = stringResource(section.accessibilityTitle)
+    val sectionAccessibilityDescription = stringResource(section.accessibilityDescription)
+    val expansionState = stringResource(
+        if (isExpanded) R.string.active_notifications_expanded else R.string.active_notifications_collapsed
+    )
+    val toggleActionLabel = stringResource(
+        R.string.active_notifications_section_toggle_desc,
+        sectionAccessibilityTitle,
+        expansionState
+    )
     Surface(
         modifier = Modifier.fillMaxWidth(),
         color = MaterialTheme.colorScheme.background,
@@ -40,6 +57,16 @@ internal fun activeSectionHeader(
                 .fillMaxWidth()
                 .padding(vertical = 4.dp)
                 .clickable(onClick = onToggle)
+                .semantics {
+                    contentDescription = sectionAccessibilityDescription
+                    stateDescription = expansionState
+                    customActions = listOf(
+                        CustomAccessibilityAction(toggleActionLabel) {
+                            onToggle()
+                            true
+                        }
+                    )
+                }
         ) {
             Row(
                 modifier = Modifier.padding(14.dp),
@@ -48,12 +75,12 @@ internal fun activeSectionHeader(
             ) {
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
-                        text = section.title,
+                        text = stringResource(section.title),
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold
                     )
                     Text(
-                        text = section.subtitle,
+                        text = stringResource(section.subtitle),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )

@@ -31,7 +31,7 @@ import com.jeffers.notimindlite.data.local.PreferencesRepository
 import kotlinx.coroutines.launch
 
 @Composable
-fun settingsCaptureSection(preferencesRepository: PreferencesRepository) {
+fun SettingsCaptureSection(preferencesRepository: PreferencesRepository) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
@@ -39,15 +39,15 @@ fun settingsCaptureSection(preferencesRepository: PreferencesRepository) {
         Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
             Text(text = stringResource(R.string.pref_capture_title), style = MaterialTheme.typography.titleMedium)
 
-            captureToggleSection(preferencesRepository = preferencesRepository)
+            CaptureToggleSection(preferencesRepository = preferencesRepository)
 
-            captureTextFieldSection(preferencesRepository = preferencesRepository)
+            CaptureTextFieldSection(preferencesRepository = preferencesRepository)
         }
     }
 }
 
 @Composable
-private fun captureToggleSection(preferencesRepository: PreferencesRepository) {
+private fun CaptureToggleSection(preferencesRepository: PreferencesRepository) {
     val scope = rememberCoroutineScope()
     val captureEnabled by preferencesRepository.captureManager.enabled.collectAsState(initial = true)
     val foregroundOnly by preferencesRepository.captureManager.foregroundOnly.collectAsState(initial = false)
@@ -58,31 +58,31 @@ private fun captureToggleSection(preferencesRepository: PreferencesRepository) {
     val enabledTitle = stringResource(R.string.pref_capture_enabled_title)
     val enabledSummary = stringResource(R.string.pref_capture_enabled_summary)
     val setEnabled: (Boolean) -> Unit = { scope.launch { preferencesRepository.captureManager.setEnabled(it) } }
-    captureToggleRow(enabledTitle, enabledSummary, captureEnabled, setEnabled, !BuildConfig.DEBUG)
+    CaptureToggleRow(enabledTitle, enabledSummary, captureEnabled, setEnabled, !BuildConfig.DEBUG)
 
     val fgTitle = stringResource(R.string.pref_capture_foreground_title)
     val fgSummary = stringResource(R.string.pref_capture_foreground_summary)
     val setFg: (Boolean) -> Unit = { scope.launch { preferencesRepository.captureManager.setForegroundOnly(it) } }
-    captureToggleRow(fgTitle, fgSummary, foregroundOnly, setFg, !BuildConfig.DEBUG)
+    CaptureToggleRow(fgTitle, fgSummary, foregroundOnly, setFg, !BuildConfig.DEBUG)
 
     val attachTitle = stringResource(R.string.pref_capture_attachments_title)
     val attachSummary = stringResource(R.string.pref_capture_attachments_summary)
     val setAttach: (Boolean) -> Unit = { scope.launch { preferencesRepository.captureManager.setAttachments(it) } }
-    captureToggleRow(attachTitle, attachSummary, attachments, setAttach, !BuildConfig.DEBUG)
+    CaptureToggleRow(attachTitle, attachSummary, attachments, setAttach, !BuildConfig.DEBUG)
 
     val ongoingTitle = stringResource(R.string.pref_capture_ongoing_title)
     val ongoingSummary = stringResource(R.string.pref_capture_ongoing_summary)
     val setOngoing: (Boolean) -> Unit = { scope.launch { preferencesRepository.captureManager.setOngoing(it) } }
-    captureToggleRow(ongoingTitle, ongoingSummary, ongoing, setOngoing, !BuildConfig.DEBUG)
+    CaptureToggleRow(ongoingTitle, ongoingSummary, ongoing, setOngoing, !BuildConfig.DEBUG)
 
     val actionsTitle = stringResource(R.string.pref_capture_actions_only_title)
     val actionsSummary = stringResource(R.string.pref_capture_actions_only_summary)
     val setActionsOnly: (Boolean) -> Unit = { scope.launch { preferencesRepository.captureManager.setActionsOnly(it) } }
-    captureToggleRow(actionsTitle, actionsSummary, actionsOnly, setActionsOnly, !BuildConfig.DEBUG)
+    CaptureToggleRow(actionsTitle, actionsSummary, actionsOnly, setActionsOnly, !BuildConfig.DEBUG)
 }
 
 @Composable
-private fun captureTextFieldSection(preferencesRepository: PreferencesRepository) {
+private fun CaptureTextFieldSection(preferencesRepository: PreferencesRepository) {
     val scope = rememberCoroutineScope()
     val allowlist by preferencesRepository.captureManager.allowlist.collectAsState(initial = "")
     val blocklist by preferencesRepository.captureManager.blocklist.collectAsState(initial = "")
@@ -96,7 +96,7 @@ private fun captureTextFieldSection(preferencesRepository: PreferencesRepository
         width = 200.dp,
         enabled = !BuildConfig.DEBUG
     )
-    captureTextFieldRow(allowConfig)
+    CaptureTextFieldRow(allowConfig)
 
     val blockConfig = CaptureTextFieldConfig(
         title = stringResource(R.string.pref_capture_blocklist_title),
@@ -106,7 +106,7 @@ private fun captureTextFieldSection(preferencesRepository: PreferencesRepository
         width = 200.dp,
         enabled = !BuildConfig.DEBUG
     )
-    captureTextFieldRow(blockConfig)
+    CaptureTextFieldRow(blockConfig)
 
     val minImpConfig = CaptureTextFieldConfig(
         title = stringResource(R.string.pref_capture_min_importance_title),
@@ -120,11 +120,11 @@ private fun captureTextFieldSection(preferencesRepository: PreferencesRepository
         width = 120.dp,
         enabled = !BuildConfig.DEBUG
     )
-    captureTextFieldRow(minImpConfig)
+    CaptureTextFieldRow(minImpConfig)
 }
 
 @Composable
-private fun captureToggleRow(
+private fun CaptureToggleRow(
     title: String,
     summary: String,
     checked: Boolean,
@@ -154,7 +154,7 @@ private data class CaptureTextFieldConfig(
 )
 
 @Composable
-private fun captureTextFieldRow(config: CaptureTextFieldConfig) {
+private fun CaptureTextFieldRow(config: CaptureTextFieldConfig) {
     Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
         Column(modifier = Modifier.weight(1f)) {
             Text(config.title, style = MaterialTheme.typography.bodyLarge)

@@ -1,6 +1,7 @@
 package com.jeffers.notimindlite.util
 
 import android.content.Context
+import androidx.core.content.edit
 import org.json.JSONObject
 import java.io.File
 
@@ -43,18 +44,18 @@ object PreferencesBackup {
         val text = file.readText()
         val jo = JSONObject(text)
         val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-        val edit = prefs.edit()
-        jo.keys().forEach { key ->
-            val v = jo.get(key)
-            when (v) {
-                is Boolean -> edit.putBoolean(key, v)
-                is Int -> edit.putInt(key, v)
-                is Long -> edit.putLong(key, v)
-                is Double -> edit.putFloat(key, v.toFloat())
-                is String -> edit.putString(key, v)
-                else -> edit.putString(key, v.toString())
+        prefs.edit {
+            jo.keys().forEach { key ->
+                val v = jo.get(key)
+                when (v) {
+                    is Boolean -> putBoolean(key, v)
+                    is Int -> putInt(key, v)
+                    is Long -> putLong(key, v)
+                    is Double -> putFloat(key, v.toFloat())
+                    is String -> putString(key, v)
+                    else -> putString(key, v.toString())
+                }
             }
         }
-        edit.apply()
     }
 }

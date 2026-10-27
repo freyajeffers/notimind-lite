@@ -8,7 +8,7 @@ import com.jeffers.notimindlite.ui.components.ActivePermissionEmptyState
 import com.jeffers.notimindlite.ui.components.ActiveSearchEmptyState
 
 @Composable
-internal fun activeEmptyState(
+internal fun ActiveEmptyState(
     isGranted: Boolean,
     isSearching: Boolean,
     debouncedSearchQuery: String,

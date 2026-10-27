@@ -1,6 +1,7 @@
 package com.jeffers.notimindlite.data.local
 
 import android.content.Context
+import androidx.core.content.edit
 import com.jeffers.notimindlite.BuildConfig
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -66,23 +67,23 @@ class PreferencesRepository(
     }
 
     private fun migrateRenamedKeys() {
-        val editor = backing.edit()
         val aliases = mapOf(
             "config_capture_allowlist" to "config_capture_package_allowlist",
             "config_capture_blocklist" to "config_capture_package_blocklist",
             "config_redact_pii" to "config_pii_redaction"
         )
-        aliases.forEach { (oldKey, newKey) ->
-            if (!backing.contains(newKey) && backing.contains(oldKey)) {
-                when (val value = backing.all[oldKey]) {
-                    is Boolean -> editor.putBoolean(newKey, value)
-                    is Int -> editor.putInt(newKey, value)
-                    is Long -> editor.putLong(newKey, value)
-                    is String -> editor.putString(newKey, value)
+        backing.edit {
+            aliases.forEach { (oldKey, newKey) ->
+                if (!backing.contains(newKey) && backing.contains(oldKey)) {
+                    when (val value = backing.all[oldKey]) {
+                        is Boolean -> putBoolean(newKey, value)
+                        is Int -> putInt(newKey, value)
+                        is Long -> putLong(newKey, value)
+                        is String -> putString(newKey, value)
+                    }
                 }
             }
         }
-        editor.apply()
     }
 
     private val _retentionDays = MutableStateFlow(
@@ -130,35 +131,35 @@ class PreferencesRepository(
 
     fun setRetentionDays(value: Int) {
         val safe = value.coerceIn(MIN_RETENTION_DAYS, MAX_RETENTION_DAYS)
-        backing.edit().putInt(KEY_RETENTION_DAYS, safe).apply()
+        backing.edit { putInt(KEY_RETENTION_DAYS, safe) }
         _retentionDays.value = safe
     }
 
     fun setExportEncryption(value: Boolean) {
-        backing.edit().putBoolean(KEY_EXPORT_ENCRYPTION, value).apply()
+        backing.edit { putBoolean(KEY_EXPORT_ENCRYPTION, value) }
         _exportEncryption.value = value
     }
 
     fun setEnableSemanticRanking(value: Boolean) {
-        backing.edit().putBoolean(KEY_ENABLE_SEMANTIC_RANKING, value).apply()
+        backing.edit { putBoolean(KEY_ENABLE_SEMANTIC_RANKING, value) }
         _enableSemanticRanking.value = value
     }
 
     fun setAutoDeleteOnRead(value: Boolean) {
         val safe = value && !BuildConfig.DEBUG
-        backing.edit().putBoolean(KEY_AUTO_DELETE_ON_READ, safe).apply()
+        backing.edit { putBoolean(KEY_AUTO_DELETE_ON_READ, safe) }
         _autoDeleteOnRead.value = safe
     }
 
     fun setBackupIntervalDays(value: Int) {
         val safe = value.coerceAtLeast(0)
-        backing.edit().putInt(KEY_BACKUP_INTERVAL_DAYS, safe).apply()
+        backing.edit { putInt(KEY_BACKUP_INTERVAL_DAYS, safe) }
         _backupIntervalDays.value = safe
     }
 
     fun setSemanticWeight(value: Int) {
         val safe = value.coerceIn(MIN_SEMANTIC_WEIGHT, MAX_SEMANTIC_WEIGHT)
-        backing.edit().putInt(KEY_SEMANTIC_WEIGHT, safe).apply()
+        backing.edit { putInt(KEY_SEMANTIC_WEIGHT, safe) }
         _semanticWeight.value = safe
     }
 

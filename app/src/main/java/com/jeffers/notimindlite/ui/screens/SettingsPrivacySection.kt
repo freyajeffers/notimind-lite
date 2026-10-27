@@ -31,7 +31,7 @@ import com.jeffers.notimindlite.data.local.PreferencesRepository
 import kotlinx.coroutines.launch
 
 @Composable
-fun settingsPrivacySection(preferencesRepository: PreferencesRepository) {
+fun SettingsPrivacySection(preferencesRepository: PreferencesRepository) {
     val scope = rememberCoroutineScope()
     val autoDelete by preferencesRepository.autoDeleteOnRead.collectAsState(initial = false)
     val anonymizeTitles by preferencesRepository.anonymizeTitles.collectAsState(initial = false)
@@ -39,17 +39,22 @@ fun settingsPrivacySection(preferencesRepository: PreferencesRepository) {
     val context = LocalContext.current
     val preferenceManager = remember { PreferenceManager(context) }
     var strictPrivacyEnabled by remember { mutableStateOf(preferenceManager.isStrictPrivacyEnabled()) }
+    val privacyAccessibilityTitle = stringResource(R.string.pref_privacy_title)
 
     Card(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
     ) {
         Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-            Text(text = stringResource(R.string.pref_privacy_title), style = MaterialTheme.typography.titleMedium)
+            Text(
+                text = stringResource(R.string.settings_section_privacy),
+                style = MaterialTheme.typography.titleMedium,
+                modifier = Modifier.semantics { contentDescription = privacyAccessibilityTitle }
+            )
 
             val autoDeleteTitle = stringResource(R.string.pref_auto_delete_title)
             val autoDeleteSummary = stringResource(R.string.pref_auto_delete_summary)
-            preferenceToggleRow(
+            PreferenceToggleRow(
                 title = autoDeleteTitle,
                 summary = autoDeleteSummary,
                 checked = autoDelete,
@@ -59,7 +64,7 @@ fun settingsPrivacySection(preferencesRepository: PreferencesRepository) {
 
             val anonymizeTitle = stringResource(R.string.pref_anonymize_title)
             val anonymizeSummary = stringResource(R.string.pref_anonymize_summary)
-            preferenceToggleRow(
+            PreferenceToggleRow(
                 title = anonymizeTitle,
                 summary = anonymizeSummary,
                 checked = anonymizeTitles,
@@ -67,17 +72,20 @@ fun settingsPrivacySection(preferencesRepository: PreferencesRepository) {
                 enabled = !BuildConfig.DEBUG
             )
 
-            val redactTitle = stringResource(R.string.pref_redact_pii_title)
-            val redactSummary = stringResource(R.string.pref_redact_pii_summary)
-            preferenceToggleRow(
+            val redactTitle = stringResource(R.string.settings_pii_redaction_title)
+            val redactSummary = stringResource(R.string.settings_pii_redaction_desc)
+            val redactAccessibilityLabel = stringResource(R.string.pref_redact_pii_title)
+            val redactAccessibilitySummary = stringResource(R.string.pref_redact_pii_summary)
+            PreferenceToggleRow(
                 title = redactTitle,
                 summary = redactSummary,
                 checked = redactPii,
                 onChanged = { scope.launch { preferencesRepository.securityManager.setRedactPii(it) } },
-                enabled = !BuildConfig.DEBUG
+                enabled = !BuildConfig.DEBUG,
+                switchContentDescription = "$redactAccessibilityLabel. $redactAccessibilitySummary"
             )
 
-            strictPrivacyRow(
+            StrictPrivacyRow(
                 enabled = strictPrivacyEnabled,
                 onChanged = {
                     strictPrivacyEnabled = it
@@ -89,12 +97,13 @@ fun settingsPrivacySection(preferencesRepository: PreferencesRepository) {
 }
 
 @Composable
-private fun preferenceToggleRow(
+private fun PreferenceToggleRow(
     title: String,
     summary: String,
     checked: Boolean,
     onChanged: (Boolean) -> Unit,
-    enabled: Boolean = true
+    enabled: Boolean = true,
+    switchContentDescription: String? = null
 ) {
     Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
         Column(modifier = Modifier.weight(1f)) {
@@ -105,15 +114,24 @@ private fun preferenceToggleRow(
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
-        Switch(checked = checked, onCheckedChange = onChanged, enabled = enabled)
+        Switch(
+            checked = checked,
+            onCheckedChange = onChanged,
+            enabled = enabled,
+            modifier = if (switchContentDescription == null) {
+                Modifier
+            } else {
+                Modifier.semantics { contentDescription = switchContentDescription }
+            }
+        )
     }
 }
 
 @Composable
-private fun strictPrivacyRow(enabled: Boolean, onChanged: (Boolean) -> Unit) {
-    preferenceToggleRow(
-        title = "Strict Privacy Mode",
-        summary = "Disable all crash reporting and anonymous usage telemetry.",
+private fun StrictPrivacyRow(enabled: Boolean, onChanged: (Boolean) -> Unit) {
+    PreferenceToggleRow(
+        title = stringResource(R.string.settings_strict_privacy_title),
+        summary = stringResource(R.string.settings_strict_privacy_desc),
         checked = enabled,
         onChanged = onChanged
     )

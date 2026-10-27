@@ -48,7 +48,7 @@ import androidx.compose.ui.unit.sp
 import com.jeffers.notimindlite.R
 import com.jeffers.notimindlite.data.local.NotificationDao
 import com.jeffers.notimindlite.data.local.NotificationEntity
-import com.jeffers.notimindlite.ui.screens.appIconImage
+import com.jeffers.notimindlite.ui.screens.AppIconImage
 import kotlinx.coroutines.launch
 import java.time.Instant
 import java.time.format.DateTimeFormatter
@@ -145,7 +145,12 @@ private fun GroupHeader(
             verticalAlignment = Alignment.CenterVertically,
             modifier = Modifier.weight(1f)
         ) {
-            if (showAppIcons) appIconImage(appIconUri = group.appIconUri)
+            if (showAppIcons) {
+                AppIconImage(
+                    appIconUri = group.appIconUri,
+                    contentDescriptionRes = com.jeffers.notimindlite.R.string.notification_icon_description
+                )
+            }
             Spacer(modifier = Modifier.width(8.dp))
             Column(modifier = Modifier.weight(1f)) {
                 Row(verticalAlignment = Alignment.CenterVertically) {

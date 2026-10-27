@@ -31,7 +31,7 @@ internal data class PreferencesBackupCardConfig(
 )
 
 @Composable
-internal fun preferencesBackupCard(config: PreferencesBackupCardConfig) {
+internal fun PreferencesBackupCard(config: PreferencesBackupCardConfig) {
     val exportFormats = config.exportFormats
     val exportAnonymize = config.exportAnonymize
     val onFormatsChange = config.onFormatsChange

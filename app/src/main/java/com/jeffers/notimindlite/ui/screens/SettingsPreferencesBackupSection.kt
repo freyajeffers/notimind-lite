@@ -38,7 +38,7 @@ import kotlinx.coroutines.withContext
 import java.util.Locale
 
 @Composable
-fun settingsPreferencesBackupSection() {
+fun SettingsPreferencesBackupSection() {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     var message by remember { mutableStateOf<String?>(null) }
@@ -77,7 +77,7 @@ fun settingsPreferencesBackupSection() {
     val exportFormats by preferences.exportManager.formats.collectAsState()
     val exportAnonymize by preferences.exportManager.anonymize.collectAsState()
 
-    preferencesBackupCard(
+    PreferencesBackupCard(
         PreferencesBackupCardConfig(
             exportFormats = exportFormats,
             exportAnonymize = exportAnonymize,

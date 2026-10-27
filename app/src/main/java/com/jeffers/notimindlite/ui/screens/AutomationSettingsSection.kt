@@ -15,7 +15,7 @@ import com.jeffers.notimindlite.R
 import com.jeffers.notimindlite.data.local.PreferencesRepository
 
 @Composable
-fun automationSettingsSection(preferencesRepository: PreferencesRepository) {
+fun AutomationSettingsSection(preferencesRepository: PreferencesRepository) {
     val autoActOnNotification by preferencesRepository.automationManager
         .autoActOnNotification
         .collectAsState(initial = false)
@@ -44,26 +44,26 @@ fun automationSettingsSection(preferencesRepository: PreferencesRepository) {
 
     Column {
         Text(stringResource(R.string.pref_automation_title), style = MaterialTheme.typography.titleMedium)
-        preferenceSwitchRow(
+        PreferenceSwitchRow(
             stringResource(R.string.pref_auto_act_title),
             stringResource(R.string.pref_auto_act_summary), autoActOnNotification,
             preferencesRepository.automationManager::setAutoActOnNotification, enabled = !BuildConfig.DEBUG
         )
-        preferenceSelectRow(
+        PreferenceSelectRow(
             stringResource(R.string.pref_default_reply_title),
             defaultReplyMethod,
             replyOptions,
             preferencesRepository.automationManager::setDefaultReplyMethod,
             enabled = !BuildConfig.DEBUG
         )
-        preferenceSelectRow(
+        PreferenceSelectRow(
             stringResource(R.string.pref_long_press_title),
             longPressAction,
             longPressOptions,
             preferencesRepository.automationManager::setLongPressAction,
             enabled = !BuildConfig.DEBUG
         )
-        autoRulesSection(
+        AutoRulesSection(
             preferencesRepository = preferencesRepository,
             config = AutoRulesConfig(
                 autoExecuteRules = autoExecuteRules,

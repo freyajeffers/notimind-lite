@@ -49,7 +49,7 @@ import com.jeffers.notimindlite.R
 import com.jeffers.notimindlite.domain.entity.ActionableEntityExtractor
 
 @Composable
-fun actionableChips(
+fun ActionableChips(
     text: String,
     modifier: Modifier = Modifier
 ) {
@@ -64,14 +64,14 @@ fun actionableChips(
         verticalAlignment = Alignment.CenterVertically
     ) {
         entities.forEach { entity ->
-            actionChip(entity = entity)
+            ActionChip(entity = entity)
             Spacer(modifier = Modifier.width(8.dp))
         }
     }
 }
 
 @Composable
-private fun actionChip(
+private fun ActionChip(
     entity: ActionableEntityExtractor.ActionableEntity
 ) {
     var expanded by remember { mutableStateOf(false) }
@@ -121,7 +121,7 @@ private fun actionChip(
             }
         )
 
-        actionChipMenu(
+        ActionChipMenu(
             ActionChipMenuParams(
                 entity = entity,
                 expanded = expanded,
@@ -160,7 +160,7 @@ private fun actionChipConfig(
 }
 
 @Composable
-private fun actionChipMenu(params: ActionChipMenuParams) {
+private fun ActionChipMenu(params: ActionChipMenuParams) {
     val entity = params.entity
     val expanded = params.expanded
     val context = params.context
@@ -178,13 +178,17 @@ private fun actionChipMenu(params: ActionChipMenuParams) {
                 onDismiss()
             },
             leadingIcon = {
-                Icon(Icons.Default.ContentCopy, contentDescription = "Copy", modifier = Modifier.size(18.dp))
+                Icon(
+                    Icons.Default.ContentCopy,
+                    contentDescription = stringResource(R.string.actionable_chips_copy_label, menuLabelForCopy(entity)),
+                    modifier = Modifier.size(18.dp)
+                )
             }
         )
         val canOpenExternally = entity.type == ActionableEntityExtractor.EntityType.URL ||
             entity.type == ActionableEntityExtractor.EntityType.LOCATION
         if (canOpenExternally) {
-            externalActionMenuItem(entity, context, onDismiss)
+            ExternalActionMenuItem(entity, context, onDismiss)
         }
         DropdownMenuItem(
             text = { Text(stringResource(R.string.actionable_share)) },
@@ -199,7 +203,7 @@ private fun actionChipMenu(params: ActionChipMenuParams) {
             leadingIcon = {
                 Icon(
                     Icons.Default.Share,
-                    contentDescription = stringResource(R.string.actionable_share),
+                    contentDescription = stringResource(R.string.common_share),
                     modifier = Modifier.size(18.dp)
                 )
             }
@@ -208,7 +212,7 @@ private fun actionChipMenu(params: ActionChipMenuParams) {
 }
 
 @Composable
-private fun externalActionMenuItem(
+private fun ExternalActionMenuItem(
     entity: ActionableEntityExtractor.ActionableEntity,
     context: android.content.Context,
     onDismiss: () -> Unit

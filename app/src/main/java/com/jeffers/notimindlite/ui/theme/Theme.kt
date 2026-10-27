@@ -10,6 +10,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import com.jeffers.notimindlite.BuildConfig
+import com.jeffers.notimindlite.R
 
 private const val DARK_PRIMARY = 0xFFD0BCFF
 private const val DARK_ON_PRIMARY = 0xFF381E72
@@ -34,21 +35,13 @@ private const val DARK_OUTLINE_VARIANT = 0xFF49454F
 private const val DARK_SCRIM = 0x80000000
 
 private const val LIGHT_PRIMARY = 0xFF6750A4
-private const val LIGHT_ON_PRIMARY = 0xFFFFFFFF
 private const val LIGHT_PRIMARY_CONTAINER = 0xFFEADDFF
 private const val LIGHT_ON_PRIMARY_CONTAINER = 0xFF21005D
 private const val LIGHT_SECONDARY = 0xFF625B71
-private const val LIGHT_ON_SECONDARY = 0xFFFFFFFF
 private const val LIGHT_SECONDARY_CONTAINER = 0xFFE8DEF8
 private const val LIGHT_ON_SECONDARY_CONTAINER = 0xFF1D192B
-private const val LIGHT_TERTIARY = 0xFF7D5260
-private const val LIGHT_ON_TERTIARY = 0xFFFFFFFF
 private const val LIGHT_TERTIARY_CONTAINER = 0xFFFFD8E4
 private const val LIGHT_ON_TERTIARY_CONTAINER = 0xFF31111D
-private const val LIGHT_BACKGROUND = 0xFFFFFBFE
-private const val LIGHT_ON_BACKGROUND = 0xFF1C1B1F
-private const val LIGHT_SURFACE = 0xFFFFFBFE
-private const val LIGHT_ON_SURFACE = 0xFF1C1B1F
 private const val LIGHT_SURFACE_VARIANT = 0xFFE7E0EC
 private const val LIGHT_ON_SURFACE_VARIANT = 0xFF49454F
 private const val LIGHT_OUTLINE = 0xFF79747E
@@ -79,23 +72,23 @@ private val DarkColorScheme = darkColorScheme(
     scrim = Color(DARK_SCRIM)
 )
 
-private val LightColorScheme = lightColorScheme(
+private fun lightColorScheme(context: android.content.Context) = lightColorScheme(
     primary = Color(LIGHT_PRIMARY),
-    onPrimary = Color(LIGHT_ON_PRIMARY),
+    onPrimary = Color(context.getColor(R.color.on_primary)),
     primaryContainer = Color(LIGHT_PRIMARY_CONTAINER),
     onPrimaryContainer = Color(LIGHT_ON_PRIMARY_CONTAINER),
     secondary = Color(LIGHT_SECONDARY),
-    onSecondary = Color(LIGHT_ON_SECONDARY),
+    onSecondary = Color(context.getColor(R.color.on_secondary)),
     secondaryContainer = Color(LIGHT_SECONDARY_CONTAINER),
     onSecondaryContainer = Color(LIGHT_ON_SECONDARY_CONTAINER),
-    tertiary = Color(LIGHT_TERTIARY),
-    onTertiary = Color(LIGHT_ON_TERTIARY),
+    tertiary = Color(context.getColor(R.color.tertiary)),
+    onTertiary = Color(context.getColor(R.color.on_tertiary)),
     tertiaryContainer = Color(LIGHT_TERTIARY_CONTAINER),
     onTertiaryContainer = Color(LIGHT_ON_TERTIARY_CONTAINER),
-    background = Color(LIGHT_BACKGROUND),
-    onBackground = Color(LIGHT_ON_BACKGROUND),
-    surface = Color(LIGHT_SURFACE),
-    onSurface = Color(LIGHT_ON_SURFACE),
+    background = Color(context.getColor(R.color.background)),
+    onBackground = Color(context.getColor(R.color.on_background)),
+    surface = Color(context.getColor(R.color.surface)),
+    onSurface = Color(context.getColor(R.color.on_surface)),
     surfaceVariant = Color(LIGHT_SURFACE_VARIANT),
     onSurfaceVariant = Color(LIGHT_ON_SURFACE_VARIANT),
     outline = Color(LIGHT_OUTLINE),
@@ -117,7 +110,7 @@ private val AmoledColorScheme = DarkColorScheme.copy(
 )
 
 @Composable
-fun notiMindLiteTheme(
+fun NotiMindLiteTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
     dynamicColor: Boolean = true,
     amoledTheme: Boolean = false,
@@ -138,7 +131,7 @@ fun notiMindLiteTheme(
         }
 
         else -> {
-            LightColorScheme
+            lightColorScheme(context)
         }
     }
 

@@ -4,6 +4,7 @@ import android.content.Context
 import android.os.Build
 import android.util.Base64
 import android.util.Log
+import androidx.core.content.edit
 import java.nio.ByteBuffer
 import java.security.KeyStore
 import java.util.concurrent.ConcurrentHashMap
@@ -36,7 +37,9 @@ object SqlCipherKeyManager {
 
         val passphrase = ByteArray(PASSPHRASE_BYTES).also { java.security.SecureRandom().nextBytes(it) }
         val encrypted = if (useKeystore) encrypt(databaseName, passphrase) else passphrase
-        check(prefs.edit().putString(VALUE, Base64.encodeToString(encrypted, Base64.NO_WRAP)).commit()) {
+        val encodedPassphrase = Base64.encodeToString(encrypted, Base64.NO_WRAP)
+        prefs.edit(commit = true) { putString(VALUE, encodedPassphrase) }
+        check(prefs.getString(VALUE, null) == encodedPassphrase) {
             "Unable to persist SQLCipher passphrase"
         }
         return passphrase

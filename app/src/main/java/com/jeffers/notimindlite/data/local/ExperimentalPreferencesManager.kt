@@ -1,6 +1,7 @@
 package com.jeffers.notimindlite.data.local
 
 import android.content.Context
+import androidx.core.content.edit
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -40,33 +41,33 @@ class ExperimentalPreferencesManager(
 
     fun setFeatureFlagsUrl(value: String) {
         val safe = value.trim().take(MAX_FEATURE_FLAGS_URL_LENGTH)
-        preferences.edit().putString(KEY_FEATURE_FLAGS_URL, safe).apply()
+        preferences.edit { putString(KEY_FEATURE_FLAGS_URL, safe) }
         _featureFlagsUrl.value = safe
     }
 
     fun setMockDataEnabled(value: Boolean) {
-        preferences.edit().putBoolean(KEY_MOCK_DATA_ENABLED, value).apply()
+        preferences.edit { putBoolean(KEY_MOCK_DATA_ENABLED, value) }
         _mockDataEnabled.value = value
     }
 
     fun setTestModeFlags(value: String) {
         val safe = value.trim().take(MAX_TEST_MODE_FLAGS_LENGTH)
-        preferences.edit().putString(KEY_TEST_MODE_FLAGS, safe).apply()
+        preferences.edit { putString(KEY_TEST_MODE_FLAGS, safe) }
         _testModeFlags.value = safe
     }
 
     fun setOffloadEmbeddings(value: Boolean) {
-        preferences.edit().putBoolean(KEY_OFFLOAD_EMBEDDINGS, value).apply()
+        preferences.edit { putBoolean(KEY_OFFLOAD_EMBEDDINGS, value) }
         _offloadEmbeddings.value = value
     }
 
     fun setUseFts5(value: Boolean) {
-        preferences.edit().putBoolean(KEY_USE_FTS5, value).apply()
+        preferences.edit { putBoolean(KEY_USE_FTS5, value) }
         _useFts5.value = value
     }
 
     fun setVectorGpu(value: Boolean) {
-        preferences.edit().putBoolean(KEY_VECTOR_GPU, value).apply()
+        preferences.edit { putBoolean(KEY_VECTOR_GPU, value) }
         _vectorGpu.value = value
     }
 

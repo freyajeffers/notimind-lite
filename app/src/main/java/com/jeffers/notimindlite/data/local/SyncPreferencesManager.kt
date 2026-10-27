@@ -1,6 +1,7 @@
 package com.jeffers.notimindlite.data.local
 
 import android.content.Context
+import androidx.core.content.edit
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -46,22 +47,22 @@ class SyncPreferencesManager(
 
     fun setSyncInterval(value: Int) {
         val safe = value.coerceIn(MIN_SYNC_INTERVAL, MAX_SYNC_INTERVAL)
-        preferences.edit().putInt(KEY_SYNC_INTERVAL, safe).apply()
+        preferences.edit { putInt(KEY_SYNC_INTERVAL, safe) }
         _syncInterval.value = safe
     }
 
     fun setSyncWifiOnly(value: Boolean) {
-        preferences.edit().putBoolean(KEY_SYNC_WIFI_ONLY, value).apply()
+        preferences.edit { putBoolean(KEY_SYNC_WIFI_ONLY, value) }
         _syncWifiOnly.value = value
     }
 
     fun setSyncChargingOnly(value: Boolean) {
-        preferences.edit().putBoolean(KEY_SYNC_CHARGING_ONLY, value).apply()
+        preferences.edit { putBoolean(KEY_SYNC_CHARGING_ONLY, value) }
         _syncChargingOnly.value = value
     }
 
     fun setLastSyncTs(value: Long) {
-        preferences.edit().putLong(KEY_LAST_SYNC_TS, value).apply()
+        preferences.edit { putLong(KEY_LAST_SYNC_TS, value) }
         _lastSyncTs.value = value
     }
 
@@ -70,22 +71,22 @@ class SyncPreferencesManager(
     }
 
     fun setUseSupabaseSync(value: Boolean) {
-        preferences.edit().putBoolean(KEY_USE_SUPABASE_SYNC, value).apply()
+        preferences.edit { putBoolean(KEY_USE_SUPABASE_SYNC, value) }
         _useSupabaseSync.value = value
     }
 
     fun setEnableSync(value: Boolean) {
-        preferences.edit().putBoolean(KEY_ENABLE_SYNC, value).apply()
+        preferences.edit { putBoolean(KEY_ENABLE_SYNC, value) }
         _enableSync.value = value
     }
 
     fun setEnableVector(value: Boolean) {
-        preferences.edit().putBoolean(KEY_ENABLE_VECTOR, value).apply()
+        preferences.edit { putBoolean(KEY_ENABLE_VECTOR, value) }
         _enableVector.value = value
     }
 
     fun setEnableFts4(value: Boolean) {
-        preferences.edit().putBoolean(KEY_ENABLE_FTS4, value).apply()
+        preferences.edit { putBoolean(KEY_ENABLE_FTS4, value) }
         _enableFts4.value = value
     }
 

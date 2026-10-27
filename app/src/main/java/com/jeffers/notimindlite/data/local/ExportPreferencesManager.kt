@@ -1,6 +1,7 @@
 package com.jeffers.notimindlite.data.local
 
 import android.content.Context
+import androidx.core.content.edit
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -37,17 +38,17 @@ class ExportPreferencesManager(
             .distinct()
             .joinToString(",")
             .ifBlank { DEFAULT_FORMATS }
-        preferences.edit().putString(KEY_FORMATS, safe).apply()
+        preferences.edit { putString(KEY_FORMATS, safe) }
         _formats.value = safe
     }
 
     fun setAnonymize(value: Boolean) {
-        preferences.edit().putBoolean(KEY_ANONYMIZE, value).apply()
+        preferences.edit { putBoolean(KEY_ANONYMIZE, value) }
         _anonymize.value = value
     }
 
     fun setAnonymizeTitles(value: Boolean) {
-        preferences.edit().putBoolean(KEY_ANONYMIZE_TITLES, value).apply()
+        preferences.edit { putBoolean(KEY_ANONYMIZE_TITLES, value) }
         _anonymizeTitles.value = value
     }
 

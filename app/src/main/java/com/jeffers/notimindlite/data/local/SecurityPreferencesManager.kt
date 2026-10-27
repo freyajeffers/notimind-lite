@@ -2,6 +2,7 @@ package com.jeffers.notimindlite.data.local
 
 import android.content.Context
 import android.content.SharedPreferences
+import androidx.core.content.edit
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -83,7 +84,7 @@ class SecurityPreferencesManager(
         updateSecurityBoolean(preferences, KEY_DB_ENCRYPTED, value) { _dbEncrypted.value = value }
 
     fun setDbEncryptionMode(value: DbEncryptionMode) {
-        preferences.edit().putString(KEY_DB_ENCRYPTION_MODE, value.persisted).apply()
+        preferences.edit { putString(KEY_DB_ENCRYPTION_MODE, value.persisted) }
         _dbEncryptionMode.value = value
     }
 
@@ -106,7 +107,7 @@ private fun updateSecurityBoolean(
     value: Boolean,
     state: () -> Unit,
 ) {
-    preferences.edit().putBoolean(key, value).apply()
+    preferences.edit { putBoolean(key, value) }
     state()
 }
 

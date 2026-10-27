@@ -1,6 +1,7 @@
 package com.jeffers.notimindlite.data.local
 
 import android.content.Context
+import androidx.core.content.edit
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -27,12 +28,12 @@ class TelemetryPreferencesManager(
     }
 
     fun setEnabled(value: Boolean) {
-        preferences.edit().putBoolean(KEY_ENABLED, value).apply()
+        preferences.edit { putBoolean(KEY_ENABLED, value) }
         _enabled.value = value
     }
 
     fun setLevel(value: String) {
-        preferences.edit().putString(KEY_LEVEL, value).apply()
+        preferences.edit { putString(KEY_LEVEL, value) }
         _level.value = value
     }
 

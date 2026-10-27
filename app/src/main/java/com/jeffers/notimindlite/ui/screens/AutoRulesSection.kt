@@ -20,8 +20,12 @@ import com.jeffers.notimindlite.data.local.AutoExecuteRule
 import com.jeffers.notimindlite.data.local.PreferencesRepository
 
 @Composable
-fun autoRulesSection(preferencesRepository: PreferencesRepository, config: AutoRulesConfig) {
+fun AutoRulesSection(preferencesRepository: PreferencesRepository, config: AutoRulesConfig) {
     Column(modifier = Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Text(
+            text = stringResource(R.string.pref_auto_rules_title),
+            style = androidx.compose.material3.MaterialTheme.typography.titleSmall
+        )
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
             OutlinedTextField(
                 config.rulePackage, onValueChange = config.onRulePackageChange, Modifier.weight(1f), singleLine = true,

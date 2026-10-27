@@ -43,7 +43,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 @Composable
-private fun advancedSwitchRow(
+private fun AdvancedSwitchRow(
     titleRes: Int,
     summaryRes: Int,
     checked: Boolean,
@@ -67,7 +67,7 @@ private fun advancedSwitchRow(
 }
 
 @Composable
-private fun advancedNumberRow(
+private fun AdvancedNumberRow(
     titleRes: Int,
     summaryRes: Int,
     value: Int,
@@ -118,7 +118,7 @@ private data class AdvancedSettingsConfig(
 )
 
 @Composable
-fun settingsAdvancedSection(
+fun SettingsAdvancedSection(
     preferencesRepository: PreferencesRepository,
     onMigrationCompleted: () -> Unit
 ) {
@@ -148,7 +148,7 @@ fun settingsAdvancedSection(
     val lowMemoryMode by preferencesRepository.lowMemoryMode.collectAsState(initial = false)
     val vectorCacheMax by preferencesRepository.vectorCacheMax.collectAsState(initial = 1000)
 
-    advancedSettingsCard(
+    AdvancedSettingsCard(
         AdvancedSettingsConfig(
             preferencesRepository,
             enableTelemetry,
@@ -161,7 +161,7 @@ fun settingsAdvancedSection(
         )
     )
 
-    migrationConfirmationDialog(
+    MigrationConfirmationDialog(
         MigrationDialogConfig(
             visible = showMigrationConfirmation,
             context = context,
@@ -176,7 +176,7 @@ fun settingsAdvancedSection(
 }
 
 @Composable
-private fun advancedSettingsCard(
+private fun AdvancedSettingsCard(
     config: AdvancedSettingsConfig
 ) {
     Card(
@@ -185,27 +185,27 @@ private fun advancedSettingsCard(
     ) {
         Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
             Text(text = stringResource(R.string.pref_advanced_title), style = MaterialTheme.typography.titleMedium)
-            advancedSwitchRow(
+            AdvancedSwitchRow(
                 R.string.pref_enable_telemetry_title,
                 R.string.pref_enable_telemetry_summary,
                 config.enableTelemetry,
                 !BuildConfig.DEBUG,
                 config.preferencesRepository.telemetryManager::setEnabled
             )
-            advancedSwitchRow(
+            AdvancedSwitchRow(
                 R.string.pref_low_memory_mode_title,
                 R.string.pref_low_memory_mode_summary,
                 config.lowMemoryMode,
                 onCheckedChange = config.preferencesRepository.storageManager::setLowMemoryMode
             )
-            advancedNumberRow(
+            AdvancedNumberRow(
                 R.string.pref_max_db_mb_title,
                 R.string.pref_max_db_mb_summary,
                 config.maxDbMb,
                 120.dp,
                 config.preferencesRepository.storageManager::setMaxDbMb
             )
-            migrationControls(
+            MigrationControls(
                 config.migrationVisible,
                 config.migrationMessage,
                 config.onShowMigration,
@@ -217,7 +217,7 @@ private fun advancedSettingsCard(
 }
 
 @Composable
-private fun migrationControls(
+private fun MigrationControls(
     visible: Boolean,
     migrationMessage: String?,
     onShowMigration: () -> Unit,
@@ -231,7 +231,7 @@ private fun migrationControls(
         }
         migrationMessage?.let { Text(it, color = MaterialTheme.colorScheme.error) }
     }
-    advancedNumberRow(
+    AdvancedNumberRow(
         R.string.pref_vector_cache_max_title,
         R.string.pref_vector_cache_max_summary,
         vectorCacheMax,
@@ -241,7 +241,7 @@ private fun migrationControls(
 }
 
 @Composable
-private fun migrationConfirmationDialog(config: MigrationDialogConfig) {
+private fun MigrationConfirmationDialog(config: MigrationDialogConfig) {
     if (!config.visible) return
     AlertDialog(
         onDismissRequest = config.onDismiss,

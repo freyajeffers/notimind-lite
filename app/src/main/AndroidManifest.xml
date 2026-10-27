@@ -47,7 +47,7 @@
 
         <service
             android:name=".service.NotificationLoggerService"
-            android:label="@string/app_name"
+            android:label="@string/notification_listener_service"
             android:permission="android.permission.BIND_NOTIFICATION_LISTENER_SERVICE"
             android:directBootAware="true"
             android:exported="true">

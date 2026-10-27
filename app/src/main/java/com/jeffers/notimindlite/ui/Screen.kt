@@ -24,10 +24,10 @@ import com.jeffers.notimindlite.data.auth.AuthManager
 import com.jeffers.notimindlite.data.local.AppDatabase
 import com.jeffers.notimindlite.data.local.NotificationDao
 import com.jeffers.notimindlite.data.local.PreferencesRepository
-import com.jeffers.notimindlite.ui.screens.activeNotificationsScreen
-import com.jeffers.notimindlite.ui.screens.logHistoryScreen
-import com.jeffers.notimindlite.ui.screens.settingsScreen
-import com.jeffers.notimindlite.ui.screens.splashScreen
+import com.jeffers.notimindlite.ui.screens.ActiveNotificationsScreen
+import com.jeffers.notimindlite.ui.screens.LogHistoryScreen
+import com.jeffers.notimindlite.ui.screens.SettingsScreen
+import com.jeffers.notimindlite.ui.screens.SplashScreen
 
 sealed class Screen(
     val route: String,
@@ -62,14 +62,14 @@ sealed class Screen(
         icon = {
             Icon(
                 Icons.Default.Settings,
-                contentDescription = stringResource(id = R.string.nav_settings_title)
+                contentDescription = stringResource(id = R.string.nav_settings_action_cd)
             )
         }
     )
 }
 
 @Composable
-fun mainNavigation(
+fun MainNavigation(
     modifier: Modifier = Modifier,
     notificationDao: NotificationDao,
     authManager: AuthManager,
@@ -106,20 +106,20 @@ fun mainNavigation(
             modifier = modifier.padding(innerPadding)
         ) {
             composable("splash") {
-                splashScreen(onTimeout = {
+                SplashScreen(onTimeout = {
                     navController.navigate(Screen.Active.route) {
                         popUpTo("splash") { inclusive = true }
                     }
                 })
             }
             composable(Screen.Active.route) {
-                activeNotificationsScreen(notificationDao, preferencesRepository)
+                ActiveNotificationsScreen(notificationDao, preferencesRepository)
             }
             composable(Screen.History.route) {
-                logHistoryScreen(notificationDao, preferencesRepository)
+                LogHistoryScreen(notificationDao, preferencesRepository)
             }
             composable(Screen.Settings.route) {
-                settingsScreen(authManager = authManager, preferencesRepository = preferencesRepository)
+                SettingsScreen(authManager = authManager, preferencesRepository = preferencesRepository)
             }
         }
     }

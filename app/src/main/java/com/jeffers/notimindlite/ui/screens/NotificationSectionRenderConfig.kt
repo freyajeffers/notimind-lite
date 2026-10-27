@@ -31,25 +31,25 @@ internal data class NotificationSectionRenderConfig(
 internal fun LazyListScope.notificationSection(config: NotificationSectionRenderConfig) {
     val section = config.section
     stickyHeader(key = "sticky_header_${section.keyName}") {
-        activeSectionHeader(section, config.isExpanded, config.itemsList.size) {
+        ActiveSectionHeader(section, config.isExpanded, config.itemsList.size) {
             config.onToggleSection(section.keyName)
         }
     }
     if (!config.isExpanded) return
     val groups = groupNotifications(config.itemsList, config.groupByApp, config.sortOrder)
     items(items = groups, key = { group -> "group_${section.keyName}_${group.groupKey}" }) { group ->
-        notificationSectionGroup(config, group)
+        NotificationSectionGroup(config, group)
     }
 }
 
 @Composable
-private fun notificationSectionGroup(
+private fun NotificationSectionGroup(
     config: NotificationSectionRenderConfig,
     group: UiNotificationGroup
 ) {
     val isGroupExpanded = !config.collapsedGroups.contains(group.groupKey)
     if (group.items.size == 1) {
-        notificationSectionCard(config, group.items[0])
+        NotificationSectionCard(config, group.items[0])
     } else {
         NotificationGroupCard(
             group = group,
@@ -57,18 +57,18 @@ private fun notificationSectionGroup(
             dao = config.dao,
             isGroupExpanded = isGroupExpanded,
             onToggleGroupExpand = { config.onToggleGroupExpand(group.groupKey) },
-            renderChildCard = { childItem -> notificationSectionCard(config, childItem) }
+            renderChildCard = { childItem -> NotificationSectionCard(config, childItem) }
         )
     }
 }
 
 @Composable
-private fun notificationSectionCard(
+private fun NotificationSectionCard(
     config: NotificationSectionRenderConfig,
     item: com.jeffers.notimindlite.data.local.NotificationEntity
 ) {
     val cardExpanded = config.expandedCards.contains(item.key)
-    logNotificationCard(
+    LogNotificationCard(
         LogNotificationCardConfig(
             item = item,
             dateTimeFormatter = config.dateTimeFormatter,

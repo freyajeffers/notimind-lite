@@ -114,15 +114,15 @@ import com.jeffers.notimindlite.data.local.PreferenceManager
 import com.jeffers.notimindlite.data.local.PreferencesRepository
 import com.jeffers.notimindlite.domain.search.HybridSearchEngine
 import com.jeffers.notimindlite.service.NotificationLoggerService
+import com.jeffers.notimindlite.ui.components.ActionableChips
 import com.jeffers.notimindlite.ui.components.ActiveFilterChip
+import com.jeffers.notimindlite.ui.components.ActiveFilterChipsRow
 import com.jeffers.notimindlite.ui.components.ActiveFirstRunEmptyState
 import com.jeffers.notimindlite.ui.components.ActivePermissionEmptyState
 import com.jeffers.notimindlite.ui.components.ActiveSearchEmptyState
 import com.jeffers.notimindlite.ui.components.NotificationGroupCard
-import com.jeffers.notimindlite.ui.components.actionableChips
-import com.jeffers.notimindlite.ui.components.activeFilterChipsRow
 import com.jeffers.notimindlite.ui.components.groupNotifications
-import com.jeffers.notimindlite.ui.dialogs.appPackageSelectorDialog
+import com.jeffers.notimindlite.ui.dialogs.AppPackageSelectorDialog
 import com.jeffers.notimindlite.util.NotificationLauncher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -185,13 +185,14 @@ fun getReasonLabel(reason: Int?): Int = reason?.let { REASON_LABELS[it] } ?: if 
     R.string.reason_unknown
 }
 
+@Composable
 fun getPriorityLabel(priority: Int): String = when (priority) {
-    PRIORITY_MIN -> "Min"
-    PRIORITY_LOW -> "Low"
-    PRIORITY_DEFAULT -> "Default"
-    PRIORITY_HIGH -> "High"
-    PRIORITY_MAX -> "Max"
-    else -> "Unknown ($priority)"
+    PRIORITY_MIN -> stringResource(R.string.priority_min)
+    PRIORITY_LOW -> stringResource(R.string.priority_low)
+    PRIORITY_DEFAULT -> stringResource(R.string.priority_default)
+    PRIORITY_HIGH -> stringResource(R.string.priority_high)
+    PRIORITY_MAX -> stringResource(R.string.priority_max)
+    else -> stringResource(R.string.priority_unknown, priority)
 }
 
 private fun notificationSectionOrder(
@@ -232,22 +233,54 @@ private val notificationSearchSuggestions:
 
 enum class NotificationSection(
     val keyName: String,
-    val title: String,
-    val subtitle: String
+    val title: Int,
+    val subtitle: Int,
+    val accessibilityTitle: Int,
+    val accessibilityDescription: Int
 ) {
-    PINNED("PINNED", "Pinned Notifications", "Flagged & saved notifications for later reference"),
-    ACTIVE("ACTIVE", "Active Notifications", "Currently active status bar notifications (sorted by time received)"),
-    FILTERED("FILTERED", "Filtered Notifications", "System, clutter, spam, and auto-filtered notifications"),
+    PINNED(
+        "PINNED",
+        R.string.section_pinned_title,
+        R.string.section_pinned_subtitle,
+        R.string.notification_group_pinned_title,
+        R.string.notification_group_pinned_desc
+    ),
+    ACTIVE(
+        "ACTIVE",
+        R.string.section_active_title,
+        R.string.section_active_subtitle,
+        R.string.notification_group_active_title,
+        R.string.notification_group_active_desc
+    ),
+    FILTERED(
+        "FILTERED",
+        R.string.section_filtered_title,
+        R.string.section_filtered_subtitle,
+        R.string.notification_group_filtered_title,
+        R.string.notification_group_filtered_desc
+    ),
     DISMISSED(
         "DISMISSED",
-        "Recently Dismissed",
-        "User swiped, clicked, or cleared notifications (sorted by time dismissed)"
+        R.string.section_dismissed_title,
+        R.string.section_dismissed_subtitle,
+        R.string.notification_group_dismissed_title,
+        R.string.notification_group_dismissed_desc
     ),
-    LOST("LOST", "Lost Notifications", "App cancelled or package changed notifications (sorted by time dismissed)")
+    LOST(
+        "LOST",
+        R.string.section_lost_title,
+        R.string.section_lost_subtitle,
+        R.string.notification_group_lost_title,
+        R.string.notification_group_lost_desc
+    )
 }
 
 @Composable
-fun appIconImage(appIconUri: String?, modifier: Modifier = Modifier) {
+fun AppIconImage(
+    appIconUri: String?,
+    modifier: Modifier = Modifier,
+    contentDescriptionRes: Int = R.string.active_notifications_app_icon_desc
+) {
     val imageBitmap = remember(appIconUri) {
         if (!appIconUri.isNullOrEmpty()) {
             try {
@@ -267,7 +300,7 @@ fun appIconImage(appIconUri: String?, modifier: Modifier = Modifier) {
     if (imageBitmap != null) {
         Image(
             bitmap = imageBitmap,
-            contentDescription = "App Icon",
+            contentDescription = stringResource(contentDescriptionRes),
             modifier = modifier.size(20.dp)
         )
     }
@@ -306,6 +339,7 @@ private val activeNotificationLifecycle: @Composable (ActiveNotificationLifecycl
 private data class ActiveNotificationsScaffoldConfig(
     val selectedPackages: List<String>?,
     val searchQuery: String,
+    val isGranted: Boolean,
     val onClearFilters: () -> Unit,
     val onOpenPackagePicker: () -> Unit,
     val onToggleSearch: () -> Unit,
@@ -316,15 +350,16 @@ private data class ActiveNotificationsScaffoldConfig(
 private val activeNotificationsLayout: @Composable (ActiveNotificationsScaffoldConfig) -> Unit = { config ->
     Scaffold(
         topBar = {
-            activeNotificationsTopBar(
+            ActiveNotificationsTopBar(
                 selectedPackages = config.selectedPackages,
                 searchQuery = config.searchQuery,
+                isGranted = config.isGranted,
                 onClearFilters = config.onClearFilters,
                 onOpenPackagePicker = config.onOpenPackagePicker,
                 onToggleSearch = config.onToggleSearch
             )
         },
-        floatingActionButton = { activeNotificationsFab(config.listState) },
+        floatingActionButton = { ActiveNotificationsFab(config.listState) },
         content = { innerPadding -> config.content(innerPadding) }
     )
 }
@@ -412,6 +447,7 @@ private val renderActiveNotificationsScreen:
             ActiveNotificationsScaffoldWrapperConfig(
                 selectedPackages = selectedPackages,
                 searchQuery = searchQuery,
+                isGranted = isGranted,
                 isSearchExplicitlyOpened = isSearchExplicitlyOpened,
                 isSearchFocused = isSearchFocused,
                 focusManager = focusManager,
@@ -439,7 +475,7 @@ private val renderActiveNotificationsScreen:
                                 pinnedNotifs + activeNotifs + filteredNotifs + recentlyDismissed + lostNotifs
                             )
                         }
-                        renderActiveNotificationsList(
+                        RenderActiveNotificationsList(
                             ActiveNotificationsListConfig(
                                 listState = listState,
                                 innerPadding = innerPadding,
@@ -498,13 +534,14 @@ private val renderActiveNotificationsScreen:
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class, ExperimentalLayoutApi::class)
 @Composable
-fun activeNotificationsScreen(dao: NotificationDao, preferences: PreferencesRepository) {
+fun ActiveNotificationsScreen(dao: NotificationDao, preferences: PreferencesRepository) {
     renderActiveNotificationsScreen(dao, preferences)
 }
 
 private data class ActiveNotificationsScaffoldWrapperConfig(
     val selectedPackages: List<String>?,
     val searchQuery: String,
+    val isGranted: Boolean,
     val isSearchExplicitlyOpened: Boolean,
     val isSearchFocused: Boolean,
     val focusManager: androidx.compose.ui.focus.FocusManager,
@@ -526,6 +563,7 @@ private val activeNotificationsScaffoldWrapper:
             ActiveNotificationsScaffoldConfig(
                 selectedPackages = config.selectedPackages,
                 searchQuery = config.searchQuery,
+                isGranted = config.isGranted,
                 onClearFilters = {
                     config.onSetSelectedPackages(null)
                     config.onSetSearchQuery("")
@@ -558,7 +596,7 @@ private val renderActivePackagePicker:
     @Composable (Boolean, List<String>?, List<Pair<String, String>>, (List<String>?, Boolean) -> Unit) -> Unit =
     { visible, selectedPackages, availableApps, onChanged ->
         if (visible) {
-            appPackageSelectorDialog(
+            AppPackageSelectorDialog(
                 selectedPackages = selectedPackages ?: emptyList(),
                 availableApps = availableApps,
                 onDismiss = { onChanged(selectedPackages, false) },
@@ -608,7 +646,7 @@ private data class ActiveNotificationsListConfig(
 )
 
 @Composable
-private fun renderActiveNotificationsList(config: ActiveNotificationsListConfig) {
+private fun RenderActiveNotificationsList(config: ActiveNotificationsListConfig) {
     LazyColumn(
         state = config.listState,
         modifier = Modifier
@@ -707,7 +745,7 @@ private fun androidx.compose.foundation.lazy.LazyListScope.activeNotificationsEm
 ) {
     if (config.hasAnyData) return
     item(key = "active_empty_state") {
-        activeEmptyState(
+        ActiveEmptyState(
             isGranted = config.isGranted,
             isSearching = config.isSearching,
             debouncedSearchQuery = config.debouncedSearchQuery,
@@ -735,7 +773,7 @@ data class LogNotificationCardConfig(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun logNotificationCard(config: LogNotificationCardConfig) {
+fun LogNotificationCard(config: LogNotificationCardConfig) {
     val item = config.item
     val dateTimeFormatter = config.dateTimeFormatter
     val dao = config.dao
@@ -763,15 +801,15 @@ fun logNotificationCard(config: LogNotificationCardConfig) {
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                activeNotificationHeader(config)
+                ActiveNotificationHeader(config)
             }
 
             if (!isExpanded) {
-                notificationCollapsedContent(config)
+                NotificationCollapsedContent(config)
             }
 
             if (isExpanded) {
-                activeNotificationExpandedContent(
+                ActiveNotificationExpandedContent(
                     item = item,
                     dateTimeFormatter = dateTimeFormatter,
                     highlightQuery = highlightQuery
@@ -782,7 +820,7 @@ fun logNotificationCard(config: LogNotificationCardConfig) {
 }
 
 @Composable
-private fun notificationCollapsedContent(config: LogNotificationCardConfig) {
+private fun NotificationCollapsedContent(config: LogNotificationCardConfig) {
     val item = config.item
     val highlightQuery = config.highlightQuery
     val previewLength = config.previewLength

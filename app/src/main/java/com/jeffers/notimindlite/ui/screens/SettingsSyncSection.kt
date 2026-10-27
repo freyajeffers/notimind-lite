@@ -40,7 +40,7 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
 @Composable
-fun settingsSyncSection(preferencesRepository: PreferencesRepository) {
+fun SettingsSyncSection(preferencesRepository: PreferencesRepository, isAuthenticated: Boolean) {
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
     val syncInterval by preferencesRepository.syncManager.syncInterval.collectAsState(initial = 60)
@@ -48,6 +48,7 @@ fun settingsSyncSection(preferencesRepository: PreferencesRepository) {
     val syncChargingOnly by preferencesRepository.syncManager.syncChargingOnly.collectAsState(initial = false)
     val lastSyncTs by preferencesRepository.syncManager.lastSyncTs.collectAsState(initial = 0L)
     val useSupabaseSync by preferencesRepository.syncManager.useSupabaseSync.collectAsState(initial = false)
+    val syncTitleAccessibleName = stringResource(R.string.pref_sync_title)
     var syncWorkId by remember { mutableStateOf<java.util.UUID?>(null) }
     val syncWorkInfo by syncWorkId?.let {
         WorkManager.getInstance(context).getWorkInfoByIdFlow(it).collectAsState(initial = null)
@@ -60,43 +61,81 @@ fun settingsSyncSection(preferencesRepository: PreferencesRepository) {
             preferencesRepository.syncManager.refreshLastSyncTs()
         }
     }
+    val syncStatusMessage = when (syncWorkInfo?.state) {
+        WorkInfo.State.SUCCEEDED -> stringResource(
+            R.string.settings_sync_success,
+            syncWorkInfo?.outputData?.getInt(SyncWorker.OUTPUT_SYNC_COUNT, 0) ?: 0
+        )
+
+        WorkInfo.State.FAILED -> stringResource(R.string.settings_sync_failure)
+
+        else -> null
+    }
 
     Card(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
     ) {
         Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-            Text(text = stringResource(R.string.pref_sync_title), style = MaterialTheme.typography.titleMedium)
+            Text(
+                text = stringResource(R.string.settings_section_sync),
+                style = MaterialTheme.typography.titleMedium,
+                modifier = Modifier.semantics {
+                    contentDescription = syncTitleAccessibleName
+                }
+            )
+            Text(
+                text = stringResource(
+                    if (isAuthenticated) {
+                        R.string.settings_sync_idle
+                    } else {
+                        R.string.settings_sync_offline
+                    }
+                ),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            if (syncStatusMessage != null) {
+                Text(
+                    text = syncStatusMessage,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = if (syncWorkInfo?.state == WorkInfo.State.FAILED) {
+                        MaterialTheme.colorScheme.error
+                    } else {
+                        MaterialTheme.colorScheme.primary
+                    }
+                )
+            }
 
-            syncIntervalRow(
+            SyncIntervalRow(
                 syncInterval = syncInterval,
                 onChange = { value ->
                     scope.launch { preferencesRepository.syncManager.setSyncInterval(value) }
                 }
             )
 
-            syncToggleRow(
+            SyncToggleRow(
                 title = stringResource(R.string.pref_sync_wifi_title),
                 summary = stringResource(R.string.pref_sync_wifi_summary),
                 checked = syncWifiOnly,
                 onChecked = { scope.launch { preferencesRepository.syncManager.setSyncWifiOnly(it) } }
             )
 
-            syncToggleRow(
+            SyncToggleRow(
                 title = stringResource(R.string.pref_sync_charging_title),
                 summary = stringResource(R.string.pref_sync_charging_summary),
                 checked = syncChargingOnly,
                 onChecked = { scope.launch { preferencesRepository.syncManager.setSyncChargingOnly(it) } }
             )
 
-            syncToggleRow(
+            SyncToggleRow(
                 title = "Supabase cloud sync (default)",
                 summary = "Uses the existing Supabase project; disable to use Firebase sync",
                 checked = useSupabaseSync,
                 onChecked = { scope.launch { preferencesRepository.syncManager.setUseSupabaseSync(it) } }
             )
 
-            syncNowRow(
+            SyncNowRow(
                 lastSyncTs = lastSyncTs,
                 syncRunning = syncRunning,
                 onClick = { syncWorkId = SyncWorker.runImmediateSync(context) }
@@ -106,7 +145,7 @@ fun settingsSyncSection(preferencesRepository: PreferencesRepository) {
 }
 
 @Composable
-private fun syncIntervalRow(syncInterval: Int, onChange: (Int) -> Unit) {
+private fun SyncIntervalRow(syncInterval: Int, onChange: (Int) -> Unit) {
     Row(
         modifier = Modifier.fillMaxWidth(),
         verticalAlignment = androidx.compose.ui.Alignment.CenterVertically
@@ -129,7 +168,7 @@ private fun syncIntervalRow(syncInterval: Int, onChange: (Int) -> Unit) {
 }
 
 @Composable
-private fun syncToggleRow(title: String, summary: String, checked: Boolean, onChecked: (Boolean) -> Unit) {
+private fun SyncToggleRow(title: String, summary: String, checked: Boolean, onChecked: (Boolean) -> Unit) {
     Row(
         modifier = Modifier.fillMaxWidth(),
         verticalAlignment = androidx.compose.ui.Alignment.CenterVertically
@@ -147,7 +186,7 @@ private fun syncToggleRow(title: String, summary: String, checked: Boolean, onCh
 }
 
 @Composable
-private fun syncNowRow(lastSyncTs: Long, syncRunning: Boolean, onClick: () -> Unit) {
+private fun SyncNowRow(lastSyncTs: Long, syncRunning: Boolean, onClick: () -> Unit) {
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.SpaceBetween,
@@ -164,12 +203,27 @@ private fun syncNowRow(lastSyncTs: Long, syncRunning: Boolean, onClick: () -> Un
             text = stringResource(R.string.pref_sync_last, lastSyncText),
             style = MaterialTheme.typography.bodySmall
         )
-        Button(onClick = onClick, enabled = !syncRunning) {
+        val syncButtonDescription = stringResource(
+            if (syncRunning) R.string.settings_sync_now_loading else R.string.pref_sync_now
+        )
+        Button(
+            onClick = onClick,
+            enabled = !syncRunning,
+            modifier = Modifier.semantics { contentDescription = syncButtonDescription }
+        ) {
             if (syncRunning) {
                 CircularProgressIndicator(modifier = Modifier.size(18.dp), strokeWidth = 2.dp)
                 Spacer(Modifier.width(8.dp))
             }
-            Text(if (syncRunning) "Syncing…" else stringResource(R.string.pref_sync_now))
+            Text(
+                stringResource(
+                    if (syncRunning) {
+                        R.string.settings_sync_now_loading
+                    } else {
+                        R.string.settings_sync_now_idle
+                    }
+                )
+            )
         }
     }
 }

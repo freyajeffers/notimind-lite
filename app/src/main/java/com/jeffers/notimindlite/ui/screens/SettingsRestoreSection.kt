@@ -22,6 +22,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.jeffers.notimindlite.BuildConfig
@@ -39,7 +40,7 @@ import java.io.FileOutputStream
 import javax.crypto.SecretKey
 
 @Composable
-internal fun restoreCard(
+internal fun RestoreCard(
     prefMgr: PreferenceManager,
     listenerGranted: Boolean,
     onPickBackup: () -> Unit,
@@ -89,7 +90,7 @@ internal fun restoreCard(
             ) {
                 Icon(Icons.Default.Restore, contentDescription = "Restore")
                 Spacer(Modifier.width(8.dp))
-                Text("Restore Backup Manually")
+                Text(stringResource(R.string.settings_restore_manual))
             }
             OutlinedButton(
                 onClick = onCreateBackup,
@@ -98,7 +99,7 @@ internal fun restoreCard(
             ) {
                 Icon(Icons.Default.Restore, contentDescription = "Encrypted backup")
                 Spacer(Modifier.width(8.dp))
-                Text("Create Encrypted Backup")
+                Text(stringResource(R.string.backup_dialog_create))
             }
         }
     }
@@ -121,7 +122,7 @@ data class RestoreDialogConfig(
 )
 
 @Composable
-fun restoreDialogs(config: RestoreDialogConfig) {
+fun RestoreDialogs(config: RestoreDialogConfig) {
     val currentUri = config.selectedBackupUri
     if (config.showRestoreDialog && currentUri != null) {
         val pickedDisplayName = currentUri.lastPathSegment
@@ -152,11 +153,14 @@ fun restoreDialogs(config: RestoreDialogConfig) {
                         config.pendingBackupKey,
                         passphrase
                     )
+                    val error = result.exceptionOrNull()
                     config.onSyncMessage(
                         if (result.isSuccess) {
-                            "Backup created successfully"
+                            config.context.getString(R.string.backup_created_successfully)
+                        } else if (error?.message == "Active internet connection is required to create a backup") {
+                            config.context.getString(R.string.backup_network_required)
                         } else {
-                            "Backup failed: ${result.exceptionOrNull()?.localizedMessage}"
+                            "${config.context.getString(R.string.backup_failed)}: ${error?.localizedMessage}"
                         }
                     )
                 }

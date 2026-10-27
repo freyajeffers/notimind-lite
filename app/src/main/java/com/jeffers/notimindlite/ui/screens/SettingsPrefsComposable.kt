@@ -39,31 +39,31 @@ import com.jeffers.notimindlite.data.local.DbEncryptionMode
 import com.jeffers.notimindlite.data.local.PreferencesRepository
 
 @Composable
-fun settingsPreferencesSection(preferencesRepository: PreferencesRepository) {
+fun SettingsPreferencesSection(preferencesRepository: PreferencesRepository) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
     ) {
         Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-            searchSyncSection(preferencesRepository)
-            displaySettingsSection(preferencesRepository)
+            SearchSyncSection(preferencesRepository)
+            DisplaySettingsSection(preferencesRepository)
 
-            automationSettingsSection(preferencesRepository)
+            AutomationSettingsSection(preferencesRepository)
 
-            settingsSecuritySection(preferencesRepository)
+            SettingsSecuritySection(preferencesRepository)
 
-            debugSettingsSection(preferencesRepository)
+            DebugSettingsSection(preferencesRepository)
         }
     }
 }
 
 @Composable
-internal fun disabledPreferenceRow(title: String, summary: String) {
-    preferenceSwitchRow(title, summary, checked = false, onCheckedChange = {}, enabled = false)
+internal fun DisabledPreferenceRow(title: String, summary: String) {
+    PreferenceSwitchRow(title, summary, checked = false, onCheckedChange = {}, enabled = false)
 }
 
 @Composable
-internal fun preferenceSwitchRow(
+internal fun PreferenceSwitchRow(
     title: String,
     summary: String,
     checked: Boolean,
@@ -89,7 +89,7 @@ internal fun preferenceSwitchRow(
 }
 
 @Composable
-internal fun preferenceSelectRow(
+internal fun PreferenceSelectRow(
     title: String,
     selected: String,
     options: List<Pair<String, String>>,

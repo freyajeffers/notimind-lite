@@ -4,6 +4,8 @@ import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.util.Base64
+import androidx.core.content.edit
+import androidx.core.net.toUri
 import com.jeffers.notimindlite.BuildConfig
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -32,7 +34,7 @@ class SupabaseAuthManager(
     private val sessionStore = SupabaseSessionStore(context)
     private var verifier: String?
         get() = prefs.getString("pkce_verifier", null)
-        set(value) = prefs.edit().putString("pkce_verifier", value).apply()
+        set(value) = prefs.edit { putString("pkce_verifier", value) }
 
     fun accessToken(): String? = sessionStore.readAccessToken()
 
@@ -53,7 +55,7 @@ class SupabaseAuthManager(
             "&redirect_to=" + encode(BuildConfig.SUPABASE_REDIRECT_URI) +
             "&code_challenge=" + encode(challenge) +
             "&code_challenge_method=S256"
-        context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url)).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+        context.startActivity(Intent(Intent.ACTION_VIEW, url.toUri()).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
     }
 
     suspend fun completeCallback(uri: Uri): Result<UserSession> = withContext(Dispatchers.IO) {
@@ -106,7 +108,7 @@ class SupabaseAuthManager(
         sessionStore.refreshSessionIfNeeded(BuildConfig.SUPABASE_URL, BuildConfig.SUPABASE_ANON_KEY)
 
     fun signOut() {
-        prefs.edit().clear().apply()
+        prefs.edit { clear() }
     }
 
     private fun decodeUser(token: String): UserSession {

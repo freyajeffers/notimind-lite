@@ -12,6 +12,7 @@ import android.os.Bundle
 import android.service.notification.NotificationListenerService
 import android.service.notification.StatusBarNotification
 import android.util.Log
+import androidx.core.graphics.createBitmap
 import com.jeffers.notimindlite.BuildConfig
 import com.jeffers.notimindlite.data.local.AppDatabase
 import com.jeffers.notimindlite.data.local.Converters
@@ -134,7 +135,7 @@ class NotificationLoggerService : NotificationListenerService() {
                 }
 
                 else -> {
-                    val bmp = Bitmap.createBitmap(
+                    val bmp = createBitmap(
                         drawable.intrinsicWidth.coerceAtLeast(1),
                         drawable.intrinsicHeight.coerceAtLeast(1),
                         Bitmap.Config.ARGB_8888

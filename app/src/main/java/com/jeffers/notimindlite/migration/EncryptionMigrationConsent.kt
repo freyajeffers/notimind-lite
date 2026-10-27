@@ -1,6 +1,7 @@
 package com.jeffers.notimindlite.migration
 
 import android.content.Context
+import androidx.core.content.edit
 
 /** Persisted user decision controlling legacy plaintext database encryption migration. */
 object EncryptionMigrationConsent {
@@ -29,12 +30,11 @@ object EncryptionMigrationConsent {
             Decision.DECLINED -> DECLINED_VALUE
             Decision.UNKNOWN -> error("Unknown consent cannot be persisted")
         }
-        check(
-            context.applicationContext
-                .getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-                .edit()
-                .putString(DECISION_KEY, value)
-                .commit()
-        ) { "Unable to persist encryption migration consent" }
+        val preferences = context.applicationContext
+            .getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        preferences.edit(commit = true) { putString(DECISION_KEY, value) }
+        check(preferences.getString(DECISION_KEY, null) == value) {
+            "Unable to persist encryption migration consent"
+        }
     }
 }

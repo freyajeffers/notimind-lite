@@ -20,7 +20,7 @@ import com.jeffers.notimindlite.R
 import com.jeffers.notimindlite.data.local.PreferencesRepository
 
 @Composable
-fun displaySettingsSection(preferencesRepository: PreferencesRepository) {
+fun DisplaySettingsSection(preferencesRepository: PreferencesRepository) {
     val compactMode by preferencesRepository.displayManager.compactMode.collectAsState(initial = false)
     val showAppIcons by preferencesRepository.displayManager.showAppIcons.collectAsState(initial = true)
     val groupByApp by preferencesRepository.displayManager.groupByApp.collectAsState(initial = true)
@@ -47,42 +47,42 @@ fun displaySettingsSection(preferencesRepository: PreferencesRepository) {
     Column(modifier = Modifier.fillMaxWidth().padding(vertical = 0.dp)) {
         Text(stringResource(R.string.pref_display_title), style = MaterialTheme.typography.titleMedium)
 
-        preferenceSwitchRow(
+        PreferenceSwitchRow(
             stringResource(R.string.pref_compact_mode_title),
             stringResource(R.string.pref_compact_mode_summary), compactMode,
             preferencesRepository.displayManager::setCompactMode
         )
-        preferenceSwitchRow(
+        PreferenceSwitchRow(
             stringResource(R.string.pref_show_app_icons_title),
             stringResource(R.string.pref_show_app_icons_summary), showAppIcons,
             preferencesRepository.displayManager::setShowAppIcons
         )
-        preferenceSwitchRow(
+        PreferenceSwitchRow(
             stringResource(R.string.pref_group_by_app_title),
             stringResource(R.string.pref_group_by_app_summary), groupByApp,
             preferencesRepository.displayManager::setGroupByApp
         )
-        preferenceSelectRow(
+        PreferenceSelectRow(
             stringResource(R.string.pref_sort_order_title),
             sortOrder,
             sortOptions,
             preferencesRepository.displayManager::setSortOrder
         )
-        preferenceSelectRow(
+        PreferenceSelectRow(
             stringResource(R.string.pref_theme_accent_title),
             themeAccent,
             themeOptions,
             preferencesRepository.displayManager::setThemeAccent
         )
 
-        previewLengthRow(previewLength, preferencesRepository)
+        PreviewLengthRow(previewLength, preferencesRepository)
     }
 }
 
 private const val PREVIEW_TEXT_WEIGHT = 0.7f
 
 @Composable
-private fun previewLengthRow(previewLength: Int, preferencesRepository: PreferencesRepository) {
+private fun PreviewLengthRow(previewLength: Int, preferencesRepository: PreferencesRepository) {
     Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
         Column(modifier = Modifier.fillMaxWidth(PREVIEW_TEXT_WEIGHT)) {
             Text(stringResource(R.string.pref_preview_length_title), style = MaterialTheme.typography.bodyLarge)

@@ -39,7 +39,7 @@ import com.jeffers.notimindlite.R
  * a set of quick-action sub-buttons (Sync, Backup, Settings).
  */
 @Composable
-fun speedDialSettingsFab(
+fun SpeedDialSettingsFab(
     onSyncClick: () -> Unit,
     onBackupClick: () -> Unit,
     onSettingsClick: () -> Unit,
@@ -47,7 +47,7 @@ fun speedDialSettingsFab(
 ) {
     var expanded by remember { mutableStateOf(false) }
 
-    speedDialFabContent(
+    SpeedDialFabContent(
         expanded = expanded,
         callbacks = SpeedDialCallbacks(
             onToggle = { expanded = !expanded },
@@ -61,7 +61,7 @@ fun speedDialSettingsFab(
 }
 
 @Composable
-private fun speedDialFabContent(
+private fun SpeedDialFabContent(
     expanded: Boolean,
     callbacks: SpeedDialCallbacks,
     modifier: Modifier = Modifier
@@ -90,7 +90,7 @@ private fun speedDialFabContent(
         contentAlignment = Alignment.BottomEnd
     ) {
         if (expanded || scale > 0f) {
-            speedDialActions(
+            SpeedDialActions(
                 scale = scale,
                 close = callbacks.onClose,
                 onSyncClick = callbacks.onSyncClick,
@@ -131,7 +131,7 @@ private data class SpeedDialCallbacks(
 )
 
 @Composable
-private fun speedDialActions(
+private fun SpeedDialActions(
     scale: Float,
     close: () -> Unit,
     onSyncClick: () -> Unit,
@@ -143,15 +143,15 @@ private fun speedDialActions(
         horizontalAlignment = Alignment.End,
         modifier = Modifier.padding(bottom = 72.dp)
     ) {
-        speedDialItem(Icons.Default.Sync, stringResource(R.string.quick_actions_sync), scale) {
+        SpeedDialItem(Icons.Default.Sync, stringResource(R.string.quick_actions_sync), scale) {
             close()
             onSyncClick()
         }
-        speedDialItem(Icons.Default.Backup, stringResource(R.string.quick_actions_backup), scale) {
+        SpeedDialItem(Icons.Default.Backup, stringResource(R.string.quick_actions_backup), scale) {
             close()
             onBackupClick()
         }
-        speedDialItem(Icons.Default.Settings, stringResource(R.string.quick_actions_settings), scale) {
+        SpeedDialItem(Icons.Default.Settings, stringResource(R.string.quick_actions_settings), scale) {
             close()
             onSettingsClick()
         }
@@ -159,7 +159,7 @@ private fun speedDialActions(
 }
 
 @Composable
-private fun speedDialItem(
+private fun SpeedDialItem(
     icon: ImageVector,
     label: String,
     scale: Float,

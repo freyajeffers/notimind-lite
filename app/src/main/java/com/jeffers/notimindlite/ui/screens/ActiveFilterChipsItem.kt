@@ -4,7 +4,7 @@ import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.ui.res.stringResource
 import com.jeffers.notimindlite.R
 import com.jeffers.notimindlite.ui.components.ActiveFilterChip
-import com.jeffers.notimindlite.ui.components.activeFilterChipsRow
+import com.jeffers.notimindlite.ui.components.ActiveFilterChipsRow
 
 internal fun LazyListScope.activeFilterChipsItem(
     searchQuery: String,
@@ -25,7 +25,7 @@ internal fun LazyListScope.activeFilterChipsItem(
     }
     if (chips.isNotEmpty()) {
         item(key = "active_filter_chips") {
-            activeFilterChipsRow(
+            ActiveFilterChipsRow(
                 label = stringResource(R.string.active_filter_chips_label),
                 chips = chips,
                 clearAllLabel = stringResource(R.string.active_filter_chips_clear_all),

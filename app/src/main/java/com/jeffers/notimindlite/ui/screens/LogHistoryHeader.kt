@@ -17,7 +17,7 @@ import androidx.compose.ui.unit.sp
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-internal fun logHistoryCardHeader(state: com.jeffers.notimindlite.ui.screens.LogHistoryCardState) {
+internal fun LogHistoryCardHeader(state: com.jeffers.notimindlite.ui.screens.LogHistoryCardState) {
     val item = state.item
 
     Row(
@@ -29,7 +29,10 @@ internal fun logHistoryCardHeader(state: com.jeffers.notimindlite.ui.screens.Log
             verticalAlignment = Alignment.CenterVertically,
             modifier = Modifier.weight(1f)
         ) {
-            appIconImage(appIconUri = item.appIconUri)
+            AppIconImage(
+                appIconUri = item.appIconUri,
+                contentDescriptionRes = com.jeffers.notimindlite.R.string.notification_icon_description
+            )
             if (!item.appIconUri.isNullOrEmpty()) {
                 Spacer(modifier = Modifier.width(6.dp))
             }
@@ -41,6 +44,6 @@ internal fun logHistoryCardHeader(state: com.jeffers.notimindlite.ui.screens.Log
             )
         }
 
-        logHistoryHeaderActions(state)
+        LogHistoryHeaderActions(state)
     }
 }

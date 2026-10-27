@@ -1,6 +1,7 @@
 package com.jeffers.notimindlite.data.local
 
 import android.content.Context
+import androidx.core.content.edit
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -34,12 +35,12 @@ class StoragePreferencesManager(
 
     fun setMaxDbMb(value: Int) {
         val safe = value.coerceIn(MIN_DB_SIZE_MB, MAX_DB_SIZE_MB)
-        preferences.edit().putInt(KEY_MAX_DB_MB, safe).apply()
+        preferences.edit { putInt(KEY_MAX_DB_MB, safe) }
         _maxDbMb.value = safe
     }
 
     fun setLowMemoryMode(value: Boolean) {
-        preferences.edit().putBoolean(KEY_LOW_MEMORY_MODE, value).apply()
+        preferences.edit { putBoolean(KEY_LOW_MEMORY_MODE, value) }
         _lowMemoryMode.value = value
         com.jeffers.notimindlite.util.VectorEmbeddingHelper
             .setLowMemoryMode(value)
@@ -47,7 +48,7 @@ class StoragePreferencesManager(
 
     fun setVectorCacheMax(value: Int) {
         val safe = value.coerceIn(MIN_VECTOR_CACHE_SIZE, MAX_VECTOR_CACHE_SIZE)
-        preferences.edit().putInt(KEY_VECTOR_CACHE_MAX, safe).apply()
+        preferences.edit { putInt(KEY_VECTOR_CACHE_MAX, safe) }
         _vectorCacheMax.value = safe
         com.jeffers.notimindlite.util.VectorEmbeddingHelper
             .updateCacheSize(safe)
@@ -55,7 +56,7 @@ class StoragePreferencesManager(
 
     fun setMaxCacheSizeMb(value: Int) {
         val safe = value.coerceIn(MIN_CACHE_SIZE_MB, MAX_CACHE_SIZE_MB)
-        preferences.edit().putInt(KEY_MAX_CACHE_MB, safe).apply()
+        preferences.edit { putInt(KEY_MAX_CACHE_MB, safe) }
         _maxCacheSizeMb.value = safe
     }
 

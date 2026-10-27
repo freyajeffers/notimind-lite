@@ -24,7 +24,7 @@ import com.jeffers.notimindlite.data.local.NotificationEntity
 import org.json.JSONArray
 
 @Composable
-internal fun activeNotificationExpandedContent(
+internal fun ActiveNotificationExpandedContent(
     item: NotificationEntity,
     dateTimeFormatter: java.time.format.DateTimeFormatter,
     highlightQuery: String
@@ -54,14 +54,14 @@ internal fun activeNotificationExpandedContent(
             Text(item.bigText, style = MaterialTheme.typography.bodySmall)
         }
         val inboxLines = remember(item.inboxLinesJson) { parseActiveInboxLines(item.inboxLinesJson) }
-        if (inboxLines.isNotEmpty()) activeInboxLinesPanel(inboxLines)
+        if (inboxLines.isNotEmpty()) ActiveInboxLinesPanel(inboxLines)
         Spacer(modifier = Modifier.height(8.dp))
-        notificationExpandedAttributes(item = item, dateTimeFormatter = dateTimeFormatter)
+        NotificationExpandedAttributes(item = item, dateTimeFormatter = dateTimeFormatter)
     }
 }
 
 @Composable
-private fun activeInboxLinesPanel(inboxLines: List<String>) {
+private fun ActiveInboxLinesPanel(inboxLines: List<String>) {
     Spacer(modifier = Modifier.height(6.dp))
     Surface(
         shape = RoundedCornerShape(6.dp),
@@ -70,7 +70,7 @@ private fun activeInboxLinesPanel(inboxLines: List<String>) {
     ) {
         Column(modifier = Modifier.padding(8.dp), verticalArrangement = Arrangement.spacedBy(2.dp)) {
             Text(
-                text = "Inbox Lines (${inboxLines.size})",
+                text = stringResource(com.jeffers.notimindlite.R.string.notification_inbox_lines, inboxLines.size),
                 style = MaterialTheme.typography.labelSmall,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.primary

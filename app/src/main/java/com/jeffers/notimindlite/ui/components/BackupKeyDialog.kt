@@ -164,12 +164,13 @@ fun BackupKeyDialog(
         },
         title = {
             Text(
-                stringResource(R.string.backup_dialog_title),
+                stringResource(R.string.backup_key_generated_title),
                 modifier = Modifier.semantics { heading() }
             )
         },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                Text(stringResource(R.string.backup_dialog_title), style = MaterialTheme.typography.titleSmall)
                 Text(
                     stringResource(R.string.backup_dialog_passphrase_description),
                     style = MaterialTheme.typography.bodyMedium,
@@ -227,7 +228,7 @@ fun BackupKeyDialog(
                     onConfirm(pass)
                 },
             ) {
-                Text(stringResource(R.string.backup_dialog_create))
+                Text(stringResource(R.string.backup_key_saved_confirm))
             }
         },
         dismissButton = {

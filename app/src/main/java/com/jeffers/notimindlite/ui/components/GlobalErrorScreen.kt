@@ -18,13 +18,14 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 
 @Composable
-fun globalErrorScreen(
+fun GlobalErrorScreen(
     message: String,
-    actionLabel: String = "Retry",
+    actionLabel: String? = null,
     onActionClick: () -> Unit,
     icon: ImageVector = Icons.Default.ErrorOutline
 ) {
@@ -45,7 +46,7 @@ fun globalErrorScreen(
             )
             Spacer(modifier = Modifier.height(16.dp))
             Text(
-                text = "Something went wrong",
+                text = stringResource(com.jeffers.notimindlite.R.string.global_error_title),
                 style = MaterialTheme.typography.headlineSmall,
                 textAlign = TextAlign.Center
             )
@@ -58,7 +59,7 @@ fun globalErrorScreen(
             )
             Spacer(modifier = Modifier.height(24.dp))
             Button(onClick = onActionClick) {
-                Text(text = actionLabel)
+                Text(text = actionLabel ?: stringResource(com.jeffers.notimindlite.R.string.common_retry))
             }
         }
     }
