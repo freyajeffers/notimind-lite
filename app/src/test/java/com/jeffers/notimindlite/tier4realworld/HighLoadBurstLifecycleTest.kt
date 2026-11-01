@@ -74,6 +74,7 @@ class HighLoadBurstLifecycleTest : BaseRobolectricTest() {
         val bootIntent = Intent(Intent.ACTION_BOOT_COMPLETED)
         val bootReceiver = BootReceiver()
         bootReceiver.onReceive(context, bootIntent)
+        bootReceiver.awaitPendingWork()
         waitUntil { shadowNm.allNotifications.isNotEmpty() }
 
         val posted = shadowNm.allNotifications

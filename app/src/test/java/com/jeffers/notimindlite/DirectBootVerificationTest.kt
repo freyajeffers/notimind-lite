@@ -4,6 +4,7 @@ import android.content.Context
 import android.content.Intent
 import android.os.UserManager
 import com.jeffers.notimindlite.receiver.BootReceiver
+import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
@@ -31,25 +32,27 @@ class DirectBootVerificationTest {
     }
 
     @Test
-    fun `BootReceiver should skip restoration when device is LOCKED`() {
+    fun `BootReceiver should skip restoration when device is LOCKED`() = runBlocking {
         // Simulate LOCKED state
         shadowUserManager.setUserUnlocked(false)
 
         val bootIntent = Intent(Intent.ACTION_LOCKED_BOOT_COMPLETED)
 
         bootReceiver.onReceive(context, bootIntent)
+        bootReceiver.awaitPendingWork()
 
         assertTrue(true) // Reached here without crashing
     }
 
     @Test
-    fun `BootReceiver should perform restoration when device is UNLOCKED`() {
+    fun `BootReceiver should perform restoration when device is UNLOCKED`() = runBlocking {
         // Simulate UNLOCKED state
         shadowUserManager.setUserUnlocked(true)
 
         val bootIntent = Intent(Intent.ACTION_BOOT_COMPLETED)
 
         bootReceiver.onReceive(context, bootIntent)
+        bootReceiver.awaitPendingWork()
 
         assertTrue(true) // Reached here without crashing
     }

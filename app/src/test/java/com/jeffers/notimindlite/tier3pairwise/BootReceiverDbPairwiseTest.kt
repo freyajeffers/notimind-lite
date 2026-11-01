@@ -64,7 +64,7 @@ class BootReceiverDbPairwiseTest : BaseRobolectricTest() {
         val receiver = BootReceiver()
 
         receiver.onReceive(context, bootIntent)
-        Thread.sleep(200)
+        receiver.awaitPendingWork()
 
         val postedNotifications = shadowNm.allNotifications
         val channelCreated = notificationManager.notificationChannels.any { it.id == BootReceiver.CHANNEL_ID_RESTORED }

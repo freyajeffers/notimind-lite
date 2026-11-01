@@ -36,6 +36,7 @@ class BootReceiverTest {
         val bootIntent = Intent(Intent.ACTION_BOOT_COMPLETED)
 
         receiver.onReceive(context, bootIntent)
+        receiver.awaitPendingWork()
         assertNotNull(receiver)
     }
 
@@ -61,6 +62,7 @@ class BootReceiverTest {
         val bootIntent = Intent(Intent.ACTION_BOOT_COMPLETED)
 
         receiver.onReceive(context, bootIntent)
+        receiver.awaitPendingWork()
         assertNotNull(receiver)
     }
 
@@ -81,6 +83,7 @@ class BootReceiverTest {
         val powerOnIntent = Intent("android.intent.action.QUICKBOOT_POWERON")
 
         receiver.onReceive(context, powerOnIntent)
+        receiver.awaitPendingWork()
         assertNotNull(receiver)
     }
 }

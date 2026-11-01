@@ -44,6 +44,7 @@ class ArchitectureBoundaryTest : BaseRobolectricTest() {
 
         try {
             receiver.onReceive(context, dummyIntent)
+            receiver.awaitPendingWork()
             // H3: assert the receiver completed BOOT_COMPLETED without crashing and did not
             // surface synthetic notifications on a fresh DB (the assertion is meaningful: a
             // buggy receiver could post a notification as a side-effect; this would fail it).
@@ -59,13 +60,14 @@ class ArchitectureBoundaryTest : BaseRobolectricTest() {
 
     @Test
     @Config(sdk = [33, 34])
-    fun tc_R1_T2_003_sdkVersionBoundaryCompatibility() {
+    fun tc_R1_T2_003_sdkVersionBoundaryCompatibility() = runBlocking {
         val db = AppDatabase.getDatabase(context)
         assertNotNull("Database initialized on target SDK boundary", db)
 
         val receiver = BootReceiver()
         val intent = Intent(Intent.ACTION_BOOT_COMPLETED)
         receiver.onReceive(context, intent)
+        receiver.awaitPendingWork()
     }
 
     @Test

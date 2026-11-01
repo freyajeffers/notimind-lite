@@ -17,7 +17,9 @@ import com.jeffers.notimindlite.service.NotificationRestoreCoordinator
 import com.jeffers.notimindlite.service.RestoredNotificationState
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.joinAll
 import kotlinx.coroutines.launch
 
 /**
@@ -39,6 +41,11 @@ class BootReceiver : BroadcastReceiver() {
                 handleAction(receiverContext, action)
             }
         }
+    }
+
+    internal suspend fun awaitPendingWork() {
+        val receiverJob = receiverScope.coroutineContext[Job] ?: return
+        receiverJob.children.toList().joinAll()
     }
 
     private fun handleAction(context: Context, action: String) {
