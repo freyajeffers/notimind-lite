@@ -28,42 +28,57 @@ object BackupNotaryClient {
      * Flow: Play Integrity Token -> Server Verification -> Signature Delivery.
      */
     suspend fun getSignature(context: Context, fileHash: String): String = withContext(Dispatchers.IO) {
-        check(NetworkUtils.isInternetAvailable(context)) {
+        getSignatureWithDependencies(
+            fileHash = fileHash,
+            isOnline = { NetworkUtils.isInternetAvailable(context) },
+            requestIntegrityToken = { nonce ->
+                val integrityManager = IntegrityManagerFactory.create(context)
+                requestIntegrityToken(integrityManager, nonce)
+            },
+            fetchSignature = { hash, token -> fetchSignatureFromServer(hash, token) }
+        )
+    }
+
+    internal suspend fun getSignatureWithDependencies(
+        fileHash: String,
+        isOnline: () -> Boolean,
+        requestIntegrityToken: suspend (String) -> String,
+        fetchSignature: suspend (String, String) -> String
+    ): String {
+        check(isOnline()) {
             "Active internet connection is required to notarize and create backup"
         }
 
         try {
-            // 1. Request an Integrity Token from Google Play
-            val integrityManager = IntegrityManagerFactory.create(context)
             val nonce = UUID.randomUUID().toString()
-            val integrityToken = requestIntegrityToken(integrityManager, nonce)
-
-            // 2. Send the hash and token to the Notary Server
-            val signature = fetchSignatureFromServer(fileHash, integrityToken)
-
-            signature
+            val integrityToken = requestIntegrityToken(nonce)
+            return fetchSignature(fileHash, integrityToken)
         } catch (e: java.net.SocketTimeoutException) {
             AppLogger.e(TAG, "Notary signature retrieval timed out: ${e.message}", e)
-            throw SecurityException("Backup authorization failed: network timeout")
+            throwSecurityFailure("Backup authorization failed: network timeout")
         } catch (e: java.io.IOException) {
             AppLogger.e(TAG, "Notary signature retrieval IO error: ${e.message}", e)
-            throw SecurityException("Could not verify app identity due to IO failure. Backup authorization failed.")
+            throwSecurityFailure("Could not verify app identity due to IO failure. Backup authorization failed.")
         } catch (e: SecurityException) {
             AppLogger.e(TAG, "Notary signature retrieval security failure: ${e.message}", e)
-            throw e
+            rethrowSecurityFailure(e)
         } catch (e: IllegalStateException) {
             AppLogger.e(TAG, "Notary signature retrieval illegal state: ${e.message}", e)
-            throw SecurityException("Could not verify app identity. Backup authorization failed.")
+            throwSecurityFailure("Could not verify app identity. Backup authorization failed.")
         } catch (e: IllegalArgumentException) {
             AppLogger.e(TAG, "Notary signature retrieval invalid argument: ${e.message}", e)
-            throw SecurityException("Could not verify app identity. Backup authorization failed.")
+            throwSecurityFailure("Could not verify app identity. Backup authorization failed.")
         } catch (e: ClassCastException) {
             AppLogger.e(TAG, "Notary signature retrieval response type failure: ${e.message}", e)
-            throw SecurityException("Could not verify app identity. Backup authorization failed.")
+            throwSecurityFailure("Could not verify app identity. Backup authorization failed.")
         }
     }
 
-    private suspend fun requestIntegrityToken(
+    private fun throwSecurityFailure(message: String): Nothing = throw SecurityException(message)
+
+    private fun rethrowSecurityFailure(exception: SecurityException): Nothing = throw exception
+
+    internal suspend fun requestIntegrityToken(
         manager: com.google.android.play.core.integrity.IntegrityManager,
         nonce: String
     ): String {
@@ -76,8 +91,12 @@ object BackupNotaryClient {
         return response.token()
     }
 
-    private suspend fun fetchSignatureFromServer(hash: String, token: String): String {
-        val connection = URL(NOTARY_SERVER_URL).openConnection() as HttpURLConnection
+    internal suspend fun fetchSignatureFromServer(
+        hash: String,
+        token: String,
+        openConnection: (URL) -> HttpURLConnection = { url -> url.openConnection() as HttpURLConnection }
+    ): String {
+        val connection = openConnection(URL(NOTARY_SERVER_URL))
         return try {
             connection.requestMethod = "POST"
             connection.doOutput = true

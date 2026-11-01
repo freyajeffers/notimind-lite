@@ -3,8 +3,10 @@ package com.jeffers.notimindlite
 import android.content.Context
 import androidx.test.core.app.ApplicationProvider
 import com.jeffers.notimindlite.data.local.NotificationEntity
+import com.jeffers.notimindlite.data.local.PreferencesRepository
 import com.jeffers.notimindlite.util.DatabaseExportHelper
 import com.jeffers.notimindlite.util.DatabaseExporter
+import kotlinx.coroutines.runBlocking
 import org.json.JSONArray
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -16,6 +18,7 @@ import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 import java.io.File
+import javax.crypto.spec.SecretKeySpec
 
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [33])
@@ -172,4 +175,159 @@ class DatabaseExporterTest {
         val emptyNdjson = DatabaseExporter.exportToNdjsonString(emptyList())
         assertTrue(emptyNdjson.isBlank())
     }
+
+    @Test
+    fun exportToJsonFile_writesNullDefaultsAndNotificationFields() {
+        val file = File(context.cacheDir, "json-file-export-${System.nanoTime()}.json")
+        val notification = NotificationEntity(
+            key = "file-export",
+            packageName = "com.example.export",
+            appName = "Example",
+            title = "Export title",
+            content = "Export body",
+            postTime = 1_700_000_000_000L
+        )
+
+        try {
+            DatabaseExporter.exportToJsonFile(file, listOf(notification))
+
+            assertTrue(file.exists())
+            val exported = JSONArray(file.readText()).getJSONObject(0)
+            assertEquals("file-export", exported.getString("key"))
+            assertEquals("Export title", exported.getString("title"))
+            assertEquals("Export body", exported.getString("content"))
+            assertEquals("", exported.getString("subText"))
+            assertEquals("", exported.getString("bigText"))
+            assertEquals("", exported.getString("category"))
+            assertEquals("", exported.getString("channelId"))
+            assertEquals(-1, exported.getInt("dismissReason"))
+        } finally {
+            file.delete()
+        }
+    }
+
+    @Test
+    fun performRestore_missingBackupReturnsFailureBeforeOpeningDatabase() = runBlocking {
+        val missing = File(context.cacheDir, "missing-backup-${System.nanoTime()}.nmb")
+        val key = SecretKeySpec(ByteArray(16), "AES")
+
+        val result = DatabaseExporter.performRestore(context, missing, key)
+
+        assertTrue(result.isFailure)
+        assertTrue(result.exceptionOrNull() is IllegalArgumentException)
+    }
+
+    @Test
+    fun performRestore_malformedBackupReturnsFailure() = runBlocking {
+        val malformed = File(context.cacheDir, "malformed-backup-${System.nanoTime()}.nmb")
+        malformed.writeText("not a NotiMind backup")
+        val key = SecretKeySpec(ByteArray(16), "AES")
+
+        try {
+            val result = DatabaseExporter.performRestore(context, malformed, key)
+
+            assertTrue(result.isFailure)
+            assertTrue(result.exceptionOrNull() is IllegalStateException)
+        } finally {
+            malformed.delete()
+        }
+    }
+
+    @Test
+    fun shareExportFile_disabledFormatDoesNotThrowOrCreateAFile() {
+        val preferences = PreferencesRepository(context)
+        val exportPreferences = preferences.exportManager
+        val originalFormats = exportPreferences.formats.value
+        val exportsDir = File(context.cacheDir, "exports")
+        val filesBefore = existingExportFiles(exportsDir)
+
+        try {
+            exportPreferences.setFormats("csv")
+            val exception = runCatching {
+                DatabaseExporter.shareExportFile(
+                    context,
+                    listOf(
+                        NotificationEntity(
+                            key = "disabled",
+                            packageName = "pkg",
+                            appName = "App",
+                            title = "T",
+                            content = "C"
+                        )
+                    ),
+                    isJson = true
+                )
+            }.exceptionOrNull()
+
+            assertTrue("Disabled-format validation must be handled without crashing", exception == null)
+            assertEquals(filesBefore, existingExportFiles(exportsDir))
+        } finally {
+            exportPreferences.setFormats(originalFormats)
+        }
+    }
+
+    @Test
+    fun shareExportFile_missingBiometricAuthenticationDoesNotThrow() {
+        val securityPreferences = PreferencesRepository(context).securityManager
+        val original = securityPreferences.exportRequiresBiometric.value
+
+        try {
+            securityPreferences.setExportRequiresBiometric(true)
+            val exception = runCatching {
+                DatabaseExporter.shareExportFile(
+                    context,
+                    listOf(
+                        NotificationEntity(
+                            key = "biometric-required",
+                            packageName = "pkg",
+                            appName = "App",
+                            title = "T",
+                            content = "C"
+                        )
+                    ),
+                    isJson = true
+                )
+            }.exceptionOrNull()
+
+            assertTrue("Biometric validation must be handled without crashing", exception == null)
+        } finally {
+            securityPreferences.setExportRequiresBiometric(original)
+        }
+    }
+
+    @Test
+    fun shareExportFile_missingPassphraseDoesNotThrow() {
+        val securityPreferences = PreferencesRepository(context).securityManager
+        val original = securityPreferences.requirePassphrase.value
+
+        try {
+            securityPreferences.setRequirePassphrase(true)
+            val exception = runCatching {
+                DatabaseExporter.shareExportFile(
+                    context,
+                    listOf(
+                        NotificationEntity(
+                            key = "passphrase-required",
+                            packageName = "pkg",
+                            appName = "App",
+                            title = "T",
+                            content = "C"
+                        )
+                    ),
+                    isJson = true
+                )
+            }.exceptionOrNull()
+
+            assertTrue("Passphrase validation must be handled without crashing", exception == null)
+        } finally {
+            securityPreferences.setRequirePassphrase(original)
+        }
+    }
+
+    private fun existingExportFiles(exportsDir: File): Set<String> =
+        exportsDir
+            .listFiles()
+            ?.map { it.name }
+            ?.toSet()
+            .orEmpty()
 }

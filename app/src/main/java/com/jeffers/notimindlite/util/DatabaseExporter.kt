@@ -245,11 +245,13 @@ object DatabaseExporter {
             .split(',')
             .map(String::trim)
             .toSet()
-        check(requestedFormat in allowedFormats) { "Export format '$requestedFormat' is disabled in Settings" }
-        check(!preferences.securityManager.exportRequiresBiometric.value || biometricAuthenticated) {
+        require(requestedFormat in allowedFormats) { "Export format '$requestedFormat' is disabled in Settings" }
+        require(!preferences.securityManager.exportRequiresBiometric.value || biometricAuthenticated) {
             "Biometric authentication is required before exporting"
         }
-        check(!preferences.securityManager.requirePassphrase.value || (passphrase != null && passphrase.isNotEmpty())) {
+        require(
+            !preferences.securityManager.requirePassphrase.value || (passphrase != null && passphrase.isNotEmpty())
+        ) {
             "A passphrase is required for exports"
         }
     }

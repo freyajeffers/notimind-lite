@@ -180,4 +180,64 @@ class BackupFileFormatTest {
         }
         assertEquals("Ciphertext payload missing or truncated", exception.message)
     }
+
+    @Test
+    fun parse_keystoreOnlyHeaderReturnsEmptyPassphraseMetadata() {
+        val output = ByteArrayOutputStream()
+        DataOutputStream(output).use { dos ->
+            dos.write(BackupFileFormat.MAGIC)
+            dos.writeByte(BackupFileFormat.CURRENT_VERSION.toInt())
+            dos.writeByte(BackupFileFormat.KEY_SOURCE_KEYSTORE_ONLY.toInt())
+            dos.write(ByteArray(BackupFileFormat.IV_LEN))
+            dos.write(ByteArray(GCM_TAG_BYTES + 1))
+        }
+
+        val parsed = BackupFileFormat.parse(output.toByteArray())
+
+        assertEquals(BackupFileFormat.KEY_SOURCE_KEYSTORE_ONLY, parsed.keySource)
+        assertEquals(0, parsed.pbkdf2Iterations)
+        assertEquals(0, parsed.pbkdf2Salt.size)
+        assertEquals(0, parsed.kekIv.size)
+        assertEquals(0, parsed.wrappedDek.size)
+        assertEquals(GCM_TAG_BYTES + 1, parsed.ciphertext.size)
+    }
+
+    @Test
+    fun parse_iterationsAboveMaximumAreRejected() {
+        val backup = createPassphraseBackup(iterations = 10_000_001, wrappedDekLength = 32)
+
+        val exception = assertThrows(BackupFileFormat.FormatException::class.java) {
+            BackupFileFormat.parse(backup)
+        }
+
+        assertEquals("Implausible iteration count: 10000001", exception.message)
+    }
+
+    @Test
+    fun parse_wrappedDekAboveMaximumLengthIsRejected() {
+        val backup = createPassphraseBackup(
+            iterations = BackupFileFormat.PBKDF2_ITERATIONS,
+            wrappedDekLength = 257
+        )
+
+        val exception = assertThrows(BackupFileFormat.FormatException::class.java) {
+            BackupFileFormat.parse(backup)
+        }
+
+        assertEquals("Implausible DEK length: 257", exception.message)
+    }
+
+    private fun createPassphraseBackup(iterations: Int, wrappedDekLength: Int): ByteArray {
+        val output = ByteArrayOutputStream()
+        DataOutputStream(output).use { dos ->
+            dos.write(BackupFileFormat.MAGIC)
+            dos.writeByte(BackupFileFormat.CURRENT_VERSION.toInt())
+            dos.writeByte(BackupFileFormat.KEY_SOURCE_PASSPHRASE_WRAPPED.toInt())
+            dos.write(ByteArray(BackupFileFormat.PBKDF2_SALT_LEN))
+            dos.writeInt(iterations)
+            dos.write(ByteArray(BackupFileFormat.IV_LEN))
+            dos.writeInt(wrappedDekLength)
+        }
+        return output.toByteArray()
+    }
 }
