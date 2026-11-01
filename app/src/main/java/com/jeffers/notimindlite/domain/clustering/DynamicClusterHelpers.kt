@@ -5,6 +5,8 @@ import android.content.pm.PackageManager
 import android.util.Log
 
 private const val TAG_HELPERS = "DynamicClusterHelpers"
+private const val MINIMUM_PREFIX_MARKER_LENGTH = 4
+private val DOMAIN_TOKEN_SEPARATOR = Regex("[^a-z0-9]+")
 
 internal fun applicationLabel(packageManager: PackageManager, app: ApplicationInfo): String? = try {
     packageManager.getApplicationLabel(app).toString().lowercase()
@@ -25,8 +27,9 @@ internal fun meaningfulPackageParts(packageName: String): List<String> = package
 }
 
 internal fun appKeywords(label: String?, meaningfulParts: List<String>): List<String> {
-    val labelWords = label?.split("\\s+".toRegex())?.filter { it.length > 2 }.orEmpty()
-    return listOfNotNull(label) + labelWords + meaningfulParts
+    val usableLabel = label?.takeIf { it.isNotBlank() }
+    val labelWords = usableLabel?.split("\\s+".toRegex())?.filter { it.length > 2 }.orEmpty()
+    return listOfNotNull(usableLabel) + labelWords + meaningfulParts
 }
 
 internal fun addMatchingSubcategoryKeywords(
@@ -45,8 +48,14 @@ internal fun addMatchingSubcategoryKeywords(
 
 internal fun inferDomainFromPackageName(pkgName: String, appLabel: String?): String? {
     val combined = "$pkgName ${appLabel ?: ""}".lowercase()
+    val tokens = combined.split(DOMAIN_TOKEN_SEPARATOR).filter { it.isNotEmpty() }
     return DynamicClusterManager.PACKAGE_DOMAIN_MARKERS
         .firstOrNull { (_, markers) ->
-            markers.any(combined::contains)
+            markers.any { marker ->
+                tokens.any { token ->
+                    token == marker ||
+                        (marker.length >= MINIMUM_PREFIX_MARKER_LENGTH && token.startsWith(marker))
+                }
+            }
         }?.first
 }

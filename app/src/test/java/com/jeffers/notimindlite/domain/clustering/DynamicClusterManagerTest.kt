@@ -1,6 +1,9 @@
 package com.jeffers.notimindlite.domain.clustering
 
 import android.content.pm.ApplicationInfo
+import android.content.pm.PackageManager
+import io.mockk.every
+import io.mockk.mockk
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
@@ -18,6 +21,15 @@ class DynamicClusterManagerTest {
     @After
     fun tearDown() {
         DynamicClusterManager.resetForTesting()
+    }
+
+    @Test
+    fun applicationLabel_lowercasesResolvedLabel() {
+        val packageManager = mockk<PackageManager>()
+        val app = ApplicationInfo().apply { packageName = "com.example.app" }
+        every { packageManager.getApplicationLabel(app) } returns "Example App"
+
+        assertEquals("example app", applicationLabel(packageManager, app))
     }
 
     @Test
@@ -42,6 +54,12 @@ class DynamicClusterManagerTest {
     fun inferDomainFromPackageName_returnsNullForUnknownPackage() {
         val domain = inferDomainFromPackageName("org.xyz.foobar", "Widget")
         assertNull(domain)
+    }
+
+    @Test
+    fun inferDomainFromPackageName_ignoresMarkersInsideUnrelatedWords() {
+        assertNull(inferDomainFromPackageName("com.example.client", "Generic Application"))
+        assertEquals("career", inferDomainFromPackageName("com.jobboard.career", "Career"))
     }
 
     @Test
@@ -164,7 +182,7 @@ class DynamicClusterManagerTest {
         assertEquals(listOf("part1", "part2"), keywordsNull)
 
         val keywordsBlank = appKeywords("   ", listOf("part"))
-        assertTrue(keywordsBlank.contains("part"))
+        assertEquals(listOf("part"), keywordsBlank)
     }
 
     @Test
