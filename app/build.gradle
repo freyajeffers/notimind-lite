@@ -16,6 +16,38 @@ ktlint {
   version = '1.8.0'
 }
 
+def versionProperties = new Properties()
+rootProject.file('version.properties').withInputStream { versionProperties.load(it) }
+
+def gitOutput = { List<String> arguments ->
+  providers.exec {
+    workingDir rootProject.projectDir
+    commandLine(['git'] + arguments)
+    ignoreExitValue = true
+  }.standardOutput.asText.get().trim()
+}
+
+def releaseTag = gitOutput(['describe', '--tags', '--abbrev=0'])
+if (!releaseTag) releaseTag = 'untagged'
+
+def commitHash = gitOutput(['rev-parse', '--short=12', 'HEAD'])
+if (!commitHash) {
+  throw new GradleException('Cannot derive app version from Git: commit hash is unavailable.')
+}
+
+def versionNamePattern = versionProperties.getProperty('versionNamePattern')
+if (!versionNamePattern?.contains('{tag}') || !versionNamePattern.contains('{commit}')) {
+  throw new GradleException('version.properties must define versionNamePattern with {tag} and {commit}.')
+}
+
+def appVersionName = versionNamePattern.replace('{tag}', releaseTag).replace('{commit}', commitHash)
+if (gitOutput(['status', '--porcelain'])) appVersionName += '-dirty'
+
+def appVersionCode = versionProperties.getProperty('versionCode')?.toInteger()
+if (!appVersionCode || appVersionCode < 1) {
+  throw new GradleException('version.properties must define a positive versionCode.')
+}
+
 android {
   namespace = 'com.jeffers.notimindlite'
   compileSdk = 37
@@ -30,8 +62,8 @@ android {
     }
     minSdk targetMinSdk
     targetSdk 37
-    versionCode 1
-    versionName '1.0-lite'
+    versionCode appVersionCode
+    versionName appVersionName
     manifestPlaceholders['migrationReceiverEnabled'] = 'false'
 
     testInstrumentationRunner 'androidx.test.runner.AndroidJUnitRunner'
@@ -75,6 +107,7 @@ android {
       signingConfig = signingConfigs.findByName('releaseConfig') ?: signingConfigs.getByName('debugConfig')
     }
     debug {
+      testCoverageEnabled true
       signingConfig = signingConfigs.getByName('debugConfig')
       manifestPlaceholders['migrationReceiverEnabled'] = 'true'
     }
@@ -159,10 +192,14 @@ tasks.register('testCoverageReport', JacocoReport) {
     xml.required = true
     html.required = true
   }
-  classDirectories.setFrom(files(layout.buildDirectory.dir('tmp/kotlin-classes/debug')))
+  classDirectories.setFrom(files(
+    layout.buildDirectory.dir('intermediates/built_in_kotlinc/debug/compileDebugKotlin/classes'),
+    layout.buildDirectory.dir('intermediates/javac/debug/compileDebugJavaWithJavac/classes')
+  ))
   sourceDirectories.setFrom(files("${projectDir}/src/main/java"))
   executionData.setFrom(fileTree(layout.buildDirectory) {
-    include 'jacoco/test-debug-UnitTest.exec'
+    include 'outputs/unit_test_code_coverage/debugUnitTest/testDebugUnitTest.exec'
+    include 'outputs/code_coverage/debugAndroidTest/connected/**/*.ec'
   })
 }
 
@@ -203,12 +240,14 @@ dependencies {
   testImplementation libs.kotlinx.coroutines.test
   testImplementation libs.robolectric
   testImplementation libs.androidx.room.testing
+  testImplementation libs.androidx.work.testing
 
   androidTestImplementation platform(libs.androidx.compose.bom)
   androidTestImplementation libs.androidx.junit
   androidTestImplementation libs.androidx.runner
   androidTestImplementation libs.androidx.espresso.core
   androidTestImplementation libs.androidx.compose.ui.test.junit4
+  androidTestImplementation libs.androidx.work.testing
 
   debugImplementation libs.androidx.compose.ui.tooling
   debugImplementation libs.androidx.compose.ui.test.manifest
