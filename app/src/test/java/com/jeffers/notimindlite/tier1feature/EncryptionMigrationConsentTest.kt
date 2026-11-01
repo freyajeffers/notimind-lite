@@ -5,6 +5,7 @@ import androidx.test.core.app.ApplicationProvider
 import com.jeffers.notimindlite.migration.EncryptionMigrationConsent
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertThrows
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -44,5 +45,23 @@ class EncryptionMigrationConsentTest {
 
         EncryptionMigrationConsent.set(context, EncryptionMigrationConsent.Decision.DECLINED)
         assertEquals(EncryptionMigrationConsent.Decision.DECLINED, EncryptionMigrationConsent.get(context))
+    }
+
+    @Test
+    fun unknownStoredDecisionFailsClosed() {
+        context
+            .getSharedPreferences("notimind_encryption_migration_consent", 0)
+            .edit()
+            .putString("decision", "unrecognized")
+            .commit()
+
+        assertEquals(EncryptionMigrationConsent.Decision.UNKNOWN, EncryptionMigrationConsent.get(context))
+    }
+
+    @Test
+    fun unknownDecisionCannotBePersisted() {
+        assertThrows(IllegalArgumentException::class.java) {
+            EncryptionMigrationConsent.set(context, EncryptionMigrationConsent.Decision.UNKNOWN)
+        }
     }
 }
