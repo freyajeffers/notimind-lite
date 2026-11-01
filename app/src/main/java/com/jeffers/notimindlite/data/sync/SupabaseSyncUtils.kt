@@ -95,8 +95,19 @@ fun request(
     token: String,
     body: String? = null,
     prefer: String? = null
+): String = requestWithConnection(method, path, token, body, prefer) { url ->
+    url.openConnection() as HttpURLConnection
+}
+
+internal fun requestWithConnection(
+    method: String,
+    path: String,
+    token: String,
+    body: String? = null,
+    prefer: String? = null,
+    openConnection: (URL) -> HttpURLConnection
 ): String {
-    val connection = URL(BuildConfig.SUPABASE_URL + path).openConnection() as HttpURLConnection
+    val connection = openConnection(URL(BuildConfig.SUPABASE_URL + path))
     try {
         connection.connectTimeout = SUPABASE_HTTP_CONNECT_TIMEOUT_MILLIS
         connection.readTimeout = SUPABASE_HTTP_READ_TIMEOUT_MILLIS
