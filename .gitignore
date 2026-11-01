@@ -56,10 +56,7 @@ google-services.json
 # Android Profiling
 *.hprof
 
-ideal_changelog.md
-ideal_commits.txt
 notimind-commits.txt
-summary.md
 
 # Local/exported account-manifest artifacts; migration scripts already tracked remain tracked
 /repomix-output.xml

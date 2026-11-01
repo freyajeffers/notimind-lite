@@ -78,15 +78,7 @@ com.jeffers.notimindlite
   — Play Store policy may require replacing it with `<queries>` blocks; do not remove without
   explicit user direction.
 
-## 🛠️ Authoritative Reference Materials
-
-Located at `/home/freya/antigravity/NotiMind-Lite/chat-extract/` (paths shown un-prefixed):
-
-| File                 | Role                                                     |
-| -------------------- | -------------------------------------------------------- |
-| `summary.md`         | "How" — literal diffs and phased requirements            |
-| `ideal_commits.txt`  | "When" — definitive atomic commit order                  |
-| `ideal_changelog.md` | Release milestones (mirror of root `ideal_changelog.md`) |
+## 🛠️ Project Documentation
 
 Project-root companions: `INSTRUCTIONS.md` (phase roadmap), `ARCHITECTURE.md`,
 `MASTER_TECHNICAL_SPECIFICATION.md`, `DESIGN_DECISIONS.md`, `MODULE_API.md`,
@@ -95,13 +87,13 @@ Project-root companions: `INSTRUCTIONS.md` (phase roadmap), `ARCHITECTURE.md`,
 `DEVELOPER_GUIDE.md`, `USER_GUIDE.md`, `AGENT_HANDOFF.md`, `PROJECT.md`,
 `TEST_READY.md`, `localization-ready-report.md`, `FUTURE_ROADMAP.md`.
 
-When `chat-extract/` (source-of-truth) disagrees with the on-disk code (current truth),
+When project guidance disagrees with the on-disk code (current truth),
 ASK the user which wins before applying.
 
 ## 🚦 Operating Principles
 
 1. **Linearity**: Strict dependency graph — Build → Data → Service → UI → Sync → Perf.
-   Never skip a phase or a commit from `ideal_commits.txt`.
+   Do not skip a phase.
 2. **Atomic Application**: One commit per change. Do not bundle.
 3. **Additive Preference**: Prefer adding code over removing it. Latent dependencies
    in this codebase are not always obvious.
@@ -266,15 +258,15 @@ After installing on a device, use this checklist before declaring "works on hard
 
 A task is **done** when ALL of the following are satisfied in the same turn:
 
-1. The literal code from `summary.md` (or the user-supplied diff) is applied.
-2. The associated `ideal_commits.txt` entry is implemented (or documented as future work).
+1. The requested implementation or user-supplied diff is applied.
+2. The project changelog documents relevant user-visible and maintenance changes.
 3. `./gradlew :app:assembleDebug` exited 0.
 4. `./gradlew :app:testDebugUnitTest` exited 0.
 5. If a new Room migration was added: a migration test exists and passes.
 6. If a new `directBootAware` manifest entry was added: receiver/service manifest
    entry was added AND a `pm lock`-then-restart smoke test was performed (or
    flagged as untested).
-7. The atomic git commit is registered with the message from `ideal_commits.txt`.
+7. The changes are registered in atomic commits with clear conventional messages.
 
 If any gate fails, the task is NOT done — report the blocker honestly.
 
@@ -301,8 +293,7 @@ If any gate fails, the task is NOT done — report the blocker honestly.
 - Build files: `build.gradle.kts`, `settings.gradle.kts`, `gradle.properties`,
   `gradle/libs.versions.toml`, `gradle/wrapper/`, `app/build.gradle.kts`
 - Manifest: `app/src/main/AndroidManifest.xml`
-- Source-of-truth docs: `summary.md`, `ideal_commits.txt`, `ideal_changelog.md`,
-  `INSTRUCTIONS.md` (in `chat-extract/` and at the project root)
+- Project guidance: `INSTRUCTIONS.md` (phase roadmap) and applicable architecture/module docs.
 - Skill: `notimind-lite-coding` (loads via `skill_view`) — covers procedure, pitfalls,
   adb verification recipe, key-collision fix.
 
@@ -310,9 +301,9 @@ If any gate fails, the task is NOT done — report the blocker honestly.
 
 - Load the `notimind-lite-coding` skill at the start of each session
   (or ask Hermes to load it).
-- Reference commits by ID from `ideal_commits.txt` whenever possible.
+- Reference relevant commits by ID when useful.
 - Paste real error output (logcat, Gradle, JUnit) — never paraphrased.
-- For DB changes, ask which wins when `summary.md` and live code disagree.
+- For DB changes, ask which wins when project guidance and live code disagree.
 - For destructive changes (deletions > additions), expect Hermes to halt and
   request explicit permission — this is enforced by memory.
 - For multi-step work, prefer atomic commits even when bundling feels faster.

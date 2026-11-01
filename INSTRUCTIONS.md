@@ -7,8 +7,8 @@ This document provides the high-level orchestration instructions for recreating 
 To begin the recreation process:
 
 1.  **Load Context**: Read `AGENTS.md` to understand the architecture and operating principles.
-2.  **Reference Technicals**: Open `/home/freya/antigravity/NotiMind-Lite/chat-extract/summary.md` for the literal diffs and technical requirements.
-3.  **Follow Sequence**: Execute the commits exactly as listed in `/home/freya/antigravity/NotiMind-Lite/chat-extract/ideal_commits.txt`.
+2.  **Reference Technicals**: Consult applicable architecture, module, and compliance docs for implementation requirements.
+3.  **Follow Sequence**: Follow the dependency phases below and keep each change in a focused atomic commit.
 
 ---
 

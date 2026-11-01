@@ -21,7 +21,7 @@ This document serves as the authoritative state-transfer for an AI agent taking 
 
 - **Build Status**: Stable. `./gradlew assembleDebug` is passing.
 - **Git State**: Clean on `master`.
-- **Verification**: All high-level features in `ideal_commits.txt` and `summary.md` have been verified on a physical device.
+- **Verification**: High-level features have been verified on a physical device.
 - **Runtime Performance**: LruCache implementation in `AppIconCache` eliminates scrolling jank in notification lists.
 
 ### 📜 Session History & Context
@@ -88,13 +88,8 @@ This project has undergone a rigorous "re-verification and hardening" phase. The
 4. **Memory Safety**: `AppIconCache` must be cleared during `onTrimMemory` and `onLowMemory` to prevent OOM crashes.
 5. **Namespace Integrity**: Do not modify the package name `com.jeffers.notimindlite`.
 
-## 🔍 Truth Sources (Artifacts)
+## 🔍 Project Guidance
 
-The following files contain the definitive specifications:
-
-- `summary.md`: Master Technical Implementation Guide.
-- `ideal_commits.txt`: The logical sequence of project milestones.
-- `ideal_changelog.md`: Semantic versioning and feature history.
 - `AGENTS.md`: Agent operating procedures.
 
 ## 🧪 Verification Suite
