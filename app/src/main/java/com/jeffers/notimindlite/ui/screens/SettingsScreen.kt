@@ -117,6 +117,7 @@ fun SettingsScreen(
             onDispose { lifecycleOwnerTop.lifecycle.removeObserver(observer) }
         }
         NotificationAccessCard(context, listenerGrantedTop)
+        RestoreRecentlyDismissedCard(snackbarHostState)
 
         SettingsSyncSection(preferencesRepository = preferencesRepository, isAuthenticated = session.isAuthenticated)
 

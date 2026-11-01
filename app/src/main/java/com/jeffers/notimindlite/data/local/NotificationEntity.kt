@@ -68,7 +68,14 @@ data class NotificationEntity(
     val isPinned: Boolean = false,
     val actionLabels: String? = null,
     val smallIconRes: Int = 0,
+    /** Local-only Android presentation metadata; excluded from cloud sync payloads. */
+    val restoreMetadataJson: String? = null,
     val syncStatus: SyncStatus = SyncStatus.PENDING_UPLOAD,
     val lastSyncedAt: Long = 0,
     val embedding: FloatArray? = null
+)
+
+data class NotificationRestoreMetadataRow(
+    val key: String,
+    val restoreMetadataJson: String?
 )

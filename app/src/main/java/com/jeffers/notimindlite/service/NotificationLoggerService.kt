@@ -9,6 +9,7 @@ import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.drawable.BitmapDrawable
 import android.os.Bundle
+import android.provider.Settings
 import android.service.notification.NotificationListenerService
 import android.service.notification.StatusBarNotification
 import android.util.Log
@@ -74,6 +75,44 @@ class NotificationLoggerService : NotificationListenerService() {
         @Volatile
         private var instance: NotificationLoggerService? = null
 
+        private val appInitiatedDismissals: MutableSet<String> = Collections.synchronizedSet(mutableSetOf())
+        private val activeNotificationKeys: MutableSet<String> = Collections.synchronizedSet(mutableSetOf())
+        private const val APP_SWIPE_DISMISS_REASON = 2
+        private const val RECONCILE_DISMISS_REASON = 0
+
+        internal fun isNotificationKnownActive(key: String): Boolean {
+            if (activeNotificationKeys.contains(key)) return true
+            val service = instance ?: return false
+            return try {
+                val currentNotifications = service.activeNotifications ?: return false
+                val isActive = currentNotifications.any {
+                    "${it.packageName}|${it.id}|${it.tag ?: ""}" == key
+                }
+                if (isActive) activeNotificationKeys.add(key)
+                isActive
+            } catch (failure: SecurityException) {
+                Log.w(TAG, "Unable to verify active notification state for key=$key", failure)
+                false
+            } catch (failure: IllegalStateException) {
+                Log.w(TAG, "Unable to verify active notification state for key=$key", failure)
+                false
+            }
+        }
+
+        internal fun clearActiveNotificationSnapshot() {
+            activeNotificationKeys.clear()
+        }
+
+        internal fun requestActiveSnapshotRefresh(context: Context) {
+            val service = instance
+            if (service == null) {
+                activeNotificationKeys.clear()
+                rebindService(context)
+            } else {
+                service.refreshActiveNotificationSnapshot()
+            }
+        }
+
         fun dismissNotification(key: String) {
             try {
                 instance?.cancelNotification(key)
@@ -81,6 +120,23 @@ class NotificationLoggerService : NotificationListenerService() {
                 Log.w("NotificationLoggerSrv", "Permission denied cancelling notification: $key", e)
             } catch (e: IllegalArgumentException) {
                 Log.w("NotificationLoggerSrv", "Invalid notification key when cancelling: $key", e)
+            }
+        }
+
+        fun dismissNotificationFromApp(key: String): Boolean {
+            val service = instance ?: return false
+            appInitiatedDismissals.add(key)
+            return try {
+                service.cancelNotification(key)
+                true
+            } catch (e: SecurityException) {
+                appInitiatedDismissals.remove(key)
+                Log.w("NotificationLoggerSrv", "Permission denied cancelling notification from card swipe: $key", e)
+                false
+            } catch (e: IllegalArgumentException) {
+                appInitiatedDismissals.remove(key)
+                Log.w("NotificationLoggerSrv", "Invalid notification key from card swipe: $key", e)
+                false
             }
         }
 
@@ -172,106 +228,145 @@ class NotificationLoggerService : NotificationListenerService() {
         super.onListenerConnected()
         instance = this
         Log.d(TAG, "onListenerConnected: listener registered successfully")
-
-        scope.launch {
-            try {
-                val activeNotifs = activeNotifications ?: emptyArray()
-                Log.d(TAG, "onListenerConnected: processing ${activeNotifs.size} active notifications in batch")
-                val entities = activeNotifs.mapNotNull { extractNotificationEntity(it) }
-                if (entities.isNotEmpty()) {
-                    val dao = database().notificationDao()
-                    val ids = dao.insertNotifications(entities)
-                    // F-G fix [2026-09-02 audit]: populate embeddings inline so the
-                    // HybridSearchEngine (read-path) can rank new notifications
-                    // semantically. Previously only DatabaseMigrator (one-shot v18
-                    // backfill) wrote embeddings, leaving every post-migration
-                    // notification unrankable. Pure-Kotlin compute, sub-ms per
-                    // embedding, LRU-cached (256 entries), safe on the IO scope.
-                    embeddingIndexer.indexBatch(dao, ids, entities)
-                    Log.d(TAG, "onListenerConnected: successfully batch inserted ${entities.size} active notifications")
-                }
-            } catch (e: IllegalStateException) {
-                Log.e(TAG, "Invalid database state syncing active notifications", e)
-            } catch (e: android.database.sqlite.SQLiteException) {
-                Log.e(TAG, "Error syncing active notifications on listener connected", e)
-            }
-        }
+        refreshActiveNotificationSnapshot()
     }
 
     override fun onDestroy() {
         super.onDestroy()
-        if (instance == this) instance = null
+        if (instance == this) {
+            instance = null
+            activeNotificationKeys.clear()
+        }
         serviceJob.cancel()
     }
 
-    override fun onNotificationPosted(sbn: StatusBarNotification) {
-        if (!BuildConfig.DEBUG && !isCaptureEnabled()) {
-            Log.d(TAG, "Ignoring notification post event: capture disabled")
+    private fun refreshActiveNotificationSnapshot() {
+        val snapshot = try {
+            activeNotifications ?: run {
+                activeNotificationKeys.clear()
+                return
+            }
+        } catch (failure: SecurityException) {
+            activeNotificationKeys.clear()
+            Log.w(TAG, "Cannot read active notifications while listener permission is unavailable", failure)
             return
         }
-        if (!isNotificationListenerActive()) {
-            Log.w(TAG, "Ignoring notification post event: listener permission revoked")
-            return
-        }
-        super.onNotificationPosted(sbn)
-        Log.d(TAG, "onNotificationPosted: ${sbn.packageName} - ${sbn.id}")
-        RestoredNotificationManager.onOriginalAppNotificationPosted(applicationContext, sbn.packageName)
-
-        // Use the new extraction helper and individual insert for single posted notifications
-        // (Single inserts are already optimized via Room, but we maintain compatibility)
-        val entity = extractNotificationEntity(sbn)
-        if (entity != null) {
-            registerNotificationActions(sbn, entity.key)
-            actionExecutor.executeOnNotification(entity.key, entity.packageName, entity.title)
-            scope.launch {
-                try {
-                    val dao = database().notificationDao()
-                    val existing = dao.getNotificationByKey(entity.key)
-
-                    // Logic: Only treat as a "new notification" (new row) if the content has changed significantly.
-                    // Significant change = title or content is different.
-                    // Otherwise, update the existing row (increment update count).
-                    val hasSignificantChange = existing == null ||
-                        existing.title != entity.title ||
-                        existing.content != entity.content
-
-                    val updateCount = if (hasSignificantChange) 1 else existing.updateCount + 1
-                    val originalPostTime = if (hasSignificantChange) entity.postTime else existing.postTime
-
-                    val finalEntity = entity.copy(
-                        id = if (hasSignificantChange) 0L else existing.id,
-                        updateCount = updateCount,
-                        postTime = originalPostTime,
-                        isRead = existing?.isRead ?: false,
-                        isPinned = existing?.isPinned ?: false
-                    )
-                    dao.insert(finalEntity)
-                    // F-G fix [2026-09-02 audit]: populate embedding for the single
-                    // posted notification so semantic search can rank it.
-                    embeddingIndexer.indexSingle(dao, finalEntity)
-                    Log.d(TAG, "Inserted: ${finalEntity.title} (${finalEntity.appName})")
-                } catch (e: IllegalStateException) {
-                    Log.e(TAG, "Invalid database state inserting ${entity.title}", e)
-                } catch (e: android.database.sqlite.SQLiteException) {
-                    Log.e(TAG, "DB insert failed for ${entity.title}", e)
-                }
+        activeNotificationKeys.clear()
+        snapshot
+            .filter { it.packageName != applicationContext.packageName }
+            .map(::notificationKey)
+            .forEach(activeNotificationKeys::add)
+        scope.launch {
+            try {
+                val dao = database().notificationDao()
+                reconcileActiveRows(snapshot, dao)
+                NotificationRestoreCoordinator.restoreQueuedNotifications(applicationContext, dao)
+            } catch (failure: IllegalStateException) {
+                Log.e(TAG, "Invalid database state reconciling active notifications", failure)
+            } catch (failure: android.database.SQLException) {
+                Log.e(TAG, "Database error reconciling active notifications", failure)
             }
         }
     }
 
-    private fun isNotificationListenerActive(): Boolean {
-        val componentName = ComponentName(applicationContext, NotificationLoggerService::class.java)
-        val enabledListeners = android.provider.Settings.Secure.getString(
-            contentResolver,
-            "enabled_notification_listeners"
-        ) ?: return false
-        // `enabled_notification_listeners` is a colon-separated list of components that the
-        // system stores in either fully-qualified form (`pkg/pkg.Cls`) or package-shorthand
-        // form (`pkg/.Cls`). Compare against both to remain robust to whichever format the
-        // current Settings provider used when our entry was written.
-        val short = componentName.flattenToShortString()
-        val long = componentName.flattenToString()
-        return enabledListeners.split(':').any { it == short || it == long }
+    private suspend fun reconcileActiveRows(
+        snapshot: Array<StatusBarNotification>,
+        dao: NotificationDao
+    ) {
+        val sourceNotifications = snapshot.filter { it.packageName != applicationContext.packageName }
+        val currentKeys = sourceNotifications.map(::notificationKey).toSet()
+        val staleRows = dao.getActiveNotificationsList().filter {
+            it.packageName != applicationContext.packageName &&
+                RestoredNotificationState.notificationId(it.restoreMetadataJson) == null &&
+                it.key !in currentKeys &&
+                !NotificationLoggerService.isNotificationKnownActive(it.key)
+        }
+        staleRows.forEach { dao.markDismissedWithReason(it.key, RECONCILE_DISMISS_REASON) }
+        sourceNotifications.forEach { sbn ->
+            if (NotificationLoggerService.isNotificationKnownActive(notificationKey(sbn))) {
+                syncPostedNotification(sbn, dao, countAsEvent = false)
+            }
+        }
+    }
+
+    override fun onNotificationPosted(sbn: StatusBarNotification) {
+        super.onNotificationPosted(sbn)
+        if (!hasNotificationListenerAccess()) return
+        if (sbn.packageName == applicationContext.packageName) return
+        val key = notificationKey(sbn)
+        activeNotificationKeys.add(key)
+        Log.d(TAG, "onNotificationPosted: ${sbn.packageName} - ${sbn.id}")
+        appInitiatedDismissals.remove(key)
+        scope.launch {
+            try {
+                val entity = syncPostedNotification(sbn, database().notificationDao(), countAsEvent = true)
+                if (entity != null) {
+                    registerNotificationActions(sbn, entity.key)
+                    actionExecutor.executeOnNotification(entity.key, entity.packageName, entity.title)
+                }
+            } catch (failure: IllegalStateException) {
+                Log.e(TAG, "Invalid database state updating notification $key", failure)
+            } catch (failure: android.database.SQLException) {
+                Log.e(TAG, "Database error updating notification $key", failure)
+            }
+        }
+    }
+
+    private suspend fun syncPostedNotification(
+        sbn: StatusBarNotification,
+        dao: NotificationDao,
+        countAsEvent: Boolean
+    ): NotificationEntity? {
+        val key = notificationKey(sbn)
+        val existing = dao.getNotificationByKey(key)
+        if (existing != null) {
+            NotificationRestoreCoordinator.markSourceNotificationActive(applicationContext, dao, key)
+        }
+        val entity = if (!BuildConfig.DEBUG && !isCaptureEnabled()) null else extractNotificationEntity(sbn)
+        if (entity == null) {
+            if (existing != null) dao.markNotificationActive(key)
+            return null
+        }
+        val significantChange = existing == null || existing.title != entity.title || existing.content != entity.content
+        val finalEntity = entity.copy(
+            id = existing?.id ?: 0L,
+            updateCount = when {
+                existing == null || significantChange -> 1
+                countAsEvent -> existing.updateCount + 1
+                else -> existing.updateCount
+            },
+            postTime = if (existing != null && !significantChange) existing.postTime else entity.postTime,
+            isDismissed = false,
+            dismissReason = null,
+            dismissTime = null,
+            isRead = existing?.isRead ?: false,
+            isPinned = existing?.isPinned ?: false,
+            restoreMetadataJson = RestoredNotificationState.withoutRestoreState(entity.restoreMetadataJson)
+        )
+        dao.insert(finalEntity)
+        if (!NotificationLoggerService.isNotificationKnownActive(key)) {
+            dao.markDismissedWithReason(key, RECONCILE_DISMISS_REASON)
+        }
+        if (countAsEvent || existing == null || significantChange) {
+            embeddingIndexer.indexSingle(dao, finalEntity)
+        }
+        Log.d(TAG, "Updated active notification: ${finalEntity.title} (${finalEntity.appName})")
+        return finalEntity
+    }
+
+    private fun notificationKey(sbn: StatusBarNotification): String =
+        "${sbn.packageName}|${sbn.id}|${sbn.tag ?: ""}"
+
+    private fun hasNotificationListenerAccess(): Boolean {
+        val expected = ComponentName(applicationContext, NotificationLoggerService::class.java)
+        val enabledListeners = Settings.Secure
+            .getString(
+                applicationContext.contentResolver,
+                "enabled_notification_listeners"
+            ).orEmpty()
+        return enabledListeners.split(':').any { enabledComponent ->
+            ComponentName.unflattenFromString(enabledComponent) == expected
+        }
     }
 
     private fun shouldCaptureNotification(sbn: StatusBarNotification): Boolean {
@@ -319,29 +414,20 @@ class NotificationLoggerService : NotificationListenerService() {
     }
 
     override fun onNotificationRemoved(sbn: StatusBarNotification) {
-        if (!isNotificationListenerActive()) {
-            Log.w(TAG, "Ignoring notification remove event: listener permission revoked")
-            return
-        }
         super.onNotificationRemoved(sbn)
         handleNotificationRemoved(sbn, null)
     }
 
     override fun onNotificationRemoved(sbn: StatusBarNotification, rankingMap: RankingMap, reason: Int) {
-        if (!isNotificationListenerActive()) {
-            Log.w(TAG, "Ignoring notification remove event: listener permission revoked")
-            return
-        }
         super.onNotificationRemoved(sbn, rankingMap, reason)
         handleNotificationRemoved(sbn, reason)
     }
 
     private fun handleNotificationRemoved(sbn: StatusBarNotification, reason: Int?) {
+        val key = notificationKey(sbn)
+        activeNotificationKeys.remove(key)
         if (sbn.packageName == applicationContext.packageName) return
-        // Always use a deterministic app-derived key. The system-provided sbn.key is
-        // inconsistent between post/remove events on some devices, causing dismissal
-        // lookups to miss the originally logged row.
-        val key = "${sbn.packageName}|${sbn.id}|${sbn.tag ?: ""}"
+        if (!hasNotificationListenerAccess()) return
         val extras = sbn.notification?.extras
         val title = extras?.getCharSequence(Notification.EXTRA_TITLE)?.toString() ?: ""
         val content = extras?.getCharSequence(Notification.EXTRA_TEXT)?.toString() ?: ""
@@ -349,11 +435,19 @@ class NotificationLoggerService : NotificationListenerService() {
         NotificationLauncher.unregisterPendingIntent(key)
         recentLogs.remove(key)
         recentContents.remove(key)
-        val effectiveReason = reason ?: 1
+        val effectiveReason = if (appInitiatedDismissals.remove(key)) {
+            APP_SWIPE_DISMISS_REASON
+        } else {
+            reason ?: 1
+        }
 
         scope.launch {
             try {
                 val dao = database().notificationDao()
+                if (activeNotificationKeys.contains(key)) {
+                    dao.markNotificationActive(key)
+                    return@launch
+                }
                 dao.markDismissedWithReasonByMatching(
                     key = key,
                     packageName = sbn.packageName,
@@ -361,9 +455,10 @@ class NotificationLoggerService : NotificationListenerService() {
                     content = content,
                     reason = effectiveReason
                 )
+                if (activeNotificationKeys.contains(key)) dao.markNotificationActive(key)
             } catch (e: IllegalStateException) {
                 Log.e(TAG, "Invalid database state marking notification dismissed for $key", e)
-            } catch (e: android.database.sqlite.SQLiteException) {
+            } catch (e: android.database.SQLException) {
                 Log.e(TAG, "Database error marking notification dismissed for $key", e)
             }
         }

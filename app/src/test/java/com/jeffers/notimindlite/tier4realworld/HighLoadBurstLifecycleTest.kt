@@ -1,10 +1,14 @@
 package com.jeffers.notimindlite.tier4realworld
 
+import android.app.Application
 import android.app.NotificationManager
 import android.content.Context
 import android.content.Intent
+import android.os.UserManager
 import com.jeffers.notimindlite.base.BaseRobolectricTest
+import com.jeffers.notimindlite.data.local.PreferenceManager
 import com.jeffers.notimindlite.receiver.BootReceiver
+import com.jeffers.notimindlite.service.NotificationLoggerService
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
@@ -60,14 +64,27 @@ class HighLoadBurstLifecycleTest : BaseRobolectricTest() {
         assertEquals(50, dao.getNotificationCount())
         assertEquals(25, dao.getActiveNotificationsList().size)
 
-        // Trigger sudden reboot
+        // Trigger sudden reboot after preparing the restored-notification runtime state.
+        val userManager = context.getSystemService(Context.USER_SERVICE) as UserManager
+        Shadows.shadowOf(userManager).setUserUnlocked(true)
+        val application = context.applicationContext as Application
+        Shadows.shadowOf(application).grantPermissions(android.Manifest.permission.POST_NOTIFICATIONS)
+        PreferenceManager(context).setRestoreOnBootEnabled(true)
+        NotificationLoggerService.clearActiveNotificationSnapshot()
         val bootIntent = Intent(Intent.ACTION_BOOT_COMPLETED)
         val bootReceiver = BootReceiver()
         bootReceiver.onReceive(context, bootIntent)
-        Thread.sleep(200)
+        waitUntil { shadowNm.allNotifications.isNotEmpty() }
 
         val posted = shadowNm.allNotifications
         assertTrue("BootReceiver must restore active notifications upon sudden reboot", posted.isNotEmpty())
+    }
+
+    private fun waitUntil(condition: () -> Boolean) {
+        val deadline = System.currentTimeMillis() + 2_000
+        while (!condition() && System.currentTimeMillis() < deadline) {
+            Thread.sleep(10)
+        }
     }
 
     private fun populateHighLoadDatabase(count: Int) {

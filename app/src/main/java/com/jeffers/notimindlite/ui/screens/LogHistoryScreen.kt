@@ -96,6 +96,7 @@ import com.jeffers.notimindlite.data.local.NotificationEntity
 import com.jeffers.notimindlite.domain.search.HybridSearchEngine
 import com.jeffers.notimindlite.ui.components.NotificationDetailPanel
 import com.jeffers.notimindlite.ui.components.NotificationGroupCard
+import com.jeffers.notimindlite.ui.components.RestoreNotificationCardAction
 import com.jeffers.notimindlite.ui.components.UiNotificationGroup
 import com.jeffers.notimindlite.ui.components.groupNotifications
 import com.jeffers.notimindlite.ui.dialogs.AppPackageSelectorDialog
@@ -876,6 +877,7 @@ fun LogHistoryCard(state: LogHistoryCardState) {
     ) {
         Column(modifier = Modifier.padding(14.dp)) {
             LogHistoryCardHeader(state)
+            RestoreNotificationCardAction(item = item, dao = dao)
 
             if (isExpanded) {
                 LogHistoryExpandedContent(

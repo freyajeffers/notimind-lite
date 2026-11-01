@@ -28,7 +28,7 @@ object BootRestoreManager {
      * Processes the list of active notifications to be restored on boot.
      * If the count exceeds [GROUPING_THRESHOLD], applies multi-pass grouping.
      *
-     * Pass 1: Group by matching title -> Append content.
+     * Pass 1: Group by matching title within the same source app -> Append content.
      * Pass 2: Group by matching app (packageName) if still over threshold.
      */
     suspend fun consolidateForBoot(
@@ -47,10 +47,11 @@ object BootRestoreManager {
 
         Log.i(TAG, "Restoring ${notifications.size} notifications on boot. Threshold exceeded. Grouping...")
 
-        // Pass 1: Group by Title
+        // Pass 1: Group by source app and title
         var groups = notifications
-            .groupBy { it.title }
-            .map { (title, members) ->
+            .groupBy { it.packageName to it.title }
+            .map { (_, members) ->
+                val title = members.first().title
                 if (members.size <= 1) {
                     val first = members.first()
                     BootConsolidationResult(first.title, first.content, first.appName, listOf(first.id))

@@ -18,10 +18,33 @@ abstract class NotificationDao :
     NotificationSearchQueries,
     NotificationReadStateQueries,
     NotificationCountQueries {
+    @Query("SELECT `key`, restoreMetadataJson FROM notifications WHERE `key` IN (:keys)")
+    abstract suspend fun getRestoreMetadataRows(keys: List<String>): List<NotificationRestoreMetadataRow>
+
+    @Query("SELECT `key`, restoreMetadataJson FROM notifications WHERE restoreMetadataJson IS NOT NULL")
+    abstract suspend fun getAllRestoreMetadataRows(): List<NotificationRestoreMetadataRow>
+
+    @Query("UPDATE notifications SET restoreMetadataJson = :restoreMetadataJson WHERE `key` = :key")
+    abstract suspend fun updateRestoreMetadataJson(key: String, restoreMetadataJson: String?)
+
+    @Query(
+        "SELECT * FROM notifications WHERE instr(restoreMetadataJson, '\"notimindRestoreQueued\":true') > 0 " +
+            "ORDER BY COALESCE(dismissTime, postTime) DESC"
+    )
+    abstract suspend fun getQueuedRestoreNotifications(): List<NotificationEntity>
+
     @Transaction
     open suspend fun insert(entity: NotificationEntity): Long {
+        val preservedRestoreMetadata = if (entity.restoreMetadataJson == null) {
+            getRestoreMetadataRows(listOf(entity.key)).firstOrNull()?.restoreMetadataJson
+        } else {
+            null
+        }
         val effectiveGroupKey = entity.groupKey?.ifBlank { null } ?: entity.packageName
-        val normalizedEntity = if (entity.groupKey == null) entity.copy(groupKey = effectiveGroupKey) else entity
+        val normalizedEntity = entity.copy(
+            groupKey = if (entity.groupKey == null) effectiveGroupKey else entity.groupKey,
+            restoreMetadataJson = entity.restoreMetadataJson ?: preservedRestoreMetadata
+        )
 
         insertAppInternal(
             AppEntity(
@@ -57,9 +80,18 @@ abstract class NotificationDao :
     @Transaction
     open suspend fun insertNotifications(notifications: List<NotificationEntity>): List<Long> {
         if (notifications.isEmpty()) return emptyList()
+        val metadataKeys = notifications.filter { it.restoreMetadataJson == null }.map { it.key }.distinct()
+        val preservedRestoreMetadata = if (metadataKeys.isEmpty()) {
+            emptyMap()
+        } else {
+            getRestoreMetadataRows(metadataKeys).associate { it.key to it.restoreMetadataJson }
+        }
         val normalizedNotifications = notifications.map { entity ->
             val effectiveGroupKey = entity.groupKey?.ifBlank { null } ?: entity.packageName
-            if (entity.groupKey == null) entity.copy(groupKey = effectiveGroupKey) else entity
+            entity.copy(
+                groupKey = if (entity.groupKey == null) effectiveGroupKey else entity.groupKey,
+                restoreMetadataJson = entity.restoreMetadataJson ?: preservedRestoreMetadata[entity.key]
+            )
         }
         val apps = normalizedNotifications.map { entity ->
             AppEntity(

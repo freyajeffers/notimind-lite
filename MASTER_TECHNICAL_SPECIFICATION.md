@@ -37,12 +37,12 @@ The system is governed by four non-negotiable engineering constraints:
 
 #### Data Layer (`com.jeffers.notimindlite.data`)
 
-- **`AppDatabase`**: Room v19 database singleton with explicit migrations through `MIGRATION_18_19`; builds separate DE and CE instances.
+- **`AppDatabase`**: Room v20 singleton with explicit migrations through `MIGRATION_19_20`; registers the full migration chain for both DE and CE instances.
 - **`EncryptedDatabaseFactory` / `SqlCipherKeyManager`**: SQLCipher open-helper wiring and per-database Keystore-wrapped passphrases. Existing plaintext-install migration remains pending.
 - **`NotificationDao`**: Primary data access point. Contains complex `@Query` logic for FTS and hybrid search.
 - **`AppDao`**: Manages the `AppEntity` table, ensuring a 1:N relationship between apps and notifications.
 - **`BackupDao`**: Handles the audit trail of backup exports and their corresponding signatures.
-- **`NotificationEntity`**: The data model for a captured notification.
+- **`NotificationEntity`**: The data model for a captured notification, including local-only restore presentation metadata that is excluded from cloud sync payloads.
 - **`NotificationFtsEntity`**: The virtual FTS4 table used for high-speed text indexing.
 
 #### Service Layer (`com.jeffers.notimindlite.service`)

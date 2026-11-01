@@ -1,6 +1,6 @@
 # Privacy Policy for NotiMind Lite
 
-**Last Updated**: August 18, 2026
+**Last Updated**: October 27, 2026
 
 NotiMind Lite is committed to a "Privacy-First" architecture. We believe your notification history is deeply personal and should remain under your sole control.
 
@@ -8,16 +8,16 @@ NotiMind Lite is committed to a "Privacy-First" architecture. We believe your no
 
 NotiMind Lite captures system notifications from your device. The data collected includes:
 
-- **Notification Content**: Title and body text of notifications.
+- **Notification Content**: Title and body text, plus expanded BigText/Inbox text and recent MessagingStyle snippets, sender labels, and conversation titles when Android exposes them.
+- **Presentation Metadata**: Style type, timestamp, color, visibility, count, progress/chronometer state, and resolvable large-icon resource references used for reboot reconstruction. This metadata stays in the local database and is excluded from cloud-sync payloads.
 - **App Metadata**: Package name, app label, and app icons.
-- **Temporal Data**: Timestamp of when the notification was posted.
-- **Technical Metadata**: Notification category and priority.
+- **Technical Metadata**: Notification category, priority, and grouping state.
 
-**We do not collect**:
+Only data exposed through Android's notification fields and extras is captured. Binary attachments and picture payloads, custom RemoteViews, and original action PendingIntents are not persisted or replayed. PII redaction, when enabled, masks common patterns such as email addresses, phone numbers, one-time codes, and payment-card numbers; it is not a guarantee that all identifying content is removed.
 
-- Personal identifiers (unless provided via Google Sign-In).
-- Location data.
-- Contact lists or call logs.
+**We do not independently collect**:
+
+- Contact lists, call logs, or location data.
 - Precise device telemetry.
 
 ## 2. How We Use Your Data

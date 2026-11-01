@@ -1,15 +1,18 @@
 package com.jeffers.notimindlite.base
 
 import android.app.Notification
+import android.content.ComponentName
 import android.content.Context
 import android.os.Bundle
 import android.os.Process
+import android.provider.Settings
 import android.service.notification.StatusBarNotification
 import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
 import com.jeffers.notimindlite.data.local.AppDatabase
 import com.jeffers.notimindlite.data.local.NotificationDao
 import com.jeffers.notimindlite.data.local.NotificationEntity
+import com.jeffers.notimindlite.service.NotificationLoggerService
 import org.junit.After
 import org.junit.Before
 import org.junit.runner.RunWith
@@ -26,6 +29,12 @@ abstract class BaseRobolectricTest {
     @Before
     open fun setup() {
         context = ApplicationProvider.getApplicationContext()
+        val listenerComponent = ComponentName(context, NotificationLoggerService::class.java)
+        Settings.Secure.putString(
+            context.contentResolver,
+            "enabled_notification_listeners",
+            listenerComponent.flattenToString()
+        )
         database = Room
             .inMemoryDatabaseBuilder(context, AppDatabase::class.java)
             .allowMainThreadQueries()

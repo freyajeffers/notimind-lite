@@ -98,6 +98,11 @@ fun NotificationGroupCard(
                     }
                 }
             )
+            RestoreNotificationBatchAction(
+                items = group.items,
+                dao = dao,
+                labelResource = R.string.notification_restore_group_action
+            )
 
             // Child Notifications List
             AnimatedVisibility(

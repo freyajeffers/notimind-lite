@@ -88,6 +88,26 @@ class BootRestoreManagerTest {
     }
 
     @Test
+    fun consolidateForBoot_overThresholdWithSameTitleKeepsAppsSeparate() = runBlocking {
+        val notifications = (1..46).map { index ->
+            val firstApp = index <= 23
+            createNotification(
+                id = index.toLong(),
+                packageName = if (firstApp) "com.first.app" else "com.second.app",
+                appName = if (firstApp) "First app" else "Second app",
+                title = "New message",
+                content = "Message $index"
+            )
+        }
+
+        val result = BootRestoreManager.consolidateForBoot(notifications)
+
+        assertEquals(2, result.size)
+        assertEquals((1L..23L).toList(), result.first { it.appName == "First app" }.originalIds)
+        assertEquals((24L..46L).toList(), result.first { it.appName == "Second app" }.originalIds)
+    }
+
+    @Test
     fun consolidateForBoot_overThresholdWithUniqueTitles_groupsByPackage() = runBlocking {
         // 50 notifications with unique titles from 2 distinct packages
         val notifications = (1..50).map { index ->

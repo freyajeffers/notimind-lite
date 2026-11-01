@@ -1,12 +1,17 @@
 package com.jeffers.notimindlite
 
 import com.jeffers.notimindlite.base.BaseRobolectricTest
+import com.jeffers.notimindlite.data.local.NotificationEntity
 import com.jeffers.notimindlite.service.NotificationLoggerService
+import com.jeffers.notimindlite.service.NotificationRestoreCoordinator
+import com.jeffers.notimindlite.service.RestoreResult
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeout
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.Robolectric
@@ -22,6 +27,50 @@ class NotificationLoggerServiceTest : BaseRobolectricTest() {
         val service = serviceController.create().get()
 
         assertNotNull(service)
+        serviceController.destroy()
+    }
+
+    @Test
+    fun restore_skipsNotificationKnownActiveInSystemSnapshot(): Unit = runBlocking {
+        val packageName = "com.example.active"
+        val key = "$packageName|101|active-tag"
+        val item = NotificationEntity(
+            key = key,
+            packageName = packageName,
+            appName = "Active app",
+            title = "Active title",
+            content = "Active content",
+            isDismissed = true,
+            dismissReason = 1
+        )
+        dao.insertNotification(item)
+        val serviceController = Robolectric.buildService(NotificationLoggerService::class.java)
+        val service = serviceController.create().get()
+        val sbn = createMockStatusBarNotification(
+            MockStatusBarParams(
+                key = "active-tag",
+                packageName = packageName,
+                title = item.title,
+                text = item.content
+            )
+        )
+
+        service.onNotificationPosted(sbn)
+        assertTrue(NotificationLoggerService.isNotificationKnownActive(key))
+        val result = NotificationRestoreCoordinator.restore(context, dao, item)
+
+        assertEquals(RestoreResult.SKIPPED, result)
+        val storedItem = dao.getNotificationByKey(key)
+        assertFalse(storedItem?.isDismissed ?: true)
+        assertFalse(
+            storedItem?.restoreMetadataJson?.contains("notimindRestoredNotificationId") == true
+        )
+
+        service.onNotificationRemoved(sbn)
+        assertFalse(NotificationLoggerService.isNotificationKnownActive(key))
+        withTimeout(2_000) {
+            while (dao.getNotificationByKey(key)?.isDismissed != true) delay(10)
+        }
         serviceController.destroy()
     }
 

@@ -164,6 +164,39 @@ class NotificationSanitizerTest {
         assertTrue(entity!!.isGroupSummary)
     }
 
+    @Test
+    fun sanitizeAndBuild_withSystemUsbDebuggingClutter_returnsNull() {
+        val sbn = createMockStatusBarNotification(
+            packageName = "com.android.systemui",
+            title = "USB debugging connected",
+            text = "Tap to disable USB debugging"
+        )
+
+        assertNull(sanitizer.sanitizeAndBuild(sbn, sbn.notification))
+    }
+
+    @Test
+    fun sanitizeAndBuild_withSystemChargingClutter_returnsNull() {
+        val sbn = createMockStatusBarNotification(
+            packageName = "android",
+            title = "Charging connected",
+            text = "Charging phone"
+        )
+
+        assertNull(sanitizer.sanitizeAndBuild(sbn, sbn.notification))
+    }
+
+    @Test
+    fun sanitizeAndBuild_withUserNotificationUsingSystemTitle_isPreserved() {
+        val sbn = createMockStatusBarNotification(
+            packageName = "com.example.chat",
+            title = "USB debugging connected",
+            text = "Tap to disable USB debugging"
+        )
+
+        assertNotNull(sanitizer.sanitizeAndBuild(sbn, sbn.notification))
+    }
+
     private fun createMockStatusBarNotification(
         packageName: String,
         title: String,

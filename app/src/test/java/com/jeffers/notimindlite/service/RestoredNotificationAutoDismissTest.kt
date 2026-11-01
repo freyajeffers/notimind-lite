@@ -1,11 +1,10 @@
 package com.jeffers.notimindlite.service
 
+import android.app.Notification.Builder
 import android.app.NotificationManager
 import android.content.Context
 import androidx.test.core.app.ApplicationProvider
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertFalse
-import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
@@ -39,19 +38,31 @@ class RestoredNotificationAutoDismissTest {
     }
 
     @Test
-    fun testOnOriginalAppNotificationPosted_autoDismissesRestoredNotification() {
+    fun testOriginalAppNotificationDoesNotDismissRestoredNotification() {
         val key = "0|com.example.chat|1|null|1000"
         val pkg = "com.example.chat"
         val notifId = 4002
-
+        val channelId = "restored-test"
+        notificationManager.createNotificationChannel(
+            android.app.NotificationChannel(channelId, "Restored test", NotificationManager.IMPORTANCE_DEFAULT)
+        )
+        notificationManager.notify(
+            notifId,
+            Builder(context, channelId)
+                .setSmallIcon(android.R.drawable.stat_notify_chat)
+                .setContentTitle("Restored")
+                .build()
+        )
         RestoredNotificationManager.markAsRestored(key, pkg, notifId)
-        assertEquals(notifId, RestoredNotificationManager.getRestoredNotifIdForPackage(pkg))
 
-        // When original app posts a new notification
         RestoredNotificationManager.onOriginalAppNotificationPosted(context, pkg)
 
-        // Restored notification must be cancelled and unregistered
-        assertNull(RestoredNotificationManager.getRestoredNotifIdForPackage(pkg))
-        assertFalse(RestoredNotificationManager.isRestored(key))
+        assertTrue(
+            notificationManager
+                .activeNotifications
+                .any { it.id == notifId }
+        )
+        assertEquals(notifId, RestoredNotificationManager.getRestoredNotifIdForPackage(pkg))
+        assertTrue(RestoredNotificationManager.isRestored(key))
     }
 }

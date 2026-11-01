@@ -29,12 +29,17 @@ import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.jeffers.notimindlite.R
+import com.jeffers.notimindlite.data.local.NotificationDao
+import com.jeffers.notimindlite.data.local.NotificationEntity
+import com.jeffers.notimindlite.ui.components.RestoreNotificationBatchAction
 
 @Composable
 internal fun ActiveSectionHeader(
     section: NotificationSection,
     isExpanded: Boolean,
     itemsCount: Int,
+    restoreItems: List<NotificationEntity>,
+    dao: NotificationDao,
     onToggle: () -> Unit
 ) {
     val sectionAccessibilityTitle = stringResource(section.accessibilityTitle)
@@ -96,6 +101,12 @@ internal fun ActiveSectionHeader(
                         modifier = Modifier.padding(horizontal = 4.dp, vertical = 2.dp)
                     )
                 }
+                Spacer(modifier = Modifier.width(8.dp))
+                RestoreNotificationBatchAction(
+                    items = restoreItems,
+                    dao = dao,
+                    labelResource = R.string.notification_restore_section_action
+                )
                 Spacer(modifier = Modifier.width(8.dp))
                 Icon(
                     imageVector = if (isExpanded) Icons.Default.ExpandLess else Icons.Default.ExpandMore,

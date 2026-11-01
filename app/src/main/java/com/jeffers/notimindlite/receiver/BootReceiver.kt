@@ -1,7 +1,5 @@
 package com.jeffers.notimindlite.receiver
 
-import android.app.NotificationChannel
-import android.app.NotificationManager
 import android.content.BroadcastReceiver
 import android.content.ComponentName
 import android.content.Context
@@ -9,11 +7,14 @@ import android.content.Intent
 import android.os.UserManager
 import android.service.notification.NotificationListenerService
 import android.util.Log
-import androidx.core.app.NotificationCompat
-import com.jeffers.notimindlite.R
 import com.jeffers.notimindlite.data.local.AppDatabase
+import com.jeffers.notimindlite.data.local.NotificationEntity
+import com.jeffers.notimindlite.data.local.PreferencesRepository
+import com.jeffers.notimindlite.service.BootConsolidationResult
 import com.jeffers.notimindlite.service.BootRestoreManager
 import com.jeffers.notimindlite.service.NotificationLoggerService
+import com.jeffers.notimindlite.service.NotificationRestoreCoordinator
+import com.jeffers.notimindlite.service.RestoredNotificationState
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -30,8 +31,6 @@ class BootReceiver : BroadcastReceiver() {
         const val CHANNEL_ID_RESTORED = "restored_notifications_channel"
         const val CHANNEL_NAME = "Restored Active Notifications"
         private const val QUICKBOOT_ACTION = "android.intent.action.QUICKBOOT_POWERON"
-        private const val RESTORED_NOTIFICATION_OFFSET = 1000
-        private const val POSITIVE_INT_MASK = 0x7FFFFFFF
     }
 
     override fun onReceive(context: Context?, intent: Intent?) {
@@ -107,46 +106,41 @@ class BootReceiver : BroadcastReceiver() {
     }
 
     private suspend fun restoreActiveNotifications(context: Context) {
-        val db = AppDatabase.getDatabase(context.applicationContext)
-        val activeNotifications = db.notificationDao().getActiveNotificationsList()
-        val consolidatedNotifications = BootRestoreManager.consolidateForBoot(activeNotifications)
-        val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-        notificationManager.createNotificationChannel(
-            NotificationChannel(
-                CHANNEL_ID_RESTORED,
-                CHANNEL_NAME,
-                NotificationManager.IMPORTANCE_DEFAULT
-            ).apply { description = "Restored active status bar notifications on boot" }
-        )
-        consolidatedNotifications.forEach { item ->
-            restoreNotificationGroup(context, notificationManager, activeNotifications, item)
-        }
-    }
-
-    private fun restoreNotificationGroup(
-        context: Context,
-        notificationManager: NotificationManager,
-        activeNotifications: List<com.jeffers.notimindlite.data.local.NotificationEntity>,
-        item: com.jeffers.notimindlite.service.BootConsolidationResult,
-    ) {
-        val firstId = item.originalIds.first()
-        val notificationId = (firstId.hashCode() and POSITIVE_INT_MASK) + RESTORED_NOTIFICATION_OFFSET
-        val notification = NotificationCompat
-            .Builder(context, CHANNEL_ID_RESTORED)
-            .setSmallIcon(android.R.drawable.stat_notify_chat)
-            .setContentTitle("${item.appName}: ${item.summaryTitle}")
-            .setContentText(item.summaryContent)
-            .setSubText(context.getString(R.string.restored_after_reboot))
-            .setPriority(NotificationCompat.PRIORITY_DEFAULT)
-            .setAutoCancel(true)
-            .build()
-        notificationManager.notify(notificationId, notification)
-        item.originalIds.forEach { originalId ->
-            activeNotifications.find { it.id == originalId }?.let { original ->
-                com.jeffers.notimindlite.service.RestoredNotificationManager.markAsRestored(
-                    original.key, original.packageName, notificationId
-                )
+        val dao = AppDatabase.getDatabase(context.applicationContext).notificationDao()
+        dao.getAllNotificationsSync().forEach { item ->
+            if (RestoredNotificationState.notificationId(item.restoreMetadataJson) != null) {
+                val nextState = if (item.isDismissed) {
+                    RestoredNotificationState.withQueuedState(item.restoreMetadataJson)
+                } else {
+                    RestoredNotificationState.withoutRestoreState(item.restoreMetadataJson)
+                }
+                dao.updateRestoreMetadataJson(item.key, nextState)
             }
         }
+        val activeNotifications = dao.getActiveNotificationsList()
+        val consolidatedNotifications = BootRestoreManager.consolidateForBoot(activeNotifications)
+        val redactPii = PreferencesRepository(context).securityManager.redactPii.value
+        consolidatedNotifications.forEach { item ->
+            restoreNotificationGroup(context, activeNotifications, item, redactPii)
+        }
+        NotificationRestoreCoordinator.restoreQueuedNotifications(context, dao)
+    }
+
+    private suspend fun restoreNotificationGroup(
+        context: Context,
+        activeNotifications: List<NotificationEntity>,
+        item: BootConsolidationResult,
+        redactPii: Boolean
+    ) {
+        val originals = item.originalIds.mapNotNull { originalId ->
+            activeNotifications.find { it.id == originalId }
+        }
+        NotificationRestoreCoordinator.restoreBootGroup(
+            context = context,
+            dao = AppDatabase.getDatabase(context.applicationContext).notificationDao(),
+            item = item,
+            originals = originals,
+            redactPii = redactPii
+        )
     }
 }

@@ -28,30 +28,16 @@ internal data class ActiveNotificationSectionsConfig(
 )
 
 internal fun LazyListScope.renderNotificationSections(config: ActiveNotificationSectionsConfig) {
+    val sectionInputs = NotificationSectionItems(
+        pinned = config.pinnedNotifs,
+        active = config.activeNotifs,
+        filtered = config.filteredNotifs,
+        dismissed = config.recentlyDismissed,
+        lost = config.lostNotifs
+    )
     config.sectionOrder.forEach { section ->
         val isExpanded = config.expandedSection == section.keyName
-        val rawItemsList = when (section) {
-            NotificationSection.PINNED -> {
-                config.pinnedNotifs
-            }
-
-            NotificationSection.ACTIVE -> {
-                config.activeNotifs
-            }
-
-            NotificationSection.FILTERED -> {
-                config.filteredNotifs
-            }
-
-            NotificationSection.DISMISSED -> {
-                config.recentlyDismissed
-                    .sortedByDescending { it.dismissTime ?: it.postTime }
-            }
-
-            NotificationSection.LOST -> {
-                config.lostNotifs
-            }
-        }.distinctBy { "${it.packageName}_${it.title}_${it.content}" }
+        val rawItemsList = sectionItems(section, sectionInputs)
         val filteredList = if (!config.selectedPackages.isNullOrEmpty()) {
             rawItemsList.filter { config.selectedPackages.contains(it.packageName) }
         } else {

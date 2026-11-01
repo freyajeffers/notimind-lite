@@ -1,9 +1,12 @@
 package com.jeffers.notimindlite.tier4realworld
 
+import android.app.Application
 import android.app.NotificationManager
 import android.content.Context
 import android.content.Intent
+import android.os.UserManager
 import com.jeffers.notimindlite.base.BaseRobolectricTest
+import com.jeffers.notimindlite.data.local.PreferenceManager
 import com.jeffers.notimindlite.receiver.BootReceiver
 import com.jeffers.notimindlite.service.NotificationLoggerService
 import kotlinx.coroutines.flow.first
@@ -60,7 +63,7 @@ class EndToEndAppLifecycleTest : BaseRobolectricTest() {
         for (sbn in sbns) {
             service.onNotificationPosted(sbn)
         }
-        Thread.sleep(150)
+        waitUntil { dao.getNotificationCount() == 5 }
 
         assertEquals("5 notifications should be ingested", 5, dao.getNotificationCount())
         assertEquals("5 notifications should be active", 5, dao.getActiveNotificationsList().size)
@@ -68,16 +71,22 @@ class EndToEndAppLifecycleTest : BaseRobolectricTest() {
         // Phase 3: User dismisses 2 notifications (WhatsApp and X)
         service.onNotificationRemoved(sbns[0]) // WhatsApp
         service.onNotificationRemoved(sbns[3]) // X
-        Thread.sleep(150)
+        waitUntil { dao.getActiveNotificationsList().size == 3 }
 
         assertEquals("Active count should drop to 3", 3, dao.getActiveNotificationsList().size)
         assertEquals("Total count should remain 5", 5, dao.getNotificationCount())
 
-        // Phase 4: Device reboot simulation
+        // Phase 4: Device reboot simulation after user unlock
+        val userManager = context.getSystemService(Context.USER_SERVICE) as UserManager
+        Shadows.shadowOf(userManager).setUserUnlocked(true)
+        val application = context.applicationContext as Application
+        Shadows.shadowOf(application).grantPermissions(android.Manifest.permission.POST_NOTIFICATIONS)
+        PreferenceManager(context).setRestoreOnBootEnabled(true)
+        NotificationLoggerService.clearActiveNotificationSnapshot()
         val bootIntent = Intent(Intent.ACTION_BOOT_COMPLETED)
         val bootReceiver = BootReceiver()
         bootReceiver.onReceive(context, bootIntent)
-        Thread.sleep(200)
+        waitUntil { shadowNm.allNotifications.isNotEmpty() }
 
         assertTrue("BootReceiver should re-post active notifications", shadowNm.allNotifications.isNotEmpty())
 
@@ -103,6 +112,13 @@ class EndToEndAppLifecycleTest : BaseRobolectricTest() {
         assertTrue("History log should be empty", dao.getAllNotifications().first().isEmpty())
 
         serviceController.destroy()
+    }
+
+    private suspend fun waitUntil(condition: suspend () -> Boolean) {
+        val deadline = System.currentTimeMillis() + 2_000
+        while (!condition() && System.currentTimeMillis() < deadline) {
+            Thread.sleep(10)
+        }
     }
 
     private fun String.capitalize(): String = replaceFirstChar {

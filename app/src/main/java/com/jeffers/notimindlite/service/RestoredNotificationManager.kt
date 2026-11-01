@@ -1,6 +1,5 @@
 package com.jeffers.notimindlite.service
 
-import android.app.NotificationManager
 import android.content.Context
 import android.util.Log
 import java.util.concurrent.ConcurrentHashMap
@@ -15,9 +14,11 @@ object RestoredNotificationManager {
     private val restoredNotificationKeys = ConcurrentHashMap.newKeySet<String>()
     private val restoredAppNotifIds = ConcurrentHashMap<String, MutableSet<Int>>()
     private val restoredAppKeys = ConcurrentHashMap<String, MutableSet<String>>()
+    private val restoredIdsByKey = ConcurrentHashMap<String, Int>()
 
     fun markAsRestored(notificationKey: String, packageName: String? = null, notifId: Int? = null) {
         restoredNotificationKeys.add(notificationKey)
+        if (notifId != null) restoredIdsByKey[notificationKey] = notifId
         if (packageName != null) {
             restoredAppKeys.computeIfAbsent(packageName) { ConcurrentHashMap.newKeySet() }.add(notificationKey)
             if (notifId != null) {
@@ -33,35 +34,26 @@ object RestoredNotificationManager {
 
     fun getRestoredNotifIdForPackage(packageName: String): Int? = restoredAppNotifIds[packageName]?.firstOrNull()
 
-    private const val AUTO_DISMISS_LOG_MAX_LEN = 80
+    /** Original-app posts no longer dismiss restored notifications; app UI owns dismissal. */
+    @Suppress("UNUSED_PARAMETER")
+    fun onOriginalAppNotificationPosted(context: Context, packageName: String) = Unit
 
-    /**
-     * Auto-dismisses NotiMind's restored notification when the original app restores its own.
-     */
-    fun onOriginalAppNotificationPosted(context: Context, packageName: String) {
-        val keys = restoredAppKeys.remove(packageName)
-        if (!keys.isNullOrEmpty()) {
-            restoredNotificationKeys.removeAll(keys)
+    fun forgetNotificationId(notificationId: Int) {
+        val keys = restoredIdsByKey.entries
+            .filter { it.value == notificationId }
+            .map { it.key }
+            .toSet()
+        keys.forEach {
+            restoredIdsByKey.remove(it)
+            restoredNotificationKeys.remove(it)
         }
-        val notifIds = restoredAppNotifIds.remove(packageName)
-        if (!notifIds.isNullOrEmpty()) {
-            val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as? NotificationManager
-            for (id in notifIds) {
-                try {
-                    notificationManager?.cancel(id)
-                    Log.i(
-                        TAG,
-                        "Auto-dismissed restored notification #$id because original app " +
-                            "($packageName) posted a notification".take(AUTO_DISMISS_LOG_MAX_LEN)
-                    )
-                } catch (e: SecurityException) {
-                    // POST_NOTIFICATIONS not granted or notification channel removed.
-                    Log.w(TAG, "Cannot auto-dismiss restored notification #$id: ${e.message}")
-                } catch (e: IllegalStateException) {
-                    // NotificationManager backing service unavailable.
-                    Log.w(TAG, "NotificationManager unavailable for #$id: ${e.message}")
-                }
-            }
+        restoredAppKeys.entries.forEach { entry ->
+            entry.value.removeAll(keys)
+            if (entry.value.isEmpty()) restoredAppKeys.remove(entry.key, entry.value)
+        }
+        restoredAppNotifIds.entries.forEach { entry ->
+            entry.value.remove(notificationId)
+            if (entry.value.isEmpty()) restoredAppNotifIds.remove(entry.key, entry.value)
         }
     }
 
@@ -69,5 +61,6 @@ object RestoredNotificationManager {
         restoredNotificationKeys.clear()
         restoredAppNotifIds.clear()
         restoredAppKeys.clear()
+        restoredIdsByKey.clear()
     }
 }

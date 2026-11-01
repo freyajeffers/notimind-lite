@@ -44,9 +44,14 @@ class NotificationSanitizer(
         val finalTitle = san?.let {
             if (preferences.anonymizeTitles.value) "[REDACTED-TITLE]" else it.title
         }
-        if (san == null || finalTitle == null || shouldReject(finalTitle, san.content, san.subText, postTime, now)) {
-            return null
-        }
+        val sanitizedData = san?.let { sanitized ->
+            finalTitle
+                ?.takeUnless { titleToStore ->
+                    isKnownSystemClutter(sbn.packageName, title, content) ||
+                        shouldReject(titleToStore, sanitized.content, sanitized.subText, postTime, now)
+                }?.let { titleToStore -> sanitized to titleToStore }
+        } ?: return null
+        val (sanitizedNotification, titleForStorage) = sanitizedData
 
         val packageName = sbn.packageName
         val isOngoing = sbn.isOngoing
@@ -56,8 +61,8 @@ class NotificationSanitizer(
             packageName = packageName,
             appName = parsingHelper.resolveAppName(packageName),
             appIconUri = appIconUri(packageName),
-            title = finalTitle,
-            content = san.content,
+            title = titleForStorage,
+            content = sanitizedNotification.content,
             postTime = postTime,
             lastUpdatedTime = now,
             updateCount = 1,
@@ -67,8 +72,8 @@ class NotificationSanitizer(
             isGroupSummary = (notification.flags and Notification.FLAG_GROUP_SUMMARY) != 0,
             category = notification.category,
             channelId = notification.channelId,
-            subText = san.subText,
-            bigText = san.bigText,
+            subText = sanitizedNotification.subText,
+            bigText = sanitizedNotification.bigText,
             inboxLinesJson = inboxLinesJson,
             priority = runCatching {
                 notification.javaClass.getField("priority").getInt(notification)
@@ -80,10 +85,29 @@ class NotificationSanitizer(
             intentUri = parsingHelper.safeLaunchIntentUri(packageName),
             isPinned = false,
             actionLabels = parsingHelper.buildActionLabelsJson(notification.actions),
-            smallIconRes = parsingHelper.safeSmallIconRes(notification)
+            smallIconRes = parsingHelper.safeSmallIconRes(notification),
+            restoreMetadataJson = NotificationRestoreMetadataExtractor.capture(
+                notification = notification,
+                redactPii = preferences.securityManager.redactPii.value,
+                anonymizeTitles = preferences.anonymizeTitles.value
+            )
         )
 
         return entity
+    }
+
+    private fun isKnownSystemClutter(packageName: String, title: String, content: String): Boolean {
+        val normalizedTitle = title.trim()
+        val normalizedContent = content.trim()
+        return when (packageName) {
+            "com.android.systemui" -> normalizedTitle.equals("USB debugging connected", ignoreCase = true) &&
+                normalizedContent.contains("USB debugging", ignoreCase = true)
+
+            "android" -> normalizedTitle.equals("Charging connected", ignoreCase = true) &&
+                normalizedContent.startsWith("Charging", ignoreCase = true)
+
+            else -> false
+        }
     }
 
     private fun shouldReject(

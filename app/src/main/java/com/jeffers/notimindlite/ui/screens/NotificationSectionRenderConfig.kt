@@ -31,9 +31,14 @@ internal data class NotificationSectionRenderConfig(
 internal fun LazyListScope.notificationSection(config: NotificationSectionRenderConfig) {
     val section = config.section
     stickyHeader(key = "sticky_header_${section.keyName}") {
-        ActiveSectionHeader(section, config.isExpanded, config.itemsList.size) {
-            config.onToggleSection(section.keyName)
-        }
+        ActiveSectionHeader(
+            section = section,
+            isExpanded = config.isExpanded,
+            itemsCount = config.itemsList.size,
+            restoreItems = if (section == NotificationSection.DISMISSED) config.itemsList else emptyList(),
+            dao = config.dao,
+            onToggle = { config.onToggleSection(section.keyName) }
+        )
     }
     if (!config.isExpanded) return
     val groups = groupNotifications(config.itemsList, config.groupByApp, config.sortOrder)

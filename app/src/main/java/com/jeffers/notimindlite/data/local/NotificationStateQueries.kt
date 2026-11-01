@@ -22,8 +22,31 @@ interface NotificationStateQueries {
     @Query("SELECT * FROM notifications WHERE isDismissed = 0 ORDER BY isOngoing DESC, postTime DESC")
     suspend fun getActiveNotificationsList(): List<NotificationEntity>
 
+    @Query(
+        """
+        UPDATE notifications
+        SET isDismissed = 0, dismissReason = NULL, dismissTime = NULL
+        WHERE `key` = :key
+        """
+    )
+    suspend fun markNotificationActive(key: String)
+
+    @Query(
+        "UPDATE notifications SET isDismissed = :isDismissed, dismissReason = :dismissReason, " +
+            "dismissTime = :dismissTime WHERE `key` = :key"
+    )
+    suspend fun restoreNotificationDismissalState(
+        key: String,
+        isDismissed: Boolean,
+        dismissReason: Int?,
+        dismissTime: Long?
+    )
+
     @Query(RECENT_DISMISSED_QUERY)
     fun getRecentlyDismissedFlow(): Flow<List<NotificationEntity>>
+
+    @Query(RECENT_DISMISSED_QUERY)
+    suspend fun getRecentlyDismissedList(): List<NotificationEntity>
 
     @Query(LOST_NOTIFICATIONS_QUERY)
     fun getLostNotificationsFlow(): Flow<List<NotificationEntity>>

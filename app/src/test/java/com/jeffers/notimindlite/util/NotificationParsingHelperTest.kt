@@ -2,8 +2,14 @@ package com.jeffers.notimindlite.util
 
 import android.app.Notification
 import android.content.Context
+import android.content.Intent
+import android.content.pm.ApplicationInfo
+import android.content.pm.PackageManager
 import android.os.Bundle
 import androidx.test.core.app.ApplicationProvider
+import com.jeffers.notimindlite.R
+import io.mockk.every
+import io.mockk.mockk
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
@@ -172,8 +178,103 @@ class NotificationParsingHelperTest {
     }
 
     @Test
+    fun resolveAppName_knownPackage_returnsLabel() {
+        val packageManager = mockk<PackageManager>()
+        val appInfo = mockk<ApplicationInfo>()
+        every {
+            packageManager.getApplicationInfo(
+                "com.example.app",
+                any<PackageManager.ApplicationInfoFlags>()
+            )
+        } returns appInfo
+        every { packageManager.getApplicationLabel(appInfo) } returns "Example App"
+
+        assertEquals(
+            "Example App",
+            NotificationParsingHelper(packageManager).resolveAppName("com.example.app")
+        )
+    }
+
+    @Test
+    fun resolveAppName_securityException_returnsPackageNameFallback() {
+        val packageManager = mockk<PackageManager>()
+        every {
+            packageManager.getApplicationInfo(any(), any<PackageManager.ApplicationInfoFlags>())
+        } throws SecurityException("Package access denied")
+
+        assertEquals(
+            "com.example.app",
+            NotificationParsingHelper(packageManager).resolveAppName("com.example.app")
+        )
+    }
+
+    @Test
+    fun extractInboxLinesJson_classCastFallsBackToStringArray() {
+        val extras = mockk<Bundle>()
+        every {
+            extras.getCharSequenceArray(Notification.EXTRA_TEXT_LINES)
+        } throws ClassCastException("Not a CharSequence array")
+        every { extras.getStringArray(Notification.EXTRA_TEXT_LINES) } returns arrayOf("First", "Second")
+
+        assertEquals(
+            "[\"First\",\"Second\"]",
+            helper.extractInboxLinesJson(extras)
+        )
+    }
+
+    @Test
+    fun safeSmallIconRes_withResourceIcon_returnsResourceId() {
+        val context = ApplicationProvider.getApplicationContext<Context>()
+        val resourceId = R.drawable.ic_launcher_vector
+        val notification = Notification
+            .Builder(context, "test-channel")
+            .setSmallIcon(resourceId)
+            .build()
+
+        assertEquals(resourceId, helper.safeSmallIconRes(notification))
+    }
+
+    @Test
+    fun safeSmallIconRes_illegalState_returnsZero() {
+        val notification = mockk<Notification>()
+        every { notification.smallIcon } throws IllegalStateException("Icon unavailable")
+
+        assertEquals(0, helper.safeSmallIconRes(notification))
+    }
+
+    @Test
+    fun safeLaunchIntentUri_validIntent_returnsIntentUri() {
+        val packageManager = mockk<PackageManager>()
+        val intent = Intent(Intent.ACTION_MAIN)
+        every { packageManager.getLaunchIntentForPackage("com.example.app") } returns intent
+
+        assertEquals(
+            intent.toUri(Intent.URI_INTENT_SCHEME),
+            NotificationParsingHelper(packageManager).safeLaunchIntentUri("com.example.app")
+        )
+    }
+
+    @Test
+    fun safeLaunchIntentUri_securityAndArgumentFailures_returnNull() {
+        val securityPackageManager = mockk<PackageManager>()
+        every { securityPackageManager.getLaunchIntentForPackage(any()) } throws SecurityException("Denied")
+        assertNull(NotificationParsingHelper(securityPackageManager).safeLaunchIntentUri("com.example.app"))
+
+        val invalidPackageManager = mockk<PackageManager>()
+        every { invalidPackageManager.getLaunchIntentForPackage(any()) } throws IllegalArgumentException("Invalid")
+        assertNull(NotificationParsingHelper(invalidPackageManager).safeLaunchIntentUri("invalid package"))
+    }
+
+    @Test
+    fun safeLaunchIntentUri_noLaunchIntent_returnsNull() {
+        val packageManager = mockk<PackageManager>()
+        every { packageManager.getLaunchIntentForPackage("com.example.app") } returns null
+
+        assertNull(NotificationParsingHelper(packageManager).safeLaunchIntentUri("com.example.app"))
+    }
+
+    @Test
     fun safeLaunchIntentUri_unknownPackage_returnsNull() {
-        val uri = helper.safeLaunchIntentUri("com.nonexistent.fake.app")
-        assertNull(uri)
+        assertNull(helper.safeLaunchIntentUri("com.nonexistent.fake.app"))
     }
 }

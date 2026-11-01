@@ -20,41 +20,12 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 
 /**
- * Scaffold for schema-migration verification using androidx.room.testing.MigrationTestHelper.
+ * Schema-migration tests for AppDatabase, including the current-schema smoke test and
+ * versioned migrations. MigrationTestHelper schemas must exist under
+ * app/src/main/assets/com.jeffers.notimindlite.data.local.AppDatabase/.
  *
- * This file ships in TWO PARTS:
- *   (A) A working smoke test ([smoke_notificationRoundTripSucceedsAtCurrentSchema]) that
- *       exercises Room's schema generation at v18 — green today, no prerequisites.
- *   (B) A scaffolded migration test ([migration_17_to_18_runsSuccessfullyAndPreservesNotificationsTable])
- *       that demonstrates the canonical MigrationTestHelper pattern for a real N -> N+1
- *       migration. It is annotated @Ignore because it requires a v17 schema JSON that is
- *       NOT yet present in source control. See "How to enable" below.
- *
- * The scaffolding is correct, compilable, and matches the official Room migration testing
- * recipe (https://developer.android.com/training/data-storage/room/migrating-db-versions#test).
- *
- * How to enable the migration test (one-time, then remove @Ignore):
- *   1. Check out the commit immediately BEFORE MIGRATION_17_18 was added.
- *      git log --oneline -- app/src/main/java/com/jeffers/notimindlite/data/local/AppDatabase.kt
- *   2. With that checkout on disk, run `./gradlew :app:assembleDebug` — Room will emit
- *      app/schemas/com.jeffers.notimindlite.data.local.AppDatabase/17.json.
- *   3. Copy that file alongside the existing 18.json:
- *        cp app/schemas/com.jeffers.notimindlite.data.local.AppDatabase/17.json .
- *   4. Return to master (`git checkout master`), confirm the file is present, and remove
- *      the @Ignore annotation below.
- *   5. Run `./gradlew :app:testDebugUnitTest --tests "*MigrationTest*"`.
- *
- * Why @Ignore is the right call (not deletion):
- *   - The migration itself works (it's exercised by the production app).
- *   - The scaffold pattern is the canonical one and should stay visible.
- *   - A failing-on-CI scaffold is worse than a green-but-disabled one, because it
- *     teaches the wrong lesson ("migrations are broken") and pollutes PR status.
- *   - The missing 17.json is a one-line addition once someone does the checkout dance.
- *
- * Pre-flight contract enforced by this file:
- *   - @Database(exportSchema = true) on AppDatabase (changed from false)
- *   - room.schemaLocation = "$projectDir/schemas" KSP arg (already set)
- *   - The exported schema for the target version exists under app/schemas/...
+ * Robolectric SQLite tests require x86_64; Linux aarch64 cannot load the native
+ * Robolectric runtime, so run these migration tests in x86_64 CI or on an emulator.
  */
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [33])
@@ -177,8 +148,55 @@ class MigrationTest {
         }
     }
 
+    @Test
+    fun migration_19_to_20_addsRestoreMetadataAndPreservesNotifications() {
+        val testDbName = "migration-test-19-20.db"
+        try {
+            helper.createDatabase(testDbName, 19).use { v19 ->
+                v19.execSQL(
+                    "INSERT INTO notifications " +
+                        "(key, packageName, appName, appIconUri, title, content, postTime, lastUpdatedTime, " +
+                        "updateCount, isDismissed, isPersistent, isRead, isGroupSummary, category, channelId, " +
+                        "subText, bigText, inboxLinesJson, priority, groupKey, isOngoing, isClearable, actionsCount, " +
+                        "dismissReason, dismissTime, intentUri, isPinned, actionLabels, smallIconRes, syncStatus, " +
+                        "lastSyncedAt, embedding) VALUES " +
+                        "(?, ?, ?, NULL, ?, ?, ?, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL, NULL, NULL, 0, NULL, " +
+                        "0, 1, 0, NULL, NULL, NULL, 0, NULL, 0, 'PENDING', 0, NULL)",
+                    arrayOf<Any?>(
+                        "migration_19_key",
+                        "com.migration.test",
+                        "MigrationApp",
+                        "Migration Title",
+                        "Migration Content",
+                        System.currentTimeMillis()
+                    )
+                )
+            }
+
+            val migrated = helper.runMigrationsAndValidate(
+                testDbName,
+                20,
+                false,
+                AppDatabase.MIGRATION_19_20
+            )
+            migrated.use { opened ->
+                val cursor = opened.query(
+                    "SELECT title, restoreMetadataJson FROM notifications WHERE key = ?",
+                    arrayOf<Any>("migration_19_key")
+                )
+                cursor.use {
+                    assertTrue("Existing notification row must survive migration", it.moveToFirst())
+                    assertEquals("Migration Title", it.getString(it.getColumnIndexOrThrow("title")))
+                    assertEquals(null, it.getString(it.getColumnIndexOrThrow("restoreMetadataJson")))
+                }
+            }
+        } finally {
+            ApplicationProvider.getApplicationContext<android.content.Context>().deleteDatabase(testDbName)
+        }
+    }
+
     /**
-     * Smoke test: builds the current schema (v19) end-to-end via Room and verifies
+     * Smoke test: builds the current schema (v20) end-to-end via Room and verifies
      * a round-tripped notification is retrievable. Always green — no prerequisites.
      */
     @Test

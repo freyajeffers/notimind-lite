@@ -121,6 +121,8 @@ import com.jeffers.notimindlite.ui.components.ActiveFirstRunEmptyState
 import com.jeffers.notimindlite.ui.components.ActivePermissionEmptyState
 import com.jeffers.notimindlite.ui.components.ActiveSearchEmptyState
 import com.jeffers.notimindlite.ui.components.NotificationGroupCard
+import com.jeffers.notimindlite.ui.components.RestoreNotificationCardAction
+import com.jeffers.notimindlite.ui.components.SwipeDismissNotificationCard
 import com.jeffers.notimindlite.ui.components.groupNotifications
 import com.jeffers.notimindlite.ui.dialogs.AppPackageSelectorDialog
 import com.jeffers.notimindlite.util.NotificationLauncher
@@ -328,7 +330,13 @@ private val activeNotificationLifecycle: @Composable (ActiveNotificationLifecycl
     DisposableEffect(config.lifecycleOwner) {
         val observer = LifecycleEventObserver { _, event ->
             if (event == Lifecycle.Event.ON_RESUME) {
-                config.setIsGranted(checkNotificationPermission(config.context))
+                val notificationAccessGranted = checkNotificationPermission(config.context)
+                config.setIsGranted(notificationAccessGranted)
+                if (notificationAccessGranted) {
+                    NotificationLoggerService.requestActiveSnapshotRefresh(config.context)
+                } else {
+                    NotificationLoggerService.clearActiveNotificationSnapshot()
+                }
             }
         }
         config.lifecycleOwner.lifecycle.addObserver(observer)
@@ -421,8 +429,11 @@ private val renderActiveNotificationsScreen:
 
         val scope = rememberCoroutineScope()
 
-        val sectionOrder = remember(expandedSection, pinnedNotifs.size) {
-            notificationSectionOrder(expandedSection, pinnedNotifs.isNotEmpty())
+        val hasActivePinnedNotifications = remember(pinnedNotifs) {
+            pinnedNotifs.any { !it.isDismissed }
+        }
+        val sectionOrder = remember(expandedSection, hasActivePinnedNotifications) {
+            notificationSectionOrder(expandedSection, hasActivePinnedNotifications)
         }
 
         val listState = rememberLazyListState()
@@ -784,36 +795,37 @@ fun LogNotificationCard(config: LogNotificationCardConfig) {
     val compactMode = config.compactMode
     val previewLength = config.previewLength
 
-    val context = LocalContext.current
-    val scope = rememberCoroutineScope()
+    SwipeDismissNotificationCard(item = item, dao = dao) {
+        Card(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clickable(onClick = onToggleExpand),
+            colors = CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.surface
+            )
+        ) {
+            Column(modifier = Modifier.padding(if (compactMode) 8.dp else 14.dp)) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    ActiveNotificationHeader(config)
+                }
 
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable(onClick = onToggleExpand),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface
-        )
-    ) {
-        Column(modifier = Modifier.padding(if (compactMode) 8.dp else 14.dp)) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                ActiveNotificationHeader(config)
-            }
+                RestoreNotificationCardAction(item = item, dao = dao)
 
-            if (!isExpanded) {
-                NotificationCollapsedContent(config)
-            }
+                if (!isExpanded) {
+                    NotificationCollapsedContent(config)
+                }
 
-            if (isExpanded) {
-                ActiveNotificationExpandedContent(
-                    item = item,
-                    dateTimeFormatter = dateTimeFormatter,
-                    highlightQuery = highlightQuery
-                )
+                if (isExpanded) {
+                    ActiveNotificationExpandedContent(
+                        item = item,
+                        dateTimeFormatter = dateTimeFormatter,
+                        highlightQuery = highlightQuery
+                    )
+                }
             }
         }
     }

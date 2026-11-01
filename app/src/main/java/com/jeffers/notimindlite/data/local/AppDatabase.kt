@@ -22,7 +22,7 @@ import com.jeffers.notimindlite.util.DatabaseLockManager
         BackupRecord::class,
         NotificationGroupEntity::class
     ],
-    version = 19,
+    version = 20,
     exportSchema = true
 )
 @TypeConverters(Converters::class)
@@ -40,7 +40,7 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun backupDao(): BackupDao
 
     companion object {
-        const val DATABASE_VERSION = 19
+        const val DATABASE_VERSION = 20
         const val DE_DATABASE_NAME = "notimind_de.db"
         const val CE_DATABASE_NAME = "notimind_lite_database"
 
@@ -63,6 +63,7 @@ abstract class AppDatabase : RoomDatabase() {
         private const val DB_VERSION_17 = 17
         private const val DB_VERSION_18 = 18
         private const val DB_VERSION_19 = 19
+        private const val DB_VERSION_20 = 20
 
         // SQLite PRAGMA tuning values applied on first DB open (idempotent, advisory only).
         // Centralised as constants so detekt MagicNumber rule is satisfied and the values
@@ -337,6 +338,19 @@ abstract class AppDatabase : RoomDatabase() {
             }
         }
 
+        val MIGRATION_19_20 = object : Migration(DB_VERSION_19, DB_VERSION_20) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE `notifications` ADD COLUMN `restoreMetadataJson` TEXT")
+            }
+        }
+
+        private val allMigrations: Array<Migration> = arrayOf(
+            MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7,
+            MIGRATION_7_8, MIGRATION_8_9, MIGRATION_9_10, MIGRATION_10_11, MIGRATION_11_12,
+            MIGRATION_12_13, MIGRATION_13_14, MIGRATION_14_15, MIGRATION_15_16, MIGRATION_16_17,
+            MIGRATION_17_18, MIGRATION_18_19, MIGRATION_19_20
+        )
+
         private fun migrateNotificationGroups(db: SupportSQLiteDatabase) {
             // 1. Ensure all notifications have non-null groupKey
             db.execSQL(
@@ -572,6 +586,7 @@ abstract class AppDatabase : RoomDatabase() {
                                 deContext,
                                 DE_DATABASE_NAME
                             )?.let(::openHelperFactory)
+                        allMigrations.forEach { addMigrations(it) }
                     }.addCallback(DB_CALLBACK)
                     .setJournalMode(JournalMode.WRITE_AHEAD_LOGGING)
                     .build()
@@ -645,12 +660,8 @@ abstract class AppDatabase : RoomDatabase() {
                                 databaseName
                             )?.let(::openHelperFactory)
                     }
-                }.addMigrations(
-                    MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7,
-                    MIGRATION_7_8, MIGRATION_8_9, MIGRATION_9_10,
-                    MIGRATION_10_11, MIGRATION_11_12, MIGRATION_12_13, MIGRATION_13_14, MIGRATION_14_15,
-                    MIGRATION_15_16, MIGRATION_16_17, MIGRATION_17_18, MIGRATION_18_19
-                ).addCallback(DB_CALLBACK)
+                    allMigrations.forEach { addMigrations(it) }
+                }.addCallback(DB_CALLBACK)
                 .setJournalMode(JournalMode.WRITE_AHEAD_LOGGING)
                 .build()
         }
