@@ -2,7 +2,11 @@ package com.jeffers.notimindlite.util
 
 import android.content.Context
 import android.net.ConnectivityManager
+import android.net.Network
+import android.net.NetworkCapabilities
 import androidx.test.core.app.ApplicationProvider
+import io.mockk.every
+import io.mockk.mockk
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Before
@@ -35,11 +39,45 @@ class NetworkUtilsTest {
     }
 
     @Test
-    fun isInternetAvailable_whenNetworkActive_evaluatesWithoutCrashing() {
-        val shadow = shadowOf(connectivityManager)
-        shadow.setDefaultNetworkActive(true)
+    fun isInternetAvailable_whenNetworkHasInternetCapability_returnsTrue() {
+        val mockedContext = mockk<Context>()
+        val mockedManager = mockk<ConnectivityManager>()
+        val network = mockk<Network>()
+        val capabilities = mockk<NetworkCapabilities>()
+        every { mockedContext.getSystemService(Context.CONNECTIVITY_SERVICE) } returns mockedManager
+        every { mockedManager.activeNetwork } returns network
+        every { mockedManager.getNetworkCapabilities(network) } returns capabilities
+        every { capabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET) } returns true
 
-        val isAvailable = NetworkUtils.isInternetAvailable(context)
-        assertTrue(isAvailable || !isAvailable)
+        assertTrue(NetworkUtils.isInternetAvailable(mockedContext))
+    }
+
+    @Test
+    fun isInternetAvailable_whenInternetCapabilityIsMissing_returnsFalse() {
+        val mockedContext = mockk<Context>()
+        val mockedManager = mockk<ConnectivityManager>()
+        val network = mockk<Network>()
+        val capabilities = mockk<NetworkCapabilities>()
+        every { mockedContext.getSystemService(Context.CONNECTIVITY_SERVICE) } returns mockedManager
+        every { mockedManager.activeNetwork } returns network
+        every { mockedManager.getNetworkCapabilities(network) } returns capabilities
+        every { capabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET) } returns false
+
+        assertFalse(NetworkUtils.isInternetAvailable(mockedContext))
+    }
+
+    @Test
+    fun isInternetAvailable_whenNetworkPlatformThrows_returnsFalse() {
+        val failures = listOf(
+            SecurityException("permission denied"),
+            ClassCastException("service type"),
+            IllegalStateException("offline")
+        )
+        failures.forEach { failure ->
+            val mockedContext = mockk<Context>()
+            every { mockedContext.getSystemService(Context.CONNECTIVITY_SERVICE) } throws failure
+
+            assertFalse(NetworkUtils.isInternetAvailable(mockedContext))
+        }
     }
 }

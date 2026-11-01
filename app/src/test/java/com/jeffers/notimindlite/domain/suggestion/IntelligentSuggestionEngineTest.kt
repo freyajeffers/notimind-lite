@@ -123,6 +123,20 @@ class IntelligentSuggestionEngineTest {
     }
 
     @Test
+    fun searchEventRetainsFieldsAcrossCopyAndEquality() {
+        val event = com.jeffers.notimindlite.util.IntelligentSuggestionEngine.SearchEvent(
+            query = "invoice",
+            timestamp = 1234L,
+            matchedNotificationIds = listOf(7L, 9L)
+        )
+
+        assertEquals("invoice", event.query)
+        assertEquals(1234L, event.timestamp)
+        assertEquals(listOf(7L, 9L), event.matchedNotificationIds)
+        assertEquals(event, event.copy())
+    }
+
+    @Test
     fun facade_utilEngineDelegatesCorrectly() = runBlocking {
         com.jeffers.notimindlite.util.IntelligentSuggestionEngine
             .clearHistoryForTesting()
