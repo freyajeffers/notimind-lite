@@ -3,6 +3,7 @@ package com.jeffers.notimindlite
 import android.content.Context
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.v2.createComposeRule
+import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.room.Room
@@ -42,6 +43,12 @@ class MainActivityInstrumentedTest {
         database.close()
     }
 
+    private fun waitForActiveTab() {
+        composeTestRule.waitUntil(timeoutMillis = 5_000) {
+            composeTestRule.onAllNodesWithText("Active").fetchSemanticsNodes().isNotEmpty()
+        }
+    }
+
     @Test
     fun mainActivity_launchesAndDisplaysNavigationTabs() {
         composeTestRule.setContent {
@@ -53,6 +60,7 @@ class MainActivityInstrumentedTest {
                 )
             }
         }
+        waitForActiveTab()
         composeTestRule.onNodeWithText("Active").assertIsDisplayed()
         composeTestRule.onNodeWithText("History").assertIsDisplayed()
     }
@@ -68,6 +76,7 @@ class MainActivityInstrumentedTest {
                 )
             }
         }
+        waitForActiveTab()
         composeTestRule.onNodeWithText("History").performClick()
         composeTestRule.onNodeWithText("No notifications found").assertIsDisplayed()
     }

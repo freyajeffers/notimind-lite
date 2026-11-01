@@ -14,11 +14,12 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
-import androidx.navigation.NavGraph.Companion.findStartDestination
+import androidx.navigation.NavOptions
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navOptions
 import com.jeffers.notimindlite.R
 import com.jeffers.notimindlite.data.auth.AuthManager
 import com.jeffers.notimindlite.data.local.AppDatabase
@@ -68,6 +69,12 @@ sealed class Screen(
     )
 }
 
+internal fun bottomTabNavigationOptions(): NavOptions = navOptions {
+    popUpTo(Screen.Active.route) { saveState = true }
+    launchSingleTop = true
+    restoreState = true
+}
+
 @Composable
 fun MainNavigation(
     modifier: Modifier = Modifier,
@@ -76,26 +83,24 @@ fun MainNavigation(
     preferencesRepository: com.jeffers.notimindlite.data.local.PreferencesRepository
 ) {
     val navController = rememberNavController()
+    val navBackStackEntry by navController.currentBackStackEntryAsState()
+    val currentRoute = navBackStackEntry?.destination?.route
     val items = listOf(Screen.Active, Screen.History, Screen.Settings)
 
     Scaffold(
         bottomBar = {
-            NavigationBar {
-                val navBackStackEntry by navController.currentBackStackEntryAsState()
-                val currentRoute = navBackStackEntry?.destination?.route
-                items.forEach { screen ->
-                    NavigationBarItem(
-                        icon = screen.icon,
-                        label = { Text(stringResource(id = screen.title)) },
-                        selected = currentRoute == screen.route,
-                        onClick = {
-                            navController.navigate(screen.route) {
-                                popUpTo(navController.graph.findStartDestination().id) { saveState = true }
-                                launchSingleTop = true
-                                restoreState = true
+            if (currentRoute != "splash") {
+                NavigationBar {
+                    items.forEach { screen ->
+                        NavigationBarItem(
+                            icon = screen.icon,
+                            label = { Text(stringResource(id = screen.title)) },
+                            selected = currentRoute == screen.route,
+                            onClick = {
+                                navController.navigate(screen.route, bottomTabNavigationOptions())
                             }
-                        }
-                    )
+                        )
+                    }
                 }
             }
         }
