@@ -9,6 +9,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import com.jeffers.notimindlite.R
@@ -30,6 +31,8 @@ internal fun RestoreNotificationBatchAction(
     if (restorableItems.isEmpty()) return
 
     val context = LocalContext.current
+    val configuration = LocalConfiguration.current
+    val resources = remember(configuration) { context.resources }
     val scope = rememberCoroutineScope()
     TextButton(
         onClick = {
@@ -41,7 +44,7 @@ internal fun RestoreNotificationBatchAction(
                     Toast
                         .makeText(
                             context,
-                            context.getString(
+                            resources.getString(
                                 R.string.settings_restore_dismissed_success,
                                 result.restoredCount,
                                 result.queuedCount

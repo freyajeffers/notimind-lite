@@ -24,6 +24,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -38,6 +39,8 @@ import kotlinx.coroutines.withContext
 @Composable
 internal fun RestoreRecentlyDismissedCard(snackbarHostState: SnackbarHostState) {
     val context = LocalContext.current
+    val configuration = LocalConfiguration.current
+    val resources = remember(configuration) { context.resources }
     val scope = rememberCoroutineScope()
     var restoring by remember { mutableStateOf(false) }
     val emptyMessage = stringResource(R.string.settings_restore_dismissed_none)
@@ -75,7 +78,7 @@ internal fun RestoreRecentlyDismissedCard(snackbarHostState: SnackbarHostState) 
                                 if (restoredCount.restoredCount == 0 && restoredCount.queuedCount == 0) {
                                     emptyMessage
                                 } else {
-                                    context.getString(
+                                    resources.getString(
                                         R.string.settings_restore_dismissed_success,
                                         restoredCount.restoredCount,
                                         restoredCount.queuedCount
