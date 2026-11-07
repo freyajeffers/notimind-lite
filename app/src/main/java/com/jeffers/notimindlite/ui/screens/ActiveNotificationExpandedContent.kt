@@ -1,6 +1,5 @@
 package com.jeffers.notimindlite.ui.screens
 
-import android.util.Log
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -21,6 +20,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.jeffers.notimindlite.data.local.NotificationEntity
+import com.jeffers.notimindlite.util.AppLogger
 import org.json.JSONArray
 
 @Composable
@@ -94,5 +94,5 @@ private fun parseActiveInboxLines(json: String?): List<String> {
     return runCatching {
         val array = JSONArray(value)
         (0 until array.length()).mapNotNull { index -> array.optString(index).takeIf { it.isNotBlank() } }
-    }.onFailure { Log.w("ActiveNotifications", "Invalid inbox lines JSON", it) }.getOrDefault(emptyList())
+    }.onFailure { AppLogger.w("ActiveNotifications", "Invalid inbox lines JSON", it) }.getOrDefault(emptyList())
 }

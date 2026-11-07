@@ -3,9 +3,9 @@ package com.jeffers.notimindlite.util
 import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
-import android.util.Log
 import android.util.LruCache
 import androidx.core.net.toUri
+import com.jeffers.notimindlite.util.AppLogger
 import java.io.FileNotFoundException
 import java.io.IOException
 import java.io.InputStream
@@ -40,13 +40,13 @@ object AppIconCache {
                 }
                 bitmap
             } catch (e: FileNotFoundException) {
-                Log.w(TAG, "Icon not found for uri=$uri", e)
+                AppLogger.w(TAG, "Icon not found for uri=$uri", e)
                 null
             } catch (e: SecurityException) {
-                Log.e(TAG, "Security exception reading icon for uri=$uri", e)
+                AppLogger.e(TAG, "Security exception reading icon for uri=$uri", e)
                 null
             } catch (e: IOException) {
-                Log.e(TAG, "I/O error decoding icon for uri=$uri", e)
+                AppLogger.e(TAG, "I/O error decoding icon for uri=$uri", e)
                 null
             }
         }
@@ -71,16 +71,16 @@ object AppIconCache {
             BitmapFactory.decodeStream(inputStream, null, options)
         }
     } catch (e: FileNotFoundException) {
-        Log.w(TAG, "Icon file not found: $uriString", e)
+        AppLogger.w(TAG, "Icon file not found: $uriString", e)
         null
     } catch (e: SecurityException) {
-        Log.e(TAG, "Security exception opening icon stream: $uriString", e)
+        AppLogger.e(TAG, "Security exception opening icon stream: $uriString", e)
         null
     } catch (e: IllegalArgumentException) {
-        Log.w(TAG, "Malformed uri for icon: $uriString", e)
+        AppLogger.w(TAG, "Malformed uri for icon: $uriString", e)
         null
     } catch (e: IOException) {
-        Log.e(TAG, "I/O error decoding icon: $uriString", e)
+        AppLogger.e(TAG, "I/O error decoding icon: $uriString", e)
         null
     }
 

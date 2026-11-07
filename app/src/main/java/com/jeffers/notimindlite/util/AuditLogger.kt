@@ -4,7 +4,6 @@ import android.content.Context
 import android.os.Build
 import android.security.keystore.KeyProperties
 import android.util.Base64
-import android.util.Log
 import androidx.core.content.edit
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
@@ -80,7 +79,7 @@ object AuditLogger {
             if (!isRobolectricRuntime()) {
                 throw e
             }
-            Log.w(TAG, "AndroidKeyStore HMAC unavailable in Robolectric; using process-local fallback", e)
+            AppLogger.w(TAG, "AndroidKeyStore HMAC unavailable in Robolectric; using process-local fallback", e)
             return fallbackHmacKey ?: synchronized(this) {
                 fallbackHmacKey ?: javax.crypto.KeyGenerator
                     .getInstance("HmacSHA256")
@@ -209,9 +208,9 @@ object AuditLogger {
             FileOutputStream(logFile, true).use { fos ->
                 fos.write(signedLine.toByteArray(StandardCharsets.UTF_8))
             }
-            Log.d(TAG, "Audit log appended: $eventType (signed)")
+            AppLogger.d(TAG, "Audit log appended: $eventType (signed)")
         } catch (e: java.io.IOException) {
-            Log.e(TAG, "Failed to write audit log to disk", e)
+            AppLogger.e(TAG, "Failed to write audit log to disk", e)
         }
         return signature
     }
@@ -236,7 +235,7 @@ object AuditLogger {
 
             if (hasPriorInstallMarker && !hasRegularState) {
                 // App data was cleared while device protected storage or prior installation marker persisted!
-                Log.w(TAG, "ALERT: App data clearance detected!")
+                AppLogger.w(TAG, "ALERT: App data clearance detected!")
                 val deviceId = getDeviceId(context)
                 val userId = resolveUserId(context)
                 val timestamp = System.currentTimeMillis()
@@ -261,7 +260,7 @@ object AuditLogger {
             regularPrefs.edit { putBoolean("app_state_valid", true) }
         } catch (e: IllegalStateException) {
             // SharedPreferences backend unavailable (storage unmounted).
-            Log.e(TAG, "Error checking app data clear status", e)
+            AppLogger.e(TAG, "Error checking app data clear status", e)
         }
     }
 
@@ -344,16 +343,16 @@ object AuditLogger {
                 .document(logId)
                 .set(logData, SetOptions.merge())
                 .addOnSuccessListener {
-                    Log.d(TAG, "Audit log synced to Firestore: $logId for user ${entry.userId}")
+                    AppLogger.d(TAG, "Audit log synced to Firestore: $logId for user ${entry.userId}")
                 }.addOnFailureListener { e ->
-                    Log.w(TAG, "Failed to sync audit log to Firestore (will retry on next sync): ${e.message}")
+                    AppLogger.w(TAG, "Failed to sync audit log to Firestore (will retry on next sync): ${e.message}")
                 }
         } catch (e: IllegalStateException) {
             // Firestore not initialized or context destroyed; non-fatal.
-            Log.w(TAG, "Firestore audit log upload skipped: ${e.message}")
+            AppLogger.w(TAG, "Firestore audit log upload skipped: ${e.message}")
         } catch (e: SecurityException) {
             // Network security policy refused the call; non-fatal.
-            Log.w(TAG, "Firestore audit log upload blocked by security policy: ${e.message}")
+            AppLogger.w(TAG, "Firestore audit log upload blocked by security policy: ${e.message}")
         }
     }
 
@@ -372,7 +371,7 @@ object AuditLogger {
                 parsePersistentLogLine(line)?.let(entries::add)
             }
         } catch (e: java.io.IOException) {
-            Log.e(TAG, "Failed to read persistent audit logs", e)
+            AppLogger.e(TAG, "Failed to read persistent audit logs", e)
         }
         return entries
     }

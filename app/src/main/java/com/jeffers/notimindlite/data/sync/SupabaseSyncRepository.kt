@@ -4,6 +4,7 @@ import com.jeffers.notimindlite.BuildConfig
 import com.jeffers.notimindlite.data.auth.SupabaseAuthManager
 import com.jeffers.notimindlite.data.local.AppDatabase
 import com.jeffers.notimindlite.data.local.NotificationEntity
+import com.jeffers.notimindlite.util.AppLogger
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.json.JSONArray
@@ -50,10 +51,10 @@ class SupabaseSyncRepository(
             val imported = importRemoteIfNewer(remote)
             Result.success(local.size + imported)
         } catch (e: java.io.IOException) {
-            android.util.Log.e("SupabaseSync", "Notification sync failed (IO)", e)
+            AppLogger.e("SupabaseSync", "Notification sync failed (IO)", e)
             Result.failure(e)
         } catch (e: org.json.JSONException) {
-            android.util.Log.e("SupabaseSync", "Notification sync failed (JSON)", e)
+            AppLogger.e("SupabaseSync", "Notification sync failed (JSON)", e)
             Result.failure(e)
         }
     }

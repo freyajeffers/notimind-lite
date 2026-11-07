@@ -2,11 +2,11 @@ package com.jeffers.notimindlite.util
 
 import android.content.Context
 import android.database.SQLException
-import android.util.Log
 import androidx.sqlite.db.SupportSQLiteDatabase
 import com.jeffers.notimindlite.data.local.AppDatabase
 import com.jeffers.notimindlite.data.local.NotificationEntity
 import com.jeffers.notimindlite.data.local.PreferencesRepository
+import com.jeffers.notimindlite.util.AppLogger
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
@@ -26,7 +26,7 @@ object DatabaseMigrator {
             val needingVectorization = dao.getNotificationsNeedingVectorization()
             if (needingVectorization.isEmpty()) return@withContext
 
-            Log.i(TAG, "Vectorizing ${needingVectorization.size} notifications...")
+            AppLogger.i(TAG, "Vectorizing ${needingVectorization.size} notifications...")
 
             val preferences = PreferencesRepository(context)
             val rateMs = preferences.getEmbeddingRateMs()
@@ -52,13 +52,13 @@ object DatabaseMigrator {
                 Pair(entity.id, bytes)
             }
             dao.updateEmbeddingsBatch(embeddingPairs)
-            Log.i(TAG, "Vectorization complete.")
+            AppLogger.i(TAG, "Vectorization complete.")
         } catch (e: java.io.IOException) {
-            Log.e(TAG, "Failed to vectorize existing notifications: IO error", e)
+            AppLogger.e(TAG, "Failed to vectorize existing notifications: IO error", e)
         } catch (e: java.lang.IllegalStateException) {
-            Log.e(TAG, "Failed to vectorize existing notifications: illegal state", e)
+            AppLogger.e(TAG, "Failed to vectorize existing notifications: illegal state", e)
         } catch (e: java.lang.RuntimeException) {
-            Log.e(TAG, "Failed to vectorize existing notifications: runtime error", e)
+            AppLogger.e(TAG, "Failed to vectorize existing notifications: runtime error", e)
         }
     }
 
@@ -83,15 +83,15 @@ object DatabaseMigrator {
             clearDeStagingTables(db)
             db.setTransactionSuccessful()
         } catch (e: android.database.SQLException) {
-            Log.e(TAG, "Error during cross-database merge: ${e.message}", e)
+            AppLogger.e(TAG, "Error during cross-database merge: ${e.message}", e)
         } catch (e: java.lang.IllegalStateException) {
-            Log.e(TAG, "Error during cross-database merge: illegal state", e)
+            AppLogger.e(TAG, "Error during cross-database merge: illegal state", e)
         } finally {
             db.endTransaction()
             try {
                 db.execSQL("DETACH DATABASE de_db;")
             } catch (e: SQLException) {
-                Log.w(TAG, "Failed detaching DE staging database", e)
+                AppLogger.w(TAG, "Failed detaching DE staging database", e)
             }
         }
     }
@@ -137,7 +137,7 @@ object DatabaseMigrator {
         try {
             db.execSQL("INSERT INTO notifications_fts(notifications_fts) VALUES('rebuild');")
         } catch (e: android.database.SQLException) {
-            Log.e(TAG, "Failed rebuilding FTS index during merge: ${e.message}", e)
+            AppLogger.e(TAG, "Failed rebuilding FTS index during merge: ${e.message}", e)
         }
     }
 
@@ -146,7 +146,7 @@ object DatabaseMigrator {
             db.execSQL("DELETE FROM de_db.notifications;")
             db.execSQL("DELETE FROM de_db.apps;")
         } catch (e: android.database.SQLException) {
-            Log.e(TAG, "Failed clearing DE staging tables: ${e.message}", e)
+            AppLogger.e(TAG, "Failed clearing DE staging tables: ${e.message}", e)
         }
     }
 }

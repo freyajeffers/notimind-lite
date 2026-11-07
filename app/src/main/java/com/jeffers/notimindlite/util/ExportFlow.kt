@@ -4,6 +4,7 @@ import android.content.Context
 import com.jeffers.notimindlite.crypto.SqlCipherKeyManager
 import com.jeffers.notimindlite.data.local.PreferencesRepository
 import com.jeffers.notimindlite.domain.backup.EncryptedBackupManager
+import com.jeffers.notimindlite.util.AppLogger
 import java.io.File
 import javax.crypto.spec.SecretKeySpec
 
@@ -81,19 +82,19 @@ internal object ExportFlow {
         check(success) { "Backup encryption or notary authorization failed" }
         Result.success(backupFile)
     } catch (e: java.io.IOException) {
-        android.util.Log.e("DatabaseExporter", "Backup process failed: IO error", e)
+        AppLogger.e("DatabaseExporter", "Backup process failed: IO error", e)
         Result.failure(e)
     } catch (e: java.security.GeneralSecurityException) {
-        android.util.Log.e("DatabaseExporter", "Backup process failed: crypto error", e)
+        AppLogger.e("DatabaseExporter", "Backup process failed: crypto error", e)
         Result.failure(e)
     } catch (e: SecurityException) {
-        android.util.Log.e("DatabaseExporter", "Backup process failed: security exception", e)
+        AppLogger.e("DatabaseExporter", "Backup process failed: security exception", e)
         Result.failure(e)
     } catch (e: IllegalArgumentException) {
-        android.util.Log.e("DatabaseExporter", "Backup process failed: invalid argument", e)
+        AppLogger.e("DatabaseExporter", "Backup process failed: invalid argument", e)
         Result.failure(e)
     } catch (e: IllegalStateException) {
-        android.util.Log.e("DatabaseExporter", "Backup process failed: invalid state", e)
+        AppLogger.e("DatabaseExporter", "Backup process failed: invalid state", e)
         Result.failure(e)
     }
 }

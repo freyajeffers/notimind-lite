@@ -1,10 +1,10 @@
 package com.jeffers.notimindlite.util
 
 import android.database.sqlite.SQLiteException
-import android.util.Log
 import com.jeffers.notimindlite.data.local.Converters
 import com.jeffers.notimindlite.data.local.NotificationDao
 import com.jeffers.notimindlite.data.local.NotificationEntity
+import com.jeffers.notimindlite.util.AppLogger
 
 class NotificationEmbeddingIndexer {
     suspend fun indexSingle(dao: NotificationDao, entity: NotificationEntity) {
@@ -13,15 +13,15 @@ class NotificationEmbeddingIndexer {
             val embedding = VectorEmbeddingHelper.computeEmbedding(text)
             dao.updateEmbedding(entity.id, Converters().fromFloatArray(embedding) ?: return)
         } catch (e: IllegalStateException) {
-            Log.w(TAG, "Embedding compute skipped for ${entity.key}: invalid state", e)
+            AppLogger.w(TAG, "Embedding compute skipped for ${entity.key}: invalid state", e)
         } catch (e: SQLiteException) {
-            Log.w(TAG, "Embedding write skipped for ${entity.key}: database error", e)
+            AppLogger.w(TAG, "Embedding write skipped for ${entity.key}: database error", e)
         }
     }
 
     suspend fun indexBatch(dao: NotificationDao, ids: List<Long>, entities: List<NotificationEntity>) {
         if (ids.size != entities.size) {
-            Log.w(TAG, "Batch embedding skipped: id/entity size mismatch (${ids.size} vs ${entities.size})")
+            AppLogger.w(TAG, "Batch embedding skipped: id/entity size mismatch (${ids.size} vs ${entities.size})")
             return
         }
         for (i in entities.indices) {

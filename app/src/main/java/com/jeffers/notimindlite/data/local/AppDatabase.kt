@@ -2,7 +2,6 @@ package com.jeffers.notimindlite.data.local
 
 import android.content.Context
 import android.os.UserManager
-import android.util.Log
 import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
@@ -12,6 +11,7 @@ import androidx.sqlite.db.SupportSQLiteDatabase
 import com.jeffers.notimindlite.migration.EncryptionMigrationConsent
 import com.jeffers.notimindlite.migration.MigrationRunner
 import com.jeffers.notimindlite.migration.MigrationState
+import com.jeffers.notimindlite.util.AppLogger
 import com.jeffers.notimindlite.util.DatabaseLockManager
 
 @Database(
@@ -545,7 +545,7 @@ abstract class AppDatabase : RoomDatabase() {
                     db.execSQL(PRAGMA_BUSY_TIMEOUT_MS)
                 } catch (e: android.database.SQLException) {
                     // Safe fallback if pragma is restricted on certain engine variants.
-                    Log.w("AppDatabase", "Skipping PRAGMA tuning: ${e.message}")
+                    AppLogger.w("AppDatabase", "Skipping PRAGMA tuning: ${e.message}")
                 }
             }
         }

@@ -1,13 +1,13 @@
 package com.jeffers.notimindlite.util
 
 import android.content.Context
-import android.util.Log
 import androidx.work.ExistingPeriodicWorkPolicy
 import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
 import com.google.firebase.FirebaseApp
 import com.jeffers.notimindlite.data.local.PreferencesRepository
 import com.jeffers.notimindlite.data.local.RetentionCleanupWorker
+import com.jeffers.notimindlite.util.AppLogger
 import kotlinx.coroutines.launch
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
@@ -30,7 +30,7 @@ object AppInitializer {
             return
         }
 
-        Log.i(TAG, "AppInitializer: Starting system initialization...")
+        AppLogger.i(TAG, "AppInitializer: Starting system initialization...")
 
         try {
             val preferences = PreferencesRepository(context)
@@ -71,23 +71,23 @@ object AppInitializer {
                 try {
                     AuditLogger.checkAndLogAppDataCleared(context)
                 } catch (e: java.io.IOException) {
-                    Log.w(TAG, "AuditLogger IO check failed on startup", e)
+                    AppLogger.w(TAG, "AuditLogger IO check failed on startup", e)
                 } catch (e: SecurityException) {
-                    Log.w(TAG, "AuditLogger permission denied on startup", e)
+                    AppLogger.w(TAG, "AuditLogger permission denied on startup", e)
                 }
             }
 
-            Log.i(TAG, "AppInitializer: System initialization complete.")
+            AppLogger.i(TAG, "AppInitializer: System initialization complete.")
         } catch (e: com.google.firebase.FirebaseException) {
-            Log.e(TAG, "AppInitializer: Firebase initialization failed: ${e.message}", e)
+            AppLogger.e(TAG, "AppInitializer: Firebase initialization failed: ${e.message}", e)
         } catch (e: java.io.IOException) {
-            Log.e(TAG, "AppInitializer: IO failure during initialization: ${e.message}", e)
+            AppLogger.e(TAG, "AppInitializer: IO failure during initialization: ${e.message}", e)
         } catch (e: IllegalStateException) {
-            Log.e(TAG, "AppInitializer: Illegal state during initialization: ${e.message}", e)
+            AppLogger.e(TAG, "AppInitializer: Illegal state during initialization: ${e.message}", e)
         } catch (e: IllegalArgumentException) {
-            Log.e(TAG, "AppInitializer: Invalid argument during initialization: ${e.message}", e)
+            AppLogger.e(TAG, "AppInitializer: Invalid argument during initialization: ${e.message}", e)
         } catch (e: SecurityException) {
-            Log.e(TAG, "AppInitializer: Security exception during initialization: ${e.message}", e)
+            AppLogger.e(TAG, "AppInitializer: Security exception during initialization: ${e.message}", e)
         }
     }
 

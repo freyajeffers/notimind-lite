@@ -1,11 +1,11 @@
 package com.jeffers.notimindlite.data.sync
 
-import android.util.Log
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.FirebaseFirestoreException
 import com.jeffers.notimindlite.data.local.AppDatabase
 import com.jeffers.notimindlite.data.local.NotificationEntity
 import com.jeffers.notimindlite.data.local.SyncStatus
+import com.jeffers.notimindlite.util.AppLogger
 import com.jeffers.notimindlite.util.SyncEncryptionHelper
 import kotlinx.coroutines.tasks.await
 import java.security.GeneralSecurityException
@@ -58,7 +58,7 @@ class FirestoreSyncRepository(
     }
 
     private fun logError(message: String, error: Throwable) {
-        runCatching { Log.e(TAG, message, error) }
+        runCatching { AppLogger.e(TAG, message, error) }
     }
 
     private fun notificationCollection(userId: String) =
@@ -246,7 +246,7 @@ class FirestoreSyncRepository(
      */
     suspend fun purgeUserData(userId: String): Result<Unit> {
         check(userId.isNotBlank()) { "purgeUserData called with blank userId" }
-        Log.w(TAG, "Purge request for uid=$userId rejected: Local and Firestore databases are non-deletable by policy.")
+        AppLogger.w(TAG, "Purge request for uid=$userId rejected: Local and Firestore databases are non-deletable by policy.")
         return Result.failure(
             UnsupportedOperationException(
                 "Data retention policy: deletion is permanently disabled. " +

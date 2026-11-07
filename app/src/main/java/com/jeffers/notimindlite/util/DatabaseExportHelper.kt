@@ -6,6 +6,7 @@ import androidx.core.content.FileProvider
 import com.jeffers.notimindlite.data.local.NotificationEntity
 import com.jeffers.notimindlite.data.local.PreferencesRepository
 import com.jeffers.notimindlite.sanitization.PiiRedactionEngine
+import com.jeffers.notimindlite.util.AppLogger
 import org.json.JSONArray
 import org.json.JSONObject
 import java.io.File
@@ -197,9 +198,9 @@ object DatabaseExportHelper {
                 ?.filter { now - it.lastModified() > maxAgeMillis }
                 ?.forEach(File::delete)
         } catch (e: SecurityException) {
-            android.util.Log.e("DatabaseExporter", "Failed to clean up temporary export files: permission denied", e)
+            AppLogger.e("DatabaseExporter", "Failed to clean up temporary export files: permission denied", e)
         } catch (e: java.io.IOException) {
-            android.util.Log.e("DatabaseExporter", "Failed to clean up temporary export files: IO error", e)
+            AppLogger.e("DatabaseExporter", "Failed to clean up temporary export files: IO error", e)
         }
     }
 }

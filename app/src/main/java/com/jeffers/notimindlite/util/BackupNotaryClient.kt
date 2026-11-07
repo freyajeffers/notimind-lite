@@ -1,9 +1,9 @@
 package com.jeffers.notimindlite.util
 
 import android.content.Context
-import android.util.Log
 import com.google.android.play.core.integrity.IntegrityManagerFactory
 import com.google.android.play.core.integrity.IntegrityTokenRequest
+import com.jeffers.notimindlite.util.AppLogger
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.tasks.await
 import kotlinx.coroutines.withContext
@@ -116,10 +116,10 @@ object BackupNotaryClient {
             }
             connection.inputStream.bufferedReader().use { it.readText().trim() }
         } catch (e: java.net.MalformedURLException) {
-            Log.e(TAG, "Notary URL invalid", e)
+            AppLogger.e(TAG, "Notary URL invalid", e)
             throw java.io.IOException("Notary URL invalid", e)
         } catch (e: java.io.IOException) {
-            Log.e(TAG, "Notary server unavailable or IO error", e)
+            AppLogger.e(TAG, "Notary server unavailable or IO error", e)
             throw e
         } finally {
             connection.disconnect()

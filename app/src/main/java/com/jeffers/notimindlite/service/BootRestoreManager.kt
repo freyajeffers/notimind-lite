@@ -1,8 +1,8 @@
 package com.jeffers.notimindlite.service
 
 import android.content.Context
-import android.util.Log
 import com.jeffers.notimindlite.data.local.NotificationEntity
+import com.jeffers.notimindlite.util.AppLogger
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
@@ -45,7 +45,7 @@ object BootRestoreManager {
             }
         }
 
-        Log.i(TAG, "Restoring ${notifications.size} notifications on boot. Threshold exceeded. Grouping...")
+        AppLogger.i(TAG, "Restoring ${notifications.size} notifications on boot. Threshold exceeded. Grouping...")
 
         // Pass 1: Group by source app and title
         var groups = notifications
@@ -67,7 +67,7 @@ object BootRestoreManager {
 
         // Pass 2: Group by App if still over threshold
         if (groups.size > GROUPING_THRESHOLD) {
-            Log.i(TAG, "Still over threshold (${groups.size}). Grouping by App...")
+            AppLogger.i(TAG, "Still over threshold (${groups.size}). Grouping by App...")
 
             groups = notifications
                 .groupBy { it.packageName }

@@ -3,7 +3,7 @@ package com.jeffers.notimindlite.util
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
-import android.util.Log
+import com.jeffers.notimindlite.util.AppLogger
 import java.util.concurrent.ConcurrentHashMap
 
 object NotificationLauncher {
@@ -47,10 +47,10 @@ object NotificationLauncher {
                 actionIntent.send()
                 return true
             } catch (e: PendingIntent.CanceledException) {
-                Log.w(TAG, "Action PendingIntent was canceled for: ${notifKey}_action_$actionIndex", e)
+                AppLogger.w(TAG, "Action PendingIntent was canceled for: ${notifKey}_action_$actionIndex", e)
             }
         } else {
-            Log.w(TAG, "No cached action PendingIntent found for: ${notifKey}_action_$actionIndex")
+            AppLogger.w(TAG, "No cached action PendingIntent found for: ${notifKey}_action_$actionIndex")
         }
         return false
     }
@@ -65,7 +65,7 @@ object NotificationLauncher {
                 pendingIntent.send()
                 launched = true
             } catch (e: PendingIntent.CanceledException) {
-                Log.w(TAG, "PendingIntent was canceled for key: $key. Attempting persistent intentUri fallback.", e)
+                AppLogger.w(TAG, "PendingIntent was canceled for key: $key. Attempting persistent intentUri fallback.", e)
             }
         }
 
@@ -83,12 +83,12 @@ object NotificationLauncher {
                     context.startActivity(parsedIntent)
                     launched = true
                 } else {
-                    Log.w(TAG, "No activity resolved for parsed intentUri: $intentUri")
+                    AppLogger.w(TAG, "No activity resolved for parsed intentUri: $intentUri")
                 }
             } catch (e: SecurityException) {
-                Log.e(TAG, "SecurityException launching parsed intentUri for package: $packageName", e)
+                AppLogger.e(TAG, "SecurityException launching parsed intentUri for package: $packageName", e)
             } catch (e: java.net.URISyntaxException) {
-                Log.w(TAG, "Malformed intentUri for package: $packageName", e)
+                AppLogger.w(TAG, "Malformed intentUri for package: $packageName", e)
             }
         }
 
@@ -100,12 +100,12 @@ object NotificationLauncher {
                     launchIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
                     context.startActivity(launchIntent)
                 } else {
-                    Log.w(TAG, "No launch intent found for package: $packageName")
+                    AppLogger.w(TAG, "No launch intent found for package: $packageName")
                 }
             } catch (e: SecurityException) {
-                Log.e(TAG, "SecurityException while launching package main intent for: $packageName", e)
+                AppLogger.e(TAG, "SecurityException while launching package main intent for: $packageName", e)
             } catch (e: IllegalStateException) {
-                Log.e(TAG, "Invalid launch state for package: $packageName", e)
+                AppLogger.e(TAG, "Invalid launch state for package: $packageName", e)
             }
         }
     }

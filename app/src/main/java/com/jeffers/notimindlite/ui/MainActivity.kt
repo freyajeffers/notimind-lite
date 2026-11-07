@@ -42,6 +42,7 @@ import com.jeffers.notimindlite.migration.EncryptionMigrationConsent
 import com.jeffers.notimindlite.migration.MigrationRunner
 import com.jeffers.notimindlite.service.NotificationLoggerService
 import com.jeffers.notimindlite.ui.screens.checkNotificationPermission
+import com.jeffers.notimindlite.util.AppLogger
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -60,6 +61,10 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        window.setFlags(
+            android.view.WindowManager.LayoutParams.FLAG_SECURE,
+            android.view.WindowManager.LayoutParams.FLAG_SECURE
+        )
         enableEdgeToEdge(
             statusBarStyle = androidx.activity.SystemBarStyle.dark(android.graphics.Color.BLACK),
             navigationBarStyle = androidx.activity.SystemBarStyle.dark(android.graphics.Color.BLACK)
@@ -177,7 +182,7 @@ class MainActivity : ComponentActivity() {
             FirebaseSettingsSyncRepository()
                 .restoreOrUpload(preferences, session.uid)
         }
-        result.exceptionOrNull()?.let { android.util.Log.w("MainActivity", "Settings restore deferred", it) }
+        result.exceptionOrNull()?.let { AppLogger.w("MainActivity", "Settings restore deferred", it) }
     }
 
     private fun checkPostNotificationsPermission() {
@@ -227,13 +232,13 @@ class MainActivity : ComponentActivity() {
                 com.jeffers.notimindlite.util.DatabaseMigrator
                     .executeRawDbMergeAndRebuildFts(applicationContext, database)
             }.onFailure { e ->
-                android.util.Log.e("MainActivity", "Failed merging staging DB", e)
+                AppLogger.e("MainActivity", "Failed merging staging DB", e)
             }
             runCatching {
                 DynamicClusterManager.initialize(applicationContext)
             }.onFailure { e ->
                 // Startup helpers are best-effort so a stale cache cannot block the UI.
-                android.util.Log.e("MainActivity", "Failed initializing notification clusters", e)
+                AppLogger.e("MainActivity", "Failed initializing notification clusters", e)
             }
             // H2: purge stale cache backups >1h so the cacheDir doesn't fill up
             // between launches. Cleanup runs at startup because the encryption
@@ -245,7 +250,7 @@ class MainActivity : ComponentActivity() {
                     EXPORT_CACHE_MAX_AGE_MILLIS
                 )
             }.onFailure { e ->
-                android.util.Log.e("MainActivity", "Failed cleaning export cache", e)
+                AppLogger.e("MainActivity", "Failed cleaning export cache", e)
             }
         }
     }

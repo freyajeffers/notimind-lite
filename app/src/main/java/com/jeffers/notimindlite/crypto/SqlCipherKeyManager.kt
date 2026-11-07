@@ -3,8 +3,8 @@ package com.jeffers.notimindlite.crypto
 import android.content.Context
 import android.os.Build
 import android.util.Base64
-import android.util.Log
 import androidx.core.content.edit
+import com.jeffers.notimindlite.util.AppLogger
 import java.nio.ByteBuffer
 import java.security.KeyStore
 import java.util.concurrent.ConcurrentHashMap
@@ -64,13 +64,13 @@ object SqlCipherKeyManager {
                 generatedKey = generator.generateKey()
             } catch (e: java.security.InvalidAlgorithmParameterException) {
                 // StrongBox not available or parameters rejected; fall back to non-StrongBox
-                Log.w("SqlCipherKeyManager", "StrongBox key generation rejected, falling back", e)
+                AppLogger.w("SqlCipherKeyManager", "StrongBox key generation rejected, falling back", e)
             } catch (e: java.security.ProviderException) {
                 // Provider failure (StrongBox provider missing/unavailable)
-                Log.w("SqlCipherKeyManager", "StrongBox provider unavailable, falling back", e)
+                AppLogger.w("SqlCipherKeyManager", "StrongBox provider unavailable, falling back", e)
             } catch (e: SecurityException) {
                 // Permission / security manager blocked StrongBox usage
-                Log.w("SqlCipherKeyManager", "Security exception during StrongBox init", e)
+                AppLogger.w("SqlCipherKeyManager", "Security exception during StrongBox init", e)
             }
 
             if (generatedKey == null) {
@@ -79,7 +79,7 @@ object SqlCipherKeyManager {
             }
             generatedKey
         } catch (e: java.security.GeneralSecurityException) {
-            Log.w("SqlCipherKeyManager", "AndroidKeyStore unavailable or failed", e)
+            AppLogger.w("SqlCipherKeyManager", "AndroidKeyStore unavailable or failed", e)
             check(Build.FINGERPRINT == "robolectric") {
                 "AndroidKeyStore is required for SQLCipher passphrase protection"
             }
@@ -92,7 +92,7 @@ object SqlCipherKeyManager {
                 )
             }
         } catch (e: java.io.IOException) {
-            Log.w("SqlCipherKeyManager", "I/O error accessing KeyStore", e)
+            AppLogger.w("SqlCipherKeyManager", "I/O error accessing KeyStore", e)
             check(Build.FINGERPRINT == "robolectric") {
                 "AndroidKeyStore is required for SQLCipher passphrase protection"
             }

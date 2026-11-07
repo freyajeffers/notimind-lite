@@ -6,7 +6,6 @@ import android.content.Context
 import android.content.Intent
 import android.os.UserManager
 import android.service.notification.NotificationListenerService
-import android.util.Log
 import com.jeffers.notimindlite.data.local.AppDatabase
 import com.jeffers.notimindlite.data.local.NotificationEntity
 import com.jeffers.notimindlite.data.local.PreferencesRepository
@@ -15,6 +14,7 @@ import com.jeffers.notimindlite.service.BootRestoreManager
 import com.jeffers.notimindlite.service.NotificationLoggerService
 import com.jeffers.notimindlite.service.NotificationRestoreCoordinator
 import com.jeffers.notimindlite.service.RestoredNotificationState
+import com.jeffers.notimindlite.util.AppLogger
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -79,13 +79,13 @@ class BootReceiver : BroadcastReceiver() {
                 }
                 restoreActiveNotifications(context)
             } catch (e: SecurityException) {
-                Log.w("BootReceiverLite", "Permission denied restoring notifications on boot", e)
+                AppLogger.w("BootReceiverLite", "Permission denied restoring notifications on boot", e)
             } catch (e: android.database.sqlite.SQLiteException) {
-                Log.e("BootReceiverLite", "Database error during boot restoration", e)
+                AppLogger.e("BootReceiverLite", "Database error during boot restoration", e)
             } catch (e: IllegalStateException) {
-                Log.e("BootReceiverLite", "Illegal state during boot restoration", e)
+                AppLogger.e("BootReceiverLite", "Illegal state during boot restoration", e)
             } catch (e: IllegalArgumentException) {
-                Log.e("BootReceiverLite", "Invalid argument during boot restoration", e)
+                AppLogger.e("BootReceiverLite", "Invalid argument during boot restoration", e)
             } finally {
                 pendingResult?.finish()
             }
@@ -98,13 +98,13 @@ class BootReceiver : BroadcastReceiver() {
                 ComponentName(context, NotificationLoggerService::class.java)
             )
         } catch (e: SecurityException) {
-            Log.w("BootReceiverLite", "Notification listener rebind was denied", e)
+            AppLogger.w("BootReceiverLite", "Notification listener rebind was denied", e)
         }
     }
 
     private fun logRestoreSkipped(isUserUnlocked: Boolean) {
         if (!isUserUnlocked) {
-            Log.i(
+            AppLogger.i(
                 "BootReceiverLite",
                 "Pre-unlock boot restoration skipped (security policy, F-L). " +
                     "Notification listener rebind already requested above."

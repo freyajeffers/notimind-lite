@@ -7,10 +7,10 @@ import android.content.Intent
 import android.content.IntentFilter
 import android.content.res.Configuration
 import android.os.Bundle
-import android.util.Log
 import com.jeffers.notimindlite.data.local.AppDatabase
 import com.jeffers.notimindlite.data.local.PreferencesRepository
 import com.jeffers.notimindlite.util.AppIconCache
+import com.jeffers.notimindlite.util.AppLogger
 import com.jeffers.notimindlite.util.DatabaseLockManager
 import com.jeffers.notimindlite.util.VectorEmbeddingHelper
 
@@ -34,14 +34,14 @@ class NotiMindApp :
                 DatabaseLockManager.unlock()
             }
         }.onFailure {
-            Log.e(TAG, "PreferencesRepository unavailable during onCreate: ${it.message}")
+            AppLogger.e(TAG, "PreferencesRepository unavailable during onCreate: ${it.message}")
         }
-        Log.i(TAG, "NotiMind Lite Application Initialized")
+        AppLogger.i(TAG, "NotiMind Lite Application Initialized")
     }
 
     override fun onTrimMemory(level: Int) {
         super.onTrimMemory(level)
-        Log.i(TAG, "onTrimMemory triggered with level: $level")
+        AppLogger.i(TAG, "onTrimMemory triggered with level: $level")
 
         if (level == android.content.ComponentCallbacks2.TRIM_MEMORY_UI_HIDDEN) {
             AppIconCache.clearCache()
@@ -53,11 +53,11 @@ class NotiMindApp :
         } else if (level == TRIM_MEMORY_RUNNING_LOW_LEVEL || level == TRIM_MEMORY_RUNNING_CRITICAL_LEVEL) {
             AppIconCache.clearCache()
             VectorEmbeddingHelper.clearCache()
-            Log.w(TAG, "Running Low/Critical: Forced cache clear")
+            AppLogger.w(TAG, "Running Low/Critical: Forced cache clear")
         } else if (level == TRIM_MEMORY_COMPLETE_LEVEL) {
             AppIconCache.clearCache()
             VectorEmbeddingHelper.clearCache()
-            Log.w(TAG, "Trim Memory Complete: Final cache clear")
+            AppLogger.w(TAG, "Trim Memory Complete: Final cache clear")
         }
     }
 
@@ -67,7 +67,7 @@ class NotiMindApp :
 
     override fun onLowMemory() {
         super.onLowMemory()
-        Log.w(TAG, "onLowMemory triggered: Clearing all caches")
+        AppLogger.w(TAG, "onLowMemory triggered: Clearing all caches")
         AppIconCache.clearCache()
     }
 }

@@ -3,7 +3,6 @@ package com.jeffers.notimindlite.util
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
-import android.util.Log
 import androidx.core.content.FileProvider
 import com.jeffers.notimindlite.R
 import com.jeffers.notimindlite.crypto.SqlCipherKeyManager
@@ -12,6 +11,7 @@ import com.jeffers.notimindlite.data.local.NotificationEntity
 import com.jeffers.notimindlite.data.local.PreferencesRepository
 import com.jeffers.notimindlite.domain.backup.EncryptedBackupManager
 import com.jeffers.notimindlite.sanitization.PiiRedactionEngine
+import com.jeffers.notimindlite.util.AppLogger
 import org.json.JSONArray
 import org.json.JSONObject
 import java.io.File
@@ -75,16 +75,16 @@ object DatabaseExporter {
                 Result.failure(IllegalStateException("Backup restoration or authorization failed"))
             }
         } catch (e: java.io.IOException) {
-            Log.e(TAG, "Restore process failed: IO error", e)
+            AppLogger.e(TAG, "Restore process failed: IO error", e)
             Result.failure(e)
         } catch (e: javax.crypto.AEADBadTagException) {
-            Log.e(TAG, "Restore process failed: authentication error (wrong passphrase or corrupted file)", e)
+            AppLogger.e(TAG, "Restore process failed: authentication error (wrong passphrase or corrupted file)", e)
             Result.failure(e)
         } catch (e: java.security.GeneralSecurityException) {
-            Log.e(TAG, "Restore process failed: crypto error", e)
+            AppLogger.e(TAG, "Restore process failed: crypto error", e)
             Result.failure(e)
         } catch (e: SecurityException) {
-            Log.e(TAG, "Restore process failed: security exception", e)
+            AppLogger.e(TAG, "Restore process failed: security exception", e)
             Result.failure(e)
         }
     }
@@ -224,13 +224,13 @@ object DatabaseExporter {
             val shareIntent = buildShareIntent(context, file, isJson, encryptedExports)
             context.startActivity(shareIntent)
         } catch (e: IllegalArgumentException) {
-            Log.e(TAG, "Failed to export database: invalid argument", e)
+            AppLogger.e(TAG, "Failed to export database: invalid argument", e)
         } catch (e: SecurityException) {
-            Log.e(TAG, "Failed to export database: security exception", e)
+            AppLogger.e(TAG, "Failed to export database: security exception", e)
         } catch (e: java.io.IOException) {
-            Log.e(TAG, "Failed to export database: IO error", e)
+            AppLogger.e(TAG, "Failed to export database: IO error", e)
         } catch (e: java.security.GeneralSecurityException) {
-            Log.e(TAG, "Failed to export database: crypto error", e)
+            AppLogger.e(TAG, "Failed to export database: crypto error", e)
         }
     }
 

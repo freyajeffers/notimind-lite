@@ -4,7 +4,6 @@ import android.content.Context
 import android.content.Intent
 import android.graphics.BitmapFactory
 import android.provider.Settings
-import android.util.Log
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.animateFloatAsState
@@ -125,6 +124,7 @@ import com.jeffers.notimindlite.ui.components.RestoreNotificationCardAction
 import com.jeffers.notimindlite.ui.components.SwipeDismissNotificationCard
 import com.jeffers.notimindlite.ui.components.groupNotifications
 import com.jeffers.notimindlite.ui.dialogs.AppPackageSelectorDialog
+import com.jeffers.notimindlite.util.AppLogger
 import com.jeffers.notimindlite.util.NotificationLauncher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -288,10 +288,10 @@ fun AppIconImage(
             try {
                 BitmapFactory.decodeFile(appIconUri)?.asImageBitmap()
             } catch (e: SecurityException) {
-                Log.w("ActiveNotifications", "Unable to read notification icon", e)
+                AppLogger.w("ActiveNotifications", "Unable to read notification icon", e)
                 null
             } catch (e: IllegalArgumentException) {
-                Log.w("ActiveNotifications", "Invalid notification icon path", e)
+                AppLogger.w("ActiveNotifications", "Invalid notification icon path", e)
                 null
             }
         } else {

@@ -1,9 +1,9 @@
 package com.jeffers.notimindlite.domain.search
 
 import android.content.Context
-import android.util.Log
 import com.jeffers.notimindlite.data.local.AppDatabase
 import com.jeffers.notimindlite.data.local.NotificationEntity
+import com.jeffers.notimindlite.util.AppLogger
 import com.jeffers.notimindlite.util.ReciprocalRankFusion
 import com.jeffers.notimindlite.util.SemanticSearchResult
 import com.jeffers.notimindlite.util.VectorEmbeddingHelper

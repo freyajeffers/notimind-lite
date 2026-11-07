@@ -3,11 +3,11 @@ package com.jeffers.notimindlite.service
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.content.Context
-import android.util.Log
 import androidx.core.app.NotificationManagerCompat
 import com.jeffers.notimindlite.data.local.NotificationDao
 import com.jeffers.notimindlite.data.local.NotificationEntity
 import com.jeffers.notimindlite.data.local.PreferencesRepository
+import com.jeffers.notimindlite.util.AppLogger
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import com.jeffers.notimindlite.service.RestoredNotificationFactory.create as createRestoredNotification
@@ -105,13 +105,13 @@ internal object NotificationRestoreCoordinator {
             try {
                 drainQueuedInternal(context, dao)
             } catch (failure: SecurityException) {
-                Log.e(TAG, "Dismissed restored notification, but queued restore was denied", failure)
+                AppLogger.e(TAG, "Dismissed restored notification, but queued restore was denied", failure)
             } catch (failure: IllegalStateException) {
-                Log.e(TAG, "Dismissed restored notification, but queued restore could not continue", failure)
+                AppLogger.e(TAG, "Dismissed restored notification, but queued restore could not continue", failure)
             } catch (failure: IllegalArgumentException) {
-                Log.e(TAG, "Dismissed restored notification, but queued restore was invalid", failure)
+                AppLogger.e(TAG, "Dismissed restored notification, but queued restore was invalid", failure)
             } catch (failure: android.database.sqlite.SQLiteException) {
-                Log.e(TAG, "Dismissed restored notification, but queued restore hit a database error", failure)
+                AppLogger.e(TAG, "Dismissed restored notification, but queued restore hit a database error", failure)
             }
             true
         }
@@ -252,13 +252,13 @@ internal object NotificationRestoreCoordinator {
                 requirePostingAllowed(context)
                 if (postOne(context, dao, item)) activeCount++
             } catch (failure: SecurityException) {
-                Log.e(TAG, "Could not restore queued notification ${item.key}: permission denied", failure)
+                AppLogger.e(TAG, "Could not restore queued notification ${item.key}: permission denied", failure)
             } catch (failure: IllegalStateException) {
-                Log.e(TAG, "Could not restore queued notification ${item.key}: illegal state", failure)
+                AppLogger.e(TAG, "Could not restore queued notification ${item.key}: illegal state", failure)
             } catch (failure: IllegalArgumentException) {
-                Log.e(TAG, "Could not restore queued notification ${item.key}: invalid notification", failure)
+                AppLogger.e(TAG, "Could not restore queued notification ${item.key}: invalid notification", failure)
             } catch (failure: android.database.sqlite.SQLiteException) {
-                Log.e(TAG, "Could not restore queued notification ${item.key}: database error", failure)
+                AppLogger.e(TAG, "Could not restore queued notification ${item.key}: database error", failure)
             }
         }
     }
@@ -354,13 +354,13 @@ internal object NotificationRestoreCoordinator {
             notificationManager(context).cancel(notificationId)
             true
         } catch (failure: SecurityException) {
-            Log.e(TAG, "Could not cancel restored notification $notificationId: permission denied", failure)
+            AppLogger.e(TAG, "Could not cancel restored notification $notificationId: permission denied", failure)
             false
         } catch (failure: IllegalStateException) {
-            Log.e(TAG, "Could not cancel restored notification $notificationId: illegal state", failure)
+            AppLogger.e(TAG, "Could not cancel restored notification $notificationId: illegal state", failure)
             false
         } catch (failure: IllegalArgumentException) {
-            Log.e(TAG, "Could not cancel restored notification $notificationId: invalid notification", failure)
+            AppLogger.e(TAG, "Could not cancel restored notification $notificationId: invalid notification", failure)
             false
         }
 

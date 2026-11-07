@@ -4,7 +4,7 @@ import android.app.AlarmManager
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
-import android.util.Log
+import com.jeffers.notimindlite.util.AppLogger
 import java.util.*
 
 /**
@@ -53,13 +53,13 @@ object SnoozeReminderScheduler {
                 alarmManager.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, triggerAt, pendingIntent)
             }
         } catch (e: SecurityException) {
-            Log.e(TAG, "Permission denied scheduling snooze reminder for $notificationId", e)
+            AppLogger.e(TAG, "Permission denied scheduling snooze reminder for $notificationId", e)
         } catch (e: IllegalArgumentException) {
-            Log.e(TAG, "Invalid argument scheduling snooze reminder for $notificationId", e)
+            AppLogger.e(TAG, "Invalid argument scheduling snooze reminder for $notificationId", e)
         } catch (e: ClassCastException) {
-            Log.e(TAG, "System service type mismatch scheduling snooze reminder", e)
+            AppLogger.e(TAG, "System service type mismatch scheduling snooze reminder", e)
         } catch (e: IllegalStateException) {
-            Log.e(TAG, "Missing system service scheduling snooze reminder", e)
+            AppLogger.e(TAG, "Missing system service scheduling snooze reminder", e)
         }
     }
 
@@ -78,13 +78,13 @@ object SnoozeReminderScheduler {
                 alarmManager.cancel(pendingIntent)
             }
         } catch (e: SecurityException) {
-            Log.e(TAG, "Permission denied cancelling snooze reminder for $notificationId", e)
+            AppLogger.e(TAG, "Permission denied cancelling snooze reminder for $notificationId", e)
         } catch (e: IllegalArgumentException) {
-            Log.e(TAG, "Invalid argument cancelling snooze reminder for $notificationId", e)
+            AppLogger.e(TAG, "Invalid argument cancelling snooze reminder for $notificationId", e)
         } catch (e: ClassCastException) {
-            Log.e(TAG, "System service type mismatch cancelling snooze reminder", e)
+            AppLogger.e(TAG, "System service type mismatch cancelling snooze reminder", e)
         } catch (e: IllegalStateException) {
-            Log.e(TAG, "Missing system service cancelling snooze reminder", e)
+            AppLogger.e(TAG, "Missing system service cancelling snooze reminder", e)
         }
     }
 }

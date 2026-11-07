@@ -1,6 +1,7 @@
 package com.jeffers.notimindlite.util
 
 import android.util.Log
+import com.jeffers.notimindlite.BuildConfig
 
 /**
  * Standardized logging wrapper for NotiMind Lite.
@@ -9,15 +10,26 @@ import android.util.Log
 object AppLogger {
     private const val TAG_PREFIX = "NotiMind_"
 
-    fun d(tag: String, message: String) {
-        Log.d("$TAG_PREFIX$tag", message)
+    fun d(tag: String, message: String, throwable: Throwable? = null) {
+        if (!BuildConfig.DEBUG) return
+        if (throwable != null) {
+            Log.d("$TAG_PREFIX$tag", message, throwable)
+        } else {
+            Log.d("$TAG_PREFIX$tag", message)
+        }
     }
 
-    fun i(tag: String, message: String) {
-        Log.i("$TAG_PREFIX$tag", message)
+    fun i(tag: String, message: String, throwable: Throwable? = null) {
+        if (!BuildConfig.DEBUG) return
+        if (throwable != null) {
+            Log.i("$TAG_PREFIX$tag", message, throwable)
+        } else {
+            Log.i("$TAG_PREFIX$tag", message)
+        }
     }
 
     fun w(tag: String, message: String, throwable: Throwable? = null) {
+        if (!BuildConfig.DEBUG) return
         if (throwable != null) {
             Log.w("$TAG_PREFIX$tag", message, throwable)
         } else {
@@ -26,6 +38,7 @@ object AppLogger {
     }
 
     fun e(tag: String, message: String, throwable: Throwable? = null) {
+        if (!BuildConfig.DEBUG) return
         if (throwable != null) {
             Log.e("$TAG_PREFIX$tag", message, throwable)
         } else {

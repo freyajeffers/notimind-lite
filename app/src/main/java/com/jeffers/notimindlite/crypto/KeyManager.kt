@@ -1,7 +1,7 @@
 package com.jeffers.notimindlite.crypto
 
 import android.content.Context
-import android.util.Log
+import com.jeffers.notimindlite.util.AppLogger
 
 /**
  * Lightweight shim for acquiring a MasterKey alias. We avoid a hard compile-time
@@ -27,21 +27,21 @@ object KeyManager {
             if (!masterKeyAlias.isNullOrBlank()) return masterKeyAlias
         } catch (e: ClassNotFoundException) {
             // AndroidX Security not available on the JVM; fall back to a deterministic alias.
-            Log.i(TAG, "AndroidX Security MasterKeys not found on classpath; using fallback alias", e)
+            AppLogger.i(TAG, "AndroidX Security MasterKeys not found on classpath; using fallback alias", e)
         } catch (e: NoSuchFieldException) {
-            Log.w(TAG, "MasterKeys AES256_GCM_SPEC field missing; using fallback alias", e)
+            AppLogger.w(TAG, "MasterKeys AES256_GCM_SPEC field missing; using fallback alias", e)
         } catch (e: NoSuchMethodException) {
-            Log.w(TAG, "MasterKeys.getOrCreate method missing; using fallback alias", e)
+            AppLogger.w(TAG, "MasterKeys.getOrCreate method missing; using fallback alias", e)
         } catch (e: IllegalAccessException) {
-            Log.w(TAG, "Access denied invoking MasterKeys; using fallback alias", e)
+            AppLogger.w(TAG, "Access denied invoking MasterKeys; using fallback alias", e)
         } catch (e: java.lang.reflect.InvocationTargetException) {
-            Log.w(TAG, "Error invoking MasterKeys.getOrCreate; using fallback alias", e)
+            AppLogger.w(TAG, "Error invoking MasterKeys.getOrCreate; using fallback alias", e)
         } catch (e: SecurityException) {
-            Log.w(TAG, "Security exception while accessing MasterKeys; using fallback alias", e)
+            AppLogger.w(TAG, "Security exception while accessing MasterKeys; using fallback alias", e)
         } catch (e: ClassCastException) {
-            Log.w(TAG, "Unexpected MasterKeys return type; using fallback alias", e)
+            AppLogger.w(TAG, "Unexpected MasterKeys return type; using fallback alias", e)
         } catch (e: IllegalArgumentException) {
-            Log.w(TAG, "Invalid argument when invoking MasterKeys; using fallback alias", e)
+            AppLogger.w(TAG, "Invalid argument when invoking MasterKeys; using fallback alias", e)
         }
 
         return alias ?: "notimind_master_key"

@@ -3,7 +3,7 @@ package com.jeffers.notimindlite.domain.clustering
 import android.content.Context
 import android.content.pm.ApplicationInfo
 import android.content.pm.PackageManager
-import android.util.Log
+import com.jeffers.notimindlite.util.AppLogger
 import java.util.concurrent.ConcurrentHashMap
 
 data class ClusterNode(
@@ -348,9 +348,9 @@ object DynamicClusterManager {
                 enrichInstalledApplications(context.packageManager)
                 isInitialized = true
             } catch (e: PackageManager.NameNotFoundException) {
-                Log.e(TAG, "Unable to resolve an installed application", e)
+                AppLogger.e(TAG, "Unable to resolve an installed application", e)
             } catch (e: SecurityException) {
-                Log.e(TAG, "Unable to inspect installed applications", e)
+                AppLogger.e(TAG, "Unable to inspect installed applications", e)
             }
         }
     }

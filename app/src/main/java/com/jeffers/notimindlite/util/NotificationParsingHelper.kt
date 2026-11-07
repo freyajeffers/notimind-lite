@@ -4,7 +4,7 @@ import android.app.Notification
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Bundle
-import android.util.Log
+import com.jeffers.notimindlite.util.AppLogger
 import org.json.JSONArray
 
 class NotificationParsingHelper(
@@ -38,7 +38,7 @@ class NotificationParsingHelper(
         val textLines = extras?.getCharSequenceArray(Notification.EXTRA_TEXT_LINES)
         if (!textLines.isNullOrEmpty()) JSONArray(textLines.map { it.toString() }).toString() else null
     } catch (e: ClassCastException) {
-        Log.w("NotificationParsing", "Notification inbox lines were not CharSequence[]; trying String[]", e)
+        AppLogger.w("NotificationParsing", "Notification inbox lines were not CharSequence[]; trying String[]", e)
         val stringLines = extras?.getStringArray(Notification.EXTRA_TEXT_LINES)
         if (!stringLines.isNullOrEmpty()) JSONArray(stringLines.toList()).toString() else null
     }
@@ -50,17 +50,17 @@ class NotificationParsingHelper(
         )
         packageManager.getApplicationLabel(appInfo).toString()
     } catch (e: PackageManager.NameNotFoundException) {
-        Log.w("NotificationParsing", "Application package no longer exists: $packageName", e)
+        AppLogger.w("NotificationParsing", "Application package no longer exists: $packageName", e)
         packageName
     } catch (e: SecurityException) {
-        Log.w("NotificationParsing", "Application label access denied for $packageName", e)
+        AppLogger.w("NotificationParsing", "Application label access denied for $packageName", e)
         packageName
     }
 
     fun safeSmallIconRes(notification: Notification): Int = try {
         notification.smallIcon?.resId ?: 0
     } catch (e: IllegalStateException) {
-        Log.w("NotificationParsing", "Notification small icon is unavailable", e)
+        AppLogger.w("NotificationParsing", "Notification small icon is unavailable", e)
         0
     }
 
@@ -76,10 +76,10 @@ class NotificationParsingHelper(
     fun safeLaunchIntentUri(packageName: String): String? = try {
         packageManager.getLaunchIntentForPackage(packageName)?.toUri(Intent.URI_INTENT_SCHEME)
     } catch (e: SecurityException) {
-        Log.w("NotificationParsing", "Launch intent unavailable for package=$packageName", e)
+        AppLogger.w("NotificationParsing", "Launch intent unavailable for package=$packageName", e)
         null
     } catch (e: IllegalArgumentException) {
-        Log.w("NotificationParsing", "Invalid package name for launch intent: $packageName", e)
+        AppLogger.w("NotificationParsing", "Invalid package name for launch intent: $packageName", e)
         null
     }
 }

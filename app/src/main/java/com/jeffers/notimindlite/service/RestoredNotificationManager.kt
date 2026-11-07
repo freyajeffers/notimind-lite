@@ -1,7 +1,7 @@
 package com.jeffers.notimindlite.service
 
 import android.content.Context
-import android.util.Log
+import com.jeffers.notimindlite.util.AppLogger
 import java.util.concurrent.ConcurrentHashMap
 
 /**
@@ -25,7 +25,7 @@ object RestoredNotificationManager {
                 restoredAppNotifIds.computeIfAbsent(packageName) { ConcurrentHashMap.newKeySet() }.add(notifId)
             }
         }
-        Log.d(TAG, "Marked as restored: $notificationKey (pkg: $packageName, notifId: $notifId)")
+        AppLogger.d(TAG, "Marked as restored: $notificationKey (pkg: $packageName, notifId: $notifId)")
     }
 
     fun isRestored(notificationKey: String): Boolean = restoredNotificationKeys.contains(notificationKey)

@@ -3,12 +3,12 @@ package com.jeffers.notimindlite.migration
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
-import android.util.Log
 import androidx.room.Room
 import androidx.sqlite.db.SupportSQLiteOpenHelper
 import androidx.sqlite.db.framework.FrameworkSQLiteOpenHelperFactory
 import com.jeffers.notimindlite.data.local.AppDatabase
 import com.jeffers.notimindlite.data.local.EncryptedDatabaseFactory
+import com.jeffers.notimindlite.util.AppLogger
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -76,7 +76,7 @@ class MigrationCommandReceiver : BroadcastReceiver() {
                     "verifiedRows=${result.verifiedRows}\ntarget=${encryptedTempFile.absolutePath}\n" +
                     "failure=${result.failure?.stackTraceToString().orEmpty()}\n"
             )
-            Log.i(TAG, "Migration dry-run completed with state=${result.state}")
+            AppLogger.i(TAG, "Migration dry-run completed with state=${result.state}")
         } finally {
             sourceHelper.close()
             target.close()
@@ -117,7 +117,7 @@ class MigrationCommandReceiver : BroadcastReceiver() {
                 "state=${result.state}\nquarantine=${quarantine.absolutePath}\n" +
                     "failure=${result.failure?.stackTraceToString().orEmpty()}\n"
             )
-            Log.i(TAG, "Migration cutover completed with state=${result.state}")
+            AppLogger.i(TAG, "Migration cutover completed with state=${result.state}")
         } catch (failure: IllegalStateException) {
             movedSidecars.asReversed().forEach { (current, backup) -> backup.renameTo(current) }
             throw failure

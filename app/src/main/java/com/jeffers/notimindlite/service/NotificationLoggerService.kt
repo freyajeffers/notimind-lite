@@ -12,7 +12,6 @@ import android.os.Bundle
 import android.provider.Settings
 import android.service.notification.NotificationListenerService
 import android.service.notification.StatusBarNotification
-import android.util.Log
 import androidx.core.graphics.createBitmap
 import com.jeffers.notimindlite.BuildConfig
 import com.jeffers.notimindlite.data.local.AppDatabase
@@ -20,6 +19,7 @@ import com.jeffers.notimindlite.data.local.Converters
 import com.jeffers.notimindlite.data.local.NotificationDao
 import com.jeffers.notimindlite.data.local.NotificationEntity
 import com.jeffers.notimindlite.data.local.PreferencesRepository
+import com.jeffers.notimindlite.util.AppLogger
 import com.jeffers.notimindlite.util.NotificationActionExecutor
 import com.jeffers.notimindlite.util.NotificationLauncher
 import com.jeffers.notimindlite.util.VectorEmbeddingHelper
@@ -91,10 +91,10 @@ class NotificationLoggerService : NotificationListenerService() {
                 if (isActive) activeNotificationKeys.add(key)
                 isActive
             } catch (failure: SecurityException) {
-                Log.w(TAG, "Unable to verify active notification state for key=$key", failure)
+                AppLogger.w(TAG, "Unable to verify active notification state for key=$key", failure)
                 false
             } catch (failure: IllegalStateException) {
-                Log.w(TAG, "Unable to verify active notification state for key=$key", failure)
+                AppLogger.w(TAG, "Unable to verify active notification state for key=$key", failure)
                 false
             }
         }
@@ -117,9 +117,9 @@ class NotificationLoggerService : NotificationListenerService() {
             try {
                 instance?.cancelNotification(key)
             } catch (e: SecurityException) {
-                Log.w("NotificationLoggerSrv", "Permission denied cancelling notification: $key", e)
+                AppLogger.w("NotificationLoggerSrv", "Permission denied cancelling notification: $key", e)
             } catch (e: IllegalArgumentException) {
-                Log.w("NotificationLoggerSrv", "Invalid notification key when cancelling: $key", e)
+                AppLogger.w("NotificationLoggerSrv", "Invalid notification key when cancelling: $key", e)
             }
         }
 
@@ -131,11 +131,11 @@ class NotificationLoggerService : NotificationListenerService() {
                 true
             } catch (e: SecurityException) {
                 appInitiatedDismissals.remove(key)
-                Log.w("NotificationLoggerSrv", "Permission denied cancelling notification from card swipe: $key", e)
+                AppLogger.w("NotificationLoggerSrv", "Permission denied cancelling notification from card swipe: $key", e)
                 false
             } catch (e: IllegalArgumentException) {
                 appInitiatedDismissals.remove(key)
-                Log.w("NotificationLoggerSrv", "Invalid notification key from card swipe: $key", e)
+                AppLogger.w("NotificationLoggerSrv", "Invalid notification key from card swipe: $key", e)
                 false
             }
         }
@@ -144,9 +144,9 @@ class NotificationLoggerService : NotificationListenerService() {
             try {
                 requestRebind(ComponentName(context, NotificationLoggerService::class.java))
             } catch (e: SecurityException) {
-                Log.w("NotificationLoggerSrv", "Permission denied when rebinding notification listener service", e)
+                AppLogger.w("NotificationLoggerSrv", "Permission denied when rebinding notification listener service", e)
             } catch (e: IllegalArgumentException) {
-                Log.w("NotificationLoggerSrv", "Invalid component when rebinding notification listener service", e)
+                AppLogger.w("NotificationLoggerSrv", "Invalid component when rebinding notification listener service", e)
             }
         }
 
@@ -207,19 +207,19 @@ class NotificationLoggerService : NotificationListenerService() {
             }
             iconFile.absolutePath
         } catch (e: android.content.pm.PackageManager.NameNotFoundException) {
-            Log.w(TAG, "Application package unavailable for package=$packageName", e)
+            AppLogger.w(TAG, "Application package unavailable for package=$packageName", e)
             null
         } catch (e: FileNotFoundException) {
-            Log.w(TAG, "Icon file unavailable for package=$packageName", e)
+            AppLogger.w(TAG, "Icon file unavailable for package=$packageName", e)
             null
         } catch (e: SecurityException) {
-            Log.w(TAG, "Icon access denied for package=$packageName", e)
+            AppLogger.w(TAG, "Icon access denied for package=$packageName", e)
             null
         } catch (e: IOException) {
-            Log.w(TAG, "Icon write failed for package=$packageName", e)
+            AppLogger.w(TAG, "Icon write failed for package=$packageName", e)
             null
         } catch (e: IllegalArgumentException) {
-            Log.w(TAG, "Invalid icon data for package=$packageName", e)
+            AppLogger.w(TAG, "Invalid icon data for package=$packageName", e)
             null
         }
     }
@@ -227,7 +227,7 @@ class NotificationLoggerService : NotificationListenerService() {
     override fun onListenerConnected() {
         super.onListenerConnected()
         instance = this
-        Log.d(TAG, "onListenerConnected: listener registered successfully")
+        AppLogger.d(TAG, "onListenerConnected: listener registered successfully")
         refreshActiveNotificationSnapshot()
     }
 
@@ -248,7 +248,7 @@ class NotificationLoggerService : NotificationListenerService() {
             }
         } catch (failure: SecurityException) {
             activeNotificationKeys.clear()
-            Log.w(TAG, "Cannot read active notifications while listener permission is unavailable", failure)
+            AppLogger.w(TAG, "Cannot read active notifications while listener permission is unavailable", failure)
             return
         }
         activeNotificationKeys.clear()
@@ -262,9 +262,9 @@ class NotificationLoggerService : NotificationListenerService() {
                 reconcileActiveRows(snapshot, dao)
                 NotificationRestoreCoordinator.restoreQueuedNotifications(applicationContext, dao)
             } catch (failure: IllegalStateException) {
-                Log.e(TAG, "Invalid database state reconciling active notifications", failure)
+                AppLogger.e(TAG, "Invalid database state reconciling active notifications", failure)
             } catch (failure: android.database.SQLException) {
-                Log.e(TAG, "Database error reconciling active notifications", failure)
+                AppLogger.e(TAG, "Database error reconciling active notifications", failure)
             }
         }
     }
@@ -295,7 +295,7 @@ class NotificationLoggerService : NotificationListenerService() {
         if (sbn.packageName == applicationContext.packageName) return
         val key = notificationKey(sbn)
         activeNotificationKeys.add(key)
-        Log.d(TAG, "onNotificationPosted: ${sbn.packageName} - ${sbn.id}")
+        AppLogger.d(TAG, "onNotificationPosted: ${sbn.packageName} - ${sbn.id}")
         appInitiatedDismissals.remove(key)
         scope.launch {
             try {
@@ -305,9 +305,9 @@ class NotificationLoggerService : NotificationListenerService() {
                     actionExecutor.executeOnNotification(entity.key, entity.packageName, entity.title)
                 }
             } catch (failure: IllegalStateException) {
-                Log.e(TAG, "Invalid database state updating notification $key", failure)
+                AppLogger.e(TAG, "Invalid database state updating notification $key", failure)
             } catch (failure: android.database.SQLException) {
-                Log.e(TAG, "Database error updating notification $key", failure)
+                AppLogger.e(TAG, "Database error updating notification $key", failure)
             }
         }
     }
@@ -350,7 +350,7 @@ class NotificationLoggerService : NotificationListenerService() {
         if (countAsEvent || existing == null || significantChange) {
             embeddingIndexer.indexSingle(dao, finalEntity)
         }
-        Log.d(TAG, "Updated active notification: ${finalEntity.title} (${finalEntity.appName})")
+        AppLogger.d(TAG, "Updated active notification: ${finalEntity.title} (${finalEntity.appName})")
         return finalEntity
     }
 
@@ -401,13 +401,13 @@ class NotificationLoggerService : NotificationListenerService() {
                         ::getOrSaveAppIconUri
                     ).sanitizeAndBuild(sbn, notification)
             } catch (e: SecurityException) {
-                Log.e(TAG, "Failed to extract notification entity - security", e)
+                AppLogger.e(TAG, "Failed to extract notification entity - security", e)
                 null
             } catch (e: IllegalArgumentException) {
-                Log.e(TAG, "Failed to extract notification entity - illegal argument", e)
+                AppLogger.e(TAG, "Failed to extract notification entity - illegal argument", e)
                 null
             } catch (e: IllegalStateException) {
-                Log.e(TAG, "Failed to extract notification entity - illegal state", e)
+                AppLogger.e(TAG, "Failed to extract notification entity - illegal state", e)
                 null
             }
         }
@@ -431,7 +431,7 @@ class NotificationLoggerService : NotificationListenerService() {
         val extras = sbn.notification?.extras
         val title = extras?.getCharSequence(Notification.EXTRA_TITLE)?.toString() ?: ""
         val content = extras?.getCharSequence(Notification.EXTRA_TEXT)?.toString() ?: ""
-        Log.d(TAG, "Notification removed: $key, reason: $reason")
+        AppLogger.d(TAG, "Notification removed: $key, reason: $reason")
         NotificationLauncher.unregisterPendingIntent(key)
         recentLogs.remove(key)
         recentContents.remove(key)
@@ -457,9 +457,9 @@ class NotificationLoggerService : NotificationListenerService() {
                 )
                 if (activeNotificationKeys.contains(key)) dao.markNotificationActive(key)
             } catch (e: IllegalStateException) {
-                Log.e(TAG, "Invalid database state marking notification dismissed for $key", e)
+                AppLogger.e(TAG, "Invalid database state marking notification dismissed for $key", e)
             } catch (e: android.database.SQLException) {
-                Log.e(TAG, "Database error marking notification dismissed for $key", e)
+                AppLogger.e(TAG, "Database error marking notification dismissed for $key", e)
             }
         }
     }

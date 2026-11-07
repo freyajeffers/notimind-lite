@@ -3,8 +3,8 @@ package com.jeffers.notimindlite.receiver
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
-import android.util.Log
 import com.jeffers.notimindlite.data.local.AppDatabase
+import com.jeffers.notimindlite.util.AppLogger
 import com.jeffers.notimindlite.util.DatabaseMigrator
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -31,11 +31,11 @@ class UnlockReceiver : BroadcastReceiver() {
                     val ceDb = AppDatabase.getCeInstance(context)
                     DatabaseMigrator.executeRawDbMergeAndRebuildFts(context, ceDb)
                 } catch (e: android.database.SQLException) {
-                    Log.e("UnlockReceiver", "Database error during unlock migration", e)
+                    AppLogger.e("UnlockReceiver", "Database error during unlock migration", e)
                 } catch (e: IllegalStateException) {
-                    Log.e("UnlockReceiver", "Illegal state during unlock migration", e)
+                    AppLogger.e("UnlockReceiver", "Illegal state during unlock migration", e)
                 } catch (e: SecurityException) {
-                    Log.e("UnlockReceiver", "Permission denied during unlock migration", e)
+                    AppLogger.e("UnlockReceiver", "Permission denied during unlock migration", e)
                 } finally {
                     pendingResult?.finish()
                 }

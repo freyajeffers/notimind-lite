@@ -1,10 +1,10 @@
 package com.jeffers.notimindlite.domain.backup
 
 import android.content.Context
-import android.util.Log
 import com.jeffers.notimindlite.data.local.AppDatabase
 import com.jeffers.notimindlite.data.local.BackupKeyCodec
 import com.jeffers.notimindlite.data.local.BackupRecord
+import com.jeffers.notimindlite.util.AppLogger
 import com.jeffers.notimindlite.util.AuditLogger
 import com.jeffers.notimindlite.util.BackupFileFormat
 import com.jeffers.notimindlite.util.BackupKeyWrap
@@ -195,7 +195,7 @@ object EncryptedBackupManager {
 
         if (header.keySource == BackupFileFormat.KEY_SOURCE_PASSPHRASE_WRAPPED) {
             if (passphrase == null) {
-                Log.w(TAG, "Backup is passphrase-wrapped but no passphrase was provided")
+                AppLogger.w(TAG, "Backup is passphrase-wrapped but no passphrase was provided")
                 return null
             }
             return try {
@@ -325,7 +325,7 @@ object EncryptedBackupManager {
     }
 
     private fun logError(message: String, error: Throwable? = null) {
-        runCatching { Log.e(TAG, message, error) }
+        runCatching { AppLogger.e(TAG, message, error) }
     }
 
     private suspend fun generateSecureSignature(

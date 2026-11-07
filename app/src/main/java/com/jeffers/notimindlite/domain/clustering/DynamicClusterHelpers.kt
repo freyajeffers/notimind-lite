@@ -2,7 +2,7 @@ package com.jeffers.notimindlite.domain.clustering
 
 import android.content.pm.ApplicationInfo
 import android.content.pm.PackageManager
-import android.util.Log
+import com.jeffers.notimindlite.util.AppLogger
 
 private const val TAG_HELPERS = "DynamicClusterHelpers"
 private const val MINIMUM_PREFIX_MARKER_LENGTH = 4
@@ -11,7 +11,7 @@ private val DOMAIN_TOKEN_SEPARATOR = Regex("[^a-z0-9]+")
 internal fun applicationLabel(packageManager: PackageManager, app: ApplicationInfo): String? = try {
     packageManager.getApplicationLabel(app).toString().lowercase()
 } catch (e: PackageManager.NameNotFoundException) {
-    Log.w(TAG_HELPERS, "Application label lookup failed for ${app.packageName}", e)
+    AppLogger.w(TAG_HELPERS, "Application label lookup failed for ${app.packageName}", e)
     null
 }
 
