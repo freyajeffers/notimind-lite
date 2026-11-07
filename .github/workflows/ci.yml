@@ -64,7 +64,57 @@ jobs:
           retention-days: 7
 
   # --------------------------------------------------------------------------
-  # 2. Unit Tests & Code Coverage
+  # 2. MobSF source security scan
+  # --------------------------------------------------------------------------
+  security-scan:
+    name: MobSF Security Scan
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v6
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v6
+        with:
+          cache-provider: enhanced
+
+      - name: Install MobSFScan and Semgrep
+        run: python -m pip install --disable-pip-version-check mobsfscan semgrep
+
+      - name: Build debug APK
+        run: ./gradlew :app:assembleDebug
+
+      - name: Scan Android source
+        run: mobsfscan app --type android --json --config .mobsf --no-fail -o mobsfscan-source.json
+
+      - name: Scan debug APK
+        run: mobsfscan app/build/outputs/apk/debug/app-debug.apk --type android --json --no-fail -o mobsfscan-debug-apk.json
+
+      - name: Upload MobSF reports
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: mobsf-security-reports
+          path: |
+            mobsfscan-source.json
+            mobsfscan-debug-apk.json
+          retention-days: 14
+
+  # --------------------------------------------------------------------------
+  # 3. Unit Tests & Code Coverage
   # --------------------------------------------------------------------------
   unit-tests:
     name: Unit Tests & Coverage

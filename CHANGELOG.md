@@ -6,6 +6,12 @@ All notable changes to NotiMind Lite are documented here. This project adheres t
 
 ## [Unreleased] - Preference Runtime, UX Polish & Reliability
 
+- **fix(ui)**: Resolve configuration-aware resource lookup lint errors in restore toast/snackbar messages.
+- **security(mobsf)**: Route production logging through a debug-only AppLogger, enable screenshot/tapjacking protections, and document intentional Room raw-SQL and non-applicable control findings in the MobSF policy.
+- **security(ci)**: Add a MobSFScan/Semgrep job that builds and scans the debug APK, uploads JSON reports, excludes test sources from production scanning, and explicitly disables backups in the debug manifest overlay.
+
+- **build(fdroid)**: Use monotonic date-based debug version codes (`YYYYMMDDNN`) for F-Droid archive builds; counters are never reset.
+
 - **docs**: Align project phase-ordering and verification guidance across agent instructions.
 
 - **style(ktlint)**: Fix all 14 Kotlin style findings and add the KtLint Gradle check to the Android static-analysis workflow.
