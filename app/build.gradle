@@ -48,6 +48,21 @@ if (!appVersionCode || appVersionCode < 1) {
   throw new GradleException('version.properties must define a positive versionCode.')
 }
 
+def fdroidDebugBuildRequested = gradle.startParameter.taskNames.any {
+  it ==~ /.*(assemble|bundle|install)Debug.*/
+}
+// Date-based versionCode: YYYYMMDDNN (NN = two-digit per-day sequence)
+def datePrefix = new Date().format('yyyyMMdd')
+def counterFile = file("${rootProject.projectDir}/.gradle/fdroid-debug-version-code")
+counterFile.parentFile.mkdirs()
+def current = counterFile.isFile() ? counterFile.text.trim() : ''
+def seq = current.startsWith(datePrefix) ? Integer.parseInt(current.substring(8)) : 0
+if (fdroidDebugBuildRequested) {
+  seq += 1
+  counterFile.text = String.format("%s%02d\n", datePrefix, seq)
+}
+def fdroidDebugVersionCode = datePrefix.toInteger() * 100 + seq
+
 android {
   namespace = 'com.jeffers.notimindlite'
   compileSdk = 37
@@ -62,7 +77,7 @@ android {
     }
     minSdk targetMinSdk
     targetSdk 37
-    versionCode appVersionCode
+    versionCode fdroidDebugBuildRequested ? fdroidDebugVersionCode : appVersionCode
     versionName appVersionName
     manifestPlaceholders['migrationReceiverEnabled'] = 'false'
 
