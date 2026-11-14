@@ -45,7 +45,7 @@ gradle.beforeProject { project ->
       } else if (requested.group == 'org.apache.httpcomponents' && requested.name == 'httpclient') {
         details.useVersion '4.5.13'
       } else if (requested.group == 'com.google.guava' && requested.name == 'guava') {
-        details.useVersion '32.1.3-android'
+        details.useVersion '33.7.2-android'
       }
     }
   }
