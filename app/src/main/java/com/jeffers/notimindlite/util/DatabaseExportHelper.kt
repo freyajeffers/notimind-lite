@@ -16,6 +16,8 @@ import java.util.Date
 import java.util.Locale
 
 object DatabaseExportHelper {
+    private const val DEFAULT_EXPORT_TTL_MILLIS = 900_000L
+
     fun exportToJsonString(notifications: List<NotificationEntity>, context: Context? = null): String {
         val jsonArray = JSONArray()
         for (notif in notifications.map { applyPrivacy(it, context) }) {
@@ -188,7 +190,7 @@ object DatabaseExportHelper {
         file
     )
 
-    fun cleanupExportFiles(context: Context, maxAgeMillis: Long = 15 * 60_000L) {
+    fun cleanupExportFiles(context: Context, maxAgeMillis: Long = DEFAULT_EXPORT_TTL_MILLIS) {
         try {
             val cacheDir = File(context.cacheDir, "exports")
             if (!cacheDir.exists()) return
