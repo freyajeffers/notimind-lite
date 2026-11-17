@@ -8,6 +8,7 @@ All notable changes to NotiMind Lite are documented here. This project adheres t
 
 - **fix(ui)**: Resolve configuration-aware resource lookup lint errors in restore toast/snackbar messages.
 - **security(deps)**: Raise the forced Android Guava resolution to 33.7.2-android, the first patched version for CVE-2026-102554.
+- **security(deps)**: Align Gradle resolution rules with patched releases for Guava, Bouncy Castle, Logback, jose4j, JDOM, Commons Lang, and Apache HttpClient so transitive advisory paths cannot select vulnerable versions.
 - **security(mobsf)**: Route production logging through a debug-only AppLogger, enable screenshot/tapjacking protections, and document intentional Room raw-SQL and non-applicable control findings in the MobSF policy.
 - **security(ci)**: Add a MobSFScan/Semgrep job that builds and scans the debug APK, uploads JSON reports, excludes test sources from production scanning, and explicitly disables backups in the debug manifest overlay.
 - **security(ci)**: Pin MobSFScan/Semgrep, fail on unapproved MobSF findings, verify the patched Guava resolution, and upload the dependency-resolution evidence with the scan reports.
