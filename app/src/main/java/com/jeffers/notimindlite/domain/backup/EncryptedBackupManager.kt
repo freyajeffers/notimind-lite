@@ -337,10 +337,10 @@ object EncryptedBackupManager {
 /**
  * Production key source. Returns the device-bound AES key from the Android KeyStore.
  *
- * The [context] parameter is intentionally unused today but is part of the public API:
- * a future enhancement may route through [androidx.security.crypto.EncryptedSharedPreferences]
- * or a Context-bound key-wrapping helper, at which point production callers do not need
- * to migrate. Tests must use the no-arg overload below, which uses plain JCE.
+ * The [context] parameter is retained for the device-bound KeyStore key source. The
+ * portable backup envelope intentionally remains application-specific AES-GCM/PBKDF2:
+ * AndroidX EncryptedFile is device-bound and cannot support cross-device restore.
+ * Tests must use the no-arg overload below, which uses plain JCE.
  */
 fun generateBackupKey(context: Context): SecretKey {
     context.applicationContext

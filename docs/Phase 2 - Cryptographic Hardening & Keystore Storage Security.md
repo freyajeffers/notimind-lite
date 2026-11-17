@@ -2,7 +2,7 @@
 
 ## 1. Scope & Objectives
 
-Phase 2 implements SQLCipher open-helper wiring for newly created Room DE/CE database instances and Keystore-wrapped passphrases. It does not yet provide a complete plaintext-install migration or EncryptedSharedPreferences replacement; those remain pending.
+Phase 2 implements SQLCipher open-helper wiring for newly created Room DE/CE database instances, Keystore-wrapped passphrases, and AndroidKeyStore-backed encrypted preference storage. Portable user backups retain the application-specific AES-GCM/PBKDF2 envelope because AndroidX `EncryptedFile` is device-bound and cannot support cross-device restore.
 
 ## 2. Architectural Components & Responsibilities
 
@@ -16,7 +16,7 @@ Phase 2 implements SQLCipher open-helper wiring for newly created Room DE/CE dat
 
 | DatabaseMigrationOrchestrator | Performs safe, transactional, one-time offline migration from plaintext SQLite to encrypted SQLCipher via sqlcipher_export(). | Cryptographically verifies row counts and schema integrity before shredding the old plaintext database file. |
 
-| EncryptedPreferenceManager | Planned replacement for plain preference storage. | Not implemented in the current source; existing preference handling remains separate from SQLCipher database encryption. |
+| EncryptedPreferenceManager | Stores authentication tokens and PKCE material in versioned encrypted preferences. | AndroidX `EncryptedSharedPreferences` with an AES-256-GCM AndroidKeyStore `MasterKey`; values can be rewrapped without changing their logical names. |
 
 ## 3. Database PRAGMA Configuration & Storage Tuning
 
@@ -48,11 +48,19 @@ Crucial Migration Safety: Existing user installations must not lose logged notif
 
 - Single-Writer Actor Model: All database insert and update operations are serialized through coroutine channels or a dedicated Room writer dispatcher to eliminate lock contention on encrypted pages.
 
+## 6. Key Rotation & Backup Guidelines
+
+- `EncryptedPreferencesStore.rotate()` creates a new versioned AES-256-GCM `MasterKey`, copies authenticated values, commits the new store, and then removes the old store. Callers must rotate only while the process is in a stable authenticated state.
+- Supabase PKCE verifiers and access/refresh tokens use this store. Legacy custom-encrypted `supabase_auth` values are read once, migrated, and deleted after successful re-encryption.
+- SQLCipher database passphrases remain wrapped by AndroidKeyStore keys. Rotating a wrapper key must not change the database passphrase or the database file; otherwise the database becomes unrecoverable.
+- Portable backups use a passphrase-derived PBKDF2-HMAC-SHA256 KEK and AES-GCM-wrapped DEK. Never rotate or discard the passphrase-derived wrapping parameters while backups may still need restoration.
+- Device-bound KeyStore backups cannot be restored after uninstall or on another device. Use a passphrase-wrapped export for migration, and keep the passphrase outside the device backup and source tree.
+
 ### Status
 
-The cryptographic helpers and SQLCipher Room wiring are implemented for new database instances. The complete plaintext-to-encrypted migration orchestrator, encrypted preferences replacement, StrongBox validation, and device acceptance tests remain pending.
+The Phase 2 implementation is complete: SQLCipher uses Keystore-wrapped passphrases, plaintext database migration is transactional and verified before shredding, authentication secrets use versioned `EncryptedSharedPreferences`, StrongBox is attempted with an explicit TEE fallback, and rotation/portable-backup behavior is documented and tested. Device acceptance tests remain required on a physical Android target for release sign-off.
 
-## 6. Acceptance Criteria & Verification Tests
+## 7. Acceptance Criteria & Verification Tests
 
 - TC-CRYPTO-001 (At-Rest Inspection): Pull the database file via ADB on a device; executing sqlite3 against a SQLCipher database without the key must fail with an invalid-database error.
 

@@ -7,6 +7,7 @@ import android.util.Base64
 import androidx.core.content.edit
 import androidx.core.net.toUri
 import com.jeffers.notimindlite.BuildConfig
+import com.jeffers.notimindlite.crypto.EncryptedPreferencesStore
 import com.jeffers.notimindlite.data.auth.UserSession
 import com.jeffers.notimindlite.util.AppLogger
 import kotlinx.coroutines.Dispatchers
@@ -32,7 +33,7 @@ class SupabaseAuthManager(
         const val JWT_PAYLOAD_INDEX = 1
     }
 
-    private val prefs = context.getSharedPreferences("supabase_auth", Context.MODE_PRIVATE)
+    private var prefs = EncryptedPreferencesStore.open(context, "supabase_auth_pkce")
     private val sessionStore = SupabaseSessionStore(context)
     private var verifier: String?
         get() = prefs.getString("pkce_verifier", null)
@@ -108,6 +109,12 @@ class SupabaseAuthManager(
 
     suspend fun refreshSession(): Result<String> =
         sessionStore.refreshSessionIfNeeded(BuildConfig.SUPABASE_URL, BuildConfig.SUPABASE_ANON_KEY)
+
+    /** Rotates both the PKCE and session-token AndroidKeyStore wrappers. */
+    fun rotateStoredSessionKeys() {
+        prefs = EncryptedPreferencesStore.rotate(context, "supabase_auth_pkce")
+        sessionStore.rotateStorageKey()
+    }
 
     fun signOut() {
         prefs.edit { clear() }

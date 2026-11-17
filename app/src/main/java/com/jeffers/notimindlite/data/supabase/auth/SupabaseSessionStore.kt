@@ -5,6 +5,7 @@ import android.security.keystore.KeyGenParameterSpec
 import android.security.keystore.KeyProperties
 import android.util.Base64
 import androidx.core.content.edit
+import com.jeffers.notimindlite.crypto.EncryptedPreferencesStore
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.json.JSONObject
@@ -30,9 +31,11 @@ class SupabaseSessionStore(
         const val GCM_TAG_BITS = 128
         const val GCM_IV_BYTES = 12
         const val KEY_ALIAS = "notimind_supabase_session"
+        const val LEGACY_PREFS_NAME = "supabase_auth"
+        const val SECURE_PREFS_NAME = "supabase_auth_secure"
     }
 
-    private val prefs = context.getSharedPreferences("supabase_auth", Context.MODE_PRIVATE)
+    private var prefs = EncryptedPreferencesStore.open(context, SECURE_PREFS_NAME)
 
     suspend fun refreshSessionIfNeeded(supabaseUrl: String, anonKey: String): Result<String> =
         withContext(Dispatchers.IO) {
@@ -93,6 +96,11 @@ class SupabaseSessionStore(
 
     fun readAccessToken(): String? = readSecret("access_token")
 
+    /** Rotates the AndroidKeyStore MasterKey protecting the session store. */
+    fun rotateStorageKey() {
+        prefs = EncryptedPreferencesStore.rotate(context, SECURE_PREFS_NAME)
+    }
+
     private fun secretKey(): SecretKey {
         val store = java.security.KeyStore
             .getInstance("AndroidKeyStore")
@@ -113,36 +121,28 @@ class SupabaseSessionStore(
     }
 
     private fun saveSecret(name: String, value: String) {
-        val cipher = Cipher
-            .getInstance("AES/GCM/NoPadding")
-            .apply { init(Cipher.ENCRYPT_MODE, secretKey()) }
-        val encrypted = cipher.iv + cipher.doFinal(value.toByteArray())
-        prefs.edit { putString("secret_$name", Base64.encodeToString(encrypted, Base64.NO_WRAP)) }
+        check(prefs.edit().putString(name, value).commit()) {
+            "Unable to persist encrypted Supabase session secret"
+        }
     }
 
     private fun readSecret(name: String): String? {
-        val encryptedValue = prefs.getString("secret_$name", null)
-        if (encryptedValue != null) {
-            return decryptSecret(encryptedValue)
-        }
+        prefs.getString(name, null)?.let { return it }
 
-        val legacyValue = prefs.getString(name, null) ?: return null
-        return runCatching {
-            val cipher = Cipher
-                .getInstance("AES/GCM/NoPadding")
-                .apply { init(Cipher.ENCRYPT_MODE, secretKey()) }
-            val encrypted = cipher.iv + cipher.doFinal(legacyValue.toByteArray())
-            val migrated =
-                prefs
-                    .edit()
-                    .putString("secret_$name", Base64.encodeToString(encrypted, Base64.NO_WRAP))
-                    .remove(name)
-                    .commit()
-            legacyValue.takeIf { migrated }
-        }.getOrNull()
+        // Migrate values written by the pre-EncryptedSharedPreferences implementation.
+        val legacyPrefs = context.getSharedPreferences(LEGACY_PREFS_NAME, Context.MODE_PRIVATE)
+        val legacyValue = legacyPrefs.getString("secret_$name", null)?.let(::decryptLegacySecret)
+            ?: legacyPrefs.getString(name, null)
+            ?: return null
+        saveSecret(name, legacyValue)
+        val editor = legacyPrefs.edit()
+        editor.remove("secret_$name")
+        editor.remove(name)
+        editor.apply()
+        return legacyValue
     }
 
-    private fun decryptSecret(value: String): String? = runCatching {
+    private fun decryptLegacySecret(value: String): String? = runCatching {
         val bytes = Base64.decode(value, Base64.NO_WRAP)
         Cipher
             .getInstance("AES/GCM/NoPadding")
