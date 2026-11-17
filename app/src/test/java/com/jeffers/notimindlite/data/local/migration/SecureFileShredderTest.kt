@@ -1,6 +1,5 @@
-package com.jeffers.notimindlite.tier1feature
+package com.jeffers.notimindlite.data.local.migration
 
-import com.jeffers.notimindlite.data.local.migration.SecureFileShredder
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
