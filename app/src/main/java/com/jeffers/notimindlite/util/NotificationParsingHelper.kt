@@ -74,7 +74,7 @@ class NotificationParsingHelper(
     }
 
     fun safeLaunchIntentUri(packageName: String): String? = try {
-        packageManager.getLaunchIntentForPackage(packageName)?.toUri(Intent.URI_INTENT_SCHEME)
+        packageManager.getLaunchIntentForPackage(packageName)?.toUri(Intent.URI_ANDROID_APP_SCHEME)
     } catch (e: SecurityException) {
         AppLogger.w("NotificationParsing", "Launch intent unavailable for package=$packageName", e)
         null

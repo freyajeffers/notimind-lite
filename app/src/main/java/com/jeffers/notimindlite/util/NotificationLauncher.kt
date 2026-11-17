@@ -76,14 +76,26 @@ object NotificationLauncher {
         // 2. Try restored persistent intentUri
         if (!launched && !intentUri.isNullOrBlank()) {
             try {
-                val parsedIntent = Intent.parseUri(intentUri, Intent.URI_INTENT_SCHEME)
+                val parsedIntent = Intent.parseUri(intentUri, Intent.URI_ANDROID_APP_SCHEME)
+                parsedIntent.component?.let { component ->
+                    if (component.packageName != packageName) {
+                        throw SecurityException("Parsed intent component is outside the expected package")
+                    }
+                }
                 if (packageName.isNotBlank()) {
                     parsedIntent.setPackage(packageName)
                 }
+                parsedIntent.flags = parsedIntent.flags and
+                    (
+                        Intent.FLAG_GRANT_READ_URI_PERMISSION or
+                            Intent.FLAG_GRANT_WRITE_URI_PERMISSION or
+                            Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION
+                    ).inv()
                 parsedIntent.addCategory(Intent.CATEGORY_LAUNCHER)
                 parsedIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
 
-                if (parsedIntent.resolveActivity(context.packageManager) != null) {
+                val resolvedActivity = parsedIntent.resolveActivity(context.packageManager)
+                if (resolvedActivity?.packageName == packageName) {
                     context.startActivity(parsedIntent)
                     launched = true
                 } else {
@@ -93,6 +105,8 @@ object NotificationLauncher {
                 AppLogger.e(TAG, "SecurityException launching parsed intentUri for package: $packageName", e)
             } catch (e: java.net.URISyntaxException) {
                 AppLogger.w(TAG, "Malformed intentUri for package: $packageName", e)
+            } catch (e: IllegalArgumentException) {
+                AppLogger.w(TAG, "Invalid intentUri for package: $packageName", e)
             }
         }
 

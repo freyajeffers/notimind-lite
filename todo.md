@@ -23,6 +23,10 @@ CONVENTION: When a feature is partially implemented, the remaining work is liste
 
 ## Manifest & OS Hardening (Phase 3)
 
+- Add malicious intent-URI tests covering mismatched explicit components and URI grant flags.
+  - Current launch parsing uses `URI_ANDROID_APP_SCHEME`, package/component validation, grant-flag stripping, and resolved-package checks.
+  - Origin: docs/Phase 3 - Android System Boundaries & Component Hardening.md
+
 - Validate the scoped `<queries>` package-visibility behavior on supported Android releases and update the Play Store compatibility checklist.
   - `QUERY_ALL_PACKAGES` and `QUICKBOOT_POWERON` were removed; an unauthorized broadcast regression test now covers the receiver.
   - Origin: docs/Phase 3 - Android System Boundaries & Component Hardening.md

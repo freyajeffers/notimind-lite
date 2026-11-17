@@ -249,7 +249,7 @@ class NotificationParsingHelperTest {
         every { packageManager.getLaunchIntentForPackage("com.example.app") } returns intent
 
         assertEquals(
-            intent.toUri(Intent.URI_INTENT_SCHEME),
+            intent.toUri(Intent.URI_ANDROID_APP_SCHEME),
             NotificationParsingHelper(packageManager).safeLaunchIntentUri("com.example.app")
         )
     }

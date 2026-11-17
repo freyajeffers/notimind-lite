@@ -29,7 +29,7 @@ class NotificationLauncherTest {
     fun notificationLauncher_launchesParsedIntentUri() {
         val context = ApplicationProvider.getApplicationContext<Context>()
         val sampleIntent = Intent(context, com.jeffers.notimindlite.ui.MainActivity::class.java)
-        val intentUri = sampleIntent.toUri(Intent.URI_INTENT_SCHEME)
+        val intentUri = sampleIntent.toUri(Intent.URI_ANDROID_APP_SCHEME)
 
         NotificationLauncher.launchNotification(context, "com.jeffers.notimindlite", "persistent_key", intentUri)
         assertNotNull(intentUri)
