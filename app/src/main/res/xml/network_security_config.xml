@@ -5,4 +5,15 @@
             <certificates src="system" />
         </trust-anchors>
     </base-config>
+    <!-- BackupNotaryClient uses the dedicated notary host only. The pin is the
+         official Let's Encrypt ISRG Root X1 SPKI and expires with that root. -->
+    <domain-config cleartextTrafficPermitted="false">
+        <domain includeSubdomains="true">api.notimind.lite</domain>
+        <pin-set expiration="2035-06-04">
+            <pin digest="SHA-256">C5+lpZ7tcVwmwQIMcRtPbsQtWLABXhQzejna0wHFr8M=</pin>
+        </pin-set>
+        <trust-anchors>
+            <certificates src="system" />
+        </trust-anchors>
+    </domain-config>
 </network-security-config>

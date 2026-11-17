@@ -19,6 +19,7 @@ import java.util.UUID
  */
 object BackupNotaryClient {
     private const val TAG = "BackupNotaryClient"
+    private const val NOTARY_HOST = "api.notimind.lite"
     private const val NOTARY_SERVER_URL = "https://api.notimind.lite/v1/internal/sign-hash"
     private const val NOTARY_CONNECT_TIMEOUT_MS = 5_000
     private const val NOTARY_READ_TIMEOUT_MS = 5_000
@@ -96,7 +97,11 @@ object BackupNotaryClient {
         token: String,
         openConnection: (URL) -> HttpURLConnection = { url -> url.openConnection() as HttpURLConnection }
     ): String {
-        val connection = openConnection(URL(NOTARY_SERVER_URL))
+        val endpoint = URL(NOTARY_SERVER_URL)
+        check(endpoint.protocol == "https" && endpoint.host == NOTARY_HOST) {
+            "Notary endpoint must use the pinned HTTPS host"
+        }
+        val connection = openConnection(endpoint)
         return try {
             connection.requestMethod = "POST"
             connection.doOutput = true
