@@ -131,11 +131,19 @@ class NotificationLoggerService : NotificationListenerService() {
                 true
             } catch (e: SecurityException) {
                 appInitiatedDismissals.remove(key)
-                AppLogger.w("NotificationLoggerSrv", "Permission denied cancelling notification from card swipe: $key", e)
+                AppLogger.w(
+                    "NotificationLoggerSrv",
+                    "Permission denied cancelling notification from card swipe: $key",
+                    e
+                )
                 false
             } catch (e: IllegalArgumentException) {
                 appInitiatedDismissals.remove(key)
-                AppLogger.w("NotificationLoggerSrv", "Invalid notification key from card swipe: $key", e)
+                AppLogger.w(
+                    "NotificationLoggerSrv",
+                    "Invalid notification key from card swipe: $key",
+                    e
+                )
                 false
             }
         }
@@ -144,9 +152,17 @@ class NotificationLoggerService : NotificationListenerService() {
             try {
                 requestRebind(ComponentName(context, NotificationLoggerService::class.java))
             } catch (e: SecurityException) {
-                AppLogger.w("NotificationLoggerSrv", "Permission denied when rebinding notification listener service", e)
+                AppLogger.w(
+                    "NotificationLoggerSrv",
+                    "Permission denied when rebinding notification listener service",
+                    e
+                )
             } catch (e: IllegalArgumentException) {
-                AppLogger.w("NotificationLoggerSrv", "Invalid component when rebinding notification listener service", e)
+                AppLogger.w(
+                    "NotificationLoggerSrv",
+                    "Invalid component when rebinding notification listener service",
+                    e
+                )
             }
         }
 

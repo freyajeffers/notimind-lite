@@ -65,7 +65,11 @@ object NotificationLauncher {
                 pendingIntent.send()
                 launched = true
             } catch (e: PendingIntent.CanceledException) {
-                AppLogger.w(TAG, "PendingIntent was canceled for key: $key. Attempting persistent intentUri fallback.", e)
+                AppLogger.w(
+                    TAG,
+                    "PendingIntent was canceled for key: $key. Attempting persistent intentUri fallback.",
+                    e
+                )
             }
         }
 

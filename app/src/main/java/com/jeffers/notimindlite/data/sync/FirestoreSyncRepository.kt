@@ -246,7 +246,11 @@ class FirestoreSyncRepository(
      */
     suspend fun purgeUserData(userId: String): Result<Unit> {
         check(userId.isNotBlank()) { "purgeUserData called with blank userId" }
-        AppLogger.w(TAG, "Purge request for uid=$userId rejected: Local and Firestore databases are non-deletable by policy.")
+        AppLogger.w(
+            TAG,
+            "Purge request for uid=$userId rejected: Local and Firestore databases " +
+                "are non-deletable by policy."
+        )
         return Result.failure(
             UnsupportedOperationException(
                 "Data retention policy: deletion is permanently disabled. " +
