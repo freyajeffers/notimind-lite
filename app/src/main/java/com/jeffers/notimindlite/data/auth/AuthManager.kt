@@ -3,6 +3,7 @@ package com.jeffers.notimindlite.data.auth
 import android.content.Context
 import android.content.Intent
 import com.google.firebase.auth.FirebaseAuth
+import com.jeffers.notimindlite.data.supabase.auth.SupabaseAuthManager
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow

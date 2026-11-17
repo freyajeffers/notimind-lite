@@ -1,13 +1,17 @@
-package com.jeffers.notimindlite.util
+package com.jeffers.notimindlite.data.firebase
 
 import android.content.Context
 import androidx.work.ExistingPeriodicWorkPolicy
 import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
 import com.google.firebase.FirebaseApp
+import com.jeffers.notimindlite.data.firebase.audit.AuditLogger
+import com.jeffers.notimindlite.data.firebase.telemetry.TelemetryManager
 import com.jeffers.notimindlite.data.local.PreferencesRepository
 import com.jeffers.notimindlite.data.local.RetentionCleanupWorker
 import com.jeffers.notimindlite.util.AppLogger
+import com.jeffers.notimindlite.util.FeatureFlagLoader
+import com.jeffers.notimindlite.util.VectorEmbeddingHelper
 import kotlinx.coroutines.launch
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean

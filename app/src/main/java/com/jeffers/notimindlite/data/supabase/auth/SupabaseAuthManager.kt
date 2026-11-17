@@ -1,4 +1,4 @@
-package com.jeffers.notimindlite.data.auth
+package com.jeffers.notimindlite.data.supabase.auth
 
 import android.content.Context
 import android.content.Intent
@@ -7,6 +7,8 @@ import android.util.Base64
 import androidx.core.content.edit
 import androidx.core.net.toUri
 import com.jeffers.notimindlite.BuildConfig
+import com.jeffers.notimindlite.data.auth.UserSession
+import com.jeffers.notimindlite.util.AppLogger
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.json.JSONObject

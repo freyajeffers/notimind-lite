@@ -7,11 +7,11 @@ import com.google.firebase.firestore.DocumentReference
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.FirebaseFirestoreException
 import com.google.firebase.firestore.WriteBatch
+import com.jeffers.notimindlite.data.firebase.sync.FirestoreSyncRepository
 import com.jeffers.notimindlite.data.local.AppDatabase
 import com.jeffers.notimindlite.data.local.NotificationDao
 import com.jeffers.notimindlite.data.local.NotificationEntity
 import com.jeffers.notimindlite.data.local.SyncStatus
-import com.jeffers.notimindlite.data.sync.FirestoreSyncRepository
 import com.jeffers.notimindlite.domain.backup.generateBackupKey
 import io.mockk.coEvery
 import io.mockk.every

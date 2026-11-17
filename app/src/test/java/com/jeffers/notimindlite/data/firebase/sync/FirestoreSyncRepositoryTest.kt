@@ -1,4 +1,4 @@
-package com.jeffers.notimindlite.data.sync
+package com.jeffers.notimindlite.data.firebase.sync
 
 import com.google.android.gms.tasks.Tasks
 import com.google.firebase.firestore.CollectionReference

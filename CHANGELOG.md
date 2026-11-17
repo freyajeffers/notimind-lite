@@ -14,7 +14,7 @@ All notable changes to NotiMind Lite are documented here. This project adheres t
 - **security(ci)**: Pin MobSFScan/Semgrep, fail on unapproved MobSF findings, verify the patched Guava resolution, and upload the dependency-resolution evidence with the scan reports.
 - **ci(quality)**: Wrap the five production log statements that exceeded Detekt's 120-character limit so the Android quality job can complete without suppressions.
 - **ci(codeql)**: Disable Gradle build and configuration caches during CodeQL's Android build so the extractor observes Kotlin and Java compilation instead of reusing cached outputs.
-- **build(config)**: Separate Firebase and Supabase configuration directories and organize their backend source and tests under matching subdirectories; Gradle now reads Supabase client settings from `config/supabase/supabase.properties`.
+- **build(config)**: Separate Firebase and Supabase configuration directories and organize backend source, initialization, telemetry, audit, sync, and tests under matching subdirectories; local database migrations now live under `data/local/migration`, and Gradle reads Supabase client settings from `config/supabase/supabase.properties`.
 - **security(codeql)**: Add a scheduled and manually dispatchable CodeQL workflow for Android Java/Kotlin, using manual build tracing against the debug variant and least-privilege code-scanning permissions.
 
 - **build(fdroid)**: Use monotonic date-based debug version codes (`YYYYMMDDNN`) for F-Droid archive builds; counters are never reset.

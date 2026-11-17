@@ -1,6 +1,5 @@
-package com.jeffers.notimindlite.tier2boundary
+package com.jeffers.notimindlite.data.firebase.telemetry
 
-import com.jeffers.notimindlite.util.TelemetryManager
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue

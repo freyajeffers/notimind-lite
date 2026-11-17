@@ -1,4 +1,4 @@
-package com.jeffers.notimindlite.util
+package com.jeffers.notimindlite.data.firebase.audit
 
 import android.content.Context
 import android.os.Build
@@ -9,6 +9,7 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.SetOptions
 import com.jeffers.notimindlite.data.local.BackupRecord
+import com.jeffers.notimindlite.util.AppLogger
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.File

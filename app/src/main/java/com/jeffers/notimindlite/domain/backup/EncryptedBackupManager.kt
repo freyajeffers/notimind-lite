@@ -1,11 +1,11 @@
 package com.jeffers.notimindlite.domain.backup
 
 import android.content.Context
+import com.jeffers.notimindlite.data.firebase.audit.AuditLogger
 import com.jeffers.notimindlite.data.local.AppDatabase
 import com.jeffers.notimindlite.data.local.BackupKeyCodec
 import com.jeffers.notimindlite.data.local.BackupRecord
 import com.jeffers.notimindlite.util.AppLogger
-import com.jeffers.notimindlite.util.AuditLogger
 import com.jeffers.notimindlite.util.BackupFileFormat
 import com.jeffers.notimindlite.util.BackupKeyWrap
 import com.jeffers.notimindlite.util.BackupNotaryClient

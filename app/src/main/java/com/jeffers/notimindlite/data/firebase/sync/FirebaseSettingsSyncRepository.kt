@@ -1,7 +1,8 @@
-package com.jeffers.notimindlite.data.sync
+package com.jeffers.notimindlite.data.firebase.sync
 
 import com.google.firebase.firestore.FirebaseFirestore
 import com.jeffers.notimindlite.data.local.PreferencesRepository
+import com.jeffers.notimindlite.data.sync.SettingsSyncRepository
 import kotlinx.coroutines.tasks.await
 import org.json.JSONObject
 

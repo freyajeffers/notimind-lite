@@ -9,9 +9,13 @@ import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
 import androidx.work.WorkerParameters
 import androidx.work.workDataOf
-import com.jeffers.notimindlite.data.auth.SupabaseAuthManager
+import com.jeffers.notimindlite.data.firebase.sync.FirebaseSettingsSyncRepository
+import com.jeffers.notimindlite.data.firebase.sync.FirestoreSyncRepository
 import com.jeffers.notimindlite.data.local.AppDatabase
 import com.jeffers.notimindlite.data.local.PreferencesRepository
+import com.jeffers.notimindlite.data.supabase.auth.SupabaseAuthManager
+import com.jeffers.notimindlite.data.supabase.sync.SupabaseSettingsSyncRepository
+import com.jeffers.notimindlite.data.supabase.sync.SupabaseSyncRepository
 import com.jeffers.notimindlite.domain.backup.generateBackupKey
 import java.util.concurrent.TimeUnit
 

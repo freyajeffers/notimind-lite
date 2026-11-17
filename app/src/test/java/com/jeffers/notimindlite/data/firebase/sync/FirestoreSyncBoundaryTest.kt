@@ -1,4 +1,4 @@
-package com.jeffers.notimindlite.tier2boundary
+package com.jeffers.notimindlite.data.firebase.sync
 
 import com.google.android.gms.tasks.Tasks
 import com.google.firebase.firestore.CollectionReference
@@ -12,7 +12,6 @@ import com.jeffers.notimindlite.data.local.AppDatabase
 import com.jeffers.notimindlite.data.local.NotificationDao
 import com.jeffers.notimindlite.data.local.NotificationEntity
 import com.jeffers.notimindlite.data.local.SyncStatus
-import com.jeffers.notimindlite.data.sync.FirestoreSyncRepository
 import com.jeffers.notimindlite.util.SyncEncryptionHelper
 import io.mockk.coEvery
 import io.mockk.coVerify

@@ -62,6 +62,7 @@ NotiMind-Lite/
 │   │   │   ├── auth/           # Shared authentication bridge
 │   │   │   ├── firebase/       # Firebase/Firestore integration
 │   │   │   ├── local/          # Room DB, DAOs, FTS & Vector Entities
+│   │   │   │   └── migration/  # Local database migration and consent logic
 │   │   │   ├── supabase/       # Supabase Auth and sync integration
 │   │   │   ├── sync/           # Shared sync orchestration & WorkManager
 │   │   │   └── maps/           # Domain-specific entity detection

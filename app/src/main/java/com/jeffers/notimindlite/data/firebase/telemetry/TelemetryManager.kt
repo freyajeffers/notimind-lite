@@ -1,4 +1,4 @@
-package com.jeffers.notimindlite.util
+package com.jeffers.notimindlite.data.firebase.telemetry
 
 import android.content.Context
 import com.google.firebase.analytics.FirebaseAnalytics

@@ -1,4 +1,4 @@
-package com.jeffers.notimindlite.data.auth
+package com.jeffers.notimindlite.data.supabase.auth
 
 import android.content.Context
 import android.security.keystore.KeyGenParameterSpec

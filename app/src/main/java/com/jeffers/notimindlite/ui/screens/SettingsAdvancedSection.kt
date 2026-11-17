@@ -34,9 +34,9 @@ import com.jeffers.notimindlite.R
 import com.jeffers.notimindlite.data.local.AppDatabase
 import com.jeffers.notimindlite.data.local.DbEncryptionMode
 import com.jeffers.notimindlite.data.local.PreferencesRepository
-import com.jeffers.notimindlite.migration.EncryptionMigrationConsent
-import com.jeffers.notimindlite.migration.MigrationRunner
-import com.jeffers.notimindlite.migration.MigrationState
+import com.jeffers.notimindlite.data.local.migration.EncryptionMigrationConsent
+import com.jeffers.notimindlite.data.local.migration.MigrationRunner
+import com.jeffers.notimindlite.data.local.migration.MigrationState
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch

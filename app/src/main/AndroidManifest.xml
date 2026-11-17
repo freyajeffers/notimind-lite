@@ -86,7 +86,7 @@
             android:exported="false" />
 
         <receiver
-            android:name=".migration.MigrationCommandReceiver"
+            android:name=".data.local.migration.MigrationCommandReceiver"
             android:enabled="${migrationReceiverEnabled}"
             android:exported="false" />
 

@@ -1,9 +1,9 @@
-package com.jeffers.notimindlite.data.sync
+package com.jeffers.notimindlite.data.supabase.sync
 
 import com.jeffers.notimindlite.BuildConfig
-import com.jeffers.notimindlite.data.auth.SupabaseAuthManager
 import com.jeffers.notimindlite.data.local.AppDatabase
 import com.jeffers.notimindlite.data.local.NotificationEntity
+import com.jeffers.notimindlite.data.supabase.auth.SupabaseAuthManager
 import com.jeffers.notimindlite.util.AppLogger
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext

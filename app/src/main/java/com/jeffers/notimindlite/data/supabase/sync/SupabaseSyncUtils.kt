@@ -1,4 +1,4 @@
-package com.jeffers.notimindlite.data.sync
+package com.jeffers.notimindlite.data.supabase.sync
 
 import com.jeffers.notimindlite.BuildConfig
 import com.jeffers.notimindlite.data.local.NotificationEntity

@@ -1,9 +1,9 @@
-package com.jeffers.notimindlite.base
+package com.jeffers.notimindlite.data.firebase
 
 import android.content.Context
 import androidx.test.core.app.ApplicationProvider
 import com.google.firebase.FirebaseApp
-import com.jeffers.notimindlite.util.AppInitializer
+import com.jeffers.notimindlite.data.firebase.AppInitializer
 import org.junit.Assert.assertEquals
 import org.junit.Test
 import org.junit.runner.RunWith

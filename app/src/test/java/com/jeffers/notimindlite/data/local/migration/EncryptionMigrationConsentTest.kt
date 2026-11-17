@@ -1,8 +1,8 @@
-package com.jeffers.notimindlite.tier1feature
+package com.jeffers.notimindlite.data.local.migration
 
 import android.content.Context
 import androidx.test.core.app.ApplicationProvider
-import com.jeffers.notimindlite.migration.EncryptionMigrationConsent
+import com.jeffers.notimindlite.data.local.migration.EncryptionMigrationConsent
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertThrows

@@ -1,8 +1,8 @@
-package com.jeffers.notimindlite.tier1feature
+package com.jeffers.notimindlite.data.local.migration
 
-import com.jeffers.notimindlite.migration.DatabaseMigrationOrchestrator
-import com.jeffers.notimindlite.migration.MigrationFileOps
-import com.jeffers.notimindlite.migration.MigrationState
+import com.jeffers.notimindlite.data.local.migration.DatabaseMigrationOrchestrator
+import com.jeffers.notimindlite.data.local.migration.MigrationFileOps
+import com.jeffers.notimindlite.data.local.migration.MigrationState
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue

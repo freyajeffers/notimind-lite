@@ -1,4 +1,4 @@
-package com.jeffers.notimindlite.tier1feature
+package com.jeffers.notimindlite.data.local.migration
 
 import android.content.Context
 import androidx.sqlite.db.SupportSQLiteDatabase

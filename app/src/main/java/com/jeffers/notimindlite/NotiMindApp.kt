@@ -26,7 +26,7 @@ class NotiMindApp :
 
     override fun onCreate() {
         super.onCreate()
-        com.jeffers.notimindlite.util.AppInitializer
+        com.jeffers.notimindlite.data.firebase.AppInitializer
             .initialize(this)
         runCatching {
             val prefs = PreferencesRepository(this)

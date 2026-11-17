@@ -8,9 +8,9 @@ import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
 import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
-import com.jeffers.notimindlite.migration.EncryptionMigrationConsent
-import com.jeffers.notimindlite.migration.MigrationRunner
-import com.jeffers.notimindlite.migration.MigrationState
+import com.jeffers.notimindlite.data.local.migration.EncryptionMigrationConsent
+import com.jeffers.notimindlite.data.local.migration.MigrationRunner
+import com.jeffers.notimindlite.data.local.migration.MigrationState
 import com.jeffers.notimindlite.util.AppLogger
 import com.jeffers.notimindlite.util.DatabaseLockManager
 

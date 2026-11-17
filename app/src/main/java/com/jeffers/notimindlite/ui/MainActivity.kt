@@ -33,13 +33,15 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.lifecycleScope
 import com.jeffers.notimindlite.BuildConfig
 import com.jeffers.notimindlite.R
+import com.jeffers.notimindlite.data.firebase.sync.FirebaseSettingsSyncRepository
 import com.jeffers.notimindlite.data.local.AppDatabase
 import com.jeffers.notimindlite.data.local.DbEncryptionMode
 import com.jeffers.notimindlite.data.local.PreferencesRepository
-import com.jeffers.notimindlite.data.sync.FirebaseSettingsSyncRepository
+import com.jeffers.notimindlite.data.local.migration.EncryptionMigrationConsent
+import com.jeffers.notimindlite.data.local.migration.MigrationRunner
+import com.jeffers.notimindlite.data.supabase.auth.SupabaseAuthManager
+import com.jeffers.notimindlite.data.supabase.sync.SupabaseSettingsSyncRepository
 import com.jeffers.notimindlite.domain.clustering.DynamicClusterManager
-import com.jeffers.notimindlite.migration.EncryptionMigrationConsent
-import com.jeffers.notimindlite.migration.MigrationRunner
 import com.jeffers.notimindlite.service.NotificationLoggerService
 import com.jeffers.notimindlite.ui.screens.checkNotificationPermission
 import com.jeffers.notimindlite.util.AppLogger
@@ -173,11 +175,9 @@ class MainActivity : ComponentActivity() {
         val session = authManager.session.value
         if (!session.isAuthenticated || session.uid == null) return
         val result = if (preferences.syncManager.useSupabaseSync.value) {
-            com.jeffers.notimindlite.data.sync
-                .SupabaseSettingsSyncRepository(
-                    com.jeffers.notimindlite.data.auth
-                        .SupabaseAuthManager(applicationContext)
-                ).restoreOrUpload(preferences, session.uid)
+            SupabaseSettingsSyncRepository(
+                SupabaseAuthManager(applicationContext)
+            ).restoreOrUpload(preferences, session.uid)
         } else {
             FirebaseSettingsSyncRepository()
                 .restoreOrUpload(preferences, session.uid)

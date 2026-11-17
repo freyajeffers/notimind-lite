@@ -9,11 +9,11 @@ import com.google.firebase.firestore.QueryDocumentSnapshot
 import com.google.firebase.firestore.QuerySnapshot
 import com.google.firebase.firestore.WriteBatch
 import com.jeffers.notimindlite.base.BaseRobolectricTest
+import com.jeffers.notimindlite.data.firebase.sync.FirestoreSyncRepository
 import com.jeffers.notimindlite.data.local.AppDatabase
 import com.jeffers.notimindlite.data.local.NotificationDao
 import com.jeffers.notimindlite.data.local.NotificationEntity
 import com.jeffers.notimindlite.data.local.SyncStatus
-import com.jeffers.notimindlite.data.sync.FirestoreSyncRepository
 import com.jeffers.notimindlite.util.SyncEncryptionHelper
 import io.mockk.coEvery
 import io.mockk.coVerify

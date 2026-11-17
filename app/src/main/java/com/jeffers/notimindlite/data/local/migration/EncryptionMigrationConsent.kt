@@ -1,4 +1,4 @@
-package com.jeffers.notimindlite.migration
+package com.jeffers.notimindlite.data.local.migration
 
 import android.content.Context
 import androidx.core.content.edit

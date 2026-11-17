@@ -1,4 +1,4 @@
-package com.jeffers.notimindlite.data.sync
+package com.jeffers.notimindlite.data.firebase.sync
 
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.FirebaseFirestoreException

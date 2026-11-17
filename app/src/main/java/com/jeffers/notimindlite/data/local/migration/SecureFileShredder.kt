@@ -1,4 +1,4 @@
-package com.jeffers.notimindlite.migration
+package com.jeffers.notimindlite.data.local.migration
 
 import java.io.File
 import java.io.RandomAccessFile

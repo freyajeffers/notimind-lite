@@ -1,4 +1,4 @@
-package com.jeffers.notimindlite.migration
+package com.jeffers.notimindlite.data.local.migration
 
 enum class MigrationState {
     NOT_REQUIRED,
