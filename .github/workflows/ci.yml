@@ -92,16 +92,30 @@ jobs:
           cache-provider: enhanced
 
       - name: Install MobSFScan and Semgrep
-        run: python -m pip install --disable-pip-version-check mobsfscan semgrep
+        run: |
+          python -m pip install --disable-pip-version-check \
+            mobsfscan==1.2.0 \
+            semgrep==1.172.0
+          command -v mobsfscan
+          command -v semgrep
+          semgrep --version
 
       - name: Build debug APK
         run: ./gradlew :app:assembleDebug
 
+      - name: Verify patched Guava resolution
+        run: |
+          ./gradlew :app:dependencyInsight \
+            --dependency com.google.guava:guava \
+            --configuration debugRuntimeClasspath \
+            --no-daemon --console=plain | tee guava-dependency-insight.txt
+          grep -F 'com.google.guava:guava:33.7.2-android (selected by rule)' guava-dependency-insight.txt
+
       - name: Scan Android source
-        run: mobsfscan app --type android --json --config .mobsf --no-fail -o mobsfscan-source.json
+        run: mobsfscan app --type android --json --config .mobsf --exit-warning -o mobsfscan-source.json
 
       - name: Scan debug APK
-        run: mobsfscan app/build/outputs/apk/debug/app-debug.apk --type android --json --no-fail -o mobsfscan-debug-apk.json
+        run: mobsfscan app/build/outputs/apk/debug/app-debug.apk --type android --json --exit-warning -o mobsfscan-debug-apk.json
 
       - name: Upload MobSF reports
         if: always()
@@ -111,6 +125,7 @@ jobs:
           path: |
             mobsfscan-source.json
             mobsfscan-debug-apk.json
+            guava-dependency-insight.txt
           retention-days: 14
 
   # --------------------------------------------------------------------------
