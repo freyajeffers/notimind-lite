@@ -53,7 +53,10 @@ jobs:
           build-mode: manual
 
       - name: Build Android debug variant
-        run: ./gradlew :app:assembleDebug --no-daemon --console=plain
+        run: >-
+          ./gradlew clean :app:assembleDebug
+          --no-daemon --no-build-cache --no-configuration-cache
+          --console=plain
 
       - name: Perform CodeQL analysis
         uses: github/codeql-action/analyze@v3

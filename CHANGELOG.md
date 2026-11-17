@@ -12,6 +12,7 @@ All notable changes to NotiMind Lite are documented here. This project adheres t
 - **security(ci)**: Add a MobSFScan/Semgrep job that builds and scans the debug APK, uploads JSON reports, excludes test sources from production scanning, and explicitly disables backups in the debug manifest overlay.
 - **security(ci)**: Pin MobSFScan/Semgrep, fail on unapproved MobSF findings, verify the patched Guava resolution, and upload the dependency-resolution evidence with the scan reports.
 - **ci(quality)**: Wrap the five production log statements that exceeded Detekt's 120-character limit so the Android quality job can complete without suppressions.
+- **ci(codeql)**: Disable Gradle build and configuration caches during CodeQL's Android build so the extractor observes Kotlin and Java compilation instead of reusing cached outputs.
 - **security(codeql)**: Add a scheduled and manually dispatchable CodeQL workflow for Android Java/Kotlin, using manual build tracing against the debug variant and least-privilege code-scanning permissions.
 
 - **build(fdroid)**: Use monotonic date-based debug version codes (`YYYYMMDDNN`) for F-Droid archive builds; counters are never reset.
