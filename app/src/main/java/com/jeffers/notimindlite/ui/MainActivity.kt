@@ -49,7 +49,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
-private const val EXPORT_CACHE_MAX_AGE_MILLIS = 3600_000L
+private const val EXPORT_CACHE_MAX_AGE_MILLIS = 900_000L
 
 class MainActivity : ComponentActivity() {
     private lateinit var authManager: com.jeffers.notimindlite.data.auth.AuthManager
