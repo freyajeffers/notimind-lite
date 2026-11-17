@@ -32,7 +32,6 @@ class BootReceiver : BroadcastReceiver() {
     companion object {
         const val CHANNEL_ID_RESTORED = "restored_notifications_channel"
         const val CHANNEL_NAME = "Restored Active Notifications"
-        private const val QUICKBOOT_ACTION = "android.intent.action.QUICKBOOT_POWERON"
     }
 
     override fun onReceive(context: Context?, intent: Intent?) {
@@ -64,7 +63,7 @@ class BootReceiver : BroadcastReceiver() {
     }
 
     private fun isBootAction(action: String): Boolean = action == Intent.ACTION_LOCKED_BOOT_COMPLETED ||
-        action == Intent.ACTION_BOOT_COMPLETED || action == QUICKBOOT_ACTION
+        action == Intent.ACTION_BOOT_COMPLETED
 
     private fun scheduleBootRestore(context: Context, isUserUnlocked: Boolean) {
         val pendingResult = goAsync()

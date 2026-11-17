@@ -23,12 +23,9 @@ CONVENTION: When a feature is partially implemented, the remaining work is liste
 
 ## Manifest & OS Hardening (Phase 3)
 
-- Decide and implement action for `QUERY_ALL_PACKAGES` vs `<queries>` scoping: remove or scope, update Play Store compatibility checklist.
+- Validate the scoped `<queries>` package-visibility behavior on supported Android releases and update the Play Store compatibility checklist.
+  - `QUERY_ALL_PACKAGES` and `QUICKBOOT_POWERON` were removed; an unauthorized broadcast regression test now covers the receiver.
   - Origin: docs/Phase 3 - Android System Boundaries & Component Hardening.md
-
-- Remove `QUICKBOOT_POWERON` or add sender UID validation and add tests simulating rogue broadcasts.
-  - Acceptance: sending spoofed QUICKBOOT_POWERON causes no state changes.
-  - Origin: Phase 3 doc
 
 - Finalize `data_extraction_rules.xml` and `fullBackupContent` to ensure DB and prefs excluded from backups and transfers.
   - Origin: Phase 3 doc

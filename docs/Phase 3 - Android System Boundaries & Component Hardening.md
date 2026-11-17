@@ -6,7 +6,7 @@ Phase 3 hardens the Android operating system perimeter around NotiMind Lite. It 
 
 ## 2. Current status
 
-Backup/data-extraction rules and the FileProvider are present. `QUICKBOOT_POWERON` remains declared, `QUERY_ALL_PACKAGES` remains intentionally declared under the root project policy, and the planned full broadcast/intent/backup acceptance tests remain pending.
+Backup/data-extraction rules and the FileProvider are present. `QUICKBOOT_POWERON` and `QUERY_ALL_PACKAGES` have been removed; launcher visibility is scoped through `<queries>`. Full broadcast/intent/backup acceptance tests remain pending.
 
 ## 3. Architectural Components & Responsibilities
 
@@ -30,7 +30,7 @@ The application manifest must be updated to explicitly lock down backup mechanis
 
 To prevent rogue applications from triggering notification storms or resource exhaustion:
 
-- Remove android.intent.action.QUICKBOOT_POWERON from the manifest <intent-filter>.
+- Remove android.intent.action.QUICKBOOT_POWERON from the manifest <intent-filter>. This is now enforced.
 
 - Inside BootReceiver.onReceive, verify that the intent action equals Intent.ACTION_BOOT_COMPLETED or Intent.ACTION_MY_PACKAGE_REPLACED.
 

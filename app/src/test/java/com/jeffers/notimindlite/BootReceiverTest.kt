@@ -77,10 +77,10 @@ class BootReceiverTest {
     }
 
     @Test
-    fun bootReceiver_handlesQuickbootPowerOnIntent() = runBlocking {
+    fun bootReceiver_ignoresUnauthorizedBootAction() = runBlocking {
         val context = ApplicationProvider.getApplicationContext<Context>()
         val receiver = BootReceiver()
-        val powerOnIntent = Intent("android.intent.action.QUICKBOOT_POWERON")
+        val powerOnIntent = Intent("com.example.UNAUTHORIZED_BOOT")
 
         receiver.onReceive(context, powerOnIntent)
         receiver.awaitPendingWork()
