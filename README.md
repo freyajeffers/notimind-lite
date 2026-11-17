@@ -59,9 +59,11 @@ NotiMind-Lite/
 ├── app/
 │   ├── src/main/java/com/jeffers/notimindlite/
 │   │   ├── data/
-│   │   │   ├── auth/           # Firebase Auth & Session Management
+│   │   │   ├── auth/           # Shared authentication bridge
+│   │   │   ├── firebase/       # Firebase/Firestore integration
 │   │   │   ├── local/          # Room DB, DAOs, FTS & Vector Entities
-│   │   │   ├── sync/           # Firestore Sync & WorkManager
+│   │   │   ├── supabase/       # Supabase Auth and sync integration
+│   │   │   ├── sync/           # Shared sync orchestration & WorkManager
 │   │   │   └── maps/           # Domain-specific entity detection
 │   │   ├── service/            # NotificationListener & Restoration logic
 │   │   ├── receiver/            # Boot, Unlock, and Snooze Receivers
@@ -70,7 +72,9 @@ NotiMind-Lite/
 │   │   │   ├── screens/        # Feature screens (Log, Active, Settings)
 │   │   │   └── theme/          # M3 Design System
 │   │   └── util/               # Hybrid Search, Vector Utils, Backup Logic
-│   └── google-services.json     # Firebase Configuration
+├── config/
+│   ├── firebase/google-services.json       # Firebase configuration
+│   └── supabase/supabase.properties        # Supabase client configuration
 ├── build.gradle.kts            # Project-level build config
 └── settings.gradle.kts         # Module management
 ```

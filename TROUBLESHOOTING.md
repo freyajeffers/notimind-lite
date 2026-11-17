@@ -57,7 +57,7 @@ If the app crashes on startup or fails to authenticate with Firebase/Play Integr
 The app requires `google-services.json` for Firebase and Play Integrity functionality.
 
 - **Symptom**: `FileNotFoundException` or `FirebaseApp` initialization error.
-- **Fix**: Download the latest `google-services.json` from the Firebase Console and place it in the `/app/` directory.
+- **Fix**: Download the latest `google-services.json` from the Firebase Console and place it at `config/firebase/google-services.json`. The tracked `app/google-services.json` symlink keeps the Gradle plugin path compatible.
 
 ### Permission Failures
 

@@ -21,7 +21,9 @@ NotiMind Lite relies on Firebase and the Play Integrity API for security notariz
 2. Add an Android App to the project. Use the `applicationId` defined in `app/build.gradle.kts` (`com.jeffers.notimindlite`).
 3. Enable **Firebase Authentication** (Google Sign-In provider).
 4. Download the `google-services.json` configuration file.
-5. Place the file in the `/app/` directory of the project root.
+5. Place the file at `config/firebase/google-services.json`. The compatibility
+   symlink at `app/google-services.json` is consumed by the Google Services
+   Gradle plugin.
 
 ### Play Integrity API Setup
 

@@ -19,6 +19,18 @@ ktlint {
 def versionProperties = new Properties()
 rootProject.file('version.properties').withInputStream { versionProperties.load(it) }
 
+def supabaseProperties = new Properties()
+def supabaseConfigFile = rootProject.file('config/supabase/supabase.properties')
+if (!supabaseConfigFile.isFile()) {
+  throw new GradleException("Missing Supabase configuration: ${supabaseConfigFile}")
+}
+supabaseConfigFile.withInputStream { supabaseProperties.load(it) }
+def supabaseBuildConfig = { String key ->
+  def value = supabaseProperties.getProperty(key)?.trim()
+  if (!value) throw new GradleException("Missing Supabase configuration property: ${key}")
+  groovy.json.JsonOutput.toJson(value)
+}
+
 def gitOutput = { List<String> arguments ->
   providers.exec {
     workingDir rootProject.projectDir
@@ -87,9 +99,9 @@ android {
     buildConfigField 'boolean', 'SUPPORTS_DYNAMIC_COLOR', (targetMinSdk >= 31).toString()
     buildConfigField 'boolean', 'SUPPORTS_LONG_VERSION_CODE', (targetMinSdk >= 28).toString()
     buildConfigField 'boolean', 'REQUIRES_RUNTIME_POST_NOTIFICATIONS', (targetMinSdk >= 33).toString()
-    buildConfigField 'String', 'SUPABASE_URL', '"https://uwkvafirzncltapkbnjx.supabase.co"'
-    buildConfigField 'String', 'SUPABASE_ANON_KEY', '"sb_publishable_LY8_1AM6UEwG8o0tysXsow_syhRrQ1X"'
-    buildConfigField 'String', 'SUPABASE_REDIRECT_URI', '"notimindlite://supabase-callback"'
+    buildConfigField 'String', 'SUPABASE_URL', supabaseBuildConfig('url')
+    buildConfigField 'String', 'SUPABASE_ANON_KEY', supabaseBuildConfig('anonKey')
+    buildConfigField 'String', 'SUPABASE_REDIRECT_URI', supabaseBuildConfig('redirectUri')
   }
 
   signingConfigs {
