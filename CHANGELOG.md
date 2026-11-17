@@ -18,6 +18,7 @@ All notable changes to NotiMind Lite are documented here. This project adheres t
 - **security(crypto)**: Complete Phase 2 storage hardening with AndroidX `EncryptedSharedPreferences`, versioned AndroidKeyStore `MasterKey` rotation for Supabase PKCE/session secrets, legacy-session migration, device rotation coverage, and portable-backup key-management guidance.
 - **security(network)**: Pin the dedicated Backup Notary host to the official Let's Encrypt ISRG Root X1 SPKI and reject any non-HTTPS or unexpected-host endpoint before connecting.
 - **security(android-boundaries)**: Remove the broad `QUERY_ALL_PACKAGES` permission and spoofable `QUICKBOOT_POWERON` receiver action; retain launcher-scoped package visibility and add an unauthorized-broadcast regression test.
+- **security(lifecycle)**: Add defense-in-depth R8 log stripping and security-provider keep rules, document the existing daily retention worker, and enforce a 15-minute default export-cache TTL.
 - **security(codeql)**: Add a scheduled and manually dispatchable CodeQL workflow for Android Java/Kotlin, using manual build tracing against the debug variant and least-privilege code-scanning permissions.
 
 - **build(fdroid)**: Use monotonic date-based debug version codes (`YYYYMMDDNN`) for F-Droid archive builds; counters are never reset.

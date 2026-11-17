@@ -6,7 +6,7 @@ Phase 5 establishes operational longevity and regression immunity. It addresses 
 
 ## 2. Current implementation status
 
-Current source includes SQLCipher R8 keep guidance in the hardening plan, encrypted backup utilities, and tiered JVM test infrastructure. The release log-stripping rules, automated retention worker, and complete five-tier adversarial gate are not all implemented; see `todo.md`. Do not describe those controls as current guarantees until verified by release/device tests.
+Current source includes SQLCipher and AndroidX Security R8 keep rules, release log stripping, encrypted backup utilities, a daily retention worker, and tiered JVM/device test infrastructure. The complete five-tier adversarial gate and release APK bytecode verification remain pending; see `todo.md`.
 
 ## 3. Architectural Components & Responsibilities
 
@@ -14,7 +14,7 @@ Current source includes SQLCipher R8 keep guidance in the hardening plan, encryp
 
 | SafeLogger Wrapper | Encapsulates all logging calls; completely disables debug and verbose logging in release builds. | Prevents accidental leakage of notification extras or titles to Android Logcat. |
 
-| ProGuard / R8 Rules | Planned configuration to strip android.util.Log.d and Log.v call-sites during APK compilation. | Pending release-build verification; not yet a current guarantee. |
+| ProGuard / R8 Rules | Strip android.util.Log call-sites during release APK compilation and preserve security-provider reflection targets. | Implemented in `app/proguard-rules.pro`; release APK bytecode verification remains a gate. |
 
 | AutoPruneRetentionWorker | AndroidX WorkManager periodic task running daily to prune dismissed notifications exceeding the retention TTL. | Runs in background under battery-friendly constraints (device idle, charging). |
 
@@ -30,7 +30,7 @@ In app/proguard-rules.pro, add explicit bytecode stripping rules for logging met
 
 To prevent indefinite data accumulation and unbounded storage growth:
 
-// Daily WorkManager task for automatic TTL pruningclass AutoPruneRetentionWorker( context: Context, workerParams: WorkerParameters) : CoroutineWorker(context, workerParams) { override suspend fun doWork(): Result { val prefManager = EncryptedPreferenceManager(applicationContext) val retentionDays = prefManager.getRetentionDays() // e.g. 30 days if (retentionDays <= 0) return Result.success() // 0 = indefinite val cutoffTimestamp = System.currentTimeMillis() - (retentionDays \* 86_400_000L) val db = EncryptedDatabaseFactory.getDatabase(applicationContext) // Execute atomic deletion of non-pinned dismissed records older than cutoff db.notificationDao().deleteDismissedOlderThan(cutoffTimestamp) return Result.success() }}
+The existing `RetentionCleanupWorker` is scheduled daily by `AppInitializer`, reads the configured retention policy, and deletes eligible dismissed records. Export cache cleanup uses a 15-minute default TTL under `cacheDir/exports/`.
 
 ## 5. 5-Tier Verification & Testing Architecture
 

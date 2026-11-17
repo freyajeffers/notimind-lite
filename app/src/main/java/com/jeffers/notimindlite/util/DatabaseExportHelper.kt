@@ -188,7 +188,7 @@ object DatabaseExportHelper {
         file
     )
 
-    fun cleanupExportFiles(context: Context, maxAgeMillis: Long = 3600_000L) {
+    fun cleanupExportFiles(context: Context, maxAgeMillis: Long = 15 * 60_000L) {
         try {
             val cacheDir = File(context.cacheDir, "exports")
             if (!cacheDir.exists()) return

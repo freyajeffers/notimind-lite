@@ -49,11 +49,11 @@ CONVENTION: When a feature is partially implemented, the remaining work is liste
 
 ## Privacy Observability & Retention (Phase 5)
 
-- ProGuard/R8 rules to strip debug/verbose logging and verify no notification content remains in release logs.
+- Verify release APK bytecode contains no `android.util.Log` callsites after the implemented R8 `assumenosideeffects` rules.
   - Add automated checks in CI to scan APK for log callsites.
   - Origin: docs/Phase 5 - Privacy Observability, Lifecycle & Verification Gates.md
 
-- Implement AutoPruneRetentionWorker periodic WorkManager job and validate retention TTL behavior on devices.
+- Validate the existing daily `RetentionCleanupWorker` retention behavior on devices and add release acceptance coverage.
   - Origin: Phase 5 doc
 
 ## Backup Notary Server & Notarization
