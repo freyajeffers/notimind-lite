@@ -5,6 +5,7 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.ApplicationInfo
 import android.content.pm.PackageManager
+import android.net.Uri
 import android.os.Bundle
 import androidx.test.core.app.ApplicationProvider
 import com.jeffers.notimindlite.R
@@ -245,11 +246,13 @@ class NotificationParsingHelperTest {
     @Test
     fun safeLaunchIntentUri_validIntent_returnsIntentUri() {
         val packageManager = mockk<PackageManager>()
-        val intent = Intent(Intent.ACTION_MAIN)
+        val intent = Intent(Intent.ACTION_MAIN).apply {
+            data = Uri.parse("android-app://com.example.app")
+        }
         every { packageManager.getLaunchIntentForPackage("com.example.app") } returns intent
 
         assertEquals(
-            intent.toUri(Intent.URI_ANDROID_APP_SCHEME),
+            intent.toUri(Intent.URI_INTENT_SCHEME),
             NotificationParsingHelper(packageManager).safeLaunchIntentUri("com.example.app")
         )
     }

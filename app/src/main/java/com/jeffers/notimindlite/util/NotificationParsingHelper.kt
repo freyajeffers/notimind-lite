@@ -3,6 +3,7 @@ package com.jeffers.notimindlite.util
 import android.app.Notification
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.net.Uri
 import android.os.Bundle
 import com.jeffers.notimindlite.util.AppLogger
 import org.json.JSONArray
@@ -74,7 +75,11 @@ class NotificationParsingHelper(
     }
 
     fun safeLaunchIntentUri(packageName: String): String? = try {
-        packageManager.getLaunchIntentForPackage(packageName)?.toUri(Intent.URI_ANDROID_APP_SCHEME)
+        val launchIntent = packageManager.getLaunchIntentForPackage(packageName)?.apply {
+            if (data == null) data = Uri.parse("android-app://$packageName")
+        } ?: return null
+        runCatching { launchIntent.toUri(Intent.URI_ANDROID_APP_SCHEME) }
+            .getOrElse { launchIntent.toUri(Intent.URI_INTENT_SCHEME) }
     } catch (e: SecurityException) {
         AppLogger.w("NotificationParsing", "Launch intent unavailable for package=$packageName", e)
         null

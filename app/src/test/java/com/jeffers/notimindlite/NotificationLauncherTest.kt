@@ -3,6 +3,7 @@ package com.jeffers.notimindlite
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
+import android.net.Uri
 import androidx.test.core.app.ApplicationProvider
 import com.jeffers.notimindlite.util.NotificationLauncher
 import org.junit.Assert.assertNotNull
@@ -28,8 +29,10 @@ class NotificationLauncherTest {
     @Test
     fun notificationLauncher_launchesParsedIntentUri() {
         val context = ApplicationProvider.getApplicationContext<Context>()
-        val sampleIntent = Intent(context, com.jeffers.notimindlite.ui.MainActivity::class.java)
-        val intentUri = sampleIntent.toUri(Intent.URI_ANDROID_APP_SCHEME)
+        val sampleIntent = Intent(context, com.jeffers.notimindlite.ui.MainActivity::class.java).apply {
+            data = Uri.parse("android-app://com.jeffers.notimindlite")
+        }
+        val intentUri = sampleIntent.toUri(Intent.URI_INTENT_SCHEME)
 
         NotificationLauncher.launchNotification(context, "com.jeffers.notimindlite", "persistent_key", intentUri)
         assertNotNull(intentUri)

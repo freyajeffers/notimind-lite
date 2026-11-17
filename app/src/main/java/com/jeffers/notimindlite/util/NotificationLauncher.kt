@@ -76,7 +76,13 @@ object NotificationLauncher {
         // 2. Try restored persistent intentUri
         if (!launched && !intentUri.isNullOrBlank()) {
             try {
-                val parsedIntent = Intent.parseUri(intentUri, Intent.URI_ANDROID_APP_SCHEME)
+                val parsedIntent = runCatching {
+                    Intent.parseUri(intentUri, Intent.URI_ANDROID_APP_SCHEME)
+                }.getOrElse {
+                    // Preserve compatibility with pre-hardening records while retaining
+                    // the component, package, grant-flag, and resolved-owner checks below.
+                    Intent.parseUri(intentUri, Intent.URI_INTENT_SCHEME)
+                }
                 parsedIntent.component?.let { component ->
                     if (component.packageName != packageName) {
                         throw SecurityException("Parsed intent component is outside the expected package")
