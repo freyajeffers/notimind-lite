@@ -3,6 +3,7 @@ package com.jeffers.notimindlite.domain.clustering
 import android.content.Context
 import android.content.pm.ApplicationInfo
 import android.content.pm.PackageManager
+import com.jeffers.notimindlite.data.local.AppDatabase
 import com.jeffers.notimindlite.util.AppLogger
 import java.util.concurrent.ConcurrentHashMap
 
@@ -345,7 +346,11 @@ object DynamicClusterManager {
             if (isInitialized) return
             try {
                 initializeVocabulary()
-                enrichInstalledApplications(context.packageManager)
+                val observedApps = AppDatabase
+                    .getDatabase(context.applicationContext)
+                    .appDao()
+                    .getAllApps()
+                enrichObservedApplications(context.packageManager, observedApps.map { it.packageName })
                 isInitialized = true
             } catch (e: PackageManager.NameNotFoundException) {
                 AppLogger.e(TAG, "Unable to resolve an installed application", e)
@@ -380,10 +385,18 @@ object DynamicClusterManager {
         }
     }
 
-    private fun enrichInstalledApplications(packageManager: PackageManager) {
-        packageManager
-            .getInstalledApplications(PackageManager.MATCH_UNINSTALLED_PACKAGES)
-            .forEach { app -> enrichApplication(packageManager, app) }
+    private fun enrichObservedApplications(packageManager: PackageManager, packageNames: List<String>) {
+        packageNames.forEach { packageName ->
+            try {
+                val app = packageManager.getApplicationInfo(
+                    packageName,
+                    PackageManager.ApplicationInfoFlags.of(0)
+                )
+                enrichApplication(packageManager, app)
+            } catch (e: PackageManager.NameNotFoundException) {
+                AppLogger.i(TAG, "Observed application is no longer installed: $packageName")
+            }
+        }
     }
 
     private fun enrichApplication(packageManager: PackageManager, app: ApplicationInfo) {

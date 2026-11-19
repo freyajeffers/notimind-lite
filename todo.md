@@ -27,8 +27,8 @@ CONVENTION: When a feature is partially implemented, the remaining work is liste
   - Current launch parsing uses `URI_ANDROID_APP_SCHEME`, package/component validation, grant-flag stripping, and resolved-package checks.
   - Origin: docs/Phase 3 - Android System Boundaries & Component Hardening.md
 
-- Validate the scoped `<queries>` package-visibility behavior on supported Android releases and update the Play Store compatibility checklist.
-  - `QUERY_ALL_PACKAGES` and `QUICKBOOT_POWERON` were removed; an unauthorized broadcast regression test now covers the receiver.
+- Validate the internal notification-derived app list on supported Android releases and update the Play Store compatibility checklist.
+  - `QUERY_ALL_PACKAGES` and `QUICKBOOT_POWERON` were removed; DynamicClusterManager now enriches only packages persisted from received notifications.
   - Origin: docs/Phase 3 - Android System Boundaries & Component Hardening.md
 
 - Finalize `data_extraction_rules.xml` and `fullBackupContent` to ensure DB and prefs excluded from backups and transfers.

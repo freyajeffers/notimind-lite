@@ -6,7 +6,7 @@ Phase 3 hardens the Android operating system perimeter around NotiMind Lite. It 
 
 ## 2. Current status
 
-Backup/data-extraction rules and the FileProvider are present. `QUICKBOOT_POWERON` and `QUERY_ALL_PACKAGES` have been removed; launcher visibility is scoped through `<queries>`. Full broadcast/intent/backup acceptance tests remain pending.
+Backup/data-extraction rules and the FileProvider are present. `QUICKBOOT_POWERON` and `QUERY_ALL_PACKAGES` have been removed; app enrichment uses the internal list of packages observed in notifications, while launcher visibility remains scoped through `<queries>`. Full broadcast/intent/backup acceptance tests remain pending.
 
 ## 3. Architectural Components & Responsibilities
 

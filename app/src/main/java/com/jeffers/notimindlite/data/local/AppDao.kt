@@ -15,6 +15,10 @@ interface AppDao {
     @Query("SELECT * FROM apps ORDER BY appName ASC")
     fun getAllAppsFlow(): Flow<List<AppEntity>>
 
+    /** Returns only applications observed in persisted notifications. */
+    @Query("SELECT * FROM apps ORDER BY appName ASC")
+    fun getAllApps(): List<AppEntity>
+
     @Query("SELECT * FROM apps WHERE packageName = :packageName LIMIT 1")
     suspend fun getAppByPackage(packageName: String): AppEntity?
 
