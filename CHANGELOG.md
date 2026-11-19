@@ -24,6 +24,7 @@ All notable changes to NotiMind Lite are documented here. This project adheres t
 - **privacy(selectors)**: Hide uninstalled observed apps from active package selectors while retaining their notification history and local observed-app records.
 - **privacy(icons)**: Store notification app-icon snapshots under durable app files instead of cache storage, with lazy migration for existing cached paths.
 - **security(export)**: Sanitize package names as well as notification fields during CSV export to close spreadsheet formula-injection coverage gaps.
+- **security(export)**: Add reusable inclusive-start/exclusive-end date and package filters to the export boundary, rejecting invalid ranges and blank package filters.
 - **storage(migrations)**: Make the historical migration path create missing backup metadata tables safely and replace the incomplete Room identity-hash test with a synthetic version-1 migration fixture.
 - **test(migrations)**: Add historical Room schema assets for versions 1–16 and a full v1-to-v20 seeded migration-preservation test.
 - **test(migrations)**: Align Android Room migration-test serialization dependencies to 1.8.1 and force the matching runtime on test configurations.

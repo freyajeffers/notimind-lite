@@ -131,7 +131,7 @@ object DatabaseExportHelper {
             val postTimeStr = dateFormat.format(Date(n.postTime))
             val rowParts = listOf(
                 n.id,
-                n.packageName,
+                sanitizeCsvField(n.packageName),
                 escapedAppName,
                 escapedTitle,
                 escapedContent,

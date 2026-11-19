@@ -11,6 +11,7 @@ import org.json.JSONArray
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertThrows
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
@@ -112,6 +113,65 @@ class DatabaseExporterTest {
         val csv = DatabaseExporter.exportToCsvString(listOf(entity))
 
         assertTrue(csv.contains("\"'=HYPERLINK(\"\"https://example.com\"\")\""))
+    }
+
+    @Test
+    fun selectForExport_appliesDateAndPackageFilters() {
+        val notifications = listOf(
+            NotificationEntity(
+                key = "before",
+                packageName = "com.example.one",
+                appName = "One",
+                title = "Before",
+                content = "Before",
+                postTime = 99L
+            ),
+            NotificationEntity(
+                key = "included",
+                packageName = "com.example.one",
+                appName = "One",
+                title = "Included",
+                content = "Included",
+                postTime = 100L
+            ),
+            NotificationEntity(
+                key = "wrong-package",
+                packageName = "com.example.two",
+                appName = "Two",
+                title = "Wrong package",
+                content = "Wrong package",
+                postTime = 150L
+            ),
+            NotificationEntity(
+                key = "at-end",
+                packageName = "com.example.one",
+                appName = "One",
+                title = "At end",
+                content = "At end",
+                postTime = 200L
+            ),
+        )
+
+        val selected = DatabaseExporter.selectForExport(
+            notifications,
+            DatabaseExporter.ExportSelection(
+                fromInclusiveMillis = 100L,
+                toExclusiveMillis = 200L,
+                packageNames = setOf("com.example.one")
+            )
+        )
+
+        assertEquals(listOf("included"), selected.map { it.key })
+    }
+
+    @Test
+    fun exportSelection_rejectsInvalidRangeAndBlankPackage() {
+        assertThrows(IllegalArgumentException::class.java) {
+            DatabaseExporter.ExportSelection(fromInclusiveMillis = 2L, toExclusiveMillis = 1L)
+        }
+        assertThrows(IllegalArgumentException::class.java) {
+            DatabaseExporter.ExportSelection(packageNames = setOf(""))
+        }
     }
 
     @Test

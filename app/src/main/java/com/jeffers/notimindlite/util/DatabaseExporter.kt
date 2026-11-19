@@ -25,6 +25,36 @@ import javax.crypto.spec.SecretKeySpec
 object DatabaseExporter {
     private const val TAG = "DatabaseExporter"
 
+    data class ExportSelection(
+        val fromInclusiveMillis: Long? = null,
+        val toExclusiveMillis: Long? = null,
+        val packageNames: Set<String> = emptySet(),
+    ) {
+        init {
+            require(
+                fromInclusiveMillis == null ||
+                    toExclusiveMillis == null ||
+                    fromInclusiveMillis < toExclusiveMillis
+            ) {
+                "Export start must be before export end"
+            }
+            require(packageNames.none(String::isBlank)) {
+                "Export package filters must not contain blank package names"
+            }
+        }
+    }
+
+    fun selectForExport(
+        notifications: List<NotificationEntity>,
+        selection: ExportSelection = ExportSelection(),
+    ): List<NotificationEntity> = notifications.filter { notification ->
+        val afterStart = selection.fromInclusiveMillis?.let { notification.postTime >= it } ?: true
+        val beforeEnd = selection.toExclusiveMillis?.let { notification.postTime < it } ?: true
+        val packageMatches = selection.packageNames.isEmpty() ||
+            notification.packageName in selection.packageNames
+        afterStart && beforeEnd && packageMatches
+    }
+
     /**
      * Orchestrates a full encrypted backup of the local database.
      * When [passphrase] is supplied, the backup is wrapped so it can be restored on
@@ -215,13 +245,15 @@ object DatabaseExporter {
         isJson: Boolean = true,
         passphrase: CharArray? = null,
         biometricAuthenticated: Boolean = false,
+        selection: ExportSelection = ExportSelection(),
     ) {
         try {
             val preferences = PreferencesRepository(context.applicationContext)
             validateExportRequest(preferences, isJson, passphrase, biometricAuthenticated)
             DatabaseExportHelper.cleanupExportFiles(context)
             val encryptedExports = preferences.securityManager.encryptedExports.value
-            val file = createExportFile(context, notifications, isJson, passphrase, preferences)
+            val selectedNotifications = selectForExport(notifications, selection)
+            val file = createExportFile(context, selectedNotifications, isJson, passphrase, preferences)
             val shareIntent = buildShareIntent(context, file, isJson, encryptedExports)
             context.startActivity(shareIntent)
         } catch (e: IllegalArgumentException) {
