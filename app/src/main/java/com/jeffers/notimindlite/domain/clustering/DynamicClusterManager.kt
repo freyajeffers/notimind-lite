@@ -394,7 +394,7 @@ object DynamicClusterManager {
                 )
                 enrichApplication(packageManager, app)
             } catch (e: PackageManager.NameNotFoundException) {
-                AppLogger.i(TAG, "Observed application is no longer installed: $packageName")
+                AppLogger.i(TAG, "Observed application is no longer installed: $packageName", e)
             }
         }
     }
