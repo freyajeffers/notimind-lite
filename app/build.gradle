@@ -277,6 +277,8 @@ dependencies {
   androidTestImplementation libs.androidx.compose.ui.test.junit4
   androidTestImplementation libs.androidx.work.testing
   androidTestImplementation libs.androidx.room.testing
+  androidTestImplementation libs.serialization.core
+  androidTestImplementation libs.serialization.json
 
   debugImplementation libs.androidx.compose.ui.tooling
   debugImplementation libs.androidx.compose.ui.test.manifest
