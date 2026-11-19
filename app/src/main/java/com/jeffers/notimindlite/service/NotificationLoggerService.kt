@@ -19,6 +19,7 @@ import com.jeffers.notimindlite.data.local.Converters
 import com.jeffers.notimindlite.data.local.NotificationDao
 import com.jeffers.notimindlite.data.local.NotificationEntity
 import com.jeffers.notimindlite.data.local.PreferencesRepository
+import com.jeffers.notimindlite.util.AppIconStorage
 import com.jeffers.notimindlite.util.AppLogger
 import com.jeffers.notimindlite.util.NotificationActionExecutor
 import com.jeffers.notimindlite.util.NotificationLauncher
@@ -193,9 +194,7 @@ class NotificationLoggerService : NotificationListenerService() {
 
     // Icon capture is best-effort; failures return null and callers fall back to no icon.
     private fun getOrSaveAppIconUri(packageName: String): String? {
-        val iconsDir = File(cacheDir, "app_icons")
-        if (!iconsDir.exists()) iconsDir.mkdirs()
-        val iconFile = File(iconsDir, "$packageName.png")
+        val iconFile = File(AppIconStorage.capturePath(this, packageName))
         if (iconFile.exists() && iconFile.length() > 0) return iconFile.absolutePath
 
         return try {

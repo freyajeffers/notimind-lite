@@ -29,14 +29,15 @@ object AppIconCache {
     }
 
     fun getIcon(context: Context, uri: String?, targetSize: Int = DEFAULT_TARGET_SIZE): Bitmap? {
-        val cached = uri?.let { iconCache.get(it) }
-        return if (uri == null || cached != null) {
+        val resolvedUri = uri?.let { AppIconStorage.resolveStoredPath(context, it) }
+        val cached = resolvedUri?.let { iconCache.get(it) }
+        return if (resolvedUri == null || cached != null) {
             cached
         } else {
             try {
-                val bitmap = decodeSampledBitmapFromUri(context, uri, targetSize)
+                val bitmap = decodeSampledBitmapFromUri(context, resolvedUri, targetSize)
                 if (bitmap != null) {
-                    iconCache.put(uri, bitmap)
+                    iconCache.put(resolvedUri, bitmap)
                 }
                 bitmap
             } catch (e: FileNotFoundException) {
