@@ -100,6 +100,21 @@ class DatabaseExporterTest {
     }
 
     @Test
+    fun csvExport_sanitizesPackageNameFormula() {
+        val entity = NotificationEntity(
+            key = "package-formula",
+            packageName = "=HYPERLINK(\"https://example.com\")",
+            appName = "App",
+            title = "Title",
+            content = "Content"
+        )
+
+        val csv = DatabaseExporter.exportToCsvString(listOf(entity))
+
+        assertTrue(csv.contains("\"'=HYPERLINK(\"\"https://example.com\"\")\""))
+    }
+
+    @Test
     fun testExportAppliesPrivacyPreferences() {
         val preferences = com.jeffers.notimindlite.data.local
             .PreferencesRepository(context)

@@ -196,12 +196,13 @@ object DatabaseExporter {
         sb.append("ID,Package,AppName,Title,Content,PostTime,IsDismissed,DismissReason,IsPinned\n")
         val dateFormat = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault())
         for (n in notifications.map { DatabaseExportHelper.applyPrivacy(it, context) }) {
+            val escapedPackageName = DatabaseExportHelper.sanitizeCsvField(n.packageName)
             val escapedAppName = DatabaseExportHelper.sanitizeCsvField(n.appName)
             val escapedTitle = DatabaseExportHelper.sanitizeCsvField(n.title)
             val escapedContent = DatabaseExportHelper.sanitizeCsvField(n.content)
             val postTimeStr = dateFormat.format(Date(n.postTime))
             sb.append(
-                "${n.id},${n.packageName},$escapedAppName,$escapedTitle,$escapedContent," +
+                "${n.id},$escapedPackageName,$escapedAppName,$escapedTitle,$escapedContent," +
                     "$postTimeStr,${n.isDismissed},${n.dismissReason ?: ""},${n.isPinned}\n"
             )
         }
