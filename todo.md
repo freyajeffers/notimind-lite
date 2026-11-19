@@ -15,7 +15,7 @@ CONVENTION: When a feature is partially implemented, the remaining work is liste
   - Origin: docs/Phase 2 - Cryptographic Hardening & Keystore Storage Security.md; MASTER_TECHNICAL_SPECIFICATION.md
 
 - Add device/CI acceptance coverage for the full Room migration chain and keep historical schema assets synchronized with `app/schemas`.
-  - Current progress: Room schema assets 1..20 are now available under `app/src/main/assets/com.jeffers.notimindlite.data.local.AppDatabase/`; `MigrationTest` exercises a seeded v1 database through v20. Physical/CI execution remains the final gate.
+  - Current progress: Room schema assets 1..20 are now available under `app/src/main/assets/com.jeffers.notimindlite.data.local.AppDatabase/`; the physical test uses a synthetic v1 fixture and exercises the full migration chain through v20. Physical execution remains the final gate when the device is online.
 
 - Verify hardware-backed Keystore (StrongBox/TEE) coverage on supported devices and fallback tests for devices without StrongBox.
   - Current progress: `SqlCipherKeyManager` and `BackupKeyCodec` now request StrongBox on API 28+ and retry with the platform Keystore/TEE when StrongBox is unavailable. Physical StrongBox and non-StrongBox acceptance tests remain pending.

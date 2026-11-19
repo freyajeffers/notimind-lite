@@ -1,42 +1,24 @@
 package com.jeffers.notimindlite.data.local.migration
 
-import androidx.room.testing.MigrationTestHelper
+import android.content.Context
+import androidx.sqlite.db.SupportSQLiteDatabase
+import androidx.sqlite.db.SupportSQLiteOpenHelper
 import androidx.sqlite.db.framework.FrameworkSQLiteOpenHelperFactory
 import androidx.test.platform.app.InstrumentationRegistry
 import com.jeffers.notimindlite.data.local.AppDatabase
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
-import org.junit.Rule
 import org.junit.Test
 
 class MigrationHistoryDeviceTest {
-    @get:Rule
-    val helper = MigrationTestHelper(
-        InstrumentationRegistry.getInstrumentation(),
-        AppDatabase::class.java,
-        emptyList(),
-        FrameworkSQLiteOpenHelperFactory()
-    )
+    private val context: Context =
+        InstrumentationRegistry.getInstrumentation().targetContext
 
     @Test
     fun migration_1_to_20_preservesLegacyNotification() {
         val testDbName = "migration-device-test-1-20.db"
-        helper.createDatabase(testDbName, 1).use { v1 ->
-            v1.execSQL(
-                "INSERT INTO notifications " +
-                    "(key, packageName, appName, title, content, postTime, isDismissed, isPersistent, priority) " +
-                    "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
-                arrayOf<Any?>(
-                    "migration_v1_key", "com.migration.legacy", "Legacy App",
-                    "Legacy title", "Legacy content", System.currentTimeMillis(), 0, 0, 0
-                )
-            )
-        }
-
-        val migrated = helper.runMigrationsAndValidate(
-            testDbName,
-            20,
-            false,
+        context.deleteDatabase(testDbName)
+        val migrations = arrayOf(
             AppDatabase.MIGRATION_1_2,
             AppDatabase.MIGRATION_2_3,
             AppDatabase.MIGRATION_3_4,
@@ -57,15 +39,64 @@ class MigrationHistoryDeviceTest {
             AppDatabase.MIGRATION_18_19,
             AppDatabase.MIGRATION_19_20
         )
-        migrated.use { database ->
-            database
-                .query(
-                    "SELECT key, title FROM notifications WHERE key = ?",
-                    arrayOf<Any>("migration_v1_key")
-                ).use { cursor ->
-                    assertTrue(cursor.moveToFirst())
-                    assertEquals("Legacy title", cursor.getString(cursor.getColumnIndexOrThrow("title")))
-                }
+        MigrationTestFixtures.createVersionOneDatabase(context, testDbName).use { database ->
+            database.execSQL(
+                "INSERT INTO notifications " +
+                    "(key, packageName, appName, title, content, postTime, isDismissed, isPersistent, priority) " +
+                    "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                arrayOf<Any?>(
+                    "migration_v1_key", "com.migration.legacy", "Legacy App",
+                    "Legacy title", "Legacy content", System.currentTimeMillis(), 0, 0, 0
+                )
+            )
         }
+
+        val config = SupportSQLiteOpenHelper.Configuration
+            .builder(context)
+            .name(testDbName)
+            .callback(object : SupportSQLiteOpenHelper.Callback(20) {
+                override fun onCreate(db: SupportSQLiteDatabase) = Unit
+
+                override fun onUpgrade(db: SupportSQLiteDatabase, oldVersion: Int, newVersion: Int) {
+                    migrations.forEach { it.migrate(db) }
+                }
+            })
+            .build()
+        val helper = FrameworkSQLiteOpenHelperFactory().create(config)
+        helper.writableDatabase.use { database ->
+            val cursor = database.query(
+                "SELECT key, title FROM notifications WHERE key = ?",
+                arrayOf<Any>("migration_v1_key")
+            )
+            cursor.use {
+                assertTrue(cursor.moveToFirst())
+                assertEquals("Legacy title", cursor.getString(cursor.getColumnIndexOrThrow("title")))
+            }
+        }
+        context.deleteDatabase(testDbName)
+    }
+}
+
+private object MigrationTestFixtures {
+    fun createVersionOneDatabase(context: Context, name: String): SupportSQLiteDatabase {
+        val configuration = SupportSQLiteOpenHelper.Configuration
+            .builder(context)
+            .name(name)
+            .callback(object : SupportSQLiteOpenHelper.Callback(1) {
+                override fun onCreate(db: SupportSQLiteDatabase) {
+                    db.execSQL(
+                        "CREATE TABLE notifications (" +
+                            "id INTEGER PRIMARY KEY NOT NULL, " +
+                            "key TEXT NOT NULL, packageName TEXT NOT NULL, " +
+                            "appName TEXT NOT NULL, title TEXT NOT NULL, content TEXT NOT NULL, " +
+                            "postTime INTEGER NOT NULL, isDismissed INTEGER NOT NULL, " +
+                            "isPersistent INTEGER NOT NULL, priority INTEGER NOT NULL)"
+                    )
+                }
+
+                override fun onUpgrade(db: SupportSQLiteDatabase, oldVersion: Int, newVersion: Int) = Unit
+            })
+            .build()
+        return FrameworkSQLiteOpenHelperFactory().create(configuration).writableDatabase
     }
 }

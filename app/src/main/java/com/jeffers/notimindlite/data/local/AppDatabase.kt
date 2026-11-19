@@ -291,9 +291,22 @@ abstract class AppDatabase : RoomDatabase() {
 
         val MIGRATION_15_16 = object : Migration(DB_VERSION_15, DB_VERSION_16) {
             override fun migrate(db: SupportSQLiteDatabase) {
-                db.execSQL("ALTER TABLE `backup_records` ADD COLUMN `actionType` TEXT NOT NULL DEFAULT 'UNKNOWN'")
-                db.execSQL("ALTER TABLE `backup_records` ADD COLUMN `logMessage` TEXT")
-                db.execSQL("ALTER TABLE `backup_records` ADD COLUMN `encryptionKeyBase64` TEXT")
+                if (!tableExists(db, "backup_records")) {
+                    db.execSQL(
+                        "CREATE TABLE `backup_records` (" +
+                            "`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, " +
+                            "`actionType` TEXT NOT NULL DEFAULT 'UNKNOWN', " +
+                            "`fileHash` TEXT NOT NULL, " +
+                            "`signature` TEXT NOT NULL, " +
+                            "`timestamp` INTEGER NOT NULL, " +
+                            "`fileName` TEXT, `logMessage` TEXT, " +
+                            "`encryptionKeyBase64` TEXT)"
+                    )
+                } else {
+                    addColumnIfMissing(db, "backup_records", "actionType", "TEXT NOT NULL DEFAULT 'UNKNOWN'")
+                    addColumnIfMissing(db, "backup_records", "logMessage", "TEXT")
+                    addColumnIfMissing(db, "backup_records", "encryptionKeyBase64", "TEXT")
+                }
             }
         }
 
@@ -350,6 +363,30 @@ abstract class AppDatabase : RoomDatabase() {
             MIGRATION_12_13, MIGRATION_13_14, MIGRATION_14_15, MIGRATION_15_16, MIGRATION_16_17,
             MIGRATION_17_18, MIGRATION_18_19, MIGRATION_19_20
         )
+
+        private fun tableExists(db: SupportSQLiteDatabase, tableName: String): Boolean {
+            val cursor = db.query(
+                "SELECT name FROM sqlite_master WHERE type = 'table' AND name = ?",
+                arrayOf(tableName)
+            )
+            return cursor.use { it.moveToFirst() }
+        }
+
+        private fun addColumnIfMissing(
+            db: SupportSQLiteDatabase,
+            tableName: String,
+            columnName: String,
+            columnDefinition: String
+        ) {
+            val exists = db.query("PRAGMA table_info(`$tableName`)").use { cursor ->
+                val nameIndex = cursor.getColumnIndex("name")
+                generateSequence { if (cursor.moveToNext()) cursor.getString(nameIndex) else null }
+                    .any { it == columnName }
+            }
+            if (!exists) {
+                db.execSQL("ALTER TABLE `$tableName` ADD COLUMN `$columnName` $columnDefinition")
+            }
+        }
 
         private fun migrateNotificationGroups(db: SupportSQLiteDatabase) {
             // 1. Ensure all notifications have non-null groupKey
