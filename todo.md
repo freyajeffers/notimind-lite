@@ -14,8 +14,8 @@ CONVENTION: When a feature is partially implemented, the remaining work is liste
   - Current progress: production startup now detects and migrates the active legacy plaintext database only when SQLCipher is enabled; schema-compatible streaming copy verifies inserted rows and exact notification counts before cutover; secure file cleanup, sidecar handling, legacy-file detection, encrypted reopen, ARM64 physical-device validation, and persisted user confirmation before migration are covered.
   - Origin: docs/Phase 2 - Cryptographic Hardening & Keystore Storage Security.md; MASTER_TECHNICAL_SPECIFICATION.md
 
-- Add formal migration tests using Room's MigrationTestHelper for each historical version (1..18) or create a synthetic schema generator to emit valid `<version>.json` files.
-  - Current progress: Room-emitted schemas 8..16 and 17..19 are tracked; schema structure 1..7 was recovered from the migration SQL and historical entity changes. Versions 1..7 lack historical Room identity hashes, so exact MigrationTestHelper validation remains pending.
+- Add device/CI acceptance coverage for the full Room migration chain and keep historical schema assets synchronized with `app/schemas`.
+  - Current progress: Room schema assets 1..20 are now available under `app/src/main/assets/com.jeffers.notimindlite.data.local.AppDatabase/`; `MigrationTest` exercises a seeded v1 database through v20. Physical/CI execution remains the final gate.
 
 - Verify hardware-backed Keystore (StrongBox/TEE) coverage on supported devices and fallback tests for devices without StrongBox.
   - Current progress: `SqlCipherKeyManager` and `BackupKeyCodec` now request StrongBox on API 28+ and retry with the platform Keystore/TEE when StrongBox is unavailable. Physical StrongBox and non-StrongBox acceptance tests remain pending.

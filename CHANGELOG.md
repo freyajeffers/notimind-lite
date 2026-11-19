@@ -24,6 +24,7 @@ All notable changes to NotiMind Lite are documented here. This project adheres t
 - **privacy(selectors)**: Hide uninstalled observed apps from active package selectors while retaining their notification history and local observed-app records.
 - **privacy(icons)**: Store notification app-icon snapshots under durable app files instead of cache storage, with lazy migration for existing cached paths.
 - **security(export)**: Sanitize package names as well as notification fields during CSV export to close spreadsheet formula-injection coverage gaps.
+- **test(migrations)**: Add historical Room schema assets for versions 1–16 and a full v1-to-v20 seeded migration-preservation test.
 - **security(codeql)**: Add a scheduled and manually dispatchable CodeQL workflow for Android Java/Kotlin, using manual build tracing against the debug variant and least-privilege code-scanning permissions.
 
 - **build(fdroid)**: Use monotonic date-based debug version codes (`YYYYMMDDNN`) for F-Droid archive builds; counters are never reset.
