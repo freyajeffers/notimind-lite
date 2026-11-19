@@ -21,6 +21,7 @@ All notable changes to NotiMind Lite are documented here. This project adheres t
 - **security(intent)**: Harden persistent notification launch intents with Android-app URI parsing, component/package validation, URI-grant stripping, and resolved-activity ownership checks.
 - **privacy(package-visibility)**: Build dynamic app enrichment from the persisted notification-derived app list instead of enumerating all installed applications.
 - **security(lifecycle)**: Add defense-in-depth R8 log stripping and security-provider keep rules, document the existing daily retention worker, and enforce a 15-minute default export-cache TTL.
+- **privacy(selectors)**: Hide uninstalled observed apps from active package selectors while retaining their notification history and local observed-app records.
 - **security(codeql)**: Add a scheduled and manually dispatchable CodeQL workflow for Android Java/Kotlin, using manual build tracing against the debug variant and least-privilege code-scanning permissions.
 
 - **build(fdroid)**: Use monotonic date-based debug version codes (`YYYYMMDDNN`) for F-Droid archive builds; counters are never reset.
