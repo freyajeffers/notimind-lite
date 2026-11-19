@@ -183,9 +183,7 @@ jobs:
       matrix:
         include:
           - tier: tier-1-feature
-            tests: >-
-              com.jeffers.notimindlite.tier1_feature.*
-              com.jeffers.notimindlite.tier1feature.*
+            tests: com.jeffers.notimindlite.tier1feature.*
           - tier: tier-2-boundary
             tests: com.jeffers.notimindlite.tier2boundary.*
           - tier: tier-3-pairwise
