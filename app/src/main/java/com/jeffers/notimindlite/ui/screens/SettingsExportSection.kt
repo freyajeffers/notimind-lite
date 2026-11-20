@@ -34,6 +34,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -81,18 +82,16 @@ fun SettingsExportSection(
         }
     }
 
-    var notifications by remember { mutableStateOf<List<NotificationEntity>>(emptyList()) }
-    var loaded by remember { mutableStateOf(false) }
-    LaunchedEffect(Unit) {
-        notifications = loadExportableNotifications(context)
-        loaded = true
-    }
+    val notificationState = rememberExportableNotifications()
+    val notifications = notificationState.items
+    val loaded = notificationState.loaded
 
     val packages = remember(notifications) { distinctPackages(notifications) }
-    var preset by remember { mutableStateOf(ExportRangePreset.ALL_TIME) }
+    var presetName by rememberSaveable { mutableStateOf(ExportRangePreset.ALL_TIME.name) }
+    val preset = ExportRangePreset.valueOf(presetName)
     var selectedPackages by remember(packages) { mutableStateOf(packages.map { it.packageName }.toSet()) }
     var showAppPicker by remember { mutableStateOf(false) }
-    var showConfirm by remember { mutableStateOf(false) }
+    var pendingExport by remember { mutableStateOf<PendingExport?>(null) }
     var passphrase by remember { mutableStateOf("") }
 
     val selection = remember(preset, selectedPackages) {
@@ -119,7 +118,7 @@ fun SettingsExportSection(
             biometricAuthenticated = deviceConfirmed,
             selection = liveSelection,
         )
-        showConfirm = false
+        pendingExport = null
         passphrase = ""
         scope.launch { snackbarHostState.showSnackbar(if (succeeded) successMessage else failedMessage) }
     }
@@ -129,11 +128,11 @@ fun SettingsExportSection(
             required = requireDeviceConfirmation,
             onExport = performExport,
             onCancelled = {
-                showConfirm = false
+                pendingExport = null
                 scope.launch { snackbarHostState.showSnackbar(cancelledMessage) }
             },
             onBlocked = {
-                showConfirm = false
+                pendingExport = null
                 scope.launch { snackbarHostState.showSnackbar(noCredentialMessage) }
             },
         )
@@ -142,7 +141,7 @@ fun SettingsExportSection(
     ExportCard(
         ExportCardConfig(
             preset = preset,
-            onPresetChange = { preset = it },
+            onPresetChange = { presetName = it.name },
             packages = packages,
             selectedPackages = selectedPackages,
             onChooseApps = { showAppPicker = true },
@@ -156,7 +155,14 @@ fun SettingsExportSection(
                 format in allowedFormats &&
                 (!requirePassphrase || passphrase.isNotEmpty()),
             loaded = loaded,
-            onExportClick = { showConfirm = true },
+            onExportClick = {
+                pendingExport = PendingExport(
+                    count = selected.size,
+                    preset = preset,
+                    appCount = selectedPackages.size,
+                    format = format,
+                )
+            },
         )
     )
 
@@ -168,20 +174,19 @@ fun SettingsExportSection(
             onDismiss = { showAppPicker = false },
         )
     }
-
-    if (showConfirm) {
+    pendingExport?.let { pending ->
         ExportConfirmDialog(
             ExportConfirmConfig(
-                selectedCount = selected.size,
-                preset = preset,
-                selectedAppCount = selectedPackages.size,
-                format = format,
+                selectedCount = pending.count,
+                preset = pending.preset,
+                selectedAppCount = pending.appCount,
+                format = pending.format,
                 encryptedExports = encryptedExports,
                 requirePassphrase = requirePassphrase,
                 passphrase = passphrase,
                 onPassphraseChange = { passphrase = it },
                 onConfirm = requestExport,
-                onDismiss = { showConfirm = false },
+                onDismiss = { pendingExport = null },
             )
         )
     }
@@ -226,6 +231,17 @@ private data class DeviceConfirmationGate(
     val onExport: (Boolean) -> Unit,
     val onCancelled: () -> Unit,
     val onBlocked: () -> Unit,
+)
+
+/**
+ * Snapshot of what the user saw when they tapped Export. The confirmation
+ * dialog renders from this, so it can never disagree with the live preview.
+ */
+private data class PendingExport(
+    val count: Int,
+    val preset: ExportRangePreset,
+    val appCount: Int,
+    val format: String,
 )
 
 /**
@@ -535,6 +551,21 @@ private suspend fun loadExportableNotifications(context: Context): List<Notifica
             AppDatabase.getDatabase(context).notificationDao().getAllNotificationsList()
         }.getOrDefault(emptyList())
     }
+
+private data class LoadedNotifications(
+    val items: List<NotificationEntity>,
+    val loaded: Boolean,
+)
+
+@Composable
+private fun rememberExportableNotifications(): LoadedNotifications {
+    var state by remember { mutableStateOf(LoadedNotifications(emptyList(), false)) }
+    val context = LocalContext.current
+    LaunchedEffect(Unit) {
+        state = LoadedNotifications(loadExportableNotifications(context), true)
+    }
+    return state
+}
 
 private fun distinctPackages(notifications: List<NotificationEntity>): List<ExportAppOption> =
     notifications
