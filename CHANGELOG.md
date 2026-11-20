@@ -5,6 +5,7 @@ All notable changes to NotiMind Lite are documented here. This project adheres t
 ---
 
 ## [Unreleased] - Preference Runtime, UX Polish & Reliability
+- **fix(migrations)**: Rebuild the notifications table on v20 to v21 so it carries the declared foreign keys, backfilling placeholder app and group rows rather than dropping orphaned history.
 
 - **fix(ui)**: Resolve configuration-aware resource lookup lint errors in restore toast/snackbar messages.
 - **security(deps)**: Raise the forced Android Guava resolution to 33.7.2-android, the first patched version for CVE-2026-102554.
