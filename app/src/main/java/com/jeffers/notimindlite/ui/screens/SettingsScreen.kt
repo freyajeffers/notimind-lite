@@ -127,6 +127,11 @@ fun SettingsScreen(
             snackbarHostState = snackbarHostState
         )
 
+        SettingsExportSection(
+            preferencesRepository = preferencesRepository,
+            snackbarHostState = snackbarHostState
+        )
+
         // Continue with other sections
         SettingsCaptureSection(preferencesRepository = preferencesRepository)
         ProfileManagerSection(repository = preferencesRepository.profileManager)

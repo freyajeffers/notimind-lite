@@ -246,7 +246,7 @@ object DatabaseExporter {
         passphrase: CharArray? = null,
         biometricAuthenticated: Boolean = false,
         selection: ExportSelection = ExportSelection(),
-    ) {
+    ): Boolean {
         try {
             val preferences = PreferencesRepository(context.applicationContext)
             validateExportRequest(preferences, isJson, passphrase, biometricAuthenticated)
@@ -256,6 +256,7 @@ object DatabaseExporter {
             val file = createExportFile(context, selectedNotifications, isJson, passphrase, preferences)
             val shareIntent = buildShareIntent(context, file, isJson, encryptedExports)
             context.startActivity(shareIntent)
+            return true
         } catch (e: IllegalArgumentException) {
             AppLogger.e(TAG, "Failed to export database: invalid argument", e)
         } catch (e: SecurityException) {
@@ -265,6 +266,7 @@ object DatabaseExporter {
         } catch (e: java.security.GeneralSecurityException) {
             AppLogger.e(TAG, "Failed to export database: crypto error", e)
         }
+        return false
     }
 
     private fun validateExportRequest(
