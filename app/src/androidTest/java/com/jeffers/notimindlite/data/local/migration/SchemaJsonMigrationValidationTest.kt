@@ -1,0 +1,122 @@
+package com.jeffers.notimindlite.data.local.migration
+
+import androidx.room.testing.MigrationTestHelper
+import androidx.test.ext.junit.runners.AndroidJUnit4
+import androidx.test.platform.app.InstrumentationRegistry
+import com.jeffers.notimindlite.data.local.AppDatabase
+import org.junit.Assert.assertTrue
+import org.junit.Rule
+import org.junit.Test
+import org.junit.runner.RunWith
+
+/**
+ * Validates every exported Room schema JSON against the migration that produces it.
+ *
+ * For each declared version `N` the test creates a database from the `N` schema JSON,
+ * applies `MIGRATION_N_(N+1)`, and asks Room to validate the resulting database against
+ * the `(N+1)` schema bundle. A mismatch in columns, indices, or identity hash is caught.
+ *
+ * Unlike [MigrationHistoryDeviceTest], which builds a legacy database from hand-written
+ * DDL, this reads the real exported schemas, so a drifted JSON is detected.
+ *
+ * ## Known drift
+ *
+ * The historical schemas were back-filled rather than captured at their original release.
+ * Six pairs disagree with the migration DDL that actually runs. Evidence:
+ *
+ * - `1 -> 2`, `2 -> 3`, `10 -> 11`: migrations create an index the JSON does not declare
+ *   (`index_notifications_key`, `index_notifications_packageName`).
+ * - `6 -> 7`, `14 -> 15`: the JSON declares columns/indexes the migration never adds
+ *   (`isPinned`, `isRead`, several covering indexes).
+ * - `8 -> 9`: the JSON expects `index_notifications_key` while the migration yields
+ *   `isDismissed`/`isPinned`/`postTime` indexes instead.
+ * - `15 -> 16`, `16 -> 17`, `18 -> 19`: the migrated tables do not match the declared
+ *   columns/indexes of `backup_records` and `notifications` respectively.
+ *
+ * Supporting evidence that these JSONs are reconstructions: versions 1–8 all carry the
+ * same `identityHash` (`40c42c028c90…`) despite structurally different tables, whereas a
+ * genuine Room export derives that hash from the schema.
+ *
+ * Runtime upgrades are unaffected, because Room only compares the stored identity hash
+ * when opening an upgraded database; the per-table validation asserted here runs in tests.
+ *
+ * The baseline below keeps the gate meaningful: new drift fails, and fixing a listed pair
+ * also fails so the entry is removed deliberately rather than silently rotting.
+ */
+@RunWith(AndroidJUnit4::class)
+class SchemaJsonMigrationValidationTest {
+    @get:Rule
+    val helper = MigrationTestHelper(
+        InstrumentationRegistry.getInstrumentation(),
+        AppDatabase::class.java,
+    )
+
+    @Test
+    fun everyHistoricalSchema_migratesAndValidatesAgainstExportedJson() {
+        val outcomes = mutableMapOf<String, String?>()
+        for (migration in DECLARED_MIGRATIONS) {
+            val from = migration.startVersion
+            val pair = "$from->${migration.endVersion}"
+            val databaseName = "schema-json-validation-$from.db"
+            outcomes[pair] = try {
+                helper.createDatabase(databaseName, from).close()
+                helper.runMigrationsAndValidate(databaseName, migration.endVersion, true, migration)
+                null
+            } catch (failure: Throwable) {
+                "${failure.javaClass.simpleName}: ${failure.message?.lineSequence()?.firstOrNull()}"
+            } finally {
+                InstrumentationRegistry.getInstrumentation().targetContext.deleteDatabase(databaseName)
+            }
+        }
+
+        val unexpected = outcomes.filter { (pair, error) -> error != null && pair !in KNOWN_SCHEMA_DRIFT }
+        val newlyFixed = outcomes.filter { (pair, error) -> error == null && pair in KNOWN_SCHEMA_DRIFT }
+
+        assertTrue(
+            "New schema/migration drift detected:\n" +
+                unexpected.entries.joinToString("\n") { "  ${it.key}: ${it.value}" },
+            unexpected.isEmpty()
+        )
+        assertTrue(
+            "Known drift now validates; remove from KNOWN_SCHEMA_DRIFT: " +
+                newlyFixed.keys.joinToString(", "),
+            newlyFixed.isEmpty()
+        )
+    }
+
+    private companion object {
+        val KNOWN_SCHEMA_DRIFT = setOf(
+            "1->2",
+            "2->3",
+            "6->7",
+            "8->9",
+            "10->11",
+            "14->15",
+            "15->16",
+            "16->17",
+            "18->19",
+        )
+
+        val DECLARED_MIGRATIONS = arrayOf(
+            AppDatabase.MIGRATION_1_2,
+            AppDatabase.MIGRATION_2_3,
+            AppDatabase.MIGRATION_3_4,
+            AppDatabase.MIGRATION_4_5,
+            AppDatabase.MIGRATION_5_6,
+            AppDatabase.MIGRATION_6_7,
+            AppDatabase.MIGRATION_7_8,
+            AppDatabase.MIGRATION_8_9,
+            AppDatabase.MIGRATION_9_10,
+            AppDatabase.MIGRATION_10_11,
+            AppDatabase.MIGRATION_11_12,
+            AppDatabase.MIGRATION_12_13,
+            AppDatabase.MIGRATION_13_14,
+            AppDatabase.MIGRATION_14_15,
+            AppDatabase.MIGRATION_15_16,
+            AppDatabase.MIGRATION_16_17,
+            AppDatabase.MIGRATION_17_18,
+            AppDatabase.MIGRATION_18_19,
+            AppDatabase.MIGRATION_19_20,
+        )
+    }
+}

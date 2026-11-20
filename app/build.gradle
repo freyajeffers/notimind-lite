@@ -179,6 +179,14 @@ android {
     }
   }
 
+  // Room-exported schema JSON must be readable from instrumentation assets so
+  // MigrationTestHelper can validate each historical version against it.
+  sourceSets {
+    androidTest {
+      assets.srcDirs += "${projectDir}/schemas"
+    }
+  }
+
   lint {
     abortOnError = true
     checkDependencies = true

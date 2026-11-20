@@ -30,6 +30,7 @@ All notable changes to NotiMind Lite are documented here. This project adheres t
 - **security(export)**: Gate exports behind device-credential confirmation when the biometric-export preference is enabled, and surface export success or failure instead of failing silently.
 - **storage(migrations)**: Make the historical migration path create missing backup metadata tables safely and replace the incomplete Room identity-hash test with a synthetic version-1 migration fixture.
 - **test(migrations)**: Add historical Room schema assets for versions 1–16 and a full v1-to-v20 seeded migration-preservation test.
+- **test(migration)**: Validate every exported Room schema JSON against the migration that produces it, using `MigrationTestHelper` over instrumentation assets rather than hand-written DDL, with nine documented historical drift pairs baselined.
 - **test(migrations)**: Align Android Room migration-test serialization dependencies to 1.8.1 and force the matching runtime on test configurations.
 - **security(codeql)**: Add a scheduled and manually dispatchable CodeQL workflow for Android Java/Kotlin, using manual build tracing against the debug variant and least-privilege code-scanning permissions.
 
