@@ -29,6 +29,7 @@ All notable changes to NotiMind Lite are documented here. This project adheres t
 - **feat(export)**: Add a notification export surface in Settings with time-window presets, per-app filtering, a live selection count, and an explicit confirmation dialog that states format, scope, and whether the file will be encrypted.
 - **security(export)**: Gate exports behind device-credential confirmation when the biometric-export preference is enabled, and surface export success or failure instead of failing silently.
 - **storage(migrations)**: Make the historical migration path create missing backup metadata tables safely and replace the incomplete Room identity-hash test with a synthetic version-1 migration fixture.
+- **storage(migrations)**: Declare SQL column defaults on notification fields that migrations added with `DEFAULT`, and bump the database to version 21 with a no-op migration, so the exported schema matches the migrated schema.
 - **test(migrations)**: Add historical Room schema assets for versions 1–16 and a full v1-to-v20 seeded migration-preservation test.
 - **test(migration)**: Validate every exported Room schema JSON against the migration that produces it, using `MigrationTestHelper` over instrumentation assets rather than hand-written DDL, with nine documented historical drift pairs baselined.
 - **test(migrations)**: Align Android Room migration-test serialization dependencies to 1.8.1 and force the matching runtime on test configurations.
