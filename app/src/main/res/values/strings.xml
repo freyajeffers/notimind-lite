@@ -131,7 +131,7 @@
     <string name="reason_22">App Disallowed</string>
     <string name="reason_23">User Dismissed</string>
     <string name="reason_24">Review Dismissed</string>
-    <string name="reason_unknown">Reason #%1$d</string>
+    <string name="reason_unknown">Unknown dismissal reason</string>
     <string name="reason_system">System Dismissed</string>
 
     <!-- Actionable Chips -->
@@ -479,4 +479,15 @@
     <string name="export_app_picker_none">Clear all</string>
     <string name="export_app_picker_done">Done</string>
     <string name="export_loading">Loading notifications\u2026</string>
+    <string name="a11y_pin_for">Pin %1$s from %2$s</string>
+    <string name="a11y_unpin_for">Unpin %1$s from %2$s</string>
+    <string name="a11y_open_for">Open %1$s from %2$s</string>
+    <string name="a11y_restore_for">Restore %1$s from %2$s</string>
+    <string name="a11y_dismiss_restored_for">Dismiss restored %1$s from %2$s</string>
+    <string name="a11y_remove_restore_for">Remove %1$s from %2$s from the restore queue</string>
+    <string name="a11y_toggle_details_for">Toggle details for %1$s from %2$s</string>
+    <string name="a11y_pin_group_for">Pin group %1$s</string>
+    <string name="a11y_unpin_group_for">Unpin group %1$s</string>
+    <string name="a11y_expand_group_for">Expand %1$s</string>
+    <string name="a11y_collapse_group_for">Collapse %1$s</string>
 </resources>

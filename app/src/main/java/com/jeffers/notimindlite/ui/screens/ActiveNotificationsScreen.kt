@@ -281,7 +281,7 @@ enum class NotificationSection(
 fun AppIconImage(
     appIconUri: String?,
     modifier: Modifier = Modifier,
-    contentDescriptionRes: Int = R.string.active_notifications_app_icon_desc
+    contentDescriptionRes: Int? = R.string.active_notifications_app_icon_desc
 ) {
     val imageBitmap = remember(appIconUri) {
         if (!appIconUri.isNullOrEmpty()) {
@@ -302,7 +302,7 @@ fun AppIconImage(
     if (imageBitmap != null) {
         Image(
             bitmap = imageBitmap,
-            contentDescription = stringResource(contentDescriptionRes),
+            contentDescription = contentDescriptionRes?.let { stringResource(it) },
             modifier = modifier.size(20.dp)
         )
     }

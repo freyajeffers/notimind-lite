@@ -181,7 +181,11 @@ private fun SyncToggleRow(title: String, summary: String, checked: Boolean, onCh
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
-        Switch(checked = checked, onCheckedChange = onChecked)
+        Switch(
+            checked = checked,
+            onCheckedChange = onChecked,
+            modifier = Modifier.semantics { contentDescription = title }
+        )
     }
 }
 

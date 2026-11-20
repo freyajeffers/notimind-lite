@@ -30,11 +30,13 @@ internal fun RestoreNotificationCardAction(item: NotificationEntity, dao: Notifi
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     val actionLabel = stringResource(
-        when {
-            restored -> R.string.notification_dismiss_restored_action
-            queued -> R.string.notification_remove_restore_queue_action
-            else -> R.string.notification_restore_action
-        }
+        id = when {
+            restored -> R.string.a11y_dismiss_restored_for
+            queued -> R.string.a11y_remove_restore_for
+            else -> R.string.a11y_restore_for
+        },
+        item.title,
+        item.appName
     )
     TextButton(
         onClick = {

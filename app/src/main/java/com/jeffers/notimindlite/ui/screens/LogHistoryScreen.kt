@@ -847,7 +847,11 @@ fun LogHistoryCard(state: LogHistoryCardState) {
     val isExpanded = state.isExpanded
     val highlightQuery = state.highlightQuery
     val onToggleExpand = state.onToggleExpand
-    val toggleDescription = stringResource(R.string.log_history_toggle_desc)
+    val toggleDescription = stringResource(
+        R.string.a11y_toggle_details_for,
+        item.title,
+        item.appName
+    )
     val expansionState = stringResource(
         if (isExpanded) R.string.active_notifications_expanded else R.string.active_notifications_collapsed
     )

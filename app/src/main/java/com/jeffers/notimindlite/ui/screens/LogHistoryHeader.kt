@@ -31,7 +31,8 @@ internal fun LogHistoryCardHeader(state: com.jeffers.notimindlite.ui.screens.Log
         ) {
             AppIconImage(
                 appIconUri = item.appIconUri,
-                contentDescriptionRes = com.jeffers.notimindlite.R.string.notification_icon_description
+                // Decorative: the app name is announced immediately after.
+                contentDescriptionRes = null
             )
             if (!item.appIconUri.isNullOrEmpty()) {
                 Spacer(modifier = Modifier.width(6.dp))

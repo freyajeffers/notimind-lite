@@ -79,10 +79,12 @@ private fun NotificationPinButton(config: LogNotificationCardConfig) {
     val scope = rememberCoroutineScope()
     val pinActionDescription = stringResource(
         if (item.isPinned) {
-            com.jeffers.notimindlite.R.string.notification_action_unpin
+            com.jeffers.notimindlite.R.string.a11y_unpin_for
         } else {
-            com.jeffers.notimindlite.R.string.notification_action_pin
-        }
+            com.jeffers.notimindlite.R.string.a11y_pin_for
+        },
+        item.title,
+        item.appName
     )
     TooltipBox(
         positionProvider = TooltipDefaults.rememberTooltipPositionProvider(
@@ -106,23 +108,18 @@ private fun NotificationPinButton(config: LogNotificationCardConfig) {
         IconButton(
             onClick = { scope.launch { config.dao.updatePinnedStatus(item.key, !item.isPinned) } },
             modifier = Modifier
-                .size(24.dp)
+                .size(48.dp)
                 .semantics { contentDescription = pinActionDescription }
         ) {
             Icon(
                 imageVector = if (item.isPinned) Icons.Default.Bookmark else Icons.Outlined.BookmarkBorder,
-                contentDescription = stringResource(
-                    if (item.isPinned) {
-                        com.jeffers.notimindlite.R.string.notification_unpin_short
-                    } else {
-                        com.jeffers.notimindlite.R.string.notification_pin_short
-                    }
-                ),
+                contentDescription = null,
                 tint = if (item.isPinned) {
                     MaterialTheme.colorScheme.primary
                 } else {
                     MaterialTheme.colorScheme.onSurfaceVariant
-                }
+                },
+                modifier = Modifier.size(24.dp)
             )
         }
     }
@@ -168,11 +165,16 @@ private fun NotificationOpenButton(item: com.jeffers.notimindlite.data.local.Not
                     item.intentUri
                 )
             },
-            modifier = Modifier.size(24.dp)
+            modifier = Modifier.size(48.dp)
         ) {
             Icon(
                 imageVector = Icons.AutoMirrored.Filled.OpenInNew,
-                contentDescription = stringResource(com.jeffers.notimindlite.R.string.notification_action_open)
+                contentDescription = stringResource(
+                    com.jeffers.notimindlite.R.string.a11y_open_for,
+                    item.title,
+                    item.appName
+                ),
+                modifier = Modifier.size(24.dp)
             )
         }
     }
