@@ -16,6 +16,8 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import com.jeffers.notimindlite.R
 
@@ -40,6 +42,7 @@ internal fun PreferencesBackupCard(config: PreferencesBackupCardConfig) {
     val onImport = config.onImport
     val message = config.message
     val enabled = config.enabled
+    val anonymizeTitle = stringResource(R.string.pref_export_anonymize)
     Card(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
@@ -59,7 +62,7 @@ internal fun PreferencesBackupCard(config: PreferencesBackupCardConfig) {
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                 Column(Modifier.weight(1f)) {
                     Text(
-                        stringResource(R.string.pref_export_anonymize),
+                        anonymizeTitle,
                         style = MaterialTheme.typography.bodyLarge
                     )
                     Text(
@@ -67,7 +70,12 @@ internal fun PreferencesBackupCard(config: PreferencesBackupCardConfig) {
                         style = MaterialTheme.typography.bodySmall
                     )
                 }
-                Switch(checked = exportAnonymize, onCheckedChange = onAnonymizeChange, enabled = enabled)
+                Switch(
+                    checked = exportAnonymize,
+                    onCheckedChange = onAnonymizeChange,
+                    enabled = enabled,
+                    modifier = Modifier.semantics { contentDescription = anonymizeTitle }
+                )
             }
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 Button(onClick = onExport, enabled = enabled) {

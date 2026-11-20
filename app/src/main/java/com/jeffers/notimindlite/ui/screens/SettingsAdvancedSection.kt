@@ -50,19 +50,25 @@ private fun AdvancedSwitchRow(
     enabled: Boolean = true,
     onCheckedChange: (Boolean) -> Unit
 ) {
+    val switchTitle = stringResource(titleRes)
     Row(
         modifier = Modifier.fillMaxWidth(),
         verticalAlignment = androidx.compose.ui.Alignment.CenterVertically
     ) {
         Column(modifier = Modifier.weight(1f)) {
-            Text(stringResource(titleRes), style = MaterialTheme.typography.bodyLarge)
+            Text(switchTitle, style = MaterialTheme.typography.bodyLarge)
             Text(
                 stringResource(summaryRes),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
-        Switch(checked = checked, onCheckedChange = onCheckedChange, enabled = enabled)
+        Switch(
+            checked = checked,
+            onCheckedChange = onCheckedChange,
+            enabled = enabled,
+            modifier = Modifier.semantics { contentDescription = switchTitle }
+        )
     }
 }
 

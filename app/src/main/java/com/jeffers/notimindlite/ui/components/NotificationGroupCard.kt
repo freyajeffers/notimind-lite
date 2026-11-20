@@ -153,7 +153,8 @@ private fun GroupHeader(
             if (showAppIcons) {
                 AppIconImage(
                     appIconUri = group.appIconUri,
-                    contentDescriptionRes = com.jeffers.notimindlite.R.string.notification_icon_description
+                    // Decorative: the app name is announced immediately after.
+                    contentDescriptionRes = null
                 )
             }
             Spacer(modifier = Modifier.width(8.dp))
@@ -213,6 +214,7 @@ private fun GroupHeader(
         GroupHeaderActions(
             isPinned = group.isPinned,
             isGroupExpanded = isGroupExpanded,
+            groupLabel = group.appName,
             onToggleGroupExpand = onToggleGroupExpand,
             onTogglePinned = onTogglePinned
         )
@@ -224,6 +226,7 @@ private fun GroupHeader(
 private fun GroupHeaderActions(
     isPinned: Boolean,
     isGroupExpanded: Boolean,
+    groupLabel: String,
     onToggleGroupExpand: () -> Unit,
     onTogglePinned: () -> Unit
 ) {
@@ -244,17 +247,17 @@ private fun GroupHeaderActions(
         ) {
             IconButton(
                 onClick = onTogglePinned,
-                modifier = Modifier.size(28.dp)
+                modifier = Modifier.size(48.dp)
             ) {
                 val pinIcon = if (isPinned) Icons.Default.Bookmark else Icons.Outlined.BookmarkBorder
                 val pinDescRes = if (isPinned) {
-                    R.string.notification_group_unpin
+                    R.string.a11y_unpin_group_for
                 } else {
-                    R.string.notification_group_pin
+                    R.string.a11y_pin_group_for
                 }
                 Icon(
                     imageVector = pinIcon,
-                    contentDescription = stringResource(pinDescRes),
+                    contentDescription = stringResource(pinDescRes, groupLabel),
                     tint = if (isPinned) {
                         MaterialTheme.colorScheme.primary
                     } else {
@@ -282,17 +285,17 @@ private fun GroupHeaderActions(
         ) {
             IconButton(
                 onClick = onToggleGroupExpand,
-                modifier = Modifier.size(28.dp)
+                modifier = Modifier.size(48.dp)
             ) {
                 val expandIcon = if (isGroupExpanded) Icons.Default.ExpandLess else Icons.Default.ExpandMore
                 val expandDescRes = if (isGroupExpanded) {
-                    R.string.notification_group_collapse_short
+                    R.string.a11y_collapse_group_for
                 } else {
-                    R.string.notification_group_expand_short
+                    R.string.a11y_expand_group_for
                 }
                 Icon(
                     imageVector = expandIcon,
-                    contentDescription = stringResource(expandDescRes),
+                    contentDescription = stringResource(expandDescRes, groupLabel),
                     modifier = Modifier.size(20.dp)
                 )
             }

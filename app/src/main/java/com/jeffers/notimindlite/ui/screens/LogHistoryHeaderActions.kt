@@ -39,11 +39,10 @@ internal fun LogHistoryHeaderActions(state: LogHistoryCardState) {
         item.isPinned -> com.jeffers.notimindlite.R.string.log_history_unpin_tooltip
         else -> com.jeffers.notimindlite.R.string.log_history_pin_tooltip
     }
-    val pinDescriptionRes = when {
-        state.isExpanded && item.isPinned -> com.jeffers.notimindlite.R.string.notification_detail_unpin_short
-        state.isExpanded -> com.jeffers.notimindlite.R.string.notification_detail_pin_short
-        item.isPinned -> com.jeffers.notimindlite.R.string.log_history_unpin_desc
-        else -> com.jeffers.notimindlite.R.string.log_history_pin_desc
+    val pinActionRes = if (item.isPinned) {
+        com.jeffers.notimindlite.R.string.a11y_unpin_for
+    } else {
+        com.jeffers.notimindlite.R.string.a11y_pin_for
     }
     val openTooltipRes = if (state.isExpanded) {
         com.jeffers.notimindlite.R.string.notification_detail_open
@@ -58,11 +57,12 @@ internal fun LogHistoryHeaderActions(state: LogHistoryCardState) {
         ) {
             IconButton(
                 onClick = { scope.launch { state.dao.updatePinnedStatus(item.key, !item.isPinned) } },
-                modifier = Modifier.size(24.dp)
+                modifier = Modifier.size(48.dp)
             ) {
                 Icon(
                     imageVector = if (item.isPinned) Icons.Default.Bookmark else Icons.Outlined.BookmarkBorder,
-                    contentDescription = stringResource(pinDescriptionRes),
+                    contentDescription = stringResource(pinActionRes, item.title, item.appName),
+                    modifier = Modifier.size(24.dp),
                     tint = if (item.isPinned) {
                         MaterialTheme.colorScheme.primary
                     } else {
@@ -84,11 +84,16 @@ internal fun LogHistoryHeaderActions(state: LogHistoryCardState) {
                         context, item.packageName, item.key, item.intentUri
                     )
                 },
-                modifier = Modifier.size(24.dp)
+                modifier = Modifier.size(48.dp)
             ) {
                 Icon(
                     Icons.AutoMirrored.Filled.OpenInNew,
-                    contentDescription = stringResource(com.jeffers.notimindlite.R.string.log_history_open_desc)
+                    contentDescription = stringResource(
+                        com.jeffers.notimindlite.R.string.a11y_open_for,
+                        item.title,
+                        item.appName
+                    ),
+                    modifier = Modifier.size(24.dp)
                 )
             }
         }

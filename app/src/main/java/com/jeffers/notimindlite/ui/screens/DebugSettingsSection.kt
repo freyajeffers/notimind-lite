@@ -15,6 +15,8 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import com.jeffers.notimindlite.BuildConfig
@@ -88,16 +90,22 @@ private fun DebugRetentionRow(retentionDays: Int) {
 
 @Composable
 private fun DebugCaptureRow() {
+    val debugCaptureTitle = stringResource(R.string.pref_capture_notifications_title)
     Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
         Column(modifier = Modifier.weight(1f)) {
-            Text(stringResource(R.string.pref_capture_notifications_title), style = MaterialTheme.typography.bodyLarge)
+            Text(debugCaptureTitle, style = MaterialTheme.typography.bodyLarge)
             Text(
                 stringResource(R.string.pref_capture_notifications_summary),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
-        Switch(checked = true, onCheckedChange = {}, enabled = false)
+        Switch(
+            checked = true,
+            onCheckedChange = {},
+            enabled = false,
+            modifier = Modifier.semantics { contentDescription = debugCaptureTitle }
+        )
     }
 }
 
@@ -125,30 +133,42 @@ private fun RetentionRow(preferencesRepository: PreferencesRepository, retention
 
 @Composable
 private fun ExportEncryptionRow(preferencesRepository: PreferencesRepository, enabled: Boolean) {
+    val exportEncryptionTitle = stringResource(R.string.pref_export_encryption_title)
     Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
         Column(modifier = Modifier.weight(1f)) {
-            Text(stringResource(R.string.pref_export_encryption_title), style = MaterialTheme.typography.bodyLarge)
+            Text(exportEncryptionTitle, style = MaterialTheme.typography.bodyLarge)
             Text(
                 stringResource(R.string.pref_export_encryption_summary),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
-        Switch(checked = enabled, onCheckedChange = preferencesRepository::setExportEncryption)
+        Switch(
+            checked = enabled,
+            onCheckedChange = preferencesRepository::setExportEncryption,
+            modifier = Modifier.semantics {
+                contentDescription = exportEncryptionTitle
+            }
+        )
     }
 }
 
 @Composable
 private fun CaptureRow(preferencesRepository: PreferencesRepository, enabled: Boolean) {
+    val captureTitle = stringResource(R.string.pref_capture_notifications_title)
     Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
         Column(modifier = Modifier.weight(1f)) {
-            Text(stringResource(R.string.pref_capture_notifications_title), style = MaterialTheme.typography.bodyLarge)
+            Text(captureTitle, style = MaterialTheme.typography.bodyLarge)
             Text(
                 stringResource(R.string.pref_capture_notifications_summary),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
-        Switch(checked = enabled, onCheckedChange = preferencesRepository.captureManager::setEnabled)
+        Switch(
+            checked = enabled,
+            onCheckedChange = preferencesRepository.captureManager::setEnabled,
+            modifier = Modifier.semantics { contentDescription = captureTitle }
+        )
     }
 }

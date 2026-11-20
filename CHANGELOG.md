@@ -26,11 +26,16 @@ All notable changes to NotiMind Lite are documented here. This project adheres t
 - **security(export)**: Sanitize package names as well as notification fields during CSV export to close spreadsheet formula-injection coverage gaps.
 - **security(export)**: Add reusable inclusive-start/exclusive-end date and package filters to the export boundary, rejecting invalid ranges and blank package filters.
 - **ci(security)**: Enforce five independently reported adversarial test tiers in GitHub Actions: feature, boundary, pairwise, real-world, and security-regression coverage.
+- **a11y**: Fix Accessibility Scanner findings: pin/open controls now expose unique, context-bearing descriptions (`Pin <title> from <app>`), the 24dp pin button is a 48dp touch target, group pin/expand actions name their group, and checkbox/switch controls carry their row label instead of reading "not checked"/"Off".
 - **feat(export)**: Add a notification export surface in Settings with time-window presets, per-app filtering, a live selection count, and an explicit confirmation dialog that states format, scope, and whether the file will be encrypted.
 - **security(export)**: Gate exports behind device-credential confirmation when the biometric-export preference is enabled, and surface export success or failure instead of failing silently.
 - **storage(migrations)**: Make the historical migration path create missing backup metadata tables safely and replace the incomplete Room identity-hash test with a synthetic version-1 migration fixture.
 - **test(migrations)**: Add historical Room schema assets for versions 1–16 and a full v1-to-v20 seeded migration-preservation test.
 - **test(migration)**: Validate every exported Room schema JSON against the migration that produces it, using `MigrationTestHelper` over instrumentation assets rather than hand-written DDL, with nine documented historical drift pairs baselined.
+- **a11y(actions)**: Grow card pin, open, group pin and group expand buttons to the 48dp touch-target minimum while keeping the icons visually unchanged.
+- **a11y(labels)**: Give pin, open, restore and details actions unique spoken labels that include the notification title and app, and label settings switches and list checkboxes, so screen readers no longer announce identical text for different items.
+- **a11y(icons)**: Mark notification app icons as decorative so talkback no longer repeats "App icon" on every card.
+- **fix(a11y)**: Show "Unknown dismissal reason" instead of leaking the raw `Reason #%1$d` format string into spoken text.
 - **test(migrations)**: Align Android Room migration-test serialization dependencies to 1.8.1 and force the matching runtime on test configurations.
 - **security(codeql)**: Add a scheduled and manually dispatchable CodeQL workflow for Android Java/Kotlin, using manual build tracing against the debug variant and least-privilege code-scanning permissions.
 
