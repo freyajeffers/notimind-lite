@@ -22,7 +22,7 @@ import com.jeffers.notimindlite.util.DatabaseLockManager
         BackupRecord::class,
         NotificationGroupEntity::class
     ],
-    version = 21,
+    version = 20,
     exportSchema = true
 )
 @TypeConverters(Converters::class)
@@ -40,7 +40,7 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun backupDao(): BackupDao
 
     companion object {
-        const val DATABASE_VERSION = 21
+        const val DATABASE_VERSION = 20
         const val DE_DATABASE_NAME = "notimind_de.db"
         const val CE_DATABASE_NAME = "notimind_lite_database"
 
@@ -64,7 +64,6 @@ abstract class AppDatabase : RoomDatabase() {
         private const val DB_VERSION_18 = 18
         private const val DB_VERSION_19 = 19
         private const val DB_VERSION_20 = 20
-        private const val DB_VERSION_21 = 21
 
         // SQLite PRAGMA tuning values applied on first DB open (idempotent, advisory only).
         // Centralised as constants so detekt MagicNumber rule is satisfied and the values
@@ -358,21 +357,11 @@ abstract class AppDatabase : RoomDatabase() {
             }
         }
 
-        /**
-         * Version 21 declares column defaults on the entity that earlier migrations already
-         * applied with `ALTER TABLE ... DEFAULT`, so the stored schema and the exported
-         * schema now agree. Existing databases already hold those defaults; only the
-         * identity hash changes, which is why the version bump is required.
-         */
-        val MIGRATION_20_21 = object : Migration(DB_VERSION_20, DB_VERSION_21) {
-            override fun migrate(db: SupportSQLiteDatabase) = Unit
-        }
-
         private val allMigrations: Array<Migration> = arrayOf(
             MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7,
             MIGRATION_7_8, MIGRATION_8_9, MIGRATION_9_10, MIGRATION_10_11, MIGRATION_11_12,
             MIGRATION_12_13, MIGRATION_13_14, MIGRATION_14_15, MIGRATION_15_16, MIGRATION_16_17,
-            MIGRATION_17_18, MIGRATION_18_19, MIGRATION_19_20, MIGRATION_20_21
+            MIGRATION_17_18, MIGRATION_18_19, MIGRATION_19_20
         )
 
         private fun tableExists(db: SupportSQLiteDatabase, tableName: String): Boolean {
