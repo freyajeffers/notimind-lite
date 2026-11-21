@@ -131,9 +131,15 @@ class SupabaseSessionStore(
 
         // Migrate values written by the pre-EncryptedSharedPreferences implementation.
         val legacyPrefs = context.getSharedPreferences(LEGACY_PREFS_NAME, Context.MODE_PRIVATE)
-        val legacyValue = legacyPrefs.getString("secret_$name", null)?.let(::decryptLegacySecret)
-            ?: legacyPrefs.getString(name, null)
-            ?: return null
+        val encryptedLegacy = legacyPrefs.getString("secret_$name", null)
+        val legacyValue = if (encryptedLegacy != null) {
+            // A secret_* value that will not decrypt is treated as absent on purpose:
+            // falling through to the plaintext column would hand back a token that the
+            // encrypted store deliberately refused, defeating the migration's intent.
+            decryptLegacySecret(encryptedLegacy) ?: return null
+        } else {
+            legacyPrefs.getString(name, null) ?: return null
+        }
         saveSecret(name, legacyValue)
         val editor = legacyPrefs.edit()
         editor.remove("secret_$name")
