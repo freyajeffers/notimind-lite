@@ -490,4 +490,5 @@
     <string name="a11y_unpin_group_for">Unpin group %1$s</string>
     <string name="a11y_expand_group_for">Expand %1$s</string>
     <string name="a11y_collapse_group_for">Collapse %1$s</string>
+    <string name="a11y_group_header_for">%1$s, %2$d notifications, latest %3$s, %4$s</string>
 </resources>

@@ -41,6 +41,8 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -138,6 +140,16 @@ private fun GroupHeader(
     onToggleGroupExpand: () -> Unit,
     onTogglePinned: () -> Unit
 ) {
+    val expansionState = stringResource(
+        if (isGroupExpanded) R.string.active_notifications_expanded else R.string.active_notifications_collapsed
+    )
+    val groupHeaderDescription = stringResource(
+        R.string.a11y_group_header_for,
+        group.appName,
+        group.items.size,
+        latestItem?.title?.takeIf { it.isNotBlank() } ?: group.appName,
+        expansionState
+    )
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -147,8 +159,10 @@ private fun GroupHeader(
         verticalAlignment = Alignment.CenterVertically
     ) {
         Row(
-            verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier.weight(1f)
+            modifier = Modifier
+                .weight(1f)
+                .clearAndSetSemantics { contentDescription = groupHeaderDescription },
+            verticalAlignment = Alignment.CenterVertically
         ) {
             if (showAppIcons) {
                 AppIconImage(

@@ -26,6 +26,7 @@ All notable changes to NotiMind Lite are documented here. This project adheres t
 - **security(export)**: Sanitize package names as well as notification fields during CSV export to close spreadsheet formula-injection coverage gaps.
 - **security(export)**: Add reusable inclusive-start/exclusive-end date and package filters to the export boundary, rejecting invalid ranges and blank package filters.
 - **ci(security)**: Enforce five independently reported adversarial test tiers in GitHub Actions: feature, boundary, pairwise, real-world, and security-regression coverage.
+- **a11y**: Group headers now announce app, notification count, latest title and expansion state, so cards from the same app no longer share an identical spoken label.
 - **a11y**: Fix Accessibility Scanner findings: pin/open controls now expose unique, context-bearing descriptions (`Pin <title> from <app>`), the 24dp pin button is a 48dp touch target, group pin/expand actions name their group, and checkbox/switch controls carry their row label instead of reading "not checked"/"Off".
 - **feat(export)**: Add a notification export surface in Settings with time-window presets, per-app filtering, a live selection count, and an explicit confirmation dialog that states format, scope, and whether the file will be encrypted.
 - **security(export)**: Gate exports behind device-credential confirmation when the biometric-export preference is enabled, and surface export success or failure instead of failing silently.
