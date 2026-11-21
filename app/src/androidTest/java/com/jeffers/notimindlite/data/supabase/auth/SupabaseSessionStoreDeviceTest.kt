@@ -3,6 +3,7 @@ package com.jeffers.notimindlite.data.supabase.auth
 import android.content.Context
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import com.jeffers.notimindlite.crypto.EncryptedPreferencesStore
 import kotlinx.coroutines.runBlocking
 import org.junit.After
 import org.junit.Assert.assertEquals
@@ -21,6 +22,7 @@ class SupabaseSessionStoreDeviceTest {
         get() = ApplicationProvider.getApplicationContext()
 
     private val prefsName = "supabase_auth"
+    private val securePrefsName = "supabase_auth_secure"
     private val isolatedPreferenceKeys = listOf(
         "secret_access_token",
         "secret_refresh_token",
@@ -28,6 +30,20 @@ class SupabaseSessionStoreDeviceTest {
         "refresh_token"
     )
     private var originalPreferenceValues: Map<String, String?> = emptyMap()
+
+    /**
+     * The store persists to two files: the legacy plaintext prefs and the
+     * EncryptedSharedPreferences file. Clearing only the legacy file let values
+     * written by one test leak into the next, because reads hit the encrypted
+     * file first and skip the legacy migration path.
+     */
+    private fun clearSecurePreferences() {
+        EncryptedPreferencesStore
+            .open(context, securePrefsName)
+            .edit()
+            .clear()
+            .commit()
+    }
 
     @Before
     fun isolateSessionPreferences() {
@@ -38,6 +54,7 @@ class SupabaseSessionStoreDeviceTest {
             .also { editor ->
                 isolatedPreferenceKeys.forEach(editor::remove)
             }.commit()
+        clearSecurePreferences()
     }
 
     @After
@@ -51,6 +68,7 @@ class SupabaseSessionStoreDeviceTest {
                     if (value != null) editor.putString(key, value)
                 }
             }.commit()
+        clearSecurePreferences()
     }
 
     @Test
@@ -63,11 +81,15 @@ class SupabaseSessionStoreDeviceTest {
         val retrieved = store.readAccessToken()
         assertEquals(token, retrieved)
 
-        // Verify stored value in SharedPreferences is encrypted (not plaintext)
-        val prefs = context.getSharedPreferences(prefsName, Context.MODE_PRIVATE)
-        val encryptedValue = prefs.getString("secret_access_token", null)
-        assertNotNull(encryptedValue)
-        assertFalse(encryptedValue!!.contains("eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9"))
+        // The token must not be recoverable as plaintext from the backing file.
+        // Checking through the SharedPreferences API would always show plaintext,
+        // because EncryptedSharedPreferences decrypts transparently on read.
+        val sharedPrefsDir = java.io.File(context.applicationInfo.dataDir, "shared_prefs")
+        val secureFiles = sharedPrefsDir
+            .listFiles { file -> file.name.startsWith("$securePrefsName.v") }
+            .orEmpty()
+        assertTrue(secureFiles.isNotEmpty())
+        assertTrue(secureFiles.none { it.readText().contains(token) })
     }
 
     @Test
@@ -80,9 +102,9 @@ class SupabaseSessionStoreDeviceTest {
 
         assertEquals(token, store.readAccessToken())
         assertNull(prefs.getString("access_token", null))
-        val encryptedValue = prefs.getString("secret_access_token", null)
-        assertNotNull(encryptedValue)
-        assertFalse(encryptedValue!!.contains(token))
+        // Migration must move the value into the encrypted store and clear the
+        // plaintext columns, leaving no copy behind.
+        assertNull(prefs.getString("secret_access_token", null))
         assertEquals(token, store.readAccessToken())
     }
 
