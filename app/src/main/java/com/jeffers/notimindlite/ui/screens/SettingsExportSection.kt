@@ -55,8 +55,10 @@ import com.jeffers.notimindlite.util.ExportRangePreset
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import java.io.File
 
 private const val FORMAT_JSON = "json"
+private const val MIME_OCTET_STREAM = "application/octet-stream"
 private const val FORMAT_CSV = "csv"
 private const val FORMATS_SEPARATOR = ','
 
@@ -105,39 +107,18 @@ fun SettingsExportSection(
         DatabaseExporter.selectForExport(notifications, selection)
     }
 
-    val successMessage = stringResource(R.string.export_success)
-    val failedMessage = stringResource(R.string.export_failed)
-    val cancelledMessage = stringResource(R.string.export_cancelled)
-    val noCredentialMessage = stringResource(R.string.export_no_credential)
-
-    val performExport: (Boolean) -> Unit = { deviceConfirmed ->
-        val liveSelection = preset
-            .toSelection(System.currentTimeMillis())
-            .copy(packageNames = selectedPackages)
-        val succeeded = DatabaseExporter.shareExportFile(
-            context = context,
+    val delivery = rememberExportDelivery(
+        ExportDeliveryConfig(
             notifications = notifications,
-            isJson = format == FORMAT_JSON,
-            passphrase = passphrase.takeIf { it.isNotEmpty() }?.toCharArray(),
-            biometricAuthenticated = deviceConfirmed,
-            selection = liveSelection,
-        )
-        pendingExport = null
-        passphrase = ""
-        scope.launch { snackbarHostState.showSnackbar(if (succeeded) successMessage else failedMessage) }
-    }
-
-    val requestExport = rememberDeviceConfirmedExport(
-        DeviceConfirmationGate(
-            required = requireDeviceConfirmation,
-            onExport = performExport,
-            onCancelled = {
+            preset = preset,
+            selectedPackages = selectedPackages,
+            format = format,
+            passphrase = passphrase,
+            requireDeviceConfirmation = requireDeviceConfirmation,
+            snackbarHostState = snackbarHostState,
+            onExportFinished = {
                 pendingExport = null
-                scope.launch { snackbarHostState.showSnackbar(cancelledMessage) }
-            },
-            onBlocked = {
-                pendingExport = null
-                scope.launch { snackbarHostState.showSnackbar(noCredentialMessage) }
+                passphrase = ""
             },
         )
     )
@@ -189,7 +170,8 @@ fun SettingsExportSection(
                 requirePassphrase = requirePassphrase,
                 passphrase = passphrase,
                 onPassphraseChange = { passphrase = it },
-                onConfirm = requestExport,
+                onShare = delivery.onShare,
+                onSave = delivery.onSave,
                 onDismiss = { pendingExport = null },
             )
         )
@@ -226,7 +208,8 @@ private data class ExportConfirmConfig(
     val requirePassphrase: Boolean,
     val passphrase: String,
     val onPassphraseChange: (String) -> Unit,
-    val onConfirm: () -> Unit,
+    val onShare: () -> Unit,
+    val onSave: () -> Unit,
     val onDismiss: () -> Unit,
 )
 
@@ -236,6 +219,121 @@ private data class DeviceConfirmationGate(
     val onCancelled: () -> Unit,
     val onBlocked: () -> Unit,
 )
+
+private data class ExportDeliveryConfig(
+    val notifications: List<NotificationEntity>,
+    val preset: ExportRangePreset,
+    val selectedPackages: Set<String>,
+    val format: String,
+    val passphrase: String,
+    val requireDeviceConfirmation: Boolean,
+    val snackbarHostState: SnackbarHostState,
+    val onExportFinished: () -> Unit,
+)
+
+private data class ExportDelivery(
+    val onShare: () -> Unit,
+    val onSave: () -> Unit,
+)
+
+/**
+ * Builds the export once, then delivers it to either the system share sheet or a
+ * user-chosen document location, behind the device-credential gate when required.
+ *
+ * Creating the file first means Share and Save produce byte-identical output and the
+ * expensive encryption runs once per request.
+ */
+@Composable
+private fun rememberExportDelivery(config: ExportDeliveryConfig): ExportDelivery {
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
+    val successMessage = stringResource(R.string.export_success)
+    val failedMessage = stringResource(R.string.export_failed)
+    val cancelledMessage = stringResource(R.string.export_cancelled)
+    val noCredentialMessage = stringResource(R.string.export_no_credential)
+    val savedMessage = stringResource(R.string.export_saved)
+    val saveFailedMessage = stringResource(R.string.export_save_failed)
+
+    var saveRequested by remember { mutableStateOf(false) }
+    var pendingSaveFile by remember { mutableStateOf<File?>(null) }
+
+    val saveLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.CreateDocument(MIME_OCTET_STREAM)
+    ) { uri ->
+        val file = pendingSaveFile
+        pendingSaveFile = null
+        if (uri == null || file == null) {
+            scope.launch { config.snackbarHostState.showSnackbar(cancelledMessage) }
+        } else {
+            val saved = DatabaseExporter.saveExportTo(context, file, uri)
+            if (saved) {
+                // The user now owns a copy; drop the transient cache artifact.
+                file.delete()
+            }
+            scope.launch {
+                config.snackbarHostState.showSnackbar(if (saved) savedMessage else saveFailedMessage)
+            }
+        }
+    }
+
+    val performExport: (Boolean) -> Unit = { deviceConfirmed ->
+        val liveSelection = config.preset
+            .toSelection(System.currentTimeMillis())
+            .copy(packageNames = config.selectedPackages)
+        val file = DatabaseExporter.createExport(
+            context = context,
+            notifications = config.notifications,
+            isJson = config.format == FORMAT_JSON,
+            passphrase = config.passphrase.takeIf { it.isNotEmpty() }?.toCharArray(),
+            biometricAuthenticated = deviceConfirmed,
+            selection = liveSelection,
+        )
+        config.onExportFinished()
+        when {
+            file == null -> {
+                scope.launch { config.snackbarHostState.showSnackbar(failedMessage) }
+            }
+
+            saveRequested -> {
+                pendingSaveFile = file
+                saveLauncher.launch(file.name)
+            }
+
+            else -> {
+                val shared = DatabaseExporter.shareExport(context, file, config.format == FORMAT_JSON)
+                scope.launch {
+                    config.snackbarHostState.showSnackbar(if (shared) successMessage else failedMessage)
+                }
+            }
+        }
+    }
+
+    val gate = rememberDeviceConfirmedExport(
+        DeviceConfirmationGate(
+            required = config.requireDeviceConfirmation,
+            onExport = performExport,
+            onCancelled = {
+                config.onExportFinished()
+                scope.launch { config.snackbarHostState.showSnackbar(cancelledMessage) }
+            },
+            onBlocked = {
+                config.onExportFinished()
+                scope.launch { config.snackbarHostState.showSnackbar(noCredentialMessage) }
+            },
+        )
+    )
+
+    return ExportDelivery(
+        onShare = {
+            saveRequested = false
+            gate()
+        },
+        onSave = {
+            saveRequested = true
+            gate()
+        },
+    )
+}
 
 /**
  * Snapshot of what the user saw when they tapped Export. The confirmation
@@ -529,11 +627,15 @@ private fun ExportConfirmDialog(config: ExportConfirmConfig) {
             }
         },
         confirmButton = {
-            TextButton(
-                onClick = config.onConfirm,
-                enabled = config.selectedCount > 0 && (!config.requirePassphrase || config.passphrase.isNotEmpty())
-            ) {
-                Text(stringResource(R.string.export_confirm_action))
+            Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                val canDeliver = config.selectedCount > 0 &&
+                    (!config.requirePassphrase || config.passphrase.isNotEmpty())
+                TextButton(onClick = config.onSave, enabled = canDeliver) {
+                    Text(stringResource(R.string.export_save_action))
+                }
+                TextButton(onClick = config.onShare, enabled = canDeliver) {
+                    Text(stringResource(R.string.export_share_action))
+                }
             }
         },
         dismissButton = {

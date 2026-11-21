@@ -468,6 +468,10 @@
     <string name="export_passphrase_label">Passphrase</string>
     <string name="export_passphrase_required">Your security settings require a passphrase.</string>
     <string name="export_confirm_action">Export</string>
+    <string name="export_share_action">Share</string>
+    <string name="export_save_action">Save to device</string>
+    <string name="export_saved">Export saved.</string>
+    <string name="export_save_failed">Could not save the export.</string>
     <string name="export_cancel">Cancel</string>
     <string name="export_success">Export ready to share.</string>
     <string name="export_failed">Export failed. Check your export settings and try again.</string>

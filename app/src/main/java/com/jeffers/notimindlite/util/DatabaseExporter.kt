@@ -239,24 +239,24 @@ object DatabaseExporter {
         return sb.toString()
     }
 
-    fun shareExportFile(
+    /**
+     * Validates the request and writes the export file, returning null when the request is
+     * rejected or the write fails. Callers deliver the file with [shareExport] or [saveExportTo].
+     */
+    fun createExport(
         context: Context,
         notifications: List<NotificationEntity>,
         isJson: Boolean = true,
         passphrase: CharArray? = null,
         biometricAuthenticated: Boolean = false,
         selection: ExportSelection = ExportSelection(),
-    ): Boolean {
+    ): File? {
         try {
             val preferences = PreferencesRepository(context.applicationContext)
             validateExportRequest(preferences, isJson, passphrase, biometricAuthenticated)
             DatabaseExportHelper.cleanupExportFiles(context)
-            val encryptedExports = preferences.securityManager.encryptedExports.value
             val selectedNotifications = selectForExport(notifications, selection)
-            val file = createExportFile(context, selectedNotifications, isJson, passphrase, preferences)
-            val shareIntent = buildShareIntent(context, file, isJson, encryptedExports)
-            context.startActivity(shareIntent)
-            return true
+            return createExportFile(context, selectedNotifications, isJson, passphrase, preferences)
         } catch (e: IllegalArgumentException) {
             AppLogger.e(TAG, "Failed to export database: invalid argument", e)
         } catch (e: SecurityException) {
@@ -266,7 +266,55 @@ object DatabaseExporter {
         } catch (e: java.security.GeneralSecurityException) {
             AppLogger.e(TAG, "Failed to export database: crypto error", e)
         }
-        return false
+        return null
+    }
+
+    /** Opens the system share sheet for an already-created export file. */
+    fun shareExport(context: Context, file: File, isJson: Boolean): Boolean =
+        try {
+            val encryptedExports =
+                PreferencesRepository(context.applicationContext).securityManager.encryptedExports.value
+            context.startActivity(buildShareIntent(context, file, isJson, encryptedExports))
+            true
+        } catch (e: android.content.ActivityNotFoundException) {
+            AppLogger.e(TAG, "No activity available to receive the export", e)
+            false
+        } catch (e: SecurityException) {
+            AppLogger.e(TAG, "Failed to share export: security exception", e)
+            false
+        }
+
+    /** Copies an already-created export file into a destination chosen through the system picker. */
+    fun saveExportTo(context: Context, file: File, uri: android.net.Uri): Boolean =
+        try {
+            context.contentResolver.openOutputStream(uri)?.use { output ->
+                file.inputStream().use { input -> input.copyTo(output) }
+            } != null
+        } catch (e: java.io.IOException) {
+            AppLogger.e(TAG, "Failed to save export: IO error", e)
+            false
+        } catch (e: SecurityException) {
+            AppLogger.e(TAG, "Failed to save export: security exception", e)
+            false
+        }
+
+    fun shareExportFile(
+        context: Context,
+        notifications: List<NotificationEntity>,
+        isJson: Boolean = true,
+        passphrase: CharArray? = null,
+        biometricAuthenticated: Boolean = false,
+        selection: ExportSelection = ExportSelection(),
+    ): Boolean {
+        val file = createExport(
+            context = context,
+            notifications = notifications,
+            isJson = isJson,
+            passphrase = passphrase,
+            biometricAuthenticated = biometricAuthenticated,
+            selection = selection,
+        ) ?: return false
+        return shareExport(context, file, isJson)
     }
 
     private fun validateExportRequest(
