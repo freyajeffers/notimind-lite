@@ -76,17 +76,24 @@ jobs:
         run: |
           set -eu
           SDK="${ANDROID_SDK_ROOT:-${ANDROID_HOME}}"
+          export ANDROID_AVD_HOME="$HOME/.android/avd"
+          mkdir -p "$ANDROID_AVD_HOME"
           echo "no" | "$SDK/cmdline-tools/latest/bin/avdmanager" create avd \
             --name "$AVD_NAME" \
             --package "system-images;android-${API_LEVEL};google_apis;x86_64" \
             --device "pixel_6" \
             --force
+          echo "--- AVD home ---"
+          ls -la "$ANDROID_AVD_HOME"
+          echo "--- emulator -list-avds ---"
+          ANDROID_AVD_HOME="$ANDROID_AVD_HOME" "$SDK/emulator/emulator" -list-avds
 
       - name: Boot emulator
         run: |
           set -eu
           SDK="${ANDROID_SDK_ROOT:-${ANDROID_HOME}}"
           ADB="$SDK/platform-tools/adb"
+          export ANDROID_AVD_HOME="$HOME/.android/avd"
           "$SDK/emulator/emulator" -avd "$AVD_NAME" \
             -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim \
             -no-snapshot -camera-back none -camera-front none \
