@@ -279,6 +279,10 @@ object DatabaseExporter {
         } catch (e: android.content.ActivityNotFoundException) {
             AppLogger.e(TAG, "No activity available to receive the export", e)
             false
+        } catch (e: IllegalArgumentException) {
+            // Some platforms report an unresolvable chooser target this way.
+            AppLogger.e(TAG, "No activity available to receive the export", e)
+            false
         } catch (e: SecurityException) {
             AppLogger.e(TAG, "Failed to share export: security exception", e)
             false
