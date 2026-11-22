@@ -16,7 +16,10 @@ on:
   workflow_dispatch:
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
+  # Shared with android-instrumentation.yml so two Gradle runs never restore and
+  # save the Robolectric artifact cache at the same time. Concurrent access made
+  # Robolectric fail in MavenArtifactFetcher before any test executed.
+  group: notimind-gradle-${{ github.ref }}
   cancel-in-progress: ${{ github.ref != 'refs/heads/main' && github.ref != 'refs/heads/master' }}
 
 permissions:

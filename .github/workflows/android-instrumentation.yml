@@ -21,8 +21,10 @@ permissions:
   contents: read
 
 concurrency:
-  group: instrumentation-${{ github.ref }}
-  cancel-in-progress: true
+  # Shared with ci.yml; see the note there. Serialising keeps the shared Gradle
+  # and Robolectric artifact cache from being written by two jobs at once.
+  group: notimind-gradle-${{ github.ref }}
+  cancel-in-progress: false
 
 env:
   API_LEVEL: '34'
