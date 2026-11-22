@@ -402,7 +402,7 @@ abstract class AppDatabase : RoomDatabase() {
             `isClearable` INTEGER NOT NULL DEFAULT 1, `actionsCount` INTEGER NOT NULL DEFAULT 0,
             `dismissReason` INTEGER, `dismissTime` INTEGER, `intentUri` TEXT,
             `isPinned` INTEGER NOT NULL DEFAULT 0, `actionLabels` TEXT,
-            `smallIconRes` INTEGER NOT NULL DEFAULT 0,
+            `smallIconRes` INTEGER NOT NULL DEFAULT 0, `restoreMetadataJson` TEXT,
             `syncStatus` TEXT NOT NULL DEFAULT 'PENDING_UPLOAD',
             `lastSyncedAt` INTEGER NOT NULL DEFAULT 0, `embedding` BLOB,
             FOREIGN KEY(`packageName`) REFERENCES `apps`(`packageName`)
