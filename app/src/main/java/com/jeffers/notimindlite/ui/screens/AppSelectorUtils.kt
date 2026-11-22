@@ -1,30 +1,17 @@
 package com.jeffers.notimindlite.ui.screens
 
-import android.content.Context
-import android.content.pm.PackageManager
-
-/** Returns only observed packages that are currently installed. */
-fun installedObservedApps(
-    context: Context,
-    observedApps: List<Pair<String, String>>
-): List<Pair<String, String>> {
-    val installedPackages = observedApps
-        .mapNotNull { (packageName, _) ->
-            runCatching {
-                context.packageManager.getApplicationInfo(
-                    packageName,
-                    PackageManager.ApplicationInfoFlags.of(0)
-                )
-                packageName
-            }.getOrNull()
-        }.toSet()
-    return filterInstalledObservedApps(observedApps, installedPackages)
-}
-
-internal fun filterInstalledObservedApps(
+/**
+ * App selectors are record-driven, not install-driven.
+ *
+ * An app appears in a selector when it has at least one persisted notification, whether
+ * or not it is still installed. Apps with no records are hidden. Installation state is
+ * deliberately ignored: uninstalling an app must not make its history disappear from the
+ * selectors that are used to review that history.
+ */
+fun observedAppsWithRecords(
     observedApps: List<Pair<String, String>>,
-    installedPackages: Set<String>
+    packagesWithRecords: Set<String>,
 ): List<Pair<String, String>> =
     observedApps
         .distinctBy { it.first }
-        .filter { it.first in installedPackages }
+        .filter { it.first in packagesWithRecords }

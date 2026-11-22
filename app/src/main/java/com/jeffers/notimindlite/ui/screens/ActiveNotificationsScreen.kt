@@ -424,7 +424,10 @@ private val renderActiveNotificationsScreen:
         }
 
         val availableApps = remember(allActiveList) {
-            installedObservedApps(context, allActiveList.map { it.packageName to it.appName })
+            observedAppsWithRecords(
+                allActiveList.map { it.packageName to it.appName },
+                allActiveList.map { it.packageName }.toSet()
+            )
         }
 
         val scope = rememberCoroutineScope()

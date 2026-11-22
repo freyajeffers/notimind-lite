@@ -322,7 +322,10 @@ private val renderLogHistoryScreen:
         }
 
         val availableApps = remember(activeList) {
-            installedObservedApps(context, activeList.map { it.packageName to it.appName })
+            observedAppsWithRecords(
+                activeList.map { it.packageName to it.appName },
+                activeList.map { it.packageName }.toSet()
+            )
         }
 
         val filteredNotifs by remember(

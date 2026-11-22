@@ -15,6 +15,16 @@ interface AppDao {
     @Query("SELECT * FROM apps ORDER BY appName ASC")
     fun getAllAppsFlow(): Flow<List<AppEntity>>
 
+    /**
+     * App selectors hide apps that have no records, regardless of installation state.
+     * Rows in `apps` with no matching notification are excluded here.
+     */
+    @Query(
+        "SELECT * FROM apps WHERE packageName IN " +
+            "(SELECT DISTINCT packageName FROM notifications) ORDER BY appName ASC"
+    )
+    fun getAppsWithRecordsFlow(): Flow<List<AppEntity>>
+
     /** Returns only applications observed in persisted notifications. */
     @Query("SELECT * FROM apps ORDER BY appName ASC")
     fun getAllApps(): List<AppEntity>
