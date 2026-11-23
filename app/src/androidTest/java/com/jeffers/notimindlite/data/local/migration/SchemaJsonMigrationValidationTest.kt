@@ -42,6 +42,17 @@ import org.junit.runner.RunWith
  *   `isDismissed`/`isPinned`/`postTime` indexes instead.
  * - `15 -> 16`, `16 -> 17`, `18 -> 19`: the migrated tables do not match the declared
  *   columns/indexes of `backup_records` and `notifications` respectively.
+ * - `20 -> 21`: a database built from the v20 schema has no SQL defaults, and version 21
+ *   declares them. The migration is intentionally a no-op because SQLite cannot change a
+ *   column default in place.
+ *
+ * ## Remaining gap: foreign keys
+ *
+ * Diffing the full v1-to-current chain shows the only structural difference left is
+ * foreign keys. Versions 20+ declare `notifications` foreign keys to `apps` and
+ * `notification_groups` with `ON DELETE CASCADE`, but the older chain builds the table with
+ * `ALTER TABLE`, which cannot add foreign keys, so upgraded databases have none while fresh
+ * installs do. Closing that requires a notifications table rebuild, not a schema change.
  *
  * Supporting evidence that these JSONs are reconstructions: versions 1–8 all carry the
  * same `identityHash` (`40c42c028c90…`) despite structurally different tables, whereas a
@@ -82,16 +93,19 @@ class SchemaJsonMigrationValidationTest {
         val unexpected = outcomes.filter { (pair, error) -> error != null && pair !in KNOWN_SCHEMA_DRIFT }
         val newlyFixed = outcomes.filter { (pair, error) -> error == null && pair in KNOWN_SCHEMA_DRIFT }
 
-        assertTrue(
-            "New schema/migration drift detected:\n" +
-                unexpected.entries.joinToString("\n") { "  ${it.key}: ${it.value}" },
-            unexpected.isEmpty()
-        )
-        assertTrue(
-            "Known drift now validates; remove from KNOWN_SCHEMA_DRIFT: " +
-                newlyFixed.keys.joinToString(", "),
-            newlyFixed.isEmpty()
-        )
+        val report = buildString {
+            if (unexpected.isNotEmpty()) {
+                appendLine("New schema/migration drift detected:")
+                unexpected.entries.forEach { appendLine("  ${it.key}: ${it.value}") }
+            }
+            if (newlyFixed.isNotEmpty()) {
+                appendLine(
+                    "Known drift now validates; remove from KNOWN_SCHEMA_DRIFT: " +
+                        newlyFixed.keys.joinToString(", ")
+                )
+            }
+        }
+        assertTrue(report, report.isEmpty())
     }
 
     private companion object {
@@ -127,6 +141,7 @@ class SchemaJsonMigrationValidationTest {
             AppDatabase.MIGRATION_17_18,
             AppDatabase.MIGRATION_18_19,
             AppDatabase.MIGRATION_19_20,
+            AppDatabase.MIGRATION_20_21,
         )
     }
 }

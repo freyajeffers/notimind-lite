@@ -7,6 +7,7 @@ All notable changes to NotiMind Lite are documented here. This project adheres t
 ## [Unreleased] - Preference Runtime, UX Polish & Reliability
 
 - **feat(selectors)**: Choose apps by recorded notifications instead of installation state, so uninstalled apps stay filterable while apps with no records are hidden.
+- **storage(migration)**: Bump the database to v21 and rebuild `notifications` during the 20→21 upgrade so the declared foreign keys, column defaults, indexes and FTS triggers match the exported schema; orphaned notifications keep their history through synthesised parent rows rather than being deleted.
 - **fix(ui)**: Resolve configuration-aware resource lookup lint errors in restore toast/snackbar messages.
 - **security(deps)**: Raise the forced Android Guava resolution to 33.7.2-android, the first patched version for CVE-2026-102554.
 - **security(deps)**: Align Gradle resolution rules with patched releases for Guava, Bouncy Castle, Logback, jose4j, JDOM, Commons Lang, and Apache HttpClient so transitive advisory paths cannot select vulnerable versions.
