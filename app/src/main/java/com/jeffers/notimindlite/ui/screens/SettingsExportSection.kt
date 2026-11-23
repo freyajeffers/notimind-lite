@@ -452,18 +452,28 @@ private fun RangeChips(preset: ExportRangePreset, onPresetChange: (ExportRangePr
 
 @Composable
 private fun AppFilterRow(config: ExportCardConfig) {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(12.dp)
-    ) {
-        Text(
-            text = appFilterLabel(config),
-            style = MaterialTheme.typography.bodyMedium,
-            modifier = Modifier.weight(1f)
-        )
-        OutlinedButton(onClick = config.onChooseApps, enabled = config.packages.isNotEmpty()) {
-            Text(stringResource(R.string.export_choose_apps))
+    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            Text(
+                text = appFilterLabel(config),
+                style = MaterialTheme.typography.bodyMedium,
+                modifier = Modifier.weight(1f)
+            )
+            OutlinedButton(onClick = config.onChooseApps, enabled = config.packages.isNotEmpty()) {
+                Text(stringResource(R.string.export_choose_apps))
+            }
+        }
+        // A disabled control with no explanation is indistinguishable from a broken one.
+        if (config.loaded && config.packages.isEmpty()) {
+            Text(
+                text = stringResource(R.string.export_no_apps_hint),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
         }
     }
 }
@@ -472,7 +482,9 @@ private fun AppFilterRow(config: ExportCardConfig) {
 private fun appFilterLabel(config: ExportCardConfig): String {
     val total = config.packages.size
     val selected = config.selectedPackages.size
-    return if (selected == total) {
+    return if (total == 0) {
+        stringResource(R.string.export_no_apps_label)
+    } else if (selected == total) {
         stringResource(R.string.export_apps_all, total)
     } else {
         stringResource(R.string.export_apps_selected, selected, total)

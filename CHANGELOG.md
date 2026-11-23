@@ -7,6 +7,7 @@ All notable changes to NotiMind Lite are documented here. This project adheres t
 ## [Unreleased] - Preference Runtime, UX Polish & Reliability
 - **docs(ux)**: Add an adversarial UX review of the v21 onboarding and navigation flow, with a filtered finding table and eight drafted tickets.
 
+- **fix(ux)**: replace notification-gate jargon with plain language and a next-step, distinguish the three history empty states so filters are never blamed when none are set, echo the search term on a miss, and explain the export app filter when no apps exist yet.
 - **feat(selectors)**: Choose apps by recorded notifications instead of installation state, so uninstalled apps stay filterable while apps with no records are hidden.
 - **storage(migration)**: Bump the database to v21 and rebuild `notifications` during the 20→21 upgrade so the declared foreign keys, column defaults, indexes and FTS triggers match the exported schema; orphaned notifications keep their history through synthesised parent rows rather than being deleted.
 - **fix(ui)**: Resolve configuration-aware resource lookup lint errors in restore toast/snackbar messages.

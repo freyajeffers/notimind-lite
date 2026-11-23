@@ -588,6 +588,40 @@ private val renderLogHistoryPackagePicker:
         }
     }
 
+/**
+ * Three distinct empty states. Blaming filters when none are set (or blaming them for a
+ * search miss) reads as the app lying about what the user did, so each cause gets its own
+ * copy and its own, matching recovery action.
+ */
+@Composable
+private fun LogHistoryEmptyState(config: LogHistoryResultsConfig) {
+    val query = config.searchQuery.trim()
+    val hasFilters = config.selectedReasonFilter != null || config.selectedPackages != null
+    when {
+        query.isNotEmpty() -> com.jeffers.notimindlite.ui.components.ActiveSearchEmptyState(
+            title = stringResource(R.string.log_history_empty_query_title, query),
+            description = stringResource(R.string.log_history_empty_query_desc, query),
+            clearButtonText = stringResource(R.string.log_history_clear_search),
+            onClearClick = { config.setSearchQuery("") }
+        )
+
+        hasFilters -> com.jeffers.notimindlite.ui.components.ActiveSearchEmptyState(
+            title = stringResource(R.string.log_history_empty_search),
+            description = stringResource(R.string.log_history_empty_filter_desc),
+            clearButtonText = stringResource(R.string.log_history_clear_filters),
+            onClearClick = {
+                config.setSelectedReasonFilter(null)
+                config.setSelectedPackages(null)
+            }
+        )
+
+        else -> com.jeffers.notimindlite.ui.components.ActiveSearchEmptyState(
+            title = stringResource(R.string.log_history_empty_initial),
+            description = stringResource(R.string.log_history_empty_initial_desc)
+        )
+    }
+}
+
 private data class LogHistoryResultsConfig(
     val filteredNotifs: List<NotificationEntity>,
     val searchQuery: String,
@@ -610,22 +644,7 @@ private data class LogHistoryResultsConfig(
 private val renderLogHistoryResults:
     @Composable (LogHistoryResultsConfig) -> Unit = { config ->
         if (config.filteredNotifs.isEmpty()) {
-            com.jeffers.notimindlite.ui.components.ActiveSearchEmptyState(
-                title = if (config.searchQuery.isBlank() &&
-                    config.selectedReasonFilter == null && config.selectedPackages == null
-                ) {
-                    stringResource(R.string.log_history_empty_initial)
-                } else {
-                    stringResource(R.string.log_history_empty_search)
-                },
-                description = stringResource(R.string.log_history_empty_filter_desc),
-                clearButtonText = stringResource(R.string.log_history_clear_filters),
-                onClearClick = {
-                    config.setSearchQuery("")
-                    config.setSelectedReasonFilter(null)
-                    config.setSelectedPackages(null)
-                }
-            )
+            LogHistoryEmptyState(config)
         } else {
             renderLogHistoryList(
                 LogHistoryListConfig(

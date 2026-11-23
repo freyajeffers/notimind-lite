@@ -133,3 +133,33 @@ Max 10 tickets per session — 8 drafted above, none filed.
   its actual job).
 - A TalkBack pass to convert finding 8 from YELLOW to RED or WHITE.
 - Screenshots, once a device with a working framebuffer is available.
+
+## Remediation pass (2026-11-23, master after `0990182`)
+
+Re-tested every finding against the live WayDroid build before changing code. Two findings
+no longer reproduced and were **not** "fixed":
+
+- **Finding 1 (stale).** Tapping "Later" now leaves the app in the foreground
+  (`mCurrentFocus` = `com.jeffers.notimindlite/.ui.MainActivity`) showing the three-step
+  "Notification access required" state with a Grant button. The old report's claim that it
+  exits to the launcher does not hold on this build.
+- **Finding 8 (YELLOW, unchanged).** Icon nodes still report `clickable=false` with the
+  clickable parent above them. Per the skill's guidance this stays YELLOW until a TalkBack
+  pass confirms it; touch works.
+
+Fixed and verified on device:
+
+| Finding | Change | Verification |
+|---|---|---|
+| 2 | Gate copy rewritten: "Let NotiMind see your notifications" plus a plain-language body naming the next screen and the switch to turn on | Dialog dump shows the new title and the full two-paragraph body with the next-step line |
+| 3 | Same dialog now states "find NotiMind Lite in the list, turn its switch on, then come back here" before the system list opens | Present in the same dump |
+| 4 | `active_empty_first_run_desc` no longer says "Once you grant notification access" | "Status: Active & Listening" now sits beside "Anything that appears in your status bar will be captured here automatically…" |
+| 5 | Three-state history empty: no data / filters active / search miss; "Clear All Filters" only appears when a filter is actually set | Zero-data dump: "No notifications found" + "Nothing has been captured yet…" and **no** clear-filters button |
+| 6 | Search miss echoes the term and offers "Clear search" | `pharmacy.` → "No results for “pharmacy.”" + "Clear search" |
+| 7 | Zero-app export shows "No apps yet" with an explanation instead of a silent disabled control | Export card dump: "No apps yet" + "Apps appear here once NotiMind has captured at least one notification from them." |
+
+**Finding 9 (YELLOW) remains open by decision** — collapsing the ~20 Settings sections into
+categories is a structural redesign, not a defect fix.
+
+**Limits unchanged:** still a cold-start pass (no populated history on this container) and
+still no screenshots (`screencap` produces a 0-byte file here).
