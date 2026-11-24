@@ -317,3 +317,31 @@ guesswork. Next step is a debugger/logpoint on `DismissStatusBadge` with a seede
 No time or date text appears anywhere in the list dumps; timestamps only exist inside the
 expanded attribute panel. For the persona's actual task ("where is the message from
 yesterday") a user must open cards one at a time to see when anything arrived.
+
+## Populated-history findings — remediated (`dd67243`)
+
+Both open findings above are fixed and verified on the same populated fixture (WayDroid,
+API 33).
+
+**Dismissal badge no longer invents a reason.** `getReasonLabel` mapped every code outside
+the 1..24 table to "Unknown dismissal reason", and the seeded rows carry such a code (0 is
+the SQLite default, and synced rows can carry anything), so nine of ten cards claimed a
+reason the data never recorded. Codes outside the table now fall back to a neutral
+**"Dismissed"** — still true, no invented specificity. The old `reason_unknown` string is
+gone.
+
+*Verified:* re-dumped History after installing the rebuilt APK — "Unknown dismissal reason"
+appears **0** times, "Dismissed" appears 10 times, and the one genuinely active row still
+reads "Active".
+
+**Collapsed rows now show when they arrived.** The card header renders a relative timestamp
+beside the app name — `just now`, `N min ago`, `N h ago`, `N d ago`, falling back to the
+formatted date beyond a week — so "where is the message from yesterday" is answerable
+without opening each card.
+
+*Verified:* header timestamps render as `6 h ago`, `8 h ago`, `1 d ago`, `5 d ago`,
+`11 h ago`, `2 d ago` … matching the seeded spread of 2 hours to 8 days.
+
+**Method note:** the fix was verified by building from a clean worktree at the commit, not
+the shared checkout — several agents were editing that tree concurrently and it was
+transiently uncompilable (`lineLimits`, unresolved `DatabaseLockManager`).

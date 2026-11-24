@@ -5,6 +5,7 @@ All notable changes to NotiMind Lite are documented here. This project adheres t
 ---
 
 ## [Unreleased] - Preference Runtime, UX Polish & Reliability
+- **fix(ux)**: stop labelling unmapped dismissal codes "Unknown dismissal reason" (now a neutral "Dismissed") and show a relative arrival time on collapsed history rows so "where is the message from yesterday" needs no expanding.
 - **security(crypto)**: Replace deprecated AndroidX `EncryptedSharedPreferences`/`MasterKey` usage with a native AndroidKeyStore AES-GCM preferences wrapper, preserving versioned key rotation and encrypted value typing.
 - **ui(crypto)**: Migrate password dialogs from deprecated `VisualTransformation` APIs to Material 3 `OutlinedSecureTextField` with `TextFieldState` and `TextObfuscationMode`.
 - **ci(android-sdk)**: Install the exact Android 37.0 platform and 37.0.0 build-tools in every Gradle-based CI job instead of relying on runner preinstallation; this prevents compileSdk availability regressions.
