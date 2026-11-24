@@ -37,7 +37,8 @@ class MigrationHistoryDeviceTest {
             AppDatabase.MIGRATION_16_17,
             AppDatabase.MIGRATION_17_18,
             AppDatabase.MIGRATION_18_19,
-            AppDatabase.MIGRATION_19_20
+            AppDatabase.MIGRATION_19_20,
+            AppDatabase.MIGRATION_20_21
         )
         MigrationTestFixtures.createVersionOneDatabase(context, testDbName).use { database ->
             database.execSQL(
@@ -54,7 +55,7 @@ class MigrationHistoryDeviceTest {
         val config = SupportSQLiteOpenHelper.Configuration
             .builder(context)
             .name(testDbName)
-            .callback(object : SupportSQLiteOpenHelper.Callback(20) {
+            .callback(object : SupportSQLiteOpenHelper.Callback(AppDatabase.DATABASE_VERSION) {
                 override fun onCreate(db: SupportSQLiteDatabase) = Unit
 
                 override fun onUpgrade(db: SupportSQLiteDatabase, oldVersion: Int, newVersion: Int) {
