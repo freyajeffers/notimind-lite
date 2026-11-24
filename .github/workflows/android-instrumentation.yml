@@ -74,6 +74,8 @@ jobs:
           packages=(
             platform-tools
             emulator
+            "platforms;android-37.0"
+            "build-tools;37.0.0"
             "system-images;android-${API_LEVEL};google_apis;x86_64"
           )
           installed=0

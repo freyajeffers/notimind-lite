@@ -5,6 +5,7 @@ All notable changes to NotiMind Lite are documented here. This project adheres t
 ---
 
 ## [Unreleased] - Preference Runtime, UX Polish & Reliability
+- **ci(android-sdk)**: Install the exact Android 37.0 platform and 37.0.0 build-tools in every Gradle-based CI job instead of relying on runner preinstallation; this prevents compileSdk availability regressions.
 - **docs(ux)**: Add an adversarial UX review of the v21 onboarding and navigation flow, with a filtered finding table and eight drafted tickets.
 
 - **fix(ux)**: collapse the ~20 Settings sections into six labelled categories with saved expansion state, keeping the notification-access card pinned above them.
