@@ -5,8 +5,16 @@ All notable changes to NotiMind Lite are documented here. This project adheres t
 ---
 
 ## [Unreleased] - Preference Runtime, UX Polish & Reliability
+- **docs(ux)**: Add an adversarial UX review of the v21 onboarding and navigation flow, with a filtered finding table and eight drafted tickets.
 
+- **fix(ux)**: collapse the ~20 Settings sections into six labelled categories with saved expansion state, keeping the notification-access card pinned above them.
+- **fix(ux)**: move the encryption, passphrase and auto-lock controls out of "Appearance & behaviour" and into "Privacy & security", which is what the category header promises, and compose each category explicitly so the grouping cannot drift.
+- **ci(test)**: cache Robolectric's android-all runtime jars and retry the unit-test step only when failures trace to `MavenArtifactFetcher`, so a transient Maven outage no longer fails every test class at load time.
+- **fix(a11y)**: make each settings category header a single button carrying a show/hide action label so screen readers announce what the header does, and stop announcing the decorative chevron twice.
+- **fix(ux)**: replace notification-gate jargon with plain language and a next-step, distinguish the three history empty states so filters are never blamed when none are set, echo the search term on a miss, and explain the export app filter when no apps exist yet.
 - **feat(selectors)**: Choose apps by recorded notifications instead of installation state, so uninstalled apps stay filterable while apps with no records are hidden.
+- **test(migration)**: Record that v21 rebuild closed the notifications schema drift and that the remaining `notification_groups` default-value gap is deliberately left open; correct the earlier claim that Room only checks the identity hash on upgrade.
+- **storage(migration)**: Bump the database to v21 and rebuild `notifications` during the 20→21 upgrade so the declared foreign keys, column defaults, indexes and FTS triggers match the exported schema; orphaned notifications keep their history through synthesised parent rows rather than being deleted.
 - **fix(ui)**: Resolve configuration-aware resource lookup lint errors in restore toast/snackbar messages.
 - **security(deps)**: Raise the forced Android Guava resolution to 33.7.2-android, the first patched version for CVE-2026-102554.
 - **security(deps)**: Align Gradle resolution rules with patched releases for Guava, Bouncy Castle, Logback, jose4j, JDOM, Commons Lang, and Apache HttpClient so transitive advisory paths cannot select vulnerable versions.

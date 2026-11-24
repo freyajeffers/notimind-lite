@@ -22,7 +22,7 @@ import com.jeffers.notimindlite.util.DatabaseLockManager
         BackupRecord::class,
         NotificationGroupEntity::class
     ],
-    version = 20,
+    version = 21,
     exportSchema = true
 )
 @TypeConverters(Converters::class)
@@ -40,7 +40,7 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun backupDao(): BackupDao
 
     companion object {
-        const val DATABASE_VERSION = 20
+        const val DATABASE_VERSION = 21
         const val DE_DATABASE_NAME = "notimind_de.db"
         const val CE_DATABASE_NAME = "notimind_lite_database"
 
@@ -64,6 +64,7 @@ abstract class AppDatabase : RoomDatabase() {
         private const val DB_VERSION_18 = 18
         private const val DB_VERSION_19 = 19
         private const val DB_VERSION_20 = 20
+        private const val DB_VERSION_21 = 21
 
         // SQLite PRAGMA tuning values applied on first DB open (idempotent, advisory only).
         // Centralised as constants so detekt MagicNumber rule is satisfied and the values
@@ -357,11 +358,173 @@ abstract class AppDatabase : RoomDatabase() {
             }
         }
 
+        /**
+         * Version 21 declares column defaults on the entity that earlier migrations already
+         * applied with `ALTER TABLE ... DEFAULT`, so the stored schema and the exported
+         * schema now agree. Existing databases already hold those defaults; only the
+         * identity hash changes, which is why the version bump is required.
+         */
+        val MIGRATION_20_21 = object : Migration(DB_VERSION_20, DB_VERSION_21) {
+            // v21 declares foreign keys from notifications to apps and notification_groups.
+            // Upgraded databases never had them, and AppDao deletes from apps without
+            // cascading, so child rows can outlive their parent. Those rows keep a
+            // synthesised parent instead of being dropped, then the table is rebuilt so
+            // Room's schema validation accepts it.
+            override fun migrate(db: SupportSQLiteDatabase) {
+                backfillOrphanApps(db)
+                backfillOrphanGroups(db)
+                rebuildNotificationsTable(db)
+                recreateNotificationIndexes(db)
+                createNotificationGroupTriggers(db)
+                recreateFtsSyncTriggers(db)
+                rebuildFtsIndex(db)
+            }
+        }
+
+        private const val NOTIFICATIONS_COLUMNS =
+            "`id`, `key`, `packageName`, `appName`, `appIconUri`, `title`, `content`, `postTime`, " +
+                "`lastUpdatedTime`, `updateCount`, `isDismissed`, `isPersistent`, `isRead`, " +
+                "`isGroupSummary`, `category`, `channelId`, `subText`, `bigText`, `inboxLinesJson`, " +
+                "`priority`, `groupKey`, `isOngoing`, `isClearable`, `actionsCount`, `dismissReason`, " +
+                "`dismissTime`, `intentUri`, `isPinned`, `actionLabels`, `smallIconRes`, " +
+                "`restoreMetadataJson`, `syncStatus`, `lastSyncedAt`, `embedding`"
+
+        private const val CREATE_NOTIFICATIONS_V21 = """CREATE TABLE IF NOT EXISTS `notifications_new` (
+            `id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+            `key` TEXT NOT NULL, `packageName` TEXT NOT NULL, `appName` TEXT NOT NULL,
+            `appIconUri` TEXT, `title` TEXT NOT NULL, `content` TEXT NOT NULL,
+            `postTime` INTEGER NOT NULL, `lastUpdatedTime` INTEGER NOT NULL DEFAULT 0,
+            `updateCount` INTEGER NOT NULL DEFAULT 1, `isDismissed` INTEGER NOT NULL,
+            `isPersistent` INTEGER NOT NULL, `isRead` INTEGER NOT NULL DEFAULT 0,
+            `isGroupSummary` INTEGER NOT NULL DEFAULT 0, `category` TEXT, `channelId` TEXT,
+            `subText` TEXT, `bigText` TEXT, `inboxLinesJson` TEXT, `priority` INTEGER NOT NULL,
+            `groupKey` TEXT, `isOngoing` INTEGER NOT NULL DEFAULT 0,
+            `isClearable` INTEGER NOT NULL DEFAULT 1, `actionsCount` INTEGER NOT NULL DEFAULT 0,
+            `dismissReason` INTEGER, `dismissTime` INTEGER, `intentUri` TEXT,
+            `isPinned` INTEGER NOT NULL DEFAULT 0, `actionLabels` TEXT,
+            `smallIconRes` INTEGER NOT NULL DEFAULT 0, `restoreMetadataJson` TEXT,
+            `syncStatus` TEXT NOT NULL DEFAULT 'PENDING_UPLOAD',
+            `lastSyncedAt` INTEGER NOT NULL DEFAULT 0, `embedding` BLOB,
+            FOREIGN KEY(`packageName`) REFERENCES `apps`(`packageName`)
+                ON UPDATE CASCADE ON DELETE CASCADE,
+            FOREIGN KEY(`groupKey`) REFERENCES `notification_groups`(`groupKey`)
+                ON UPDATE CASCADE ON DELETE CASCADE
+        )"""
+
+        private val NOTIFICATION_INDEX_DDL = arrayOf(
+            "CREATE UNIQUE INDEX IF NOT EXISTS `index_notifications_key` " +
+                "ON `notifications` (`key`)",
+            "CREATE INDEX IF NOT EXISTS `index_notifications_packageName` " +
+                "ON `notifications` (`packageName`)",
+            "CREATE INDEX IF NOT EXISTS `index_notifications_isDismissed_postTime` " +
+                "ON `notifications` (`isDismissed`, `postTime`)",
+            "CREATE INDEX IF NOT EXISTS `index_notifications_isDismissed_dismissTime` " +
+                "ON `notifications` (`isDismissed`, `dismissTime`)",
+            "CREATE INDEX IF NOT EXISTS `index_notifications_isDismissed_isOngoing_postTime` " +
+                "ON `notifications` (`isDismissed`, `isOngoing`, `postTime`)",
+            "CREATE INDEX IF NOT EXISTS `index_notifications_isDismissed_dismissReason_dismissTime` " +
+                "ON `notifications` (`isDismissed`, `dismissReason`, `dismissTime`)",
+            "CREATE INDEX IF NOT EXISTS `index_notifications_packageName_isDismissed_postTime` " +
+                "ON `notifications` (`packageName`, `isDismissed`, `postTime`)",
+            "CREATE INDEX IF NOT EXISTS `index_notifications_isPinned_postTime` " +
+                "ON `notifications` (`isPinned`, `postTime`)",
+            "CREATE INDEX IF NOT EXISTS `index_notifications_isRead_isDismissed` " +
+                "ON `notifications` (`isRead`, `isDismissed`)",
+            "CREATE INDEX IF NOT EXISTS `index_notifications_groupKey_postTime` " +
+                "ON `notifications` (`groupKey`, `postTime`)",
+            "CREATE INDEX IF NOT EXISTS `index_notifications_syncStatus` " +
+                "ON `notifications` (`syncStatus`)",
+        )
+
+        private fun backfillOrphanApps(db: SupportSQLiteDatabase) {
+            db.execSQL(
+                """
+                INSERT OR IGNORE INTO `apps` (
+                    `packageName`, `appName`, `appIconUri`, `statusBarIconRes`,
+                    `statusBarIconPackage`, `firstSeenTime`, `lastSeenTime`,
+                    `syncStatus`, `lastSyncedAt`
+                )
+                SELECT n.`packageName`, MIN(n.`appName`), NULL, 0, NULL,
+                       MIN(n.`postTime`), MAX(n.`postTime`), 'PENDING_UPLOAD', 0
+                FROM `notifications` n
+                LEFT JOIN `apps` a ON a.`packageName` = n.`packageName`
+                WHERE a.`packageName` IS NULL
+                GROUP BY n.`packageName`
+                """.trimIndent()
+            )
+        }
+
+        private fun backfillOrphanGroups(db: SupportSQLiteDatabase) {
+            db.execSQL(
+                """
+                INSERT OR IGNORE INTO `notification_groups` (
+                    `groupKey`, `packageName`, `appName`, `appIconUri`, `latestPostTime`,
+                    `notificationCount`, `activeCount`, `isPinned`, `isDismissed`,
+                    `summaryTitle`, `summaryText`, `lastUpdatedTime`
+                )
+                SELECT n.`groupKey`, MIN(n.`packageName`), MIN(n.`appName`), NULL,
+                       MAX(n.`postTime`), COUNT(*),
+                       SUM(CASE WHEN n.`isDismissed` = 0 THEN 1 ELSE 0 END),
+                       0, 0, NULL, NULL, MAX(n.`postTime`)
+                FROM `notifications` n
+                LEFT JOIN `notification_groups` g ON g.`groupKey` = n.`groupKey`
+                WHERE n.`groupKey` IS NOT NULL AND g.`groupKey` IS NULL
+                GROUP BY n.`groupKey`
+                """.trimIndent()
+            )
+        }
+
+        private fun rebuildNotificationsTable(db: SupportSQLiteDatabase) {
+            db.execSQL("DROP TABLE IF EXISTS `notifications_new`")
+            db.execSQL(CREATE_NOTIFICATIONS_V21)
+            db.execSQL(
+                "INSERT INTO `notifications_new` ($NOTIFICATIONS_COLUMNS) " +
+                    "SELECT $NOTIFICATIONS_COLUMNS FROM `notifications`"
+            )
+            db.execSQL("DROP TABLE `notifications`")
+            db.execSQL("ALTER TABLE `notifications_new` RENAME TO `notifications`")
+        }
+
+        private fun recreateNotificationIndexes(db: SupportSQLiteDatabase) {
+            NOTIFICATION_INDEX_DDL.forEach(db::execSQL)
+        }
+
+        private fun recreateFtsSyncTriggers(db: SupportSQLiteDatabase) {
+            val columns = "`docid`, `title`, `content`, `appName`, `packageName`"
+            db.execSQL(
+                "CREATE TRIGGER IF NOT EXISTS room_fts_content_sync_notifications_fts_BEFORE_UPDATE " +
+                    "BEFORE UPDATE ON `notifications` BEGIN DELETE FROM `notifications_fts` " +
+                    "WHERE `docid`=OLD.`rowid`; END"
+            )
+            db.execSQL(
+                "CREATE TRIGGER IF NOT EXISTS room_fts_content_sync_notifications_fts_BEFORE_DELETE " +
+                    "BEFORE DELETE ON `notifications` BEGIN DELETE FROM `notifications_fts` " +
+                    "WHERE `docid`=OLD.`rowid`; END"
+            )
+            db.execSQL(
+                "CREATE TRIGGER IF NOT EXISTS room_fts_content_sync_notifications_fts_AFTER_UPDATE " +
+                    "AFTER UPDATE ON `notifications` BEGIN INSERT INTO `notifications_fts`($columns) " +
+                    "VALUES (NEW.`rowid`, NEW.`title`, NEW.`content`, NEW.`appName`, " +
+                    "NEW.`packageName`); END"
+            )
+            db.execSQL(
+                "CREATE TRIGGER IF NOT EXISTS room_fts_content_sync_notifications_fts_AFTER_INSERT " +
+                    "AFTER INSERT ON `notifications` BEGIN INSERT INTO `notifications_fts`($columns) " +
+                    "VALUES (NEW.`rowid`, NEW.`title`, NEW.`content`, NEW.`appName`, " +
+                    "NEW.`packageName`); END"
+            )
+        }
+
+        private fun rebuildFtsIndex(db: SupportSQLiteDatabase) {
+            if (!tableExists(db, "notifications_fts")) return
+            db.execSQL("INSERT INTO `notifications_fts`(`notifications_fts`) VALUES('rebuild')")
+        }
+
         private val allMigrations: Array<Migration> = arrayOf(
             MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7,
             MIGRATION_7_8, MIGRATION_8_9, MIGRATION_9_10, MIGRATION_10_11, MIGRATION_11_12,
             MIGRATION_12_13, MIGRATION_13_14, MIGRATION_14_15, MIGRATION_15_16, MIGRATION_16_17,
-            MIGRATION_17_18, MIGRATION_18_19, MIGRATION_19_20
+            MIGRATION_17_18, MIGRATION_18_19, MIGRATION_19_20, MIGRATION_20_21
         )
 
         private fun tableExists(db: SupportSQLiteDatabase, tableName: String): Boolean {

@@ -1,5 +1,6 @@
 package com.jeffers.notimindlite.data.local
 
+import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.ForeignKey
 import androidx.room.Index
@@ -46,12 +47,12 @@ data class NotificationEntity(
     val title: String,
     val content: String,
     val postTime: Long = System.currentTimeMillis(),
-    val lastUpdatedTime: Long = System.currentTimeMillis(),
-    val updateCount: Int = 1,
+    @ColumnInfo(defaultValue = "0") val lastUpdatedTime: Long = System.currentTimeMillis(),
+    @ColumnInfo(defaultValue = "1") val updateCount: Int = 1,
     val isDismissed: Boolean = false,
     val isPersistent: Boolean = false,
-    val isRead: Boolean = false,
-    val isGroupSummary: Boolean = false,
+    @ColumnInfo(defaultValue = "0") val isRead: Boolean = false,
+    @ColumnInfo(defaultValue = "0") val isGroupSummary: Boolean = false,
     val category: String? = null,
     val channelId: String? = null,
     val subText: String? = null,
@@ -59,19 +60,19 @@ data class NotificationEntity(
     val inboxLinesJson: String? = null,
     val priority: Int = 0,
     val groupKey: String? = null,
-    val isOngoing: Boolean = false,
-    val isClearable: Boolean = true,
-    val actionsCount: Int = 0,
+    @ColumnInfo(defaultValue = "0") val isOngoing: Boolean = false,
+    @ColumnInfo(defaultValue = "1") val isClearable: Boolean = true,
+    @ColumnInfo(defaultValue = "0") val actionsCount: Int = 0,
     val dismissReason: Int? = null,
     val dismissTime: Long? = null,
     val intentUri: String? = null,
-    val isPinned: Boolean = false,
+    @ColumnInfo(defaultValue = "0") val isPinned: Boolean = false,
     val actionLabels: String? = null,
-    val smallIconRes: Int = 0,
+    @ColumnInfo(defaultValue = "0") val smallIconRes: Int = 0,
     /** Local-only Android presentation metadata; excluded from cloud sync payloads. */
     val restoreMetadataJson: String? = null,
-    val syncStatus: SyncStatus = SyncStatus.PENDING_UPLOAD,
-    val lastSyncedAt: Long = 0,
+    @ColumnInfo(defaultValue = "'PENDING_UPLOAD'") val syncStatus: SyncStatus = SyncStatus.PENDING_UPLOAD,
+    @ColumnInfo(defaultValue = "0") val lastSyncedAt: Long = 0,
     val embedding: FloatArray? = null
 )
 

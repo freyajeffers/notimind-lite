@@ -242,15 +242,17 @@ fun ActiveFirstRunEmptyState(
 fun ActiveSearchEmptyState(
     title: String,
     description: String,
-    clearButtonText: String,
-    onClearClick: () -> Unit
+    clearButtonText: String? = null,
+    onClearClick: (() -> Unit)? = null
 ) {
     EmptyStateShell(
         icon = Icons.Default.SearchOff,
         title = title,
         description = description,
         secondaryAction = {
-            OutlinedButton(onClick = onClearClick) { Text(clearButtonText) }
+            if (clearButtonText != null && onClearClick != null) {
+                OutlinedButton(onClick = onClearClick) { Text(clearButtonText) }
+            }
         }
     )
 }

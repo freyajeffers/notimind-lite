@@ -36,8 +36,8 @@
     <string name="package_filter_apply">Apply</string>
 
     <!-- Main -->
-    <string name="main_listener_required_title">Notification Listener Required</string>
-    <string name="main_listener_required_desc">NotiMind Lite requires Notification Listener access to intercept, filter, and store notifications locally on your device.</string>
+    <string name="main_listener_required_title">Let NotiMind see your notifications</string>
+    <string name="main_listener_required_desc">NotiMind saves the notifications that pop up on your phone so you can find them again later. Nothing leaves your phone unless you export it.\n\nOn the next screen, find NotiMind Lite in the list, turn its switch on, then come back here.</string>
     <string name="main_grant_permission">Grant Permission</string>
 
     <!-- Navigation -->
@@ -59,6 +59,26 @@
     <string name="log_history_empty_initial">No notifications found</string>
     <string name="log_history_empty_search">No matching notifications found</string>
     <string name="log_history_empty_filter_desc">No notifications match your current filters.</string>
+    <string name="log_history_empty_initial_desc">Nothing has been captured yet. New notifications will appear here as they arrive.</string>
+    <string name="log_history_empty_query_title">No results for “%1$s”</string>
+    <string name="log_history_empty_query_desc">Nothing in your log matches “%1$s”. Try a shorter word, or check the spelling.</string>
+    <string name="log_history_clear_search">Clear search</string>
+    <string name="export_no_apps_label">No apps yet</string>
+    <string name="export_no_apps_hint">Apps appear here once NotiMind has captured at least one notification from them.</string>
+    <string name="settings_category_account">Account &amp; sync</string>
+    <string name="settings_category_account_desc">Sign-in, profiles and cloud sync</string>
+    <string name="settings_category_notifications">Notifications</string>
+    <string name="settings_category_notifications_desc">Sync, restore and capture rules</string>
+    <string name="settings_category_data">Backup &amp; export</string>
+    <string name="settings_category_data_desc">Backups, exports and settings transfer</string>
+    <string name="settings_category_appearance">Appearance &amp; behaviour</string>
+    <string name="settings_category_appearance_desc">Display, sorting and automation</string>
+    <string name="settings_category_privacy">Privacy &amp; security</string>
+    <string name="settings_category_privacy_desc">Encryption, passphrase and telemetry</string>
+    <string name="settings_category_advanced">Advanced</string>
+    <string name="settings_category_advanced_desc">Diagnostics, limits and database migration</string>
+    <string name="settings_category_expand">Show %1$s settings</string>
+    <string name="settings_category_collapse">Hide %1$s settings</string>
     <string name="log_history_clear_filters">Clear All Filters</string>
     <string name="log_history_sort_newest">Newest First</string>
     <string name="log_history_sort_oldest">Oldest First</string>
@@ -145,7 +165,7 @@
     <string name="active_empty_permission_step3">Toggle the switch on, then return to this app</string>
     <string name="active_empty_permission_grant">Grant</string>
     <string name="active_empty_first_run_title">No notifications yet</string>
-    <string name="active_empty_first_run_desc">Once you grant notification access, anything that appears in your status bar will be captured here automatically — even if you swipe it away.</string>
+    <string name="active_empty_first_run_desc">Anything that appears in your status bar will be captured here automatically — even if you swipe it away.</string>
     <string name="active_empty_first_run_hint">Pull down to refresh, or wait for the next notification.</string>
     <string name="active_empty_search_title">No matches</string>
     <string name="active_empty_search_desc">Nothing in your log matches \"%1$s\". Try a shorter keyword, a different app filter, or check spelling.</string>
