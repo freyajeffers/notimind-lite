@@ -1,3 +1,5 @@
+@file:Suppress("DEPRECATION")
+
 package com.jeffers.notimindlite.ui.components
 
 import android.content.ClipData
