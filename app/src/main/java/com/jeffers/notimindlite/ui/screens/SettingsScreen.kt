@@ -59,8 +59,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.LocalLifecycleOwner
@@ -259,6 +262,10 @@ private fun SettingsCategory(
 ) {
     val title = stringResource(category.titleRes)
     val subtitle = stringResource(category.subtitleRes)
+    val toggleLabel = stringResource(
+        if (expanded) R.string.settings_category_collapse else R.string.settings_category_expand,
+        title
+    )
     Card(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
@@ -268,7 +275,11 @@ private fun SettingsCategory(
                 modifier = Modifier
                     .fillMaxWidth()
                     .clickable(onClick = onToggle)
-                    .padding(16.dp),
+                    .padding(16.dp)
+                    .semantics(mergeDescendants = true) {
+                        role = Role.Button
+                        stateDescription = toggleLabel
+                    },
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
@@ -286,10 +297,7 @@ private fun SettingsCategory(
                 }
                 Icon(
                     imageVector = if (expanded) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
-                    contentDescription = stringResource(
-                        if (expanded) R.string.settings_category_collapse else R.string.settings_category_expand,
-                        title
-                    )
+                    contentDescription = null
                 )
             }
             AnimatedVisibility(visible = expanded) {

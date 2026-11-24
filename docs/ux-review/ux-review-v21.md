@@ -205,3 +205,36 @@ The wrapper was deleted so the grouping cannot silently drift again.
 **Not device-verified this session:** the WayDroid container reported RUNNING but its Android
 runtime had no reachable address (`192.168.240.112` — no route, 100% packet loss), so this
 change is verified by compilation, ktlint, detekt and unit tests only.
+
+## Finding 9 — Settings categories (resolved)
+
+**Already implemented** in `d96cf84 fix(ux): collapse settings into six labelled
+categories`, before this pass reached it. The screen now opens as six collapsible cards
+(Account & sync, Notifications, Backup & export, Appearance, Privacy, Advanced) with
+`rememberSaveable` expansion state, so a re-launch keeps what the user opened.
+
+Section coverage is complete — every settings section has a home:
+
+| Category | Sections |
+|---|---|
+| Account & sync | AccountSection, ProfileManagerSection |
+| Notifications | SettingsSyncSection, RestoreRecentlyDismissedCard, SettingsCaptureSection |
+| Backup & export | SettingsBackupSection, SettingsExportSection, SettingsPreferencesBackupSection |
+| Appearance | SearchSyncSection, DisplaySettingsSection, AutomationSettingsSection |
+| Privacy | SettingsPrivacySection, SettingsSecuritySection |
+| Advanced | DebugSettingsSection, SettingsAdvancedSection |
+
+The notification-access card stays outside every category on purpose: it is the one control
+a new user must act on and must never be hidden behind a collapsed header.
+
+**Improvement added in this pass:** the category header had no state for a screen reader —
+the chevron's `contentDescription` described the *action* but the row itself announced
+nothing about whether it was open. The header now carries
+`semantics(mergeDescendants = true) { role = Role.Button; stateDescription = "Show/Hide X
+settings" }`, and the decorative chevron is no longer announced twice.
+
+**Not verified on a device.** The WayDroid container lost its network namespace
+(`eth0` absent inside the container, `IP address: UNKNOWN`, `adb` unreachable) and its
+Android framework stopped answering (`Can't find service: activity`) partway through this
+step, after a `wayland` session restart. The category behaviour above is verified by code
+inspection and passing `ktlint`/`detekt`/`compileDebugKotlin`, not by a fresh UI dump.
