@@ -67,12 +67,33 @@ jobs:
         run: |
           set -eu
           SDK="${ANDROID_SDK_ROOT:-${ANDROID_HOME}}"
+          SDKMANAGER="$SDK/cmdline-tools/latest/bin/sdkmanager"
           echo "sdk=$SDK"
-          yes | "$SDK/cmdline-tools/latest/bin/sdkmanager" --licenses > /dev/null || true
-          "$SDK/cmdline-tools/latest/bin/sdkmanager" --install \
-            "platform-tools" \
-            "emulator" \
+          yes | "$SDKMANAGER" --licenses > /dev/null || true
+
+          packages=(
+            platform-tools
+            emulator
             "system-images;android-${API_LEVEL};google_apis;x86_64"
+          )
+          installed=0
+          for attempt in 1 2 3; do
+            echo "Installing Android SDK packages (attempt ${attempt}/3)"
+            if "$SDKMANAGER" --install "${packages[@]}"; then
+              installed=1
+              break
+            fi
+            echo "::warning::SDK package installation failed; removing partial downloads before retry"
+            rm -rf "$SDK/.temp"/*
+            rm -rf "$SDK/system-images/android-${API_LEVEL}/google_apis/x86_64"
+            if [ "$attempt" -lt 3 ]; then
+              sleep $((attempt * 10))
+            fi
+          done
+          if [ "$installed" -ne 1 ]; then
+            echo '::error::Android SDK package installation failed after 3 attempts'
+            exit 1
+          fi
 
       - name: Create AVD
         run: |
