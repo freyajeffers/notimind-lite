@@ -227,6 +227,46 @@ Section coverage is complete — every settings section has a home:
 The notification-access card stays outside every category on purpose: it is the one control
 a new user must act on and must never be hidden behind a collapsed header.
 
+**Improvement added in this pass:** the category header described the toggle only
+through the chevron's `contentDescription`, so the row itself carried no hint that it
+expands. The header is now one clickable button with
+`clickable(role = Role.Button, onClickLabel = "Show/Hide X settings")`, so TalkBack
+announces the action against the whole row, and the decorative chevron is no longer
+announced twice.
+
+**Verified on the WayDroid container (API 33, 1080x1888):**
+- The screen opens with six labelled categories plus the always-visible notification
+  access card, i.e. it reads as an index rather than a 20-section scroll.
+- "Notifications" is expanded on first open; collapsing it exposes the other category
+  headers.
+- Expanding "Backup & export" reveals the export card inside that category.
+- Returning to Settings after visiting another tab keeps the same set of visible
+  headers, consistent with the configured `saveState`/`restoreState` on tab
+  navigation. Header counts vary with scroll position and node clipping in
+  `uiautomator`, so this is corroboration rather than a clean measurement.
+- The `onClickLabel` announcement itself needs TalkBack and was **not** verified.
+
+## Finding 9 — Settings categories (resolved)
+
+**Already implemented** in `d96cf84 fix(ux): collapse settings into six labelled
+categories`, before this pass reached it. The screen now opens as six collapsible cards
+(Account & sync, Notifications, Backup & export, Appearance, Privacy, Advanced) with
+`rememberSaveable` expansion state, so a re-launch keeps what the user opened.
+
+Section coverage is complete — every settings section has a home:
+
+| Category | Sections |
+|---|---|
+| Account & sync | AccountSection, ProfileManagerSection |
+| Notifications | SettingsSyncSection, RestoreRecentlyDismissedCard, SettingsCaptureSection |
+| Backup & export | SettingsBackupSection, SettingsExportSection, SettingsPreferencesBackupSection |
+| Appearance | SearchSyncSection, DisplaySettingsSection, AutomationSettingsSection |
+| Privacy | SettingsPrivacySection, SettingsSecuritySection |
+| Advanced | DebugSettingsSection, SettingsAdvancedSection |
+
+The notification-access card stays outside every category on purpose: it is the one control
+a new user must act on and must never be hidden behind a collapsed header.
+
 **Improvement added in this pass:** the category header had no state for a screen reader —
 the chevron's `contentDescription` described the *action* but the row itself announced
 nothing about whether it was open. The header now carries

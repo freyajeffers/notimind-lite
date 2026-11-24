@@ -61,9 +61,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
-import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.LocalLifecycleOwner
@@ -274,12 +272,8 @@ private fun SettingsCategory(
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .clickable(onClick = onToggle)
-                    .padding(16.dp)
-                    .semantics(mergeDescendants = true) {
-                        role = Role.Button
-                        stateDescription = toggleLabel
-                    },
+                    .clickable(role = Role.Button, onClickLabel = toggleLabel, onClick = onToggle)
+                    .padding(16.dp),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
