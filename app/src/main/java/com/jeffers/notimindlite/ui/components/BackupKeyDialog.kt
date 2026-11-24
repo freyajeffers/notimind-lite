@@ -1,5 +1,3 @@
-@file:Suppress("DEPRECATION")
-
 package com.jeffers.notimindlite.ui.components
 
 import android.content.ClipData
@@ -16,6 +14,8 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.text.input.TextFieldState
+import androidx.compose.foundation.text.input.TextObfuscationMode
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.Share
@@ -25,7 +25,7 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedSecureTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -42,8 +42,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.text.input.PasswordVisualTransformation
-import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.jeffers.notimindlite.R
@@ -146,7 +144,7 @@ fun BackupKeyDialog(
     onConfirm: (passphrase: CharArray?) -> Unit,
 ) {
     val context = LocalContext.current
-    var passphrase by remember { mutableStateOf("") }
+    val passphrase = remember { TextFieldState() }
     var showPassword by remember { mutableStateOf(false) }
     var clipboardKeyCopied by remember { mutableStateOf(false) }
     val shareKeyPayload = stringResource(R.string.backup_share_key_payload, keyBase64)
@@ -177,14 +175,13 @@ fun BackupKeyDialog(
                     stringResource(R.string.backup_dialog_passphrase_description),
                     style = MaterialTheme.typography.bodyMedium,
                 )
-                OutlinedTextField(
-                    value = passphrase,
-                    onValueChange = { passphrase = it },
+                OutlinedSecureTextField(
+                    state = passphrase,
                     label = { Text(stringResource(R.string.backup_dialog_passphrase_label)) },
-                    visualTransformation = if (showPassword) {
-                        VisualTransformation.None
+                    textObfuscationMode = if (showPassword) {
+                        TextObfuscationMode.Visible
                     } else {
-                        PasswordVisualTransformation()
+                        TextObfuscationMode.Hidden
                     },
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
                     trailingIcon = {
@@ -202,7 +199,6 @@ fun BackupKeyDialog(
                         }
                     },
                     modifier = Modifier.fillMaxWidth(),
-                    singleLine = true,
                 )
                 Text(
                     stringResource(R.string.backup_dialog_local_only_hint),
@@ -226,7 +222,8 @@ fun BackupKeyDialog(
             TextButton(
                 onClick = {
                     clearBackupKeyClipboard(context, keyBase64, notify = false)
-                    val pass = if (passphrase.isBlank()) null else passphrase.toCharArray()
+                    val passphraseText = passphrase.text.toString()
+                    val pass = if (passphraseText.isBlank()) null else passphraseText.toCharArray()
                     onConfirm(pass)
                 },
             ) {

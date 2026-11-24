@@ -1,11 +1,11 @@
-@file:Suppress("DEPRECATION")
-
 package com.jeffers.notimindlite.ui.components
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.text.input.TextFieldState
+import androidx.compose.foundation.text.input.TextObfuscationMode
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
@@ -13,7 +13,7 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedSecureTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -26,8 +26,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.text.input.PasswordVisualTransformation
-import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import com.jeffers.notimindlite.R
 
@@ -37,7 +35,7 @@ fun RestoreBackupDialog(
     onDismiss: () -> Unit,
     onConfirm: (passphrase: CharArray?) -> Unit,
 ) {
-    var passphrase by remember { mutableStateOf("") }
+    var passphrase = remember { TextFieldState() }
     var showPassword by remember { mutableStateOf(false) }
 
     AlertDialog(
@@ -58,14 +56,13 @@ fun RestoreBackupDialog(
                     stringResource(R.string.restore_dialog_passphrase_description),
                     style = MaterialTheme.typography.bodySmall,
                 )
-                OutlinedTextField(
-                    value = passphrase,
-                    onValueChange = { passphrase = it },
+                OutlinedSecureTextField(
+                    state = passphrase,
                     label = { Text(stringResource(R.string.backup_dialog_passphrase_label)) },
-                    visualTransformation = if (showPassword) {
-                        VisualTransformation.None
+                    textObfuscationMode = if (showPassword) {
+                        TextObfuscationMode.Visible
                     } else {
-                        PasswordVisualTransformation()
+                        TextObfuscationMode.Hidden
                     },
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
                     trailingIcon = {
@@ -83,14 +80,14 @@ fun RestoreBackupDialog(
                         }
                     },
                     modifier = Modifier.fillMaxWidth(),
-                    singleLine = true,
                 )
             }
         },
         confirmButton = {
             TextButton(
                 onClick = {
-                    val pass = if (passphrase.isBlank()) null else passphrase.toCharArray()
+                    val passphraseText = passphrase.text.toString()
+                    val pass = if (passphraseText.isBlank()) null else passphraseText.toCharArray()
                     onConfirm(pass)
                 },
             ) {

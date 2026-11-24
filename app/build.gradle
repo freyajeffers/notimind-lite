@@ -78,7 +78,6 @@ def fdroidDebugVersionCode = datePrefix.toInteger() * 100 + seq
 android {
   namespace = 'com.jeffers.notimindlite'
   compileSdk = 37
-    compileSdkMinor = 2
 
   def targetMinSdk = (project.findProperty('minSdk') as String)?.toInteger() ?: 33
   def validationApplicationIdSuffix = project.findProperty('validationApplicationIdSuffix') as String
@@ -256,7 +255,6 @@ dependencies {
   implementation libs.androidx.navigation.compose
   implementation libs.androidx.room.runtime
   implementation libs.androidx.room.ktx
-  implementation libs.androidx.security.crypto
   implementation libs.sqlcipher.android
   implementation libs.kotlinx.coroutines.android
   implementation libs.kotlinx.coroutines.core
