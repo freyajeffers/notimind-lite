@@ -27,6 +27,7 @@ object EncryptedPreferencesStore {
     private const val KEYSTORE = "AndroidKeyStore"
     private const val KEY_ALIAS_PREFIX = "notimind_encrypted_preferences_"
     private const val TRANSFORMATION = "AES/GCM/NoPadding"
+    private const val AES_KEY_BITS = 256
     private const val GCM_TAG_BITS = 128
     private const val GCM_IV_BYTES = 12
     private const val TYPE_STRING = "s:"
@@ -85,7 +86,7 @@ object EncryptedPreferencesStore {
                 .Builder(
                     alias,
                     KeyProperties.PURPOSE_ENCRYPT or KeyProperties.PURPOSE_DECRYPT
-                ).setKeySize(256)
+                ).setKeySize(AES_KEY_BITS)
                 .setBlockModes(KeyProperties.BLOCK_MODE_GCM)
                 .setEncryptionPaddings(KeyProperties.ENCRYPTION_PADDING_NONE)
                 .build()
@@ -157,34 +158,16 @@ object EncryptedPreferencesStore {
                     doFinal(ciphertext).toString(StandardCharsets.UTF_8)
                 }
                 when {
-                    plaintext.startsWith(TYPE_STRING) -> {
-                        plaintext.removePrefix(TYPE_STRING)
-                    }
-
-                    plaintext.startsWith(TYPE_BOOLEAN) -> {
-                        plaintext.removePrefix(TYPE_BOOLEAN).toBoolean()
-                    }
-
-                    plaintext.startsWith(TYPE_FLOAT) -> {
-                        plaintext.removePrefix(TYPE_FLOAT).toFloat()
-                    }
-
-                    plaintext.startsWith(TYPE_INT) -> {
-                        plaintext.removePrefix(TYPE_INT).toInt()
-                    }
-
-                    plaintext.startsWith(TYPE_LONG) -> {
-                        plaintext.removePrefix(TYPE_LONG).toLong()
-                    }
-
+                    plaintext.startsWith(TYPE_STRING) -> plaintext.removePrefix(TYPE_STRING)
+                    plaintext.startsWith(TYPE_BOOLEAN) -> plaintext.removePrefix(TYPE_BOOLEAN).toBoolean()
+                    plaintext.startsWith(TYPE_FLOAT) -> plaintext.removePrefix(TYPE_FLOAT).toFloat()
+                    plaintext.startsWith(TYPE_INT) -> plaintext.removePrefix(TYPE_INT).toInt()
+                    plaintext.startsWith(TYPE_LONG) -> plaintext.removePrefix(TYPE_LONG).toLong()
                     plaintext.startsWith(TYPE_STRING_SET) -> {
                         val values = JSONArray(plaintext.removePrefix(TYPE_STRING_SET))
                         buildSet { repeat(values.length()) { add(values.getString(it)) } }
                     }
-
-                    else -> {
-                        null
-                    }
+                    else -> null
                 }
             }.getOrNull()
         }
