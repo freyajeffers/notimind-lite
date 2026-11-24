@@ -65,6 +65,16 @@ import org.junit.runner.RunWith
  *
  * The baseline below keeps the gate meaningful: new drift fails, and fixing a listed pair
  * also fails so the entry is removed deliberately rather than silently rotting.
+ *
+ * ## What remains, precisely
+ *
+ * v21 declared the eleven column defaults for `notifications`, so a full v1→v21 chain no
+ * longer diverges there. It still fails on `notification_groups`, whose six integer columns
+ * (`activeCount`, `isDismissed`, `isPinned`, `lastUpdatedTime`, `latestPostTime`,
+ * `notificationCount`) are created by migration with `DEFAULT 0` but carry no
+ * `@ColumnInfo(defaultValue = "0")`. Adding them changes the schema hash, so it needs
+ * either a version bump or amending the still-unreleased v21; until then a strict
+ * end-to-end chain assertion cannot pass, which is why only the per-pair form exists.
  */
 @RunWith(AndroidJUnit4::class)
 class SchemaJsonMigrationValidationTest {
