@@ -151,7 +151,11 @@
     <string name="reason_22">App Disallowed</string>
     <string name="reason_23">User Dismissed</string>
     <string name="reason_24">Review Dismissed</string>
-    <string name="reason_unknown">Unknown dismissal reason</string>
+    <string name="reason_not_recorded">Dismissed</string>
+    <string name="time_just_now">just now</string>
+    <string name="time_minutes_ago">%1$d min ago</string>
+    <string name="time_hours_ago">%1$d h ago</string>
+    <string name="time_days_ago">%1$d d ago</string>
     <string name="reason_system">System Dismissed</string>
 
     <!-- Actionable Chips -->

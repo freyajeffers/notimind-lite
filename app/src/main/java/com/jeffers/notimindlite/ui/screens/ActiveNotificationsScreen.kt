@@ -181,10 +181,15 @@ private val REASON_LABELS = listOf(
     R.string.reason_24
 ).mapIndexed { index, label -> index + REASON_CODE_OFFSET to label }.toMap()
 
-fun getReasonLabel(reason: Int?): Int = reason?.let { REASON_LABELS[it] } ?: if (reason == null) {
-    R.string.reason_system
-} else {
-    R.string.reason_unknown
+/**
+ * Reason codes outside 1..24 mean the platform never recorded a reason (0 is the SQLite
+ * default, and synced rows can carry anything). Saying "Unknown dismissal reason" to a
+ * user is noise, so fall back to a neutral label that is still true: it was dismissed.
+ */
+fun getReasonLabel(reason: Int?): Int = when {
+    reason == null -> R.string.reason_system
+    reason in REASON_LABELS -> REASON_LABELS.getValue(reason)
+    else -> R.string.reason_not_recorded
 }
 
 @Composable
