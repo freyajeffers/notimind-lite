@@ -178,7 +178,9 @@ fun SettingsScreen(
             expanded = SettingsCategory.APPEARANCE.key in expandedCategories,
             onToggle = { expandedCategories.toggle(SettingsCategory.APPEARANCE.key) }
         ) {
-            SettingsPreferencesSection(preferencesRepository = preferencesRepository)
+            SearchSyncSection(preferencesRepository)
+            DisplaySettingsSection(preferencesRepository)
+            AutomationSettingsSection(preferencesRepository)
         }
 
         SettingsCategory(
@@ -187,6 +189,9 @@ fun SettingsScreen(
             onToggle = { expandedCategories.toggle(SettingsCategory.PRIVACY.key) }
         ) {
             SettingsPrivacySection(preferencesRepository = preferencesRepository)
+            // The category promises "Encryption, passphrase", so the controls that
+            // actually implement them belong here rather than under Appearance.
+            SettingsSecuritySection(preferencesRepository)
         }
 
         SettingsCategory(
@@ -194,6 +199,7 @@ fun SettingsScreen(
             expanded = SettingsCategory.ADVANCED.key in expandedCategories,
             onToggle = { expandedCategories.toggle(SettingsCategory.ADVANCED.key) }
         ) {
+            DebugSettingsSection(preferencesRepository)
             SettingsAdvancedSection(
                 preferencesRepository = preferencesRepository,
                 onMigrationCompleted = { (context as? android.app.Activity)?.recreate() }

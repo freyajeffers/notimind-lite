@@ -8,6 +8,7 @@ All notable changes to NotiMind Lite are documented here. This project adheres t
 - **docs(ux)**: Add an adversarial UX review of the v21 onboarding and navigation flow, with a filtered finding table and eight drafted tickets.
 
 - **fix(ux)**: collapse the ~20 Settings sections into six labelled categories with saved expansion state, keeping the notification-access card pinned above them.
+- **fix(ux)**: move the encryption, passphrase and auto-lock controls out of "Appearance & behaviour" and into "Privacy & security", which is what the category header promises, and compose each category explicitly so the grouping cannot drift.
 - **fix(ux)**: replace notification-gate jargon with plain language and a next-step, distinguish the three history empty states so filters are never blamed when none are set, echo the search term on a miss, and explain the export app filter when no apps exist yet.
 - **feat(selectors)**: Choose apps by recorded notifications instead of installation state, so uninstalled apps stay filterable while apps with no records are hidden.
 - **storage(migration)**: Bump the database to v21 and rebuild `notifications` during the 20→21 upgrade so the declared foreign keys, column defaults, indexes and FTS triggers match the exported schema; orphaned notifications keep their history through synthesised parent rows rather than being deleted.

@@ -184,3 +184,24 @@ user opened.
 **Verification status:** compiled, `ktlintCheck` and `detekt` clean. **Not re-verified on a
 device** — the Waydroid container died mid-pass (system server gone, then `No route to
 host`) and could not be recovered within this session. Needs one pass on real hardware.
+
+## Finding 9 (Settings length) — resolved in `d96cf84`, grouping defect fixed
+
+Category collapsing already landed. Re-checking it surfaced a misfiling: the
+"Privacy & security" header advertises "Encryption, passphrase and telemetry" but contained
+only the privacy (telemetry) card. The controls that actually implement encryption, passphrase,
+biometric-for-export and auto-lock were rendered under "Appearance & behaviour", next to
+search/sync, automation and debug.
+
+Fixed by composing sections per category instead of through the bundled
+`SettingsPreferencesSection` wrapper:
+
+- **Appearance & behaviour** — search/sync, display, automation
+- **Privacy & security** — privacy, security
+- **Advanced** — diagnostics, limits, database migration
+
+The wrapper was deleted so the grouping cannot silently drift again.
+
+**Not device-verified this session:** the WayDroid container reported RUNNING but its Android
+runtime had no reachable address (`192.168.240.112` — no route, 100% packet loss), so this
+change is verified by compilation, ktlint, detekt and unit tests only.

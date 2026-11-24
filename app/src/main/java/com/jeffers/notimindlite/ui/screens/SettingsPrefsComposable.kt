@@ -39,25 +39,6 @@ import com.jeffers.notimindlite.data.local.DbEncryptionMode
 import com.jeffers.notimindlite.data.local.PreferencesRepository
 
 @Composable
-fun SettingsPreferencesSection(preferencesRepository: PreferencesRepository) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
-    ) {
-        Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-            SearchSyncSection(preferencesRepository)
-            DisplaySettingsSection(preferencesRepository)
-
-            AutomationSettingsSection(preferencesRepository)
-
-            SettingsSecuritySection(preferencesRepository)
-
-            DebugSettingsSection(preferencesRepository)
-        }
-    }
-}
-
-@Composable
 internal fun DisabledPreferenceRow(title: String, summary: String) {
     PreferenceSwitchRow(title, summary, checked = false, onCheckedChange = {}, enabled = false)
 }
