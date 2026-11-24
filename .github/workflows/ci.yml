@@ -155,8 +155,36 @@ jobs:
           cache-provider: enhanced
           add-job-summary-as-pr-comment: on-failure
 
+      # Robolectric resolves its android-all runtime jar into the local Maven repository.
+      # setup-gradle does not cache that directory, so every cold run re-downloads it and
+      # a transient Maven failure kills each test class at load time.
+      - name: Cache Robolectric runtime jars
+        uses: actions/cache@v4
+        with:
+          path: ~/.m2/repository/org/robolectric
+          key: robolectric-${{ runner.os }}-${{ hashFiles('gradle/libs.versions.toml') }}
+          restore-keys: |
+            robolectric-${{ runner.os }}-
+
       - name: Run Unit Tests & Generate Coverage
-        run: ./gradlew testDebugUnitTest testCoverageReport
+        run: |
+          set -o pipefail
+          for attempt in 1 2 3; do
+            if ./gradlew testDebugUnitTest testCoverageReport; then
+              exit 0
+            fi
+            # Robolectric downloads its android-all runtime jar on first use. A transient
+            # Maven failure kills every test class at load time, which looks identical to
+            # a mass regression. Retry only that case; real failures fail immediately.
+            if grep -rqs 'MavenArtifactFetcher' app/build/test-results/testDebugUnitTest; then
+              echo "::warning::Robolectric runtime download failed (attempt ${attempt}); retrying"
+              sleep $((attempt * 15))
+              continue
+            fi
+            echo "Failures are not download-related; not retrying."
+            exit 1
+          done
+          exit 1
 
       # Adversarial tiers run in this job, after the full suite has warmed the
       # Robolectric artifact cache. Running them in a parallel job made two

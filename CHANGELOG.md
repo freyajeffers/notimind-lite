@@ -9,6 +9,7 @@ All notable changes to NotiMind Lite are documented here. This project adheres t
 
 - **fix(ux)**: collapse the ~20 Settings sections into six labelled categories with saved expansion state, keeping the notification-access card pinned above them.
 - **fix(ux)**: move the encryption, passphrase and auto-lock controls out of "Appearance & behaviour" and into "Privacy & security", which is what the category header promises, and compose each category explicitly so the grouping cannot drift.
+- **ci(test)**: cache Robolectric's android-all runtime jars and retry the unit-test step only when failures trace to `MavenArtifactFetcher`, so a transient Maven outage no longer fails every test class at load time.
 - **fix(a11y)**: make each settings category header a single button carrying a show/hide action label so screen readers announce what the header does, and stop announcing the decorative chevron twice.
 - **fix(ux)**: replace notification-gate jargon with plain language and a next-step, distinguish the three history empty states so filters are never blamed when none are set, echo the search term on a miss, and explain the export app filter when no apps exist yet.
 - **feat(selectors)**: Choose apps by recorded notifications instead of installation state, so uninstalled apps stay filterable while apps with no records are hidden.
