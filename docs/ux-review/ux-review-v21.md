@@ -278,3 +278,42 @@ settings" }`, and the decorative chevron is no longer announced twice.
 Android framework stopped answering (`Can't find service: activity`) partway through this
 step, after a `wayland` session restart. The category behaviour above is verified by code
 inspection and passing `ktlint`/`detekt`/`compileDebugKotlin`, not by a fresh UI dump.
+
+## Populated-history pass (2026-11-23)
+
+The cold-start limitation above is now partly addressed. The container had no real
+notification stream, so 12 rows were seeded straight into the app database through the DAO
+(`com.example.pharmacy` ×3, `com.example.delivery` ×2, `com.example.bank` ×2,
+`com.example.chat` ×3, `com.example.news` ×2, spanning 2 hours to 8 days old) and the
+fixture was asserted after insert: `isDismissed == false`, `dismissReason == null`.
+
+> Note: `cmd notification post` does **not** work as a seeding route — `com.android.shell`
+> is in `PackageFilterManager`'s ignore list, so those notifications never reach the app.
+> That filter is deliberate, not a defect.
+
+**Verified working with a populated log:**
+- Grouping by app with accurate counts and "latest <title>" summaries
+  (`Walgreens, 3 notifications, latest Prescription ready, expanded`).
+- Per-item pin / open / toggle-details actions present and labelled.
+- `Log (13 of 13)` count is correct for the seed plus the one real captured notification.
+- The empty states fixed earlier no longer appear once data exists.
+
+**Open finding — dismissal badge shows a reason that does not exist (RED candidate).**
+Every seeded row — none of which was ever dismissed — displays the badge text
+**"Unknown dismissal reason"** at the card's action row. The evidence does not yet
+reconcile:
+- the database read-back in the seeding test asserts `isDismissed == false` and
+  `dismissReason == null` for the same rows;
+- `DismissStatusBadge` (`LogHistoryScreen.kt:831`) only renders a reason when
+  `isDismissed && dismissReason != null`, and otherwise renders "Active";
+- `getReasonLabel(null)` maps to `reason_system`, not `reason_unknown`.
+
+So the rendered text cannot come from the guarded branch with the data the test measured.
+Either the list is passing different objects than the DAO returns, or the badge is composed
+somewhere else. **Not fixed** — a blind change to a guarded branch would have been
+guesswork. Next step is a debugger/logpoint on `DismissStatusBadge` with a seeded row.
+
+**Open finding — collapsed rows show no timestamp (YELLOW).**
+No time or date text appears anywhere in the list dumps; timestamps only exist inside the
+expanded attribute panel. For the persona's actual task ("where is the message from
+yesterday") a user must open cards one at a time to see when anything arrived.
