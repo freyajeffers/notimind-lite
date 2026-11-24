@@ -78,6 +78,7 @@ def fdroidDebugVersionCode = datePrefix.toInteger() * 100 + seq
 android {
   namespace = 'com.jeffers.notimindlite'
   compileSdk = 37
+    compileSdkMinor = 2
 
   def targetMinSdk = (project.findProperty('minSdk') as String)?.toInteger() ?: 33
   def validationApplicationIdSuffix = project.findProperty('validationApplicationIdSuffix') as String
