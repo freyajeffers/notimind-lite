@@ -163,3 +163,24 @@ categories is a structural redesign, not a defect fix.
 
 **Limits unchanged:** still a cold-start pass (no populated history on this container) and
 still no screenshots (`screencap` produces a 0-byte file here).
+
+## Finding 9 — settings collapsed into categories (implemented)
+
+Settings opened as ~20 full-width cards in one scroll. It now opens as an index of six
+collapsible categories, each with a one-line subtitle:
+
+- Account & sync — sign-in, profiles, cloud sync
+- Notifications — sync, restore, capture rules *(expanded by default)*
+- Backup & export — backups, exports, settings transfer
+- Appearance & behaviour — display, sorting, automation
+- Privacy & security — encryption, passphrase, telemetry
+- Advanced — diagnostics, limits, database migration
+
+The **Notification Access card stays pinned above the categories**, because it is the one
+control a first-run user must act on and must never be behind a collapsed header. Expansion
+state is `rememberSaveable`, so a rotation or process restore does not collapse what the
+user opened.
+
+**Verification status:** compiled, `ktlintCheck` and `detekt` clean. **Not re-verified on a
+device** — the Waydroid container died mid-pass (system server gone, then `No route to
+host`) and could not be recovered within this session. Needs one pass on real hardware.

@@ -6,8 +6,11 @@ import android.net.Uri
 import android.provider.Settings
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -20,6 +23,8 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Login
 import androidx.compose.material.icons.automirrored.filled.Logout
+import androidx.compose.material.icons.filled.ExpandLess
+import androidx.compose.material.icons.filled.ExpandMore
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.NotificationsOff
 import androidx.compose.material.icons.filled.Person
@@ -42,10 +47,14 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.listSaver
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.toMutableStateList
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -84,26 +93,28 @@ fun SettingsScreen(
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
     val snackbarHostState = remember { SnackbarHostState() }
+    val expandedCategories = rememberSaveable(
+        saver = listSaver(
+            save = { it.toList() },
+            restore = { it.toMutableStateList() }
+        )
+    ) { mutableStateListOf(SettingsCategory.NOTIFICATIONS.key) }
+
     Column(
         modifier = Modifier
             .fillMaxSize()
             .verticalScroll(rememberScrollState())
             .padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
+        verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         Text(
             text = stringResource(R.string.settings_title),
             style = MaterialTheme.typography.headlineSmall,
             fontWeight = FontWeight.SemiBold
         )
-        AccountSection(
-            session = session,
-            authManager = authManager,
-            scope = scope,
-            context = context
-        )
 
-        // Notification Access card moved to top for discoverability
+        // Kept outside the categories on purpose: this is the one setting a new user must
+        // act on, so it must never be hidden behind a collapsed header.
         val prefMgrTop = remember { PreferenceManager(context) }
         val lifecycleOwnerTop = LocalLifecycleOwner.current
         var listenerGrantedTop by remember { mutableStateOf(checkNotificationPermission(context)) }
@@ -117,34 +128,172 @@ fun SettingsScreen(
             onDispose { lifecycleOwnerTop.lifecycle.removeObserver(observer) }
         }
         NotificationAccessCard(context, listenerGrantedTop)
-        RestoreRecentlyDismissedCard(snackbarHostState)
 
-        SettingsSyncSection(preferencesRepository = preferencesRepository, isAuthenticated = session.isAuthenticated)
+        SettingsCategory(
+            category = SettingsCategory.ACCOUNT,
+            expanded = SettingsCategory.ACCOUNT.key in expandedCategories,
+            onToggle = { expandedCategories.toggle(SettingsCategory.ACCOUNT.key) }
+        ) {
+            AccountSection(
+                session = session,
+                authManager = authManager,
+                scope = scope,
+                context = context
+            )
+            ProfileManagerSection(repository = preferencesRepository.profileManager)
+        }
 
-        SettingsBackupSection(
-            prefMgr = prefMgrTop,
-            listenerGranted = listenerGrantedTop,
-            snackbarHostState = snackbarHostState
-        )
+        SettingsCategory(
+            category = SettingsCategory.NOTIFICATIONS,
+            expanded = SettingsCategory.NOTIFICATIONS.key in expandedCategories,
+            onToggle = { expandedCategories.toggle(SettingsCategory.NOTIFICATIONS.key) }
+        ) {
+            SettingsSyncSection(
+                preferencesRepository = preferencesRepository,
+                isAuthenticated = session.isAuthenticated
+            )
+            RestoreRecentlyDismissedCard(snackbarHostState)
+            SettingsCaptureSection(preferencesRepository = preferencesRepository)
+        }
 
-        SettingsExportSection(
-            preferencesRepository = preferencesRepository,
-            snackbarHostState = snackbarHostState
-        )
+        SettingsCategory(
+            category = SettingsCategory.DATA,
+            expanded = SettingsCategory.DATA.key in expandedCategories,
+            onToggle = { expandedCategories.toggle(SettingsCategory.DATA.key) }
+        ) {
+            SettingsBackupSection(
+                prefMgr = prefMgrTop,
+                listenerGranted = listenerGrantedTop,
+                snackbarHostState = snackbarHostState
+            )
+            SettingsExportSection(
+                preferencesRepository = preferencesRepository,
+                snackbarHostState = snackbarHostState
+            )
+            SettingsPreferencesBackupSection()
+        }
 
-        // Continue with other sections
-        SettingsCaptureSection(preferencesRepository = preferencesRepository)
-        ProfileManagerSection(repository = preferencesRepository.profileManager)
-        SettingsPreferencesSection(preferencesRepository = preferencesRepository)
-        SettingsPrivacySection(preferencesRepository = preferencesRepository)
-        SettingsAdvancedSection(
-            preferencesRepository = preferencesRepository,
-            onMigrationCompleted = { (context as? android.app.Activity)?.recreate() }
-        )
-        SettingsPreferencesBackupSection()
+        SettingsCategory(
+            category = SettingsCategory.APPEARANCE,
+            expanded = SettingsCategory.APPEARANCE.key in expandedCategories,
+            onToggle = { expandedCategories.toggle(SettingsCategory.APPEARANCE.key) }
+        ) {
+            SettingsPreferencesSection(preferencesRepository = preferencesRepository)
+        }
+
+        SettingsCategory(
+            category = SettingsCategory.PRIVACY,
+            expanded = SettingsCategory.PRIVACY.key in expandedCategories,
+            onToggle = { expandedCategories.toggle(SettingsCategory.PRIVACY.key) }
+        ) {
+            SettingsPrivacySection(preferencesRepository = preferencesRepository)
+        }
+
+        SettingsCategory(
+            category = SettingsCategory.ADVANCED,
+            expanded = SettingsCategory.ADVANCED.key in expandedCategories,
+            onToggle = { expandedCategories.toggle(SettingsCategory.ADVANCED.key) }
+        ) {
+            SettingsAdvancedSection(
+                preferencesRepository = preferencesRepository,
+                onMigrationCompleted = { (context as? android.app.Activity)?.recreate() }
+            )
+        }
+
         SettingsVersionFooter(context)
 
         SnackbarHost(hostState = snackbarHostState)
+    }
+}
+
+/** Top-level grouping for the settings list, so the screen opens as a short, scannable index. */
+private enum class SettingsCategory(
+    val key: String,
+    val titleRes: Int,
+    val subtitleRes: Int
+) {
+    ACCOUNT("account", R.string.settings_category_account, R.string.settings_category_account_desc),
+    NOTIFICATIONS(
+        "notifications",
+        R.string.settings_category_notifications,
+        R.string.settings_category_notifications_desc
+    ),
+    DATA(
+        "data",
+        R.string.settings_category_data,
+        R.string.settings_category_data_desc
+    ),
+    APPEARANCE(
+        "appearance",
+        R.string.settings_category_appearance,
+        R.string.settings_category_appearance_desc
+    ),
+    PRIVACY(
+        "privacy",
+        R.string.settings_category_privacy,
+        R.string.settings_category_privacy_desc
+    ),
+    ADVANCED(
+        "advanced",
+        R.string.settings_category_advanced,
+        R.string.settings_category_advanced_desc
+    )
+}
+
+private fun MutableList<String>.toggle(key: String) {
+    if (contains(key)) remove(key) else add(key)
+}
+
+@Composable
+private fun SettingsCategory(
+    category: SettingsCategory,
+    expanded: Boolean,
+    onToggle: () -> Unit,
+    content: @Composable ColumnScope.() -> Unit
+) {
+    val title = stringResource(category.titleRes)
+    val subtitle = stringResource(category.subtitleRes)
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
+    ) {
+        Column {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable(onClick = onToggle)
+                    .padding(16.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = title,
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                    Text(
+                        text = subtitle,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+                Icon(
+                    imageVector = if (expanded) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
+                    contentDescription = stringResource(
+                        if (expanded) R.string.settings_category_collapse else R.string.settings_category_expand,
+                        title
+                    )
+                )
+            }
+            AnimatedVisibility(visible = expanded) {
+                Column(
+                    modifier = Modifier.padding(start = 16.dp, end = 16.dp, bottom = 16.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp),
+                    content = content
+                )
+            }
+        }
     }
 }
 
