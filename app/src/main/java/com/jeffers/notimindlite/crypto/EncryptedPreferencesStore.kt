@@ -158,16 +158,34 @@ object EncryptedPreferencesStore {
                     doFinal(ciphertext).toString(StandardCharsets.UTF_8)
                 }
                 when {
-                    plaintext.startsWith(TYPE_STRING) -> plaintext.removePrefix(TYPE_STRING)
-                    plaintext.startsWith(TYPE_BOOLEAN) -> plaintext.removePrefix(TYPE_BOOLEAN).toBoolean()
-                    plaintext.startsWith(TYPE_FLOAT) -> plaintext.removePrefix(TYPE_FLOAT).toFloat()
-                    plaintext.startsWith(TYPE_INT) -> plaintext.removePrefix(TYPE_INT).toInt()
-                    plaintext.startsWith(TYPE_LONG) -> plaintext.removePrefix(TYPE_LONG).toLong()
+                    plaintext.startsWith(TYPE_STRING) -> {
+                        plaintext.removePrefix(TYPE_STRING)
+                    }
+
+                    plaintext.startsWith(TYPE_BOOLEAN) -> {
+                        plaintext.removePrefix(TYPE_BOOLEAN).toBoolean()
+                    }
+
+                    plaintext.startsWith(TYPE_FLOAT) -> {
+                        plaintext.removePrefix(TYPE_FLOAT).toFloat()
+                    }
+
+                    plaintext.startsWith(TYPE_INT) -> {
+                        plaintext.removePrefix(TYPE_INT).toInt()
+                    }
+
+                    plaintext.startsWith(TYPE_LONG) -> {
+                        plaintext.removePrefix(TYPE_LONG).toLong()
+                    }
+
                     plaintext.startsWith(TYPE_STRING_SET) -> {
                         val values = JSONArray(plaintext.removePrefix(TYPE_STRING_SET))
                         buildSet { repeat(values.length()) { add(values.getString(it)) } }
                     }
-                    else -> null
+
+                    else -> {
+                        null
+                    }
                 }
             }.getOrNull()
         }

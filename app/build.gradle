@@ -77,6 +77,8 @@ def fdroidDebugVersionCode = datePrefix.toInteger() * 100 + seq
 
 android {
   namespace = 'com.jeffers.notimindlite'
+  // AGP 9 takes the minor SDK as a separate Int; `compileSdk = 37.2` is a Groovy
+  // decimal and is silently ignored, leaving the build on android-37.0.
   compileSdk = 37
   compileSdkMinor = 2
 
