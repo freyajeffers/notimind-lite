@@ -371,3 +371,24 @@ Verified after the fix on device: menu reads `Dismissed (#0)`, and selecting it 
 `cmd notification post` produced system notifications that NotiMind did not persist (the
 log stayed at 13), so the capture path and any app-label fallback for unseen packages
 remain untested here.
+
+## Correction — capture path (2026-11-25)
+
+The earlier note said posting via `cmd notification post` produced notifications that
+NotiMind "did not persist". That conclusion was wrong in its first half. On a fresh session:
+
+- `adb shell cmd notification post -S bigtext -t "Pharmacy" notimind_probe "…"` appeared in
+  `dumpsys notification` (4 references), and NotiMind logged
+  `onNotificationPosted: com.android.shell - 2020` from `NotiMind_NotificationLoggerSrv`.
+
+So the listener **does** receive notifications posted by the shell uid. Whether the row was
+persisted was not confirmed: the container was left showing the capture "Apps to block"
+dialog, and both `uiautomator dump` and input injection became unreliable from that point,
+so the History counter could not be read.
+
+**Unconfirmed observation, not filed as a bug:** with that dialog open, tapping `Cancel`,
+`Save`, and pressing Back all left the dialog in place. Input injection was demonstrably
+flaky in the same window (a later dump failed outright), so this needs a clean container
+before it is treated as an app defect. `PackageBlocklistDialog` does wire
+`onDismissRequest = onDismiss`, which sets `showBlocklistDialog = false`, so the code path
+looks correct.
