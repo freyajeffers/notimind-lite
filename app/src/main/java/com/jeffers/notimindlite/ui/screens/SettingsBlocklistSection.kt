@@ -75,11 +75,21 @@ internal fun PackageBlocklistDialog(
 ) {
     var searchQuery by remember { mutableStateOf("") }
     val currentSelected = remember { mutableStateListOf<String>().apply { addAll(selectedPackages) } }
-    val filteredApps = remember(searchQuery, availableApps) {
+    // A blocked package that NotiMind never saw a notification from (for example the seeded
+    // system packages) still has to be visible, otherwise the count says "3 blocked" while
+    // the list shows nothing checked and the entry cannot be removed.
+    val options = remember(availableApps, selectedPackages) {
+        val known = availableApps.toMutableList()
+        selectedPackages
+            .filter { pkg -> availableApps.none { it.first == pkg } }
+            .forEach { pkg -> known.add(pkg to pkg) }
+        known.sortedBy { it.second.lowercase() }
+    }
+    val filteredApps = remember(searchQuery, options) {
         if (searchQuery.isBlank()) {
-            availableApps
+            options
         } else {
-            availableApps.filter {
+            options.filter {
                 it.second.contains(searchQuery, ignoreCase = true) ||
                     it.first.contains(searchQuery, ignoreCase = true)
             }
@@ -91,7 +101,7 @@ internal fun PackageBlocklistDialog(
         title = { Text(stringResource(R.string.pref_capture_blocklist_dialog_title)) },
         text = {
             Column(modifier = Modifier.fillMaxWidth()) {
-                if (availableApps.isEmpty()) {
+                if (options.isEmpty()) {
                     Text(
                         text = stringResource(R.string.pref_capture_blocklist_empty),
                         style = MaterialTheme.typography.bodyMedium

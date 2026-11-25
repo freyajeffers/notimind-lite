@@ -11,6 +11,7 @@ All notable changes to NotiMind Lite are documented here. This project adheres t
 ## [Unreleased] - Preference Runtime, UX Polish & Reliability
 - **feat(capture)**: Choose blocked apps from a searchable list of apps NotiMind has seen instead of typing comma-separated package names.
 - **fix(capture)**: Observe NotiMind's own notifications for active/dismissal bookkeeping instead of dropping them at the first gate; they are still never logged.
+- **fix(capture)**: Show blocked packages that have no captured notifications in the picker, so the seeded system entries are visible and removable instead of counting toward "N apps blocked" while appearing unchecked.
 - **feat(capture)**: Seed the shipped system-noise packages into the user blocklist once, so the default filtering survives but every entry can be edited or removed.
 - **fix(ux)**: stop labelling unmapped dismissal codes "Unknown dismissal reason" (now a neutral "Dismissed") and show a relative arrival time on collapsed history rows so "where is the message from yesterday" needs no expanding.
 - **security(crypto)**: Replace deprecated AndroidX `EncryptedSharedPreferences`/`MasterKey` usage with a native AndroidKeyStore AES-GCM preferences wrapper, preserving versioned key rotation and encrypted value typing.
