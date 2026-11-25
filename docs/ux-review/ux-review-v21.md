@@ -392,3 +392,37 @@ flaky in the same window (a later dump failed outright), so this needs a clean c
 before it is treated as an app defect. `PackageBlocklistDialog` does wire
 `onDismissRequest = onDismiss`, which sets `showBlocklistDialog = false`, so the code path
 looks correct.
+
+## Populated-history pass (2026-11-25)
+
+The owed pass ran against a database of **14 captured notifications from 7 apps**
+(Walgreens, UPS, Chase, Messages, Daily Brief, PantryCraft, Phone Diary) on the WayDroid
+container. Animations were disabled and `uiautomator dump --compressed` used, because a
+plain dump reports "could not get idle state" while the app is settling.
+
+Confirmed working with real data:
+
+- **Search** — `walgreens` returned 3 of 14 and `pharmacy` returned 4 of 14 (matching bodies,
+  not just titles).
+- **Search miss** — `zzzznothing` produced "No results for “zzzznothing”", echoed the term in
+  the description, and offered **Clear search** only. No filter blame. This is the fix from
+  the earlier pass holding up under populated data.
+- **Export card** — "All apps (7)" and "14 of 14 notifications selected".
+- **App picker** — listed the real apps with Select all / Clear all.
+- **Window filter** — Last 7 days narrowed 14 → 11.
+- **Confirmation** — "About to export 11 notifications… Time window: Last 7 days… Apps: 7…
+  Format: JSON", plus the PII warning and the encryption notice.
+
+### RED finding fixed in this pass
+
+**Clearing every app exported the entire log.** With "0 of 7 apps selected" the card still
+reported "14 of 14 notifications selected", the Export button stayed enabled, and
+`ExportSelection(packageNames = emptySet())` means "all apps" — so unticking everything
+would have exported everything. Fixed by `ExportSelectionPolicy`, which treats
+"apps available but none selected" as *nothing to export* (null), used by both the card and
+the delivery path. Verified on device: count shows "0 of 14", the
+"Select at least one app…" hint appears, and Export no longer opens the confirmation.
+Unit-covered by `ExportSelectionPolicyTest`.
+
+**Still not covered:** screenshots (`screencap` returns 0 bytes on this container) and the
+TalkBack announcement pass.

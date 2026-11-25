@@ -52,6 +52,7 @@ import com.jeffers.notimindlite.data.local.NotificationEntity
 import com.jeffers.notimindlite.data.local.PreferencesRepository
 import com.jeffers.notimindlite.util.DatabaseExporter
 import com.jeffers.notimindlite.util.ExportRangePreset
+import com.jeffers.notimindlite.util.ExportSelectionPolicy
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -100,11 +101,18 @@ fun SettingsExportSection(
     var pendingExport by remember { mutableStateOf<PendingExport?>(null) }
     var passphrase by remember { mutableStateOf("") }
 
-    val selection = remember(preset, selectedPackages) {
-        preset.toSelection(System.currentTimeMillis()).copy(packageNames = selectedPackages)
+    // An empty package set means "every app" to ExportSelection, but an empty selection in
+    // this UI means the user unticked everything; the policy reconciles the two.
+    val selection = remember(preset, selectedPackages, packages.size) {
+        ExportSelectionPolicy.selection(
+            availablePackageCount = packages.size,
+            selectedPackages = selectedPackages,
+            preset = preset,
+            nowMillis = System.currentTimeMillis(),
+        )
     }
     val selected = remember(notifications, selection) {
-        DatabaseExporter.selectForExport(notifications, selection)
+        selection?.let { DatabaseExporter.selectForExport(notifications, it) } ?: emptyList()
     }
 
     val delivery = rememberExportDelivery(
@@ -112,6 +120,7 @@ fun SettingsExportSection(
             notifications = notifications,
             preset = preset,
             selectedPackages = selectedPackages,
+            availablePackageCount = packages.size,
             format = format,
             passphrase = passphrase,
             requireDeviceConfirmation = requireDeviceConfirmation,
@@ -224,6 +233,7 @@ private data class ExportDeliveryConfig(
     val notifications: List<NotificationEntity>,
     val preset: ExportRangePreset,
     val selectedPackages: Set<String>,
+    val availablePackageCount: Int,
     val format: String,
     val passphrase: String,
     val requireDeviceConfirmation: Boolean,
@@ -277,17 +287,23 @@ private fun rememberExportDelivery(config: ExportDeliveryConfig): ExportDelivery
     }
 
     val performExport: (Boolean) -> Unit = { deviceConfirmed ->
-        val liveSelection = config.preset
-            .toSelection(System.currentTimeMillis())
-            .copy(packageNames = config.selectedPackages)
-        val file = DatabaseExporter.createExport(
-            context = context,
-            notifications = config.notifications,
-            isJson = config.format == FORMAT_JSON,
-            passphrase = config.passphrase.takeIf { it.isNotEmpty() }?.toCharArray(),
-            biometricAuthenticated = deviceConfirmed,
-            selection = liveSelection,
+        // Same policy as the card: an empty package set must never be read as "all apps".
+        val selection = ExportSelectionPolicy.selection(
+            availablePackageCount = config.availablePackageCount,
+            selectedPackages = config.selectedPackages,
+            preset = config.preset,
+            nowMillis = System.currentTimeMillis(),
         )
+        val file = selection?.let {
+            DatabaseExporter.createExport(
+                context = context,
+                notifications = config.notifications,
+                isJson = config.format == FORMAT_JSON,
+                passphrase = config.passphrase.takeIf { it.isNotEmpty() }?.toCharArray(),
+                biometricAuthenticated = deviceConfirmed,
+                selection = it,
+            )
+        }
         config.onExportFinished()
         when {
             file == null -> {
