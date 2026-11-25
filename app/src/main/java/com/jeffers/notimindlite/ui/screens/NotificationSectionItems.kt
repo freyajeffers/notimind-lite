@@ -26,12 +26,8 @@ internal fun sectionItems(
     NotificationSection.LOST -> items.lost.filter { it.isDismissed }
 }.distinctBy { it.key }
 
-private val RESTORED_NOTIFICATION_ID_PATTERN = Regex(
-    "\"notimindRestoredNotificationId\"\s*:\s*\d+"
-)
-
 private fun NotificationEntity.isRestoredNotification(): Boolean =
-    restoreMetadataJson?.let(RESTORED_NOTIFICATION_ID_PATTERN::containsMatchIn) == true
+    restoreMetadataJson?.contains(RestoredNotificationState.NOTIFICATION_ID_FIELD) == true
 
 private fun NotificationEntity.isSystemFilteredNotification(): Boolean =
     packageName in SYSTEM_NOTIFICATION_PACKAGES ||
