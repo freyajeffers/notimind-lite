@@ -40,16 +40,27 @@ import org.junit.runner.RunWith
  * byte-identical, so the current 8+ schemas already match history, and versions 1-7 never
  * existed in git history at all.
  *
- * Verified pairs:
+ * Verified pairs, with the exact difference `describeDrift` reports:
  *
- * - `1 -> 2`, `2 -> 3`, `10 -> 11`: migrations create an index the JSON does not declare
- *   (`index_notifications_key`, `index_notifications_packageName`).
- * - `6 -> 7`, `14 -> 15`: the JSON declares columns/indexes the migration never adds
- *   (`isPinned`, `isRead`, several covering indexes).
- * - `8 -> 9`: the JSON expects `index_notifications_key` while the migration yields
- *   `isDismissed`/`isPinned`/`postTime` indexes instead.
- * - `15 -> 16`, `16 -> 17`, `18 -> 19`: the migrated tables do not match the declared
- *   columns/indexes of `backup_records` and `notifications` respectively.
+ * - `1 -> 2`, `2 -> 3`, `10 -> 11`: unexpected index — the migration creates
+ *   `index_notifications_key` / `index_notifications_packageName` and the JSON omits it.
+ * - `6 -> 7`: missing index `index_notifications_isPinned`.
+ * - `8 -> 9`: missing `index_notifications_key`, plus unexpected
+ *   `isDismissed`/`isPinned`/`postTime` indexes.
+ * - `14 -> 15`: attributes differ — same column and index names, different definitions.
+ * - `15 -> 16`: `backup_records` has an unexpected `encryptionKeyBase64` column.
+ * - `16 -> 17`: five covering indexes missing (`isDismissed_dismissReason_dismissTime`,
+ *   `isDismissed_isOngoing_postTime`, `isRead_isDismissed`,
+ *   `packageName_isDismissed_postTime`, `syncStatus`) and two unexpected (`isRead`,
+ *   `packageName_isDismissed`).
+ * - `18 -> 19`: missing `index_notifications_packageName`.
+ *
+ * Several of these are harness artifacts rather than product defects. Real installs
+ * accumulate indexes that earlier migrations created without the entities ever declaring
+ * them, so a database built from the exported `N` schema starts from a different state
+ * than a device that actually upgraded to `N`. `1 -> 2`, `2 -> 3`, `8 -> 9` and `10 -> 11`
+ * all have this shape: the "unexpected" index is one a genuine v`N` device would already
+ * carry.
  *
  * ## Why this runs in tests, not at runtime
  *
@@ -96,7 +107,7 @@ class SchemaJsonMigrationValidationTest {
                 helper.runMigrationsAndValidate(databaseName, migration.endVersion, true, migration)
                 null
             } catch (failure: Throwable) {
-                "${failure.javaClass.simpleName}: ${failure.message?.lineSequence()?.firstOrNull()}"
+                describeDrift(failure)
             } finally {
                 InstrumentationRegistry.getInstrumentation().targetContext.deleteDatabase(databaseName)
             }
@@ -121,6 +132,47 @@ class SchemaJsonMigrationValidationTest {
     }
 
     private companion object {
+        /**
+         * Room reports drift as a full "Expected: … Found: …" dump. Keeping only its first
+         * line ("Migration didn't properly handle: notifications") hides what actually
+         * differs, so reduce it to the column and index names that disagree.
+         */
+        fun describeDrift(failure: Throwable): String {
+            val message = failure.message.orEmpty()
+            val expected = message.substringAfter("Expected:", "").substringBefore("Found:")
+            val found = message.substringAfter("Found:", "")
+            val head = "${failure.javaClass.simpleName}: " +
+                message.lineSequence().firstOrNull().orEmpty()
+            if (expected.isBlank() || found.isBlank()) return head
+
+            fun names(regex: Regex, source: String): Set<String> =
+                regex.findAll(source).map { it.groupValues[1] }.toSet()
+
+            val columnPattern =
+                Regex("""Column\s*\{[^}]*?name = '([^']+)'""", RegexOption.DOT_MATCHES_ALL)
+            val indexPattern =
+                Regex("""Index\s*\{[^}]*?name = '([^']+)'""", RegexOption.DOT_MATCHES_ALL)
+
+            val expectedColumns = names(columnPattern, expected)
+            val foundColumns = names(columnPattern, found)
+            val expectedIndexes = names(indexPattern, expected)
+            val foundIndexes = names(indexPattern, found)
+
+            val missingColumns = expectedColumns - foundColumns
+            val extraColumns = foundColumns - expectedColumns
+            val missingIndexes = expectedIndexes - foundIndexes
+            val extraIndexes = foundIndexes - expectedIndexes
+            val differences = buildList {
+                if (missingColumns.isNotEmpty()) add("missing columns $missingColumns")
+                if (extraColumns.isNotEmpty()) add("unexpected columns $extraColumns")
+                if (missingIndexes.isNotEmpty()) add("missing indexes $missingIndexes")
+                if (extraIndexes.isNotEmpty()) add("unexpected indexes $extraIndexes")
+            }
+            // Matching names mean a per-column attribute differs; that is the defaultValue
+            // case, where migrations add NOT NULL columns with SQL defaults.
+            return "$head (${differences.ifEmpty { listOf("attributes differ") }.joinToString("; ")})"
+        }
+
         val KNOWN_SCHEMA_DRIFT = setOf(
             "1->2",
             "2->3",
