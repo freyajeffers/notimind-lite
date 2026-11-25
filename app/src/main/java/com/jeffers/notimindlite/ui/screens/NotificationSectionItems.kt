@@ -38,14 +38,7 @@ private fun NotificationEntity.isRestoredNotification(): Boolean =
     restoreMetadataJson?.let(RESTORED_NOTIFICATION_ID_PATTERN::containsMatchIn) == true
 
 private fun NotificationEntity.isSystemFilteredNotification(): Boolean =
-    packageName in SYSTEM_NOTIFICATION_PACKAGES ||
-        category in SYSTEM_NOTIFICATION_CATEGORIES ||
+    category in SYSTEM_NOTIFICATION_CATEGORIES ||
         priority < 0
-
-private val SYSTEM_NOTIFICATION_PACKAGES = setOf(
-    "android",
-    "com.android.systemui",
-    "com.google.android.googlequicksearchbox"
-)
 
 private val SYSTEM_NOTIFICATION_CATEGORIES = setOf("sys", "service", "status", "progress")

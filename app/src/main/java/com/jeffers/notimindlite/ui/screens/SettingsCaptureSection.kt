@@ -14,12 +14,15 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
@@ -27,8 +30,12 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.jeffers.notimindlite.BuildConfig
 import com.jeffers.notimindlite.R
+import com.jeffers.notimindlite.data.local.AppDatabase
 import com.jeffers.notimindlite.data.local.PreferencesRepository
+import com.jeffers.notimindlite.service.parseNotificationPackageList
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 @Composable
 fun SettingsCaptureSection(preferencesRepository: PreferencesRepository) {
@@ -98,15 +105,34 @@ private fun CaptureTextFieldSection(preferencesRepository: PreferencesRepository
     )
     CaptureTextFieldRow(allowConfig)
 
-    val blockConfig = CaptureTextFieldConfig(
-        title = stringResource(R.string.pref_capture_blocklist_title),
-        summary = stringResource(R.string.pref_capture_blocklist_summary),
-        value = blocklist,
-        onValueChange = { scope.launch { preferencesRepository.captureManager.setBlocklist(it) } },
-        width = 200.dp,
-        enabled = !BuildConfig.DEBUG
+    val blockedPackages = remember(blocklist) { parseNotificationPackageList(blocklist) }
+    var showBlocklistDialog by remember { mutableStateOf(false) }
+    var knownApps by remember { mutableStateOf<List<Pair<String, String>>>(emptyList()) }
+    val appContext = LocalContext.current.applicationContext
+    LaunchedEffect(Unit) {
+        knownApps = withContext(Dispatchers.IO) {
+            runCatching {
+                AppDatabase.getDatabase(appContext).appDao().getAllApps()
+            }.getOrDefault(emptyList())
+        }.map { it.packageName to it.appName }
+    }
+    PackageBlocklistRow(
+        blockedCount = blockedPackages.size,
+        onConfigureClick = { showBlocklistDialog = true }
     )
-    CaptureTextFieldRow(blockConfig)
+    if (showBlocklistDialog) {
+        PackageBlocklistDialog(
+            selectedPackages = blockedPackages.toList(),
+            availableApps = knownApps,
+            onDismiss = { showBlocklistDialog = false },
+            onApply = { packages ->
+                showBlocklistDialog = false
+                scope.launch {
+                    preferencesRepository.captureManager.setBlocklist(packages.joinToString(","))
+                }
+            }
+        )
+    }
 
     val minImpConfig = CaptureTextFieldConfig(
         title = stringResource(R.string.pref_capture_min_importance_title),

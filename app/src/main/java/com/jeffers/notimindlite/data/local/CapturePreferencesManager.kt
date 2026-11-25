@@ -20,7 +20,7 @@ class CapturePreferencesManager(
     private val _attachments = MutableStateFlow(preferences.getBoolean(KEY_ATTACHMENTS, true))
     private val _ongoing = MutableStateFlow(preferences.getBoolean(KEY_ONGOING, true))
     private val _allowlist = MutableStateFlow(readString(preferences, KEY_ALLOWLIST, "config_capture_allowlist"))
-    private val _blocklist = MutableStateFlow(readString(preferences, KEY_BLOCKLIST, "config_capture_blocklist"))
+    private val _blocklist = MutableStateFlow(seedBlocklist(preferences))
     private val _minImportance = MutableStateFlow(preferences.getInt(KEY_MIN_IMPORTANCE, 0))
     private val _actionsOnly = MutableStateFlow(preferences.getBoolean(KEY_ACTIONS_ONLY, false))
 
@@ -39,7 +39,7 @@ class CapturePreferencesManager(
         _attachments.value = preferences.getBoolean(KEY_ATTACHMENTS, true)
         _ongoing.value = preferences.getBoolean(KEY_ONGOING, true)
         _allowlist.value = readString(preferences, KEY_ALLOWLIST, "config_capture_allowlist")
-        _blocklist.value = readString(preferences, KEY_BLOCKLIST, "config_capture_blocklist")
+        _blocklist.value = seedBlocklist(preferences)
         _minImportance.value = preferences.getInt(KEY_MIN_IMPORTANCE, 0)
         _actionsOnly.value = preferences.getBoolean(KEY_ACTIONS_ONLY, false)
     }
@@ -61,6 +61,22 @@ class CapturePreferencesManager(
 
     fun setBlocklist(value: String) =
         prefsUpdate(preferences, KEY_BLOCKLIST, value) { _blocklist.value = value }
+
+    /**
+     * Seeds the shipped defaults into the user's blocklist exactly once, so the default
+     * filtering behaviour survives but every entry is editable. A user who clears the list
+     * keeps it cleared because the marker is already set.
+     */
+    private fun seedBlocklist(prefs: SharedPreferences): String {
+        val stored = readString(prefs, KEY_BLOCKLIST, "config_capture_blocklist")
+        if (prefs.getBoolean(CaptureDefaults.KEY_BLOCKLIST_SEEDED, false)) return stored
+        val seeded = stored.ifBlank { CaptureDefaults.BLOCKED_PACKAGES_CSV }
+        prefs.edit {
+            putString(KEY_BLOCKLIST, seeded)
+            putBoolean(CaptureDefaults.KEY_BLOCKLIST_SEEDED, true)
+        }
+        return seeded
+    }
 
     fun setMinImportance(value: Int) =
         prefsUpdate(preferences, KEY_MIN_IMPORTANCE, value) { _minImportance.value = value }

@@ -319,7 +319,13 @@
     <string name="pref_capture_attachments_title">Capture attachments</string><string name="pref_capture_attachments_summary">Include notification attachments.</string>
     <string name="pref_capture_ongoing_title">Capture ongoing</string><string name="pref_capture_ongoing_summary">Include ongoing notifications.</string>
     <string name="pref_capture_allowlist_title">Package allowlist</string><string name="pref_capture_allowlist_summary">Comma-separated package names to include.</string>
-    <string name="pref_capture_blocklist_title">Package blocklist</string><string name="pref_capture_blocklist_summary">Comma-separated package names to exclude.</string>
+    <string name="pref_capture_blocklist_title">Package blocklist</string>
+    <string name="pref_capture_blocklist_none">No apps blocked</string>
+    <string name="pref_capture_blocklist_count">%1$d apps blocked</string>
+    <string name="pref_capture_blocklist_choose">Choose apps</string>
+    <string name="pref_capture_blocklist_dialog_title">Apps to block</string>
+    <string name="pref_capture_blocklist_empty">No apps seen yet. NotiMind lists an app once it has captured a notification from it.</string>
+    <string name="pref_capture_blocklist_save">Save</string>
     <string name="pref_capture_min_importance_title">Minimum importance</string><string name="pref_capture_min_importance_summary">Ignore notifications below this importance.</string>
     <string name="pref_capture_actions_only_title">Actions only</string><string name="pref_capture_actions_only_summary">Capture notifications with actionable content.</string>
     <string name="pref_privacy_title">Privacy &amp; Redaction</string><string name="pref_auto_delete_title">Auto-delete on read</string><string name="pref_auto_delete_summary">Delete notifications after reading.</string><string name="pref_anonymize_title">Anonymize titles</string><string name="pref_anonymize_summary">Remove sensitive title content.</string><string name="pref_redact_pii_title">Redact PII</string><string name="pref_redact_pii_summary">Redact common personal information.</string>
