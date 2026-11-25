@@ -307,7 +307,9 @@ class NotificationLoggerService : NotificationListenerService() {
     override fun onNotificationPosted(sbn: StatusBarNotification) {
         super.onNotificationPosted(sbn)
         if (!hasNotificationListenerAccess()) return
-        if (sbn.packageName == applicationContext.packageName) return
+        // Our own notifications are still observed so their active key and dismissal
+        // bookkeeping stay accurate, but they are never written to the log:
+        // shouldCaptureNotification() rejects our own package, so extraction yields null.
         val key = notificationKey(sbn)
         activeNotificationKeys.add(key)
         AppLogger.d(TAG, "onNotificationPosted: ${sbn.packageName} - ${sbn.id}")
