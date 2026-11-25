@@ -9,6 +9,7 @@ All notable changes to NotiMind Lite are documented here. This project adheres t
 ---
 
 ## [Unreleased] - Preference Runtime, UX Polish & Reliability
+- **fix(ui)**: Drive "Filtered" from the user blocklist instead of a hardcoded package list, so un-blocking an app also stops its notifications being hidden.
 - **feat(capture)**: Choose blocked apps from a searchable list of apps NotiMind has seen instead of typing comma-separated package names.
 - **fix(capture)**: Observe NotiMind's own notifications for active/dismissal bookkeeping instead of dropping them at the first gate; they are still never logged.
 - **fix(capture)**: Show blocked packages that have no captured notifications in the picker, so the seeded system entries are visible and removable instead of counting toward "N apps blocked" while appearing unchecked.

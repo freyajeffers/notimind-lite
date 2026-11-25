@@ -745,6 +745,9 @@ private val renderActiveNotificationSections:
                 showAppIcons = config.showAppIcons,
                 compactMode = config.compactMode,
                 previewLength = config.previewLength,
+                blockedPackages = com.jeffers.notimindlite.service.parseNotificationPackageList(
+                    config.preferences.captureManager.blocklist.value
+                ),
                 toggleSection = config.toggleSection
             )
         )

@@ -13,12 +13,14 @@ internal data class NotificationSectionItems(
 
 internal fun sectionItems(
     section: NotificationSection,
-    items: NotificationSectionItems
+    items: NotificationSectionItems,
+    blockedPackages: Set<String> = emptySet()
 ): List<NotificationEntity> = when (section) {
     NotificationSection.PINNED -> items.pinned.filter { !it.isDismissed }
 
     NotificationSection.ACTIVE -> items.active.filter {
-        !it.isDismissed && !it.isPinned && (it.isRestoredNotification() || !it.isSystemFilteredNotification())
+        !it.isDismissed && !it.isPinned &&
+            (it.isRestoredNotification() || !it.isSystemFilteredNotification(blockedPackages))
     }
 
     NotificationSection.FILTERED -> items.filtered.filter {
@@ -37,10 +39,14 @@ private val RESTORED_NOTIFICATION_ID_PATTERN = Regex(
 private fun NotificationEntity.isRestoredNotification(): Boolean =
     restoreMetadataJson?.let(RESTORED_NOTIFICATION_ID_PATTERN::containsMatchIn) == true
 
-private fun NotificationEntity.isSystemFilteredNotification(): Boolean =
-    packageName in SYSTEM_NOTIFICATION_PACKAGES ||
+/**
+ * A notification is filtered when the user blocked its package, or when the notification
+ * itself is system chatter. The blocked set comes from the user's editable blocklist, so a
+ * package they un-block stops being hidden here too.
+ */
+private fun NotificationEntity.isSystemFilteredNotification(blockedPackages: Set<String>): Boolean =
+    packageName in blockedPackages ||
         category in SYSTEM_NOTIFICATION_CATEGORIES ||
         priority < 0
 
-private val SYSTEM_NOTIFICATION_PACKAGES = setOf("android", "com.android.systemui")
 private val SYSTEM_NOTIFICATION_CATEGORIES = setOf("sys", "service", "status", "progress")

@@ -24,6 +24,7 @@ internal data class ActiveNotificationSectionsConfig(
     val showAppIcons: Boolean,
     val compactMode: Boolean,
     val previewLength: Int,
+    val blockedPackages: Set<String>,
     val toggleSection: (String) -> Unit
 )
 
@@ -37,7 +38,7 @@ internal fun LazyListScope.renderNotificationSections(config: ActiveNotification
     )
     config.sectionOrder.forEach { section ->
         val isExpanded = config.expandedSection == section.keyName
-        val rawItemsList = sectionItems(section, sectionInputs)
+        val rawItemsList = sectionItems(section, sectionInputs, config.blockedPackages)
         val filteredList = if (!config.selectedPackages.isNullOrEmpty()) {
             rawItemsList.filter { config.selectedPackages.contains(it.packageName) }
         } else {
