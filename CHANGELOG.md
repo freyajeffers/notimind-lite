@@ -252,3 +252,7 @@ All notable changes to NotiMind Lite are documented here. This project adheres t
 ### 🛠️ Build
 
 - **build**: Initialize project structure, Gradle configuration, and base Android manifest.
+## Unreleased
+
+### Fixed
+- Restore CI Android SDK installation to the available `platforms;android-37.0` package; `compileSdk = 37` does not require the nonexistent `android-37.2` SDK package.
