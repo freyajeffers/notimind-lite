@@ -16,13 +16,17 @@ internal fun sectionItems(
     items: NotificationSectionItems
 ): List<NotificationEntity> = when (section) {
     NotificationSection.PINNED -> items.pinned.filter { !it.isDismissed }
+
     NotificationSection.ACTIVE -> items.active.filter {
         !it.isDismissed && !it.isPinned && (it.isRestoredNotification() || !it.isSystemFilteredNotification())
     }
+
     NotificationSection.FILTERED -> items.filtered.filter {
         !it.isDismissed && !it.isPinned && !it.isRestoredNotification()
     }
+
     NotificationSection.DISMISSED -> items.dismissed.filter { it.isDismissed }
+
     NotificationSection.LOST -> items.lost.filter { it.isDismissed }
 }.distinctBy { it.key }
 
