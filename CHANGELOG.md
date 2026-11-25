@@ -256,3 +256,4 @@ All notable changes to NotiMind Lite are documented here. This project adheres t
 
 ### Fixed
 - Restore CI Android SDK installation to the available `platforms;android-37.0` package; `compileSdk = 37` does not require the nonexistent `android-37.2` SDK package.
+- Use the Android Gradle Plugin's explicit `compileSdkMinor = 2` setting so the project reports API 37.2 to AAR metadata checks instead of Groovy coercing `37.2` to API 37.0.
