@@ -345,3 +345,29 @@ without opening each card.
 **Method note:** the fix was verified by building from a clean worktree at the commit, not
 the shared checkout — several agents were editing that tree concurrently and it was
 transiently uncompilable (`lineLimits`, unresolved `DatabaseLockManager`).
+
+## Populated-data pass (WayDroid, 13 captured notifications)
+
+With real history present the earlier cold-start limits no longer apply.
+
+Verified working:
+- Search narrows live: `delivery` → 2 UPS results, counter `Log (2 of 13)`.
+- Search miss on real data shows the query-specific state: `zzz` →
+  "No results for “zzz”", body echoing the term, `Clear search`, and clearing restores
+  `Log (13 of 13)`.
+- An app with no label was not the culprit here; the offending entry was a **reason**
+  filter, see below.
+
+**Bug found and fixed (`fix(ux)` in this commit):** the reason filter menu rendered
+`2131690076 (#0)` instead of `Dismissed (#0)`. `getReasonLabel()` returns a string
+resource **id**, and this one call site passed it straight into the `%1$s` placeholder of
+`log_history_filter_reason_item`, so Android printed the integer. Every other call site
+already wrapped it in `stringResource`; this one did not.
+
+Verified after the fix on device: menu reads `Dismissed (#0)`, and selecting it filters to
+`Log (12 of 13)` — one of the 13 rows has a non-zero reason.
+
+**Still unverified:** capturing *new* notifications on this container. Posting via
+`cmd notification post` produced system notifications that NotiMind did not persist (the
+log stayed at 13), so the capture path and any app-label fallback for unseen packages
+remain untested here.

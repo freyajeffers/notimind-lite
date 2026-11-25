@@ -124,7 +124,7 @@ private fun LogHistoryFilterDropdown(config: LogHistoryTopActions) {
                     Text(
                         stringResource(
                             id = R.string.log_history_filter_reason_item,
-                            getReasonLabel(reasonCode),
+                            stringResource(getReasonLabel(reasonCode)),
                             reasonCode,
                             if (config.selectedReasonFilter == reasonCode) "✓" else ""
                         )
