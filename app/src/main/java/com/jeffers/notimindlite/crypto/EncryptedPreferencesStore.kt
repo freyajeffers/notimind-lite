@@ -218,23 +218,39 @@ object EncryptedPreferencesStore {
         override fun putBoolean(key: String?, value: Boolean): SharedPreferences.Editor =
             putEncoded(key, TYPE_BOOLEAN + value)
 
-        override fun remove(key: String?): SharedPreferences.Editor = delegate.remove(key)
+        override fun remove(key: String?): SharedPreferences.Editor {
+            delegate.remove(key)
+            return this
+        }
 
-        override fun clear(): SharedPreferences.Editor = delegate.clear()
+        override fun clear(): SharedPreferences.Editor {
+            delegate.clear()
+            return this
+        }
 
         override fun commit(): Boolean = delegate.commit()
 
         override fun apply() = delegate.apply()
 
         private fun putEncoded(key: String?, value: String?): SharedPreferences.Editor {
-            if (key == null) return delegate
-            if (value == null) return delegate.remove(key)
-            val iv = ByteArray(GCM_IV_BYTES).also { java.security.SecureRandom().nextBytes(it) }
-            val ciphertext = Cipher.getInstance(TRANSFORMATION).run {
-                init(Cipher.ENCRYPT_MODE, this@Editor.key, GCMParameterSpec(GCM_TAG_BITS, iv))
-                doFinal(value.toByteArray(StandardCharsets.UTF_8))
+            // SharedPreferences.Editor must return the same editor so calls can be chained.
+            // Returning the raw delegate escaped the wrapper: `edit().clear().putString(..)`
+            // then wrote plaintext, and the value could not be read back.
+            if (key == null) return this
+            if (value == null) {
+                delegate.remove(key)
+                return this
             }
-            return delegate.putString(key, Base64.encodeToString(iv + ciphertext, Base64.NO_WRAP))
+            // AndroidKeyStore keys are generated with setRandomizedEncryptionRequired(true)
+            // by default, so the Keystore picks the IV and rejects a caller-supplied one
+            // ("Caller-provided IV not permitted"). Read the IV back after init instead of
+            // generating it here; decryption may still supply it explicitly.
+            val cipher = Cipher.getInstance(TRANSFORMATION)
+            cipher.init(Cipher.ENCRYPT_MODE, this@Editor.key)
+            val iv = cipher.iv
+            val ciphertext = cipher.doFinal(value.toByteArray(StandardCharsets.UTF_8))
+            delegate.putString(key, Base64.encodeToString(iv + ciphertext, Base64.NO_WRAP))
+            return this
         }
     }
 }

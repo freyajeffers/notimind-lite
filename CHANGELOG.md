@@ -1,3 +1,7 @@
+## Unreleased
+
+- Fixed AndroidKeyStore AES-GCM preference writes to let the Keystore generate randomized IVs, avoiding `Caller-provided IV not permitted` failures on API 34 emulators.
+
 # Changelog
 
 All notable changes to NotiMind Lite are documented here. This project adheres to [Conventional Commits](https://www.conventionalcommits.org/).
